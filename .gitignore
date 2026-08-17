@@ -1,0 +1,48 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+build/
+dist/
+coverage/
+.angular/cache/
+
+# .NET and Visual Studio
+*.user
+*.userosscache
+*.suo
+*.rsuser
+*.sln.docstates
+.vs/
+TestResults/
+
+# Node.js and Angular
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Visual Studio Code
+.vscode/
+!.vscode/extensions.json
+
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+logs/
+debug.log
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
+secrets.json
+*.pem
+*.key
