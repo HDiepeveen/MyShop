@@ -1,3 +1,4 @@
+using MyShop.Application.Catalog;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Application.Catalog.SetProductAttributeValue;
 using MyShop.Domain.Catalog;
@@ -30,12 +31,13 @@ public sealed class SetProductAttributeValueTests
 
         // Assert
         Assert.Equal(["blue"], input.Values);
+        Assert.Throws<NotSupportedException>(() => ((IList<string>)input.Values)[0] = "green");
     }
 
     [Theory]
     [MemberData(nameof(ValidAssignments))]
     public async Task ExecuteAsync_WithValidInput_SetsTypedValueAndSavesOnce(
-        SetProductAttributeValueInput input,
+        CatalogAttributeValueInput input,
         Type expectedValueType)
     {
         // Arrange
@@ -226,7 +228,7 @@ public sealed class SetProductAttributeValueTests
 
     private static SetProductAttributeValueCommand CreateCommand(
         Scenario scenario,
-        SetProductAttributeValueInput input) =>
+        CatalogAttributeValueInput input) =>
         new(scenario.Product.Id, scenario.AttributeDefinitionId, input);
 
     private static Scenario CreateScenario(

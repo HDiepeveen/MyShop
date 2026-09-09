@@ -1,14 +1,14 @@
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
 
-namespace MyShop.Application.Catalog.SetProductAttributeValue;
+namespace MyShop.Application.Catalog.SetVariantAttributeValue;
 
-public sealed class SetProductAttributeValue
+public sealed class SetVariantAttributeValue
 {
     private readonly IProductRepository _products;
     private readonly IProductTypeRepository _productTypes;
 
-    public SetProductAttributeValue(
+    public SetVariantAttributeValue(
         IProductRepository products,
         IProductTypeRepository productTypes)
     {
@@ -16,8 +16,8 @@ public sealed class SetProductAttributeValue
         _productTypes = productTypes ?? throw new ArgumentNullException(nameof(productTypes));
     }
 
-    public async Task<SetProductAttributeValueResult> ExecuteAsync(
-        SetProductAttributeValueCommand command,
+    public async Task<SetVariantAttributeValueResult> ExecuteAsync(
+        SetVariantAttributeValueCommand command,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
@@ -26,27 +26,30 @@ public sealed class SetProductAttributeValue
 
         var product = await _products.GetByIdAsync(command.ProductId, cancellationToken);
         if (product is null)
-            return SetProductAttributeValueResult.Failed(SetProductAttributeValueFailure.ProductNotFound);
+            return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.ProductNotFound);
+
+        if (!product.Variants.Any(variant => variant.Id == command.ProductVariantId))
+            return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.VariantNotFound);
 
         var productType = await _productTypes.GetByIdAsync(product.ProductTypeId, cancellationToken);
         if (productType is null)
-            return SetProductAttributeValueResult.Failed(SetProductAttributeValueFailure.ProductTypeNotFound);
+            return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.ProductTypeNotFound);
 
         var definition = productType.AttributeDefinitions.SingleOrDefault(attribute =>
             attribute.Id == command.AttributeDefinitionId);
         if (definition is null)
-            return SetProductAttributeValueResult.Failed(SetProductAttributeValueFailure.AttributeDefinitionNotFound);
+            return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.AttributeDefinitionNotFound);
 
-        if (definition.Scope != AttributeScope.Product)
-            return SetProductAttributeValueResult.Failed(SetProductAttributeValueFailure.WrongAttributeScope);
+        if (definition.Scope != AttributeScope.Variant)
+            return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.WrongAttributeScope);
 
         if (definition.DataType != command.Value.DataType)
-            return SetProductAttributeValueResult.Failed(SetProductAttributeValueFailure.WrongAttributeDataType);
+            return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.WrongAttributeDataType);
 
         var value = CatalogAttributeValueFactory.Create(command.AttributeDefinitionId, command.Value);
-        product.SetAttributeValue(value);
+        product.SetVariantAttributeValue(command.ProductVariantId, value);
         await _products.SaveAsync(product, cancellationToken);
 
-        return SetProductAttributeValueResult.Succeeded;
+        return SetVariantAttributeValueResult.Succeeded;
     }
 }

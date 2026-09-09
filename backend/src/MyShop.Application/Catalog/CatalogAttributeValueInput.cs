@@ -1,44 +1,44 @@
 using System.Collections.ObjectModel;
 using MyShop.Domain.Catalog;
 
-namespace MyShop.Application.Catalog.SetProductAttributeValue;
+namespace MyShop.Application.Catalog;
 
-public abstract record SetProductAttributeValueInput
+public abstract record CatalogAttributeValueInput
 {
     public abstract AttributeDataType DataType { get; }
 }
 
-public sealed record TextAttributeValueInput(string Value) : SetProductAttributeValueInput
+public sealed record TextAttributeValueInput(string Value) : CatalogAttributeValueInput
 {
     public override AttributeDataType DataType => AttributeDataType.Text;
 }
 
-public sealed record IntegerAttributeValueInput(long Value) : SetProductAttributeValueInput
+public sealed record IntegerAttributeValueInput(long Value) : CatalogAttributeValueInput
 {
     public override AttributeDataType DataType => AttributeDataType.Integer;
 }
 
-public sealed record DecimalAttributeValueInput(decimal Value) : SetProductAttributeValueInput
+public sealed record DecimalAttributeValueInput(decimal Value) : CatalogAttributeValueInput
 {
     public override AttributeDataType DataType => AttributeDataType.Decimal;
 }
 
-public sealed record BooleanAttributeValueInput(bool Value) : SetProductAttributeValueInput
+public sealed record BooleanAttributeValueInput(bool Value) : CatalogAttributeValueInput
 {
     public override AttributeDataType DataType => AttributeDataType.Boolean;
 }
 
-public sealed record DateAttributeValueInput(DateOnly Value) : SetProductAttributeValueInput
+public sealed record DateAttributeValueInput(DateOnly Value) : CatalogAttributeValueInput
 {
     public override AttributeDataType DataType => AttributeDataType.Date;
 }
 
-public sealed record ChoiceAttributeValueInput(string Value) : SetProductAttributeValueInput
+public sealed record ChoiceAttributeValueInput(string Value) : CatalogAttributeValueInput
 {
     public override AttributeDataType DataType => AttributeDataType.Choice;
 }
 
-public sealed record MultiChoiceAttributeValueInput : SetProductAttributeValueInput
+public sealed record MultiChoiceAttributeValueInput : CatalogAttributeValueInput
 {
     private readonly ReadOnlyCollection<string> _values;
 
