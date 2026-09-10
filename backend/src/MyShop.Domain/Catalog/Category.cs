@@ -9,6 +9,13 @@ public sealed class Category
         ParentCategoryId = parentCategoryId;
     }
 
+    private Category(CategoryId id, string name, CategoryId? parentCategoryId)
+    {
+        Id = id;
+        Name = name;
+        ParentCategoryId = parentCategoryId;
+    }
+
     public CategoryId Id { get; }
     public string Name { get; private set; }
     public CategoryId? ParentCategoryId { get; private set; }
@@ -20,6 +27,21 @@ public sealed class Category
     {
         ValidateParentCategoryId(parentCategoryId);
         return new Category(name, parentCategoryId);
+    }
+
+    internal static Category Rehydrate(
+        CategoryId id,
+        string name,
+        CategoryId? parentCategoryId)
+    {
+        if (id == default)
+            throw new ArgumentException("Category ID must not be empty.", nameof(id));
+        if (parentCategoryId == default(CategoryId))
+            throw new ArgumentException("Parent category ID must not be empty.", nameof(parentCategoryId));
+        if (parentCategoryId == id)
+            throw new ArgumentException("A category cannot be its own parent.", nameof(parentCategoryId));
+
+        return new Category(id, ValidateName(name), parentCategoryId);
     }
 
     public void Rename(string name) => Name = ValidateName(name);

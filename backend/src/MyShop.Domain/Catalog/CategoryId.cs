@@ -7,4 +7,12 @@ public readonly record struct CategoryId
     public Guid Value { get; }
 
     public static CategoryId New() => new(Guid.NewGuid());
+
+    internal static CategoryId From(Guid value)
+    {
+        if (value == Guid.Empty)
+            throw new ArgumentException("Category ID must not be empty.", nameof(value));
+
+        return new CategoryId(value);
+    }
 }

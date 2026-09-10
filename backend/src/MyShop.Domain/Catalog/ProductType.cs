@@ -14,11 +14,39 @@ public sealed class ProductType
         _readOnlyAttributeDefinitions = _attributeDefinitions.AsReadOnly();
     }
 
+    private ProductType(ProductTypeId id, string name, List<AttributeDefinition> attributeDefinitions)
+    {
+        Id = id;
+        Name = name;
+        _attributeDefinitions.AddRange(attributeDefinitions);
+        _readOnlyAttributeDefinitions = _attributeDefinitions.AsReadOnly();
+    }
+
     public ProductTypeId Id { get; }
     public string Name { get; private set; }
     public IReadOnlyCollection<AttributeDefinition> AttributeDefinitions => _readOnlyAttributeDefinitions;
 
     public static ProductType Create(string name) => new(name);
+
+    internal static ProductType Rehydrate(
+        ProductTypeId id,
+        string name,
+        IEnumerable<AttributeDefinition> attributeDefinitions)
+    {
+        ArgumentNullException.ThrowIfNull(attributeDefinitions);
+
+        var definitions = attributeDefinitions.ToList();
+        if (id == default)
+            throw new ArgumentException("Product type ID must not be empty.", nameof(id));
+        if (definitions.Any(definition => definition is null))
+            throw new InvalidOperationException("A product type cannot contain null attribute definitions.");
+        if (definitions.GroupBy(definition => definition.Id).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product type cannot contain duplicate attribute definitions.");
+        if (definitions.GroupBy(definition => definition.Code).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product type cannot contain duplicate attribute codes.");
+
+        return new ProductType(id, ValidateName(name), definitions);
+    }
     public void Rename(string name) => Name = ValidateName(name);
 
     public AttributeDefinition AddAttribute(AttributeDefinitionId id, AttributeCode code, string displayName,

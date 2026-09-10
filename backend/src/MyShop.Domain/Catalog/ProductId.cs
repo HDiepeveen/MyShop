@@ -7,4 +7,12 @@ public readonly record struct ProductId
     public Guid Value { get; }
 
     public static ProductId New() => new(Guid.NewGuid());
+
+    internal static ProductId From(Guid value)
+    {
+        if (value == Guid.Empty)
+            throw new ArgumentException("Product ID must not be empty.", nameof(value));
+
+        return new ProductId(value);
+    }
 }

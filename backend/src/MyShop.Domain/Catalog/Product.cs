@@ -25,6 +25,25 @@ public sealed class Product
         AddVariant(initialVariantName);
     }
 
+    private Product(
+        ProductId id,
+        ProductTypeId productTypeId,
+        string name,
+        List<ProductVariant> variants,
+        List<CategoryId> categoryIds,
+        List<AttributeValue> attributeValues)
+    {
+        Id = id;
+        ProductTypeId = productTypeId;
+        Name = name;
+        _variants.AddRange(variants);
+        _categoryIds.AddRange(categoryIds);
+        _attributeValues.AddRange(attributeValues);
+        _readOnlyVariants = _variants.AsReadOnly();
+        _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _readOnlyCategoryIds = _categoryIds.AsReadOnly();
+    }
+
     public ProductId Id { get; }
     public ProductTypeId ProductTypeId { get; }
     public string Name { get; private set; }
@@ -34,6 +53,54 @@ public sealed class Product
 
     public static Product Create(string name, ProductTypeId productTypeId, string initialVariantName) =>
         new(name, productTypeId, initialVariantName);
+
+    internal static Product Rehydrate(
+        ProductId id,
+        ProductTypeId productTypeId,
+        string name,
+        IEnumerable<ProductVariant> variants,
+        IEnumerable<CategoryId> categoryIds,
+        IEnumerable<AttributeValue> attributeValues)
+    {
+        ArgumentNullException.ThrowIfNull(variants);
+        ArgumentNullException.ThrowIfNull(categoryIds);
+        ArgumentNullException.ThrowIfNull(attributeValues);
+
+        var variantList = variants.ToList();
+        var categoryIdList = categoryIds.ToList();
+        var values = attributeValues.ToList();
+
+        if (id == default)
+            throw new ArgumentException("Product ID must not be empty.", nameof(id));
+        if (productTypeId == default)
+            throw new ArgumentException("Product type ID must not be empty.", nameof(productTypeId));
+        if (variantList.Count == 0)
+            throw new InvalidOperationException("A product must contain at least one variant.");
+        if (variantList.Any(variant => variant is null))
+            throw new InvalidOperationException("A product cannot contain null variants.");
+        if (variantList.GroupBy(variant => variant.Id).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate variants.");
+        if (variantList.Where(variant => variant.Sku is not null)
+            .GroupBy(variant => variant.Sku)
+            .Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate variant SKUs.");
+        if (categoryIdList.Any(categoryId => categoryId == default))
+            throw new ArgumentException("Category ID must not be empty.", nameof(categoryIds));
+        if (categoryIdList.Distinct().Count() != categoryIdList.Count)
+            throw new InvalidOperationException("A product cannot contain duplicate categories.");
+        if (values.Any(value => value is null))
+            throw new InvalidOperationException("A product cannot contain null attribute values.");
+        if (values.GroupBy(value => value.AttributeDefinitionId).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate attribute definitions.");
+
+        return new Product(
+            id,
+            productTypeId,
+            ValidateName(name),
+            variantList,
+            categoryIdList,
+            values);
+    }
 
     public void Rename(string name) => Name = ValidateName(name);
 

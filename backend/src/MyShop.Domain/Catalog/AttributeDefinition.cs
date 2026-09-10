@@ -23,6 +23,16 @@ public sealed class AttributeDefinition
         Scope = scope;
     }
 
+    internal static AttributeDefinition Rehydrate(
+        AttributeDefinitionId id,
+        AttributeCode code,
+        string displayName,
+        AttributeDataType dataType,
+        bool isRequired,
+        bool isFilterable,
+        AttributeScope scope) =>
+        new(id, code, displayName, dataType, isRequired, isFilterable, scope);
+
     public AttributeDefinitionId Id { get; }
     public AttributeCode Code { get; }
     public string DisplayName { get; private set; }
