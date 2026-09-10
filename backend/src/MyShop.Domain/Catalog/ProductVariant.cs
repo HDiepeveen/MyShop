@@ -19,9 +19,16 @@ public sealed class ProductVariant
 
     public ProductVariantId Id { get; }
     public string Name { get; private set; }
+    public Sku? Sku { get; private set; }
     public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
 
     internal void Rename(string name) => Name = ValidateName(name);
+
+    internal void SetSku(Sku sku)
+    {
+        ArgumentNullException.ThrowIfNull(sku);
+        Sku = sku;
+    }
 
     internal void SetAttributeValue(AttributeValue value)
     {

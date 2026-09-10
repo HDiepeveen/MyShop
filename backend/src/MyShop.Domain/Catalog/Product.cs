@@ -46,6 +46,20 @@ public sealed class Product
 
     public void RenameVariant(ProductVariantId variantId, string name) => FindVariant(variantId).Rename(name);
 
+    public void SetVariantSku(ProductVariantId variantId, Sku sku)
+    {
+        ArgumentNullException.ThrowIfNull(sku);
+
+        if (variantId == default)
+            throw new ArgumentException("Product variant ID must not be empty.", nameof(variantId));
+
+        var variant = FindVariant(variantId);
+        if (_variants.Any(candidate => candidate.Id != variantId && candidate.Sku == sku))
+            throw new InvalidOperationException($"SKU '{sku}' is already assigned to another variant of this product.");
+
+        variant.SetSku(sku);
+    }
+
     public void SetAttributeValue(AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);
