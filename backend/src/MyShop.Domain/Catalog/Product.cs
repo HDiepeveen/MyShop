@@ -8,6 +8,8 @@ public sealed class Product
     private readonly ReadOnlyCollection<ProductVariant> _readOnlyVariants;
     private readonly List<AttributeValue> _attributeValues = [];
     private readonly ReadOnlyCollection<AttributeValue> _readOnlyAttributeValues;
+    private readonly List<CategoryId> _categoryIds = [];
+    private readonly ReadOnlyCollection<CategoryId> _readOnlyCategoryIds;
 
     private Product(string name, ProductTypeId productTypeId, string initialVariantName)
     {
@@ -19,6 +21,7 @@ public sealed class Product
         Name = ValidateName(name);
         _readOnlyVariants = _variants.AsReadOnly();
         _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _readOnlyCategoryIds = _categoryIds.AsReadOnly();
         AddVariant(initialVariantName);
     }
 
@@ -27,6 +30,7 @@ public sealed class Product
     public string Name { get; private set; }
     public IReadOnlyCollection<ProductVariant> Variants => _readOnlyVariants;
     public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
+    public IReadOnlyCollection<CategoryId> CategoryIds => _readOnlyCategoryIds;
 
     public static Product Create(string name, ProductTypeId productTypeId, string initialVariantName) =>
         new(name, productTypeId, initialVariantName);
@@ -50,6 +54,23 @@ public sealed class Product
 
     public void RemoveAttributeValue(AttributeDefinitionId attributeDefinitionId) =>
         RemoveAttributeValue(_attributeValues, attributeDefinitionId);
+
+    public void AssignToCategory(CategoryId categoryId)
+    {
+        ValidateCategoryId(categoryId);
+
+        if (!_categoryIds.Contains(categoryId))
+            _categoryIds.Add(categoryId);
+    }
+
+    public void RemoveFromCategory(CategoryId categoryId)
+    {
+        ValidateCategoryId(categoryId);
+
+        if (!_categoryIds.Remove(categoryId))
+            throw new InvalidOperationException(
+                $"Category with ID '{categoryId}' is not assigned to this product.");
+    }
 
     public void SetVariantAttributeValue(ProductVariantId variantId, AttributeValue value)
     {
@@ -100,6 +121,12 @@ public sealed class Product
                 $"Attribute value for definition ID '{attributeDefinitionId}' does not exist.");
 
         values.Remove(value);
+    }
+
+    private static void ValidateCategoryId(CategoryId categoryId)
+    {
+        if (categoryId == default)
+            throw new ArgumentException("Category ID must not be empty.", nameof(categoryId));
     }
 
     private static string ValidateName(string name)
