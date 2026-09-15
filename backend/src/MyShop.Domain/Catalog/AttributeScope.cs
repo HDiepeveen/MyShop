@@ -2,6 +2,6 @@ namespace MyShop.Domain.Catalog;
 
 public enum AttributeScope
 {
-    Product,
-    Variant
+    Product = 0,
+    Variant = 1
 }
