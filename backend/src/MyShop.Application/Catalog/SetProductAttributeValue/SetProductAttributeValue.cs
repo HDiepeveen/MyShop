@@ -24,9 +24,11 @@ public sealed class SetProductAttributeValue
         ArgumentNullException.ThrowIfNull(command.Value);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var product = await _products.GetByIdAsync(command.ProductId, cancellationToken);
-        if (product is null)
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
+        if (snapshot is null)
             return SetProductAttributeValueResult.Failed(SetProductAttributeValueFailure.ProductNotFound);
+
+        var product = snapshot.Product;
 
         var productType = await _productTypes.GetByIdAsync(product.ProductTypeId, cancellationToken);
         if (productType is null)
@@ -45,7 +47,7 @@ public sealed class SetProductAttributeValue
 
         var value = CatalogAttributeValueFactory.Create(command.AttributeDefinitionId, command.Value);
         product.SetAttributeValue(value);
-        await _products.SaveAsync(product, cancellationToken);
+        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return SetProductAttributeValueResult.Succeeded;
     }

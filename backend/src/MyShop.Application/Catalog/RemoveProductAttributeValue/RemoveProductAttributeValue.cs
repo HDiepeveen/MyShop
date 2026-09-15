@@ -21,15 +21,17 @@ public sealed class RemoveProductAttributeValue
         if (command.AttributeDefinitionId == default)
             throw new ArgumentException("Attribute definition ID must not be empty.", nameof(command.AttributeDefinitionId));
 
-        var product = await _products.GetByIdAsync(command.ProductId, cancellationToken);
-        if (product is null)
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
+        if (snapshot is null)
             return RemoveProductAttributeValueResult.Failed(RemoveProductAttributeValueFailure.ProductNotFound);
+
+        var product = snapshot.Product;
 
         if (!product.AttributeValues.Any(value => value.AttributeDefinitionId == command.AttributeDefinitionId))
             return RemoveProductAttributeValueResult.Succeeded;
 
         product.RemoveAttributeValue(command.AttributeDefinitionId);
-        await _products.SaveAsync(product, cancellationToken);
+        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return RemoveProductAttributeValueResult.Succeeded;
     }

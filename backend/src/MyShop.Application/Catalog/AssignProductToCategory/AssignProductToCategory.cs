@@ -27,9 +27,11 @@ public sealed class AssignProductToCategory
         if (command.CategoryId == default)
             throw new ArgumentException("Category ID must not be empty.", nameof(command.CategoryId));
 
-        var product = await _products.GetByIdAsync(command.ProductId, cancellationToken);
-        if (product is null)
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
+        if (snapshot is null)
             return AssignProductToCategoryResult.Failed(AssignProductToCategoryFailure.ProductNotFound);
+
+        var product = snapshot.Product;
 
         var category = await _categories.GetByIdAsync(command.CategoryId, cancellationToken);
         if (category is null)
@@ -39,7 +41,7 @@ public sealed class AssignProductToCategory
             return AssignProductToCategoryResult.Succeeded;
 
         product.AssignToCategory(command.CategoryId);
-        await _products.SaveAsync(product, cancellationToken);
+        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return AssignProductToCategoryResult.Succeeded;
     }

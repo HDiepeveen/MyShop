@@ -24,9 +24,11 @@ public sealed class SetVariantAttributeValue
         ArgumentNullException.ThrowIfNull(command.Value);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var product = await _products.GetByIdAsync(command.ProductId, cancellationToken);
-        if (product is null)
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
+        if (snapshot is null)
             return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.ProductNotFound);
+
+        var product = snapshot.Product;
 
         if (!product.Variants.Any(variant => variant.Id == command.ProductVariantId))
             return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.VariantNotFound);
@@ -48,7 +50,7 @@ public sealed class SetVariantAttributeValue
 
         var value = CatalogAttributeValueFactory.Create(command.AttributeDefinitionId, command.Value);
         product.SetVariantAttributeValue(command.ProductVariantId, value);
-        await _products.SaveAsync(product, cancellationToken);
+        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return SetVariantAttributeValueResult.Succeeded;
     }

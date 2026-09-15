@@ -29,9 +29,11 @@ public sealed class SetProductVariantSku
             throw new ArgumentException("Product variant ID must not be empty.", nameof(command.ProductVariantId));
 
         var sku = Sku.Create(command.Sku);
-        var product = await _products.GetByIdAsync(command.ProductId, cancellationToken);
-        if (product is null)
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
+        if (snapshot is null)
             return SetProductVariantSkuResult.Failed(SetProductVariantSkuFailure.ProductNotFound);
+
+        var product = snapshot.Product;
 
         var variant = product.Variants.SingleOrDefault(candidate =>
             candidate.Id == command.ProductVariantId);
@@ -51,7 +53,7 @@ public sealed class SetProductVariantSku
             return SetProductVariantSkuResult.Failed(SetProductVariantSkuFailure.SkuAlreadyInUse);
 
         product.SetVariantSku(command.ProductVariantId, sku);
-        await _products.SaveAsync(product, cancellationToken);
+        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return SetProductVariantSkuResult.Succeeded;
     }

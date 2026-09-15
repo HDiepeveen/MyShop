@@ -8,6 +8,21 @@ namespace MyShop.Application.Tests.Catalog.RemoveVariantAttributeValue;
 public sealed class RemoveVariantAttributeValueTests
 {
     [Fact]
+    public async Task ExecuteAsync_WhenSaveConflicts_PropagatesSameConcurrencyException()
+    {
+        var scenario = new Scenario();
+        var expected = new ProductConcurrencyException(scenario.Product.Id);
+        scenario.Products.SaveException = expected;
+
+        var exception = await Assert.ThrowsAsync<ProductConcurrencyException>(() =>
+            scenario.Handler.ExecuteAsync(scenario.Command, CancellationToken.None));
+
+        Assert.Same(expected, exception);
+        Assert.Equal(1, scenario.Products.SaveCalls);
+        Assert.Same(scenario.Products.ReadToken, scenario.Products.SavedExpectedToken);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RemovesStoredValueWithoutDefinitionMetadataAndSavesSameProductOnce()
     {
         var scenario = new Scenario();
@@ -23,6 +38,7 @@ public sealed class RemoveVariantAttributeValueTests
         Assert.Equal(source.Token, scenario.Products.GetToken);
         Assert.Equal(1, scenario.Products.SaveCalls);
         Assert.Same(scenario.Product, scenario.Products.SavedProduct);
+        Assert.Same(scenario.Products.ReadToken, scenario.Products.SavedExpectedToken);
         Assert.Equal(source.Token, scenario.Products.SaveToken);
     }
 
@@ -207,7 +223,7 @@ public sealed class RemoveVariantAttributeValueTests
             new(Product.Id, Variant.Id, Existing.AttributeDefinitionId);
     }
 
-    private sealed class ProductRepositoryFake(Product product) : IProductRepository
+    private sealed class ProductRepositoryFake(Product? product) : IProductRepository
     {
         public Product? Product { get; set; } = product;
         public Exception? GetException { get; set; }
@@ -218,25 +234,44 @@ public sealed class RemoveVariantAttributeValueTests
         public CancellationToken GetToken { get; private set; }
         public CancellationToken SaveToken { get; private set; }
         public Product? SavedProduct { get; private set; }
+        public ProductConcurrencyToken? ReadToken { get; private set; }
+        public ProductConcurrencyToken? SavedExpectedToken { get; private set; }
+        private ProductConcurrencyToken? _currentToken;
+        private int _revision = 1;
 
-        public Task<Product?> GetByIdAsync(ProductId id, CancellationToken cancellationToken)
+        public Task<ProductSnapshot?> GetByIdAsync(ProductId id, CancellationToken cancellationToken)
         {
             GetCalls++;
             RequestedId = id;
             GetToken = cancellationToken;
-            if (GetException is not null) return Task.FromException<Product?>(GetException);
+            if (GetException is not null) return Task.FromException<ProductSnapshot?>(GetException);
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(Product);
+            if (Product is null) return Task.FromResult<ProductSnapshot?>(null);
+            if (_currentToken is null || _currentToken.ProductId != Product.Id)
+                _currentToken = CreateToken(Product.Id);
+            ReadToken = _currentToken;
+            return Task.FromResult<ProductSnapshot?>(new ProductSnapshot(Product, ReadToken));
         }
 
-        public Task SaveAsync(Product product, CancellationToken cancellationToken)
+        public Task<ProductConcurrencyToken> AddAsync(Product product, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<ProductConcurrencyToken> SaveAsync(
+            Product product,
+            ProductConcurrencyToken expectedToken,
+            CancellationToken cancellationToken)
         {
             SaveCalls++;
-            SaveToken = cancellationToken;
             SavedProduct = product;
-            if (SaveException is not null) return Task.FromException(SaveException);
+            SavedExpectedToken = expectedToken;
+            SaveToken = cancellationToken;
+            if (SaveException is not null) return Task.FromException<ProductConcurrencyToken>(SaveException);
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.CompletedTask;
+            _currentToken = CreateToken(product.Id);
+            return Task.FromResult(_currentToken);
         }
+
+        private ProductConcurrencyToken CreateToken(ProductId productId) =>
+            ProductConcurrencyToken.Create(productId, new Guid(_revision++, 0, 0, new byte[8]));
     }
 }

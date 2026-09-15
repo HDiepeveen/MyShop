@@ -23,15 +23,17 @@ public sealed class RemoveProductFromCategory
         if (command.CategoryId == default)
             throw new ArgumentException("Category ID must not be empty.", nameof(command.CategoryId));
 
-        var product = await _products.GetByIdAsync(command.ProductId, cancellationToken);
-        if (product is null)
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
+        if (snapshot is null)
             return RemoveProductFromCategoryResult.Failed(RemoveProductFromCategoryFailure.ProductNotFound);
+
+        var product = snapshot.Product;
 
         if (!product.CategoryIds.Contains(command.CategoryId))
             return RemoveProductFromCategoryResult.Succeeded;
 
         product.RemoveFromCategory(command.CategoryId);
-        await _products.SaveAsync(product, cancellationToken);
+        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return RemoveProductFromCategoryResult.Succeeded;
     }
