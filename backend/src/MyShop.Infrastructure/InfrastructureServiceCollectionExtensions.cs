@@ -1,0 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MyShop.Application.Catalog.Abstractions;
+using MyShop.Infrastructure.Persistence;
+using MyShop.Infrastructure.Persistence.Repositories;
+
+namespace MyShop.Infrastructure;
+
+public static class InfrastructureServiceCollectionExtensions
+{
+    public static IServiceCollection AddMyShopInfrastructure(
+        this IServiceCollection services,
+        string connectionString)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+
+        services.AddDbContext<MyShopDbContext>(options =>
+            options.UseSqlServer(connectionString));
+        services.AddScoped<IProductRepository>(provider =>
+            new ProductRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IProductTypeRepository>(provider =>
+            new ProductTypeRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<ICategoryRepository>(provider =>
+            new CategoryRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IProductSkuLookup>(provider =>
+            new ProductSkuLookup(provider.GetRequiredService<MyShopDbContext>()));
+
+        return services;
+    }
+}
