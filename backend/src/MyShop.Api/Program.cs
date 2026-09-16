@@ -11,5 +11,6 @@ app.MapCreateProduct();
 app.MapGetProduct();
 app.MapRenameProduct();
 app.MapAddProductVariant();
+app.MapRenameProductVariant();
 
 app.Run();
