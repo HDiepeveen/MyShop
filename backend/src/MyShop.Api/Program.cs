@@ -8,5 +8,6 @@ builder.Services.AddMyShop(builder.Configuration);
 var app = builder.Build();
 
 app.MapCreateProduct();
+app.MapGetProduct();
 
 app.Run();
