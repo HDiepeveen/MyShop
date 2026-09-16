@@ -9,5 +9,6 @@ var app = builder.Build();
 
 app.MapCreateProduct();
 app.MapGetProduct();
+app.MapRenameProduct();
 
 app.Run();
