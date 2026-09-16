@@ -138,6 +138,30 @@ public sealed class RemoveVariantAttributeValueTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WithDefaultProductId_ThrowsBeforeRepositoryAccess()
+    {
+        var scenario = new Scenario();
+
+        await Assert.ThrowsAsync<ArgumentException>(() => scenario.Handler.ExecuteAsync(
+            scenario.Command with { ProductId = default }, CancellationToken.None));
+
+        Assert.Equal(0, scenario.Products.GetCalls);
+        Assert.Equal(0, scenario.Products.SaveCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithDefaultVariantId_ThrowsBeforeRepositoryAccess()
+    {
+        var scenario = new Scenario();
+
+        await Assert.ThrowsAsync<ArgumentException>(() => scenario.Handler.ExecuteAsync(
+            scenario.Command with { ProductVariantId = default }, CancellationToken.None));
+
+        Assert.Equal(0, scenario.Products.GetCalls);
+        Assert.Equal(0, scenario.Products.SaveCalls);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_WithDefaultDefinitionId_ThrowsBeforeRepositoryAccess()
     {
         var scenario = new Scenario();

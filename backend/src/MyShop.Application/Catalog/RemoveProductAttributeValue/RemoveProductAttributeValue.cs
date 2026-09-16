@@ -18,6 +18,8 @@ public sealed class RemoveProductAttributeValue
         ArgumentNullException.ThrowIfNull(command);
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (command.ProductId == default)
+            throw new ArgumentException("Product ID must not be empty.", nameof(command.ProductId));
         if (command.AttributeDefinitionId == default)
             throw new ArgumentException("Attribute definition ID must not be empty.", nameof(command.AttributeDefinitionId));
 

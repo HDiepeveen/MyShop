@@ -8,6 +8,28 @@ namespace MyShop.Application.Tests.Catalog.SetProductAttributeValue;
 
 public sealed class SetProductAttributeValueTests
 {
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task ExecuteAsync_WithDefaultId_ThrowsBeforeRepositoryAccess(
+        bool defaultProductId,
+        bool defaultDefinitionId)
+    {
+        var scenario = CreateScenario(AttributeDataType.Text);
+        var command = CreateCommand(scenario, new TextAttributeValueInput("Value")) with
+        {
+            ProductId = defaultProductId ? default : scenario.Product.Id,
+            AttributeDefinitionId = defaultDefinitionId ? default : scenario.AttributeDefinitionId
+        };
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            scenario.UseCase.ExecuteAsync(command, CancellationToken.None));
+
+        Assert.Equal(0, scenario.Products.GetByIdCallCount);
+        Assert.Equal(0, scenario.ProductTypes.GetByIdCallCount);
+        Assert.Equal(0, scenario.Products.SaveCallCount);
+    }
+
     [Fact]
     public async Task ExecuteAsync_WhenSaveConflicts_PropagatesSameConcurrencyException()
     {

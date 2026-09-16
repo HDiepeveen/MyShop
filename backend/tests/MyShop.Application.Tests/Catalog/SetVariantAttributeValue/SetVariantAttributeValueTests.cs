@@ -8,6 +8,31 @@ namespace MyShop.Application.Tests.Catalog.SetVariantAttributeValue;
 
 public sealed class SetVariantAttributeValueTests
 {
+    [Theory]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, true)]
+    public async Task ExecuteAsync_WithDefaultId_ThrowsBeforeRepositoryAccess(
+        bool defaultProductId,
+        bool defaultVariantId,
+        bool defaultDefinitionId)
+    {
+        var scenario = new Scenario();
+        var command = scenario.Command(new TextAttributeValueInput("Value")) with
+        {
+            ProductId = defaultProductId ? default : scenario.Product.Id,
+            ProductVariantId = defaultVariantId ? default : scenario.Variant.Id,
+            AttributeDefinitionId = defaultDefinitionId ? default : scenario.DefinitionId
+        };
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            scenario.Handler.ExecuteAsync(command, CancellationToken.None));
+
+        Assert.Equal(0, scenario.Products.GetCalls);
+        Assert.Equal(0, scenario.ProductTypes.GetCalls);
+        Assert.Equal(0, scenario.Products.SaveCalls);
+    }
+
     [Fact]
     public async Task ExecuteAsync_WhenSaveConflicts_PropagatesSameConcurrencyException()
     {

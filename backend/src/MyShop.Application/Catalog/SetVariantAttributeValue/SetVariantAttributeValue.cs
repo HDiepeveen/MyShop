@@ -24,6 +24,13 @@ public sealed class SetVariantAttributeValue
         ArgumentNullException.ThrowIfNull(command.Value);
         cancellationToken.ThrowIfCancellationRequested();
 
+        if (command.ProductId == default)
+            throw new ArgumentException("Product ID must not be empty.", nameof(command.ProductId));
+        if (command.ProductVariantId == default)
+            throw new ArgumentException("Product variant ID must not be empty.", nameof(command.ProductVariantId));
+        if (command.AttributeDefinitionId == default)
+            throw new ArgumentException("Attribute definition ID must not be empty.", nameof(command.AttributeDefinitionId));
+
         var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
         if (snapshot is null)
             return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.ProductNotFound);
