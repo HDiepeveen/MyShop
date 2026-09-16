@@ -10,6 +10,7 @@ public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) :
     internal DbSet<CategoryPersistence> Categories => Set<CategoryPersistence>();
     internal DbSet<ProductPersistence> Products => Set<ProductPersistence>();
     internal DbSet<ProductVariantPersistence> ProductVariants => Set<ProductVariantPersistence>();
+    internal DbSet<ProductCategoryPersistence> ProductCategories => Set<ProductCategoryPersistence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -8,4 +8,5 @@ internal sealed class ProductPersistence
     public Guid Version { get; set; }
     public ProductTypePersistence ProductType { get; set; } = null!;
     public ICollection<ProductVariantPersistence> Variants { get; set; } = [];
+    public ICollection<ProductCategoryPersistence> Categories { get; set; } = [];
 }
