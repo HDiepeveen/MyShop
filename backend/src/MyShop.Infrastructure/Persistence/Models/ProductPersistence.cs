@@ -9,4 +9,5 @@ internal sealed class ProductPersistence
     public ProductTypePersistence ProductType { get; set; } = null!;
     public ICollection<ProductVariantPersistence> Variants { get; set; } = [];
     public ICollection<ProductCategoryPersistence> Categories { get; set; } = [];
+    public ICollection<ProductAttributeValuePersistence> AttributeValues { get; set; } = [];
 }
