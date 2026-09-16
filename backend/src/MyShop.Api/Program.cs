@@ -15,5 +15,6 @@ app.MapRenameProductVariant();
 app.MapSetProductVariantSku();
 app.MapRemoveProductVariant();
 app.MapAssignProductToCategory();
+app.MapRemoveProductFromCategory();
 
 app.Run();
