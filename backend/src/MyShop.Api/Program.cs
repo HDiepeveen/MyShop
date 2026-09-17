@@ -1,4 +1,5 @@
 using MyShop.Api;
+using MyShop.Api.Catalog.Categories;
 using MyShop.Api.Catalog.Products;
 using MyShop.Api.Catalog.ProductTypes;
 
@@ -9,6 +10,7 @@ builder.Services.AddMyShop(builder.Configuration);
 var app = builder.Build();
 
 app.MapCreateProduct();
+app.MapGetCategory();
 app.MapGetProduct();
 app.MapGetProductType();
 app.MapRenameProduct();
