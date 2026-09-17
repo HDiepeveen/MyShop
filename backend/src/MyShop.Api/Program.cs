@@ -1,5 +1,6 @@
 using MyShop.Api;
 using MyShop.Api.Catalog.Products;
+using MyShop.Api.Catalog.ProductTypes;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,7 @@ var app = builder.Build();
 
 app.MapCreateProduct();
 app.MapGetProduct();
+app.MapGetProductType();
 app.MapRenameProduct();
 app.MapAddProductVariant();
 app.MapRenameProductVariant();
