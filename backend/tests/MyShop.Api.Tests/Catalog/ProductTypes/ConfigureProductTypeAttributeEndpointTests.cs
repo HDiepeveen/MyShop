@@ -53,6 +53,11 @@ public sealed class ConfigureProductTypeAttributeEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => ConfigureProductTypeAttributeEndpoint.ExecuteAsync(
             Guid.NewGuid(), Guid.NewGuid(), null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ConfigureProductTypeAttributeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new(true, true), null!, CancellationToken.None));
+
     private sealed class StoreFake(ProductType? productType) : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; } = productType;
