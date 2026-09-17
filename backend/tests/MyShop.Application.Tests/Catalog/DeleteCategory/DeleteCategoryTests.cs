@@ -59,13 +59,28 @@ public sealed class DeleteCategoryTests
         Assert.Null(store.DeletedId);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_MissingCategory_SkipsUsageAndDelete()
+    {
+        var store = new StoreFake();
+        var result = await new UseCase(store, store, store).ExecuteAsync(CategoryId.New(), CancellationToken.None);
+        Assert.Equal(DeleteCategoryOutcome.NotFound, result.Outcome);
+        Assert.Equal(0, store.UsageCalls);
+        Assert.Null(store.DeletedId);
+    }
+
     private sealed class StoreFake : ICategoryRepository, ICategoryUsageRepository, ICategoryWriter
     {
         public Category? Category { get; set; }
         public CategoryUsage Usage { get; set; } = new(0, 0);
         public CategoryId? DeletedId { get; private set; }
+        public int UsageCalls { get; private set; }
         public Task<Category?> GetByIdAsync(CategoryId id, CancellationToken token) => Task.FromResult(Category);
-        public Task<CategoryUsage> GetUsageAsync(CategoryId id, CancellationToken token) => Task.FromResult(Usage);
+        public Task<CategoryUsage> GetUsageAsync(CategoryId id, CancellationToken token)
+        {
+            UsageCalls++;
+            return Task.FromResult(Usage);
+        }
         public Task AddAsync(Category category, CancellationToken token) => throw new NotSupportedException();
         public Task SaveAsync(Category category, CancellationToken token) => throw new NotSupportedException();
         public Task DeleteAsync(CategoryId categoryId, CancellationToken token)
