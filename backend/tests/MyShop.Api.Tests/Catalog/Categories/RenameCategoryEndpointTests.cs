@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Categories;
 public sealed class RenameCategoryEndpointTests
 {
     [Fact]
+    public void MapRenameCategory_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => RenameCategoryEndpoint.MapRenameCategory(null!));
+
+    [Fact]
     public void MapRenameCategory_MapsNamedPatchRoute()
     {
         var app = WebApplication.CreateBuilder().Build();
