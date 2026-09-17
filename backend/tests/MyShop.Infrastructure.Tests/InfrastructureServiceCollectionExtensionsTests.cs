@@ -42,6 +42,7 @@ public sealed class InfrastructureServiceCollectionExtensionsTests
         AssertScopedFactory<ICategoryRepository>(services);
         AssertScopedFactory<ICategoryListRepository>(services);
         AssertScopedFactory<ICategoryWriter>(services);
+        AssertScopedFactory<ICategoryHierarchyRepository>(services);
         AssertScopedFactory<IProductSkuLookup>(services);
     }
 

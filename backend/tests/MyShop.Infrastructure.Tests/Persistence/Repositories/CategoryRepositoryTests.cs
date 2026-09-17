@@ -66,6 +66,16 @@ public sealed class CategoryRepositoryTests
         Assert.Contains("[c].[ParentCategoryId] IS NULL", sql);
     }
 
+    [Fact]
+    public void ParentIdQuery_UsesSqlServerScalarProjectionWithoutConnection()
+    {
+        using var context = CreateContext();
+        var sql = CategoryRepository.ParentIdQuery(
+            context.Set<CategoryPersistence>(), Guid.NewGuid()).ToQueryString();
+        Assert.Contains("SELECT [c].[ParentCategoryId]", sql);
+        Assert.Contains("WHERE [c].[Id]", sql);
+    }
+
     private static MyShopDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()

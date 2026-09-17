@@ -6,7 +6,8 @@ using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRepository, ICategoryWriter
+internal sealed class CategoryRepository
+    : ICategoryRepository, ICategoryListRepository, ICategoryWriter, ICategoryHierarchyRepository
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -46,6 +47,30 @@ internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRep
         CategoryPersistenceWriter.Write(category, persistence);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<bool> IsDescendantOfAsync(
+        CategoryId candidateId,
+        CategoryId ancestorId,
+        CancellationToken cancellationToken)
+    {
+        var visited = new HashSet<Guid>();
+        Guid? currentId = candidateId.Value;
+        while (currentId is not null && visited.Add(currentId.Value))
+        {
+            if (currentId.Value == ancestorId.Value)
+                return true;
+            currentId = await ParentIdQuery(_dbContext.Categories, currentId.Value)
+                .SingleOrDefaultAsync(cancellationToken);
+        }
+        return false;
+    }
+
+    internal static IQueryable<Guid?> ParentIdQuery(
+        IQueryable<CategoryPersistence> categories,
+        Guid categoryId) =>
+        categories.AsNoTracking()
+            .Where(category => category.Id == categoryId)
+            .Select(category => category.ParentCategoryId);
 
     public async Task<IReadOnlyList<CategoryListItem>> ListAsync(
         string? searchTerm,
