@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
 using MyShop.Api.Catalog.ProductTypes;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
@@ -8,6 +10,17 @@ namespace MyShop.Api.Tests.Catalog.ProductTypes;
 
 public sealed class AddProductTypeAttributeEndpointTests
 {
+    [Fact]
+    public void MapAddProductTypeAttribute_MapsNamedPostRoute()
+    {
+        var app = WebApplication.CreateBuilder().Build();
+        Assert.Same(app, app.MapAddProductTypeAttribute());
+        var endpoint = Assert.IsType<RouteEndpoint>(Assert.Single(((IEndpointRouteBuilder)app).DataSources).Endpoints.Single());
+        Assert.Equal("/api/product-types/{productTypeId:guid}/attributes", endpoint.RoutePattern.RawText);
+        Assert.Equal("AddProductTypeAttribute", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
+        Assert.Equal(["POST"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
+    }
+
     [Fact]
     public async Task ExecuteAsync_AddsAttributeAndReturnsCreated()
     {
