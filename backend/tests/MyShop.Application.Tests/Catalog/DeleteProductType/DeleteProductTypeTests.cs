@@ -17,6 +17,15 @@ public sealed class DeleteProductTypeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store, store).ExecuteAsync(
+                ProductTypeId.New(), new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnusedProductType_IsDeleted()
     {
         var store = new StoreFake { ProductType = ProductType.Create("Old") };
