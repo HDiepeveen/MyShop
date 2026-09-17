@@ -26,6 +26,17 @@ public sealed class AddProductTypeAttributeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyProductTypeId()
+    {
+        var store = new StoreFake();
+        var useCase = new UseCase(store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(new(
+            default, "size", "Size", AttributeDataType.Text, false, false, AttributeScope.Product),
+            CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_AddsAndPersistsAttribute()
     {
         var store = new StoreFake { ProductType = ProductType.Create("Clothing") };
