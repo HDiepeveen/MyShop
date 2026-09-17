@@ -30,6 +30,7 @@ app.MapRemoveProductVariant();
 app.MapAssignProductToCategory();
 app.MapRemoveProductFromCategory();
 app.MapRemoveProductAttributeValue();
+app.MapRemoveProductTypeAttribute();
 app.MapRemoveVariantAttributeValue();
 app.MapSetVariantAttributeValue();
 app.MapSetProductAttributeValue();
