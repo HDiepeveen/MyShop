@@ -122,6 +122,11 @@ public sealed class AddProductVariantEndpointTests
         Assert.Equal(0, scenario.Products.SaveCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => AddProductVariantEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario()
