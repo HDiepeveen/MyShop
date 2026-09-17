@@ -55,6 +55,11 @@ public sealed class CreateProductTypeEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => CreateProductTypeEndpoint.ExecuteAsync(
             null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => CreateProductTypeEndpoint.ExecuteAsync(
+            new("Clothing"), null!, CancellationToken.None));
+
     private sealed class WriterFake : IProductTypeWriter
     {
         public ProductType? Added { get; private set; }
