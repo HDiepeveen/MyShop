@@ -65,6 +65,15 @@ public sealed class CreateCategoryTests
         Assert.Null(store.Added);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_InvalidName_DoesNotWrite()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new UseCase(store, store).ExecuteAsync(new(""), CancellationToken.None));
+        Assert.Null(store.Added);
+    }
+
     private sealed class StoreFake : ICategoryRepository, ICategoryWriter
     {
         public Category? Found { get; set; }
