@@ -20,6 +20,15 @@ public sealed class ProductSkuLookupTests
     }
 
     [Fact]
+    public async Task FindOwnerAsync_PreCancelledRequest_DoesNotOpenConnection()
+    {
+        await using var context = CreateContext();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            new ProductSkuLookup(context).FindOwnerAsync(
+                Sku.Create("SKU-001"), new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public void OwnerQuery_UsesNoTrackingSqlServerProjectionAndSkuPredicate()
     {
         using var context = CreateContext();
