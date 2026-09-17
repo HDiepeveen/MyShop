@@ -66,6 +66,11 @@ public sealed class MoveCategoryEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => MoveCategoryEndpoint.ExecuteAsync(
             Guid.NewGuid(), null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => MoveCategoryEndpoint.ExecuteAsync(
+            Guid.NewGuid(), new(null), null!, CancellationToken.None));
+
     private sealed class StoreFake(params Category[] categories)
         : ICategoryRepository, ICategoryHierarchyRepository, ICategoryWriter
     {
