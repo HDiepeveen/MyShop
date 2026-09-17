@@ -39,6 +39,7 @@ public sealed class InfrastructureServiceCollectionExtensionsTests
         AssertScopedFactory<IProductTypeRepository>(services);
         AssertScopedFactory<IProductTypeListRepository>(services);
         AssertScopedFactory<IProductTypeWriter>(services);
+        AssertScopedFactory<IProductTypeUsageRepository>(services);
         AssertScopedFactory<ICategoryRepository>(services);
         AssertScopedFactory<ICategoryListRepository>(services);
         AssertScopedFactory<ICategoryWriter>(services);

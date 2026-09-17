@@ -54,6 +54,17 @@ public sealed class ProductTypeRepositoryTests
         Assert.Contains("ORDER BY", sql);
     }
 
+    [Fact]
+    public void ProductsQuery_UsesSqlServerProductTypePredicate()
+    {
+        using var context = CreateContext();
+        var sql = ProductTypeRepository.ProductsQuery(
+            context.Products, MyShop.Domain.Catalog.ProductTypeId.New()).ToQueryString();
+        Assert.Contains("FROM [Products]", sql);
+        Assert.Contains("[p].[ProductTypeId]", sql);
+        Assert.Contains("WHERE", sql);
+    }
+
     private static MyShopDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()

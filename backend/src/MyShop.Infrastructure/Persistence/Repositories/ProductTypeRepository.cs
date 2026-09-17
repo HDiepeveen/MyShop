@@ -7,7 +7,7 @@ using MyShop.Infrastructure.Persistence.Models;
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
 internal sealed class ProductTypeRepository
-    : IProductTypeRepository, IProductTypeListRepository, IProductTypeWriter
+    : IProductTypeRepository, IProductTypeListRepository, IProductTypeWriter, IProductTypeUsageRepository
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -78,4 +78,14 @@ internal sealed class ProductTypeRepository
     internal static IQueryable<ProductTypePersistence> CompleteGraph(
         IQueryable<ProductTypePersistence> productTypes) =>
         productTypes.Include(productType => productType.AttributeDefinitions);
+
+    public async Task<int> CountProductsAsync(
+        ProductTypeId productTypeId,
+        CancellationToken cancellationToken) =>
+        await ProductsQuery(_dbContext.Products, productTypeId).CountAsync(cancellationToken);
+
+    internal static IQueryable<ProductPersistence> ProductsQuery(
+        IQueryable<ProductPersistence> products,
+        ProductTypeId productTypeId) =>
+        products.AsNoTracking().Where(product => product.ProductTypeId == productTypeId.Value);
 }
