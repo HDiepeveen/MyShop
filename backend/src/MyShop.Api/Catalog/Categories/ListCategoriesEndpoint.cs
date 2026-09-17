@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Catalog.ListCategories;
+using MyShop.Domain.Catalog;
 using UseCase = MyShop.Application.Catalog.ListCategories.ListCategories;
 
 namespace MyShop.Api.Catalog.Categories;
@@ -21,6 +22,8 @@ public static class ListCategoriesEndpoint
         Ok<IReadOnlyList<CategorySummaryResponse>>,
         BadRequest<ProblemDetails>>> ExecuteAsync(
         [FromQuery] string? search,
+        [FromQuery] Guid? parentCategoryId,
+        [FromQuery] bool? rootsOnly,
         [FromServices] UseCase useCase,
         CancellationToken cancellationToken)
     {
@@ -29,7 +32,11 @@ public static class ListCategoriesEndpoint
         try
         {
             var categories = await useCase.ExecuteAsync(
-                new ListCategoriesQuery(search), cancellationToken);
+                new ListCategoriesQuery(
+                    search,
+                    parentCategoryId is null ? null : CategoryId.From(parentCategoryId.Value),
+                    rootsOnly ?? false),
+                cancellationToken);
             IReadOnlyList<CategorySummaryResponse> response = categories
                 .Select(category => new CategorySummaryResponse(
                     category.Id,
@@ -43,7 +50,7 @@ public static class ListCategoriesEndpoint
         {
             return TypedResults.BadRequest(new ProblemDetails
             {
-                Title = "Invalid category search",
+                Title = "Invalid category filter",
                 Detail = exception.Message
             });
         }

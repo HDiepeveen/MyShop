@@ -30,15 +30,26 @@ internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRep
 
     public async Task<IReadOnlyList<CategoryListItem>> ListAsync(
         string? searchTerm,
+        CategoryId? parentCategoryId,
+        bool rootsOnly,
         CancellationToken cancellationToken) =>
-        await ListQuery(_dbContext.Categories, searchTerm).ToListAsync(cancellationToken);
+        await ListQuery(
+            _dbContext.Categories, searchTerm, parentCategoryId, rootsOnly)
+            .ToListAsync(cancellationToken);
 
     internal static IQueryable<CategoryListItem> ListQuery(
         IQueryable<CategoryPersistence> categories,
-        string? searchTerm)
+        string? searchTerm,
+        CategoryId? parentCategoryId,
+        bool rootsOnly)
     {
         if (searchTerm is not null)
             categories = categories.Where(category => category.Name.Contains(searchTerm));
+        if (parentCategoryId is not null)
+            categories = categories.Where(category =>
+                category.ParentCategoryId == parentCategoryId.Value.Value);
+        if (rootsOnly)
+            categories = categories.Where(category => category.ParentCategoryId == null);
 
         return categories
             .AsNoTracking()
