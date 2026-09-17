@@ -13,6 +13,10 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class SetVariantAttributeValueEndpointTests
 {
     [Fact]
+    public void MapSetVariantAttributeValue_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => SetVariantAttributeValueEndpoint.MapSetVariantAttributeValue(null!));
+
+    [Fact]
     public void MapSetVariantAttributeValue_MapsNamedPutRoute()
     {
         var builder = WebApplication.CreateBuilder();
