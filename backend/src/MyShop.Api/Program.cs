@@ -11,6 +11,7 @@ var app = builder.Build();
 
 app.MapCreateProduct();
 app.MapCreateProductType();
+app.MapConfigureProductTypeAttribute();
 app.MapGetCategory();
 app.MapListCategories();
 app.MapGetProduct();
