@@ -6,7 +6,7 @@ using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class ProductRepository : IProductRepository
+internal sealed class ProductRepository : IProductRepository, IProductDeleter
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -101,4 +101,17 @@ internal sealed class ProductRepository : IProductRepository
         .Include(product => product.Categories)
         .Include(product => product.AttributeValues)
             .ThenInclude(value => value.MultiChoiceValues);
+
+    public async Task<bool> DeleteAsync(ProductId productId, CancellationToken cancellationToken) =>
+        await DeleteQuery(_dbContext.Products, productId).ExecuteDeleteAsync(cancellationToken) > 0;
+
+    internal static IQueryable<ProductPersistence> DeleteQuery(
+        IQueryable<ProductPersistence> products,
+        ProductId productId)
+    {
+        ArgumentNullException.ThrowIfNull(products);
+        if (productId == default)
+            throw new ArgumentException("Product ID must not be empty.", nameof(productId));
+        return products.Where(product => product.Id == productId.Value);
+    }
 }

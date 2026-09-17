@@ -11,6 +11,24 @@ namespace MyShop.Infrastructure.Tests.Persistence.Repositories;
 public sealed class ProductRepositoryTests
 {
     [Fact]
+    public void DeleteQuery_UsesSqlServerProductIdPredicate()
+    {
+        using var context = CreateContext(new SavingGraphInterceptor());
+        var sql = ProductRepository.DeleteQuery(context.Products, ProductId.New()).ToQueryString();
+        Assert.Contains("FROM [Products]", sql);
+        Assert.Contains("[p].[Id]", sql);
+        Assert.Contains("WHERE", sql);
+    }
+
+    [Fact]
+    public void DeleteQuery_RejectsInvalidArguments()
+    {
+        using var context = CreateContext(new SavingGraphInterceptor());
+        Assert.Throws<ArgumentNullException>(() => ProductRepository.DeleteQuery(null!, ProductId.New()));
+        Assert.Throws<ArgumentException>(() => ProductRepository.DeleteQuery(context.Products, default));
+    }
+
+    [Fact]
     public void Constructor_RejectsNullContext() =>
         Assert.Throws<ArgumentNullException>(() => new ProductRepository(null!));
 
