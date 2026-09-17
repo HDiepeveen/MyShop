@@ -135,6 +135,10 @@ public sealed class Product
         FindVariant(variantId).ClearSku();
     }
 
+    public void SetVariantPrice(ProductVariantId variantId, Money price) => FindVariant(variantId).SetPrice(price);
+
+    public void ClearVariantPrice(ProductVariantId variantId) => FindVariant(variantId).ClearPrice();
+
     public void SetAttributeValue(AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);

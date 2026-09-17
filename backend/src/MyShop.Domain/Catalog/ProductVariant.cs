@@ -21,17 +21,20 @@ public sealed class ProductVariant
         ProductVariantId id,
         string name,
         Sku? sku,
-        List<AttributeValue> attributeValues)
+        List<AttributeValue> attributeValues,
+        Money? price)
     {
         Id = id;
         Name = name;
         Sku = sku;
+        Price = price;
         _attributeValues.AddRange(attributeValues);
         _readOnlyAttributeValues = _attributeValues.AsReadOnly();
     }
 
     public ProductVariantId Id { get; }
     public string Name { get; private set; }
+    public Money? Price { get; private set; }
     public Sku? Sku { get; private set; }
     public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
 
@@ -39,7 +42,8 @@ public sealed class ProductVariant
         ProductVariantId id,
         string name,
         Sku? sku,
-        IEnumerable<AttributeValue> attributeValues)
+        IEnumerable<AttributeValue> attributeValues,
+        Money? price = null)
     {
         ArgumentNullException.ThrowIfNull(attributeValues);
 
@@ -50,7 +54,7 @@ public sealed class ProductVariant
             throw new ArgumentException("Product variant ID must not be empty.", nameof(id));
 
         var validatedName = ValidateName(name);
-        return new ProductVariant(id, validatedName, sku, values);
+        return new ProductVariant(id, validatedName, sku, values, price);
     }
 
     internal void Rename(string name) => Name = ValidateName(name);
@@ -62,6 +66,10 @@ public sealed class ProductVariant
     }
 
     internal void ClearSku() => Sku = null;
+
+    internal void SetPrice(Money price) => Price = price;
+
+    internal void ClearPrice() => Price = null;
 
     internal void SetAttributeValue(AttributeValue value)
     {
