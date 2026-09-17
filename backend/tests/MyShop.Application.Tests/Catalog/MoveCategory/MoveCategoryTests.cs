@@ -26,6 +26,18 @@ public sealed class MoveCategoryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyIds()
+    {
+        var store = new StoreFake();
+        var useCase = new UseCase(store, store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new(default, null), CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new(CategoryId.New(), default(CategoryId)), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_MovesCategoryUnderValidParent()
     {
         var category = Category.CreateRoot("Shirts");
