@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Categories;
 public sealed class MoveCategoryEndpointTests
 {
     [Fact]
+    public void MapMoveCategory_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => MoveCategoryEndpoint.MapMoveCategory(null!));
+
+    [Fact]
     public void MapMoveCategory_MapsNamedPutRoute()
     {
         var app = WebApplication.CreateBuilder().Build();
