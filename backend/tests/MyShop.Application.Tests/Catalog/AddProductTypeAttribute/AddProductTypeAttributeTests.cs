@@ -16,6 +16,16 @@ public sealed class AddProductTypeAttributeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        var command = new AddProductTypeAttributeCommand(ProductTypeId.New(), "size", "Size",
+            AttributeDataType.Text, false, false, AttributeScope.Product);
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store).ExecuteAsync(command, new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_AddsAndPersistsAttribute()
     {
         var store = new StoreFake { ProductType = ProductType.Create("Clothing") };
