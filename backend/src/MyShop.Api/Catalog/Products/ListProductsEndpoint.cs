@@ -24,6 +24,7 @@ public static class ListProductsEndpoint
         [FromQuery] int? offset,
         [FromQuery] int? limit,
         [FromQuery] Guid? productTypeId,
+        [FromQuery] Guid? categoryId,
         [FromServices] UseCase useCase,
         CancellationToken cancellationToken)
     {
@@ -38,7 +39,8 @@ public static class ListProductsEndpoint
                 new ListProductsQuery(
                     effectiveOffset,
                     effectiveLimit,
-                    productTypeId is null ? null : ProductTypeId.From(productTypeId.Value)),
+                    productTypeId is null ? null : ProductTypeId.From(productTypeId.Value),
+                    categoryId is null ? null : CategoryId.From(categoryId.Value)),
                 cancellationToken);
             var items = page.Items.Select(item => new ProductSummaryResponse(
                 item.Id,
@@ -64,7 +66,7 @@ public static class ListProductsEndpoint
         {
             return TypedResults.BadRequest(new ProblemDetails
             {
-                Title = "Invalid product type filter",
+                Title = "Invalid product filter",
                 Detail = exception.Message
             });
         }

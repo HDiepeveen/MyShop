@@ -5,4 +5,5 @@ namespace MyShop.Application.Catalog.ListProducts;
 public sealed record ListProductsQuery(
     int Offset,
     int Limit,
-    ProductTypeId? ProductTypeId = null);
+    ProductTypeId? ProductTypeId = null,
+    CategoryId? CategoryId = null);

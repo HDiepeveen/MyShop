@@ -39,12 +39,27 @@ public sealed class ProductListRepositoryTests
         var productTypeId = ProductTypeId.New();
 
         var query = ProductListRepository.FilterQuery(
-            context.Set<ProductPersistence>(), productTypeId);
+            context.Set<ProductPersistence>(), productTypeId, null);
         var sql = query.ToQueryString();
 
         Assert.Contains("[p].[ProductTypeId]", sql);
         Assert.Contains("WHERE", sql);
         Assert.DoesNotContain("JOIN", sql);
+    }
+
+    [Fact]
+    public void FilterQuery_WithCategoryId_UsesSqlServerRelationshipPredicate()
+    {
+        using var context = CreateContext();
+        var categoryId = CategoryId.New();
+
+        var query = ProductListRepository.FilterQuery(
+            context.Set<ProductPersistence>(), null, categoryId);
+        var sql = query.ToQueryString();
+
+        Assert.Contains("[ProductCategories]", sql);
+        Assert.Contains("EXISTS", sql);
+        Assert.Contains("WHERE", sql);
     }
 
     private static MyShopDbContext CreateContext()

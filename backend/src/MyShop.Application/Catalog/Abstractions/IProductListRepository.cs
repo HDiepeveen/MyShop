@@ -8,6 +8,7 @@ public interface IProductListRepository
         int offset,
         int limit,
         ProductTypeId? productTypeId,
+        CategoryId? categoryId,
         CancellationToken cancellationToken);
 }
 

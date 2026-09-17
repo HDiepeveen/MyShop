@@ -16,7 +16,8 @@ public sealed class ListProductsTests
         var repository = new ProductListRepositoryFake { Page = expected };
         var useCase = new UseCase(repository);
         var productTypeId = ProductTypeId.New();
-        var query = new ListProductsQuery(5, 10, productTypeId);
+        var categoryId = CategoryId.New();
+        var query = new ListProductsQuery(5, 10, productTypeId, categoryId);
         using var source = new CancellationTokenSource();
 
         var result = await useCase.ExecuteAsync(query, source.Token);
@@ -25,6 +26,7 @@ public sealed class ListProductsTests
         Assert.Equal(5, repository.Offset);
         Assert.Equal(10, repository.Limit);
         Assert.Equal(productTypeId, repository.ProductTypeId);
+        Assert.Equal(categoryId, repository.CategoryId);
         Assert.Equal(source.Token, repository.Token);
     }
 
@@ -70,6 +72,20 @@ public sealed class ListProductsTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsEmptyCategoryIdBeforeRepositoryAccess()
+    {
+        var repository = new ProductListRepositoryFake();
+        var useCase = new UseCase(repository);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            useCase.ExecuteAsync(
+                new ListProductsQuery(0, 50, CategoryId: (CategoryId?)default(CategoryId)),
+                CancellationToken.None));
+
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_WhenPreCancelled_DoesNotAccessRepository()
     {
         var repository = new ProductListRepositoryFake();
@@ -109,18 +125,21 @@ public sealed class ListProductsTests
         public int Offset { get; private set; }
         public int Limit { get; private set; }
         public ProductTypeId? ProductTypeId { get; private set; }
+        public CategoryId? CategoryId { get; private set; }
         public CancellationToken Token { get; private set; }
 
         public Task<ProductListPage> ListAsync(
             int offset,
             int limit,
             ProductTypeId? productTypeId,
+            CategoryId? categoryId,
             CancellationToken cancellationToken)
         {
             ListCalls++;
             Offset = offset;
             Limit = limit;
             ProductTypeId = productTypeId;
+            CategoryId = categoryId;
             Token = cancellationToken;
             if (Exception is not null)
                 return Task.FromException<ProductListPage>(Exception);

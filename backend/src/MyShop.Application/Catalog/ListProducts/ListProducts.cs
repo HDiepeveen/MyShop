@@ -28,11 +28,14 @@ public sealed class ListProducts
                 $"Limit must be between 1 and {MaximumLimit}.");
         if (query.ProductTypeId == default(ProductTypeId))
             throw new ArgumentException("Product type ID must not be empty.", nameof(query.ProductTypeId));
+        if (query.CategoryId == default(CategoryId))
+            throw new ArgumentException("Category ID must not be empty.", nameof(query.CategoryId));
 
         return await _products.ListAsync(
             query.Offset,
             query.Limit,
             query.ProductTypeId,
+            query.CategoryId,
             cancellationToken);
     }
 }
