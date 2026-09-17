@@ -95,6 +95,19 @@ public sealed class CatalogPersistenceModelContractTests
         { typeof(ProductVariantAttributeMultiChoiceValuePersistence), typeof(ProductVariantAttributeValuePersistence), DeleteBehavior.Cascade }
     };
 
+    public static TheoryData<Type, Type, string[]> ForeignKeyProperties => new()
+    {
+        { typeof(ProductPersistence), typeof(ProductTypePersistence), ["ProductTypeId"] },
+        { typeof(ProductVariantPersistence), typeof(ProductPersistence), ["ProductId"] },
+        { typeof(CategoryPersistence), typeof(CategoryPersistence), ["ParentCategoryId"] },
+        { typeof(AttributeDefinitionPersistence), typeof(ProductTypePersistence), ["ProductTypeId"] },
+        { typeof(ProductCategoryPersistence), typeof(ProductPersistence), ["ProductId"] },
+        { typeof(ProductAttributeValuePersistence), typeof(ProductPersistence), ["ProductId"] },
+        { typeof(ProductAttributeMultiChoiceValuePersistence), typeof(ProductAttributeValuePersistence), ["ProductId", "AttributeDefinitionId"] },
+        { typeof(ProductVariantAttributeValuePersistence), typeof(ProductVariantPersistence), ["ProductVariantId"] },
+        { typeof(ProductVariantAttributeMultiChoiceValuePersistence), typeof(ProductVariantAttributeValuePersistence), ["ProductVariantId", "AttributeDefinitionId"] }
+    };
+
     public static TheoryData<Type, string, string> ColumnTypes => new()
     {
         { typeof(ProductAttributeValuePersistence), "DataType", "int" },
@@ -160,6 +173,18 @@ public sealed class CatalogPersistenceModelContractTests
         var foreignKey = Assert.Single(entity.GetForeignKeys(),
             candidate => candidate.PrincipalEntityType.ClrType == principalType);
         Assert.Equal(deleteBehavior, foreignKey.DeleteBehavior);
+    }
+
+    [Theory]
+    [MemberData(nameof(ForeignKeyProperties))]
+    public void Relationship_UsesExpectedForeignKey(
+        Type dependentType, Type principalType, string[] propertyNames)
+    {
+        using var context = CreateContext();
+        var entity = context.Model.FindEntityType(dependentType)!;
+        var foreignKey = Assert.Single(entity.GetForeignKeys(),
+            candidate => candidate.PrincipalEntityType.ClrType == principalType);
+        Assert.Equal(propertyNames, foreignKey.Properties.Select(property => property.Name));
     }
 
     [Theory]
