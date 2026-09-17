@@ -15,6 +15,7 @@ using MyShop.Application.Catalog.RemoveProductFromCategory;
 using MyShop.Application.Catalog.RemoveProductVariant;
 using MyShop.Application.Catalog.RemoveVariantAttributeValue;
 using MyShop.Application.Catalog.RenameProduct;
+using MyShop.Application.Catalog.RenameProductType;
 using MyShop.Application.Catalog.RenameProductVariant;
 using MyShop.Application.Catalog.SetProductAttributeValue;
 using MyShop.Application.Catalog.SetProductVariantSku;
@@ -44,6 +45,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<RemoveProductVariant>();
         services.AddScoped<RemoveVariantAttributeValue>();
         services.AddScoped<RenameProduct>();
+        services.AddScoped<RenameProductType>();
         services.AddScoped<RenameProductVariant>();
         services.AddScoped<SetProductAttributeValue>();
         services.AddScoped<SetProductVariantSku>();

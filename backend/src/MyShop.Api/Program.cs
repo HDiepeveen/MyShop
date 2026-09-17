@@ -17,6 +17,7 @@ app.MapGetProduct();
 app.MapGetProductBySku();
 app.MapListProducts();
 app.MapListProductTypes();
+app.MapRenameProductType();
 app.MapGetProductType();
 app.MapRenameProduct();
 app.MapAddProductVariant();
