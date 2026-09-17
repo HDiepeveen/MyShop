@@ -8,6 +8,14 @@ namespace MyShop.Application.Tests.Catalog.RenameCategory;
 public sealed class RenameCategoryTests
 {
     [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake();
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RenamesAndPersistsExistingCategory()
     {
         var store = new StoreFake { Category = Category.CreateRoot("Old") };
