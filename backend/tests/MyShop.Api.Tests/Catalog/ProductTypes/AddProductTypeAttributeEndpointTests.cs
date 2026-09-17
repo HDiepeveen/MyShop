@@ -36,6 +36,8 @@ public sealed class AddProductTypeAttributeEndpointTests
 
         var created = Assert.IsType<Created<AddProductTypeAttributeResponse>>(result.Result);
         Assert.Equal("colour", created.Value!.Code);
+        Assert.Equal(AttributeDataTypeResponse.Choice, created.Value.DataType);
+        Assert.Equal(AttributeScopeResponse.Variant, created.Value.Scope);
         Assert.Contains(created.Value.Id.ToString(), created.Location);
     }
 

@@ -37,7 +37,8 @@ public static class AddProductTypeAttributeEndpoint
 
             var response = new AddProductTypeAttributeResponse(
                 attribute.Id.Value, attribute.Code.Value, attribute.DisplayName,
-                attribute.DataType, attribute.IsRequired, attribute.IsFilterable, attribute.Scope);
+                MapDataType(attribute.DataType), attribute.IsRequired, attribute.IsFilterable,
+                MapScope(attribute.Scope));
             return TypedResults.Created(
                 $"/api/product-types/{productTypeId}/attributes/{attribute.Id.Value}", response);
         }
@@ -56,6 +57,25 @@ public static class AddProductTypeAttributeEndpoint
             });
         }
     }
+
+    private static AttributeDataTypeResponse MapDataType(AttributeDataType dataType) => dataType switch
+    {
+        AttributeDataType.Text => AttributeDataTypeResponse.Text,
+        AttributeDataType.Integer => AttributeDataTypeResponse.Integer,
+        AttributeDataType.Decimal => AttributeDataTypeResponse.Decimal,
+        AttributeDataType.Boolean => AttributeDataTypeResponse.Boolean,
+        AttributeDataType.Date => AttributeDataTypeResponse.Date,
+        AttributeDataType.Choice => AttributeDataTypeResponse.Choice,
+        AttributeDataType.MultiChoice => AttributeDataTypeResponse.MultiChoice,
+        _ => throw new ArgumentOutOfRangeException(nameof(dataType), dataType, "Unsupported attribute data type.")
+    };
+
+    private static AttributeScopeResponse MapScope(AttributeScope scope) => scope switch
+    {
+        AttributeScope.Product => AttributeScopeResponse.Product,
+        AttributeScope.Variant => AttributeScopeResponse.Variant,
+        _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, "Unsupported attribute scope.")
+    };
 }
 
 public sealed record AddProductTypeAttributeRequest(
@@ -63,5 +83,22 @@ public sealed record AddProductTypeAttributeRequest(
     bool IsRequired, bool IsFilterable, AttributeScope Scope);
 
 public sealed record AddProductTypeAttributeResponse(
-    Guid Id, string Code, string DisplayName, AttributeDataType DataType,
-    bool IsRequired, bool IsFilterable, AttributeScope Scope);
+    Guid Id, string Code, string DisplayName, AttributeDataTypeResponse DataType,
+    bool IsRequired, bool IsFilterable, AttributeScopeResponse Scope);
+
+public enum AttributeDataTypeResponse
+{
+    Text = 0,
+    Integer = 1,
+    Decimal = 2,
+    Boolean = 3,
+    Date = 4,
+    Choice = 5,
+    MultiChoice = 6
+}
+
+public enum AttributeScopeResponse
+{
+    Product = 0,
+    Variant = 1
+}
