@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Categories;
 public sealed class GetCategoryEndpointTests
 {
     [Fact]
+    public void MapGetCategory_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => GetCategoryEndpoint.MapGetCategory(null!));
+
+    [Fact]
     public void MapGetCategory_MapsNamedGetRoute()
     {
         var builder = WebApplication.CreateBuilder();
