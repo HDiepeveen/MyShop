@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Catalog.ListProducts;
+using MyShop.Domain.Catalog;
 using UseCase = MyShop.Application.Catalog.ListProducts.ListProducts;
 
 namespace MyShop.Api.Catalog.Products;
@@ -22,6 +23,7 @@ public static class ListProductsEndpoint
         BadRequest<ProblemDetails>>> ExecuteAsync(
         [FromQuery] int? offset,
         [FromQuery] int? limit,
+        [FromQuery] Guid? productTypeId,
         [FromServices] UseCase useCase,
         CancellationToken cancellationToken)
     {
@@ -33,7 +35,10 @@ public static class ListProductsEndpoint
         try
         {
             var page = await useCase.ExecuteAsync(
-                new ListProductsQuery(effectiveOffset, effectiveLimit),
+                new ListProductsQuery(
+                    effectiveOffset,
+                    effectiveLimit,
+                    productTypeId is null ? null : ProductTypeId.From(productTypeId.Value)),
                 cancellationToken);
             var items = page.Items.Select(item => new ProductSummaryResponse(
                 item.Id,
@@ -52,6 +57,14 @@ public static class ListProductsEndpoint
             return TypedResults.BadRequest(new ProblemDetails
             {
                 Title = "Invalid product paging",
+                Detail = exception.Message
+            });
+        }
+        catch (ArgumentException exception)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid product type filter",
                 Detail = exception.Message
             });
         }

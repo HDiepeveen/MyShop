@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MyShop.Infrastructure.Persistence;
 using MyShop.Infrastructure.Persistence.Models;
 using MyShop.Infrastructure.Persistence.Repositories;
+using MyShop.Domain.Catalog;
 
 namespace MyShop.Infrastructure.Tests.Persistence.Repositories;
 
@@ -29,6 +30,21 @@ public sealed class ProductListRepositoryTests
         Assert.Contains("ORDER BY", sql);
         Assert.Contains("OFFSET", sql);
         Assert.Contains("COUNT(*)", sql);
+    }
+
+    [Fact]
+    public void FilterQuery_WithProductTypeId_UsesSqlServerPredicate()
+    {
+        using var context = CreateContext();
+        var productTypeId = ProductTypeId.New();
+
+        var query = ProductListRepository.FilterQuery(
+            context.Set<ProductPersistence>(), productTypeId);
+        var sql = query.ToQueryString();
+
+        Assert.Contains("[p].[ProductTypeId]", sql);
+        Assert.Contains("WHERE", sql);
+        Assert.DoesNotContain("JOIN", sql);
     }
 
     private static MyShopDbContext CreateContext()

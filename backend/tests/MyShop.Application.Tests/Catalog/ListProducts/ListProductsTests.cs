@@ -1,5 +1,6 @@
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Application.Catalog.ListProducts;
+using MyShop.Domain.Catalog;
 using UseCase = MyShop.Application.Catalog.ListProducts.ListProducts;
 
 namespace MyShop.Application.Tests.Catalog.ListProducts;
@@ -14,7 +15,8 @@ public sealed class ListProductsTests
             12);
         var repository = new ProductListRepositoryFake { Page = expected };
         var useCase = new UseCase(repository);
-        var query = new ListProductsQuery(5, 10);
+        var productTypeId = ProductTypeId.New();
+        var query = new ListProductsQuery(5, 10, productTypeId);
         using var source = new CancellationTokenSource();
 
         var result = await useCase.ExecuteAsync(query, source.Token);
@@ -22,6 +24,7 @@ public sealed class ListProductsTests
         Assert.Same(expected, result);
         Assert.Equal(5, repository.Offset);
         Assert.Equal(10, repository.Limit);
+        Assert.Equal(productTypeId, repository.ProductTypeId);
         Assert.Equal(source.Token, repository.Token);
     }
 
@@ -48,6 +51,20 @@ public sealed class ListProductsTests
 
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
             useCase.ExecuteAsync(null!, CancellationToken.None));
+
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsEmptyProductTypeIdBeforeRepositoryAccess()
+    {
+        var repository = new ProductListRepositoryFake();
+        var useCase = new UseCase(repository);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            useCase.ExecuteAsync(
+                new ListProductsQuery(0, 50, (ProductTypeId?)default(ProductTypeId)),
+                CancellationToken.None));
 
         Assert.Equal(0, repository.ListCalls);
     }
@@ -91,16 +108,19 @@ public sealed class ListProductsTests
         public int ListCalls { get; private set; }
         public int Offset { get; private set; }
         public int Limit { get; private set; }
+        public ProductTypeId? ProductTypeId { get; private set; }
         public CancellationToken Token { get; private set; }
 
         public Task<ProductListPage> ListAsync(
             int offset,
             int limit,
+            ProductTypeId? productTypeId,
             CancellationToken cancellationToken)
         {
             ListCalls++;
             Offset = offset;
             Limit = limit;
+            ProductTypeId = productTypeId;
             Token = cancellationToken;
             if (Exception is not null)
                 return Task.FromException<ProductListPage>(Exception);

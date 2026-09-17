@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MyShop.Application.Catalog.Abstractions;
+using MyShop.Domain.Catalog;
 using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
@@ -15,9 +16,10 @@ internal sealed class ProductListRepository
     public async Task<ProductListPage> ListAsync(
         int offset,
         int limit,
+        ProductTypeId? productTypeId,
         CancellationToken cancellationToken)
     {
-        var products = _dbContext.Products.AsNoTracking();
+        var products = FilterQuery(_dbContext.Products.AsNoTracking(), productTypeId);
         var totalCount = await products.CountAsync(cancellationToken);
         var items = await ItemsQuery(products, offset, limit).ToListAsync(cancellationToken);
         return new ProductListPage(items, totalCount);
@@ -38,4 +40,11 @@ internal sealed class ProductListRepository
                 product.ProductTypeId,
                 product.Name,
                 product.Variants.Count));
+
+    internal static IQueryable<ProductPersistence> FilterQuery(
+        IQueryable<ProductPersistence> products,
+        ProductTypeId? productTypeId) =>
+        productTypeId is null
+            ? products
+            : products.Where(product => product.ProductTypeId == productTypeId.Value.Value);
 }

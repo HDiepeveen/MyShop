@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using MyShop.Api.Catalog.Products;
 using MyShop.Application.Catalog.Abstractions;
+using MyShop.Domain.Catalog;
 using UseCase = MyShop.Application.Catalog.ListProducts.ListProducts;
 
 namespace MyShop.Api.Tests.Catalog.Products;
@@ -31,7 +32,7 @@ public sealed class ListProductsEndpointTests
         var repository = new ProductListRepositoryFake(new ProductListPage([item], 12));
         var useCase = new UseCase(repository);
 
-        var result = await ListProductsEndpoint.ExecuteAsync(5, 10, useCase, CancellationToken.None);
+        var result = await ListProductsEndpoint.ExecuteAsync(5, 10, null, useCase, CancellationToken.None);
 
         var ok = Assert.IsType<Ok<ProductListResponse>>(result.Result);
         var response = Assert.IsType<ProductListResponse>(ok.Value);
@@ -51,7 +52,7 @@ public sealed class ListProductsEndpointTests
         var repository = new ProductListRepositoryFake(new ProductListPage([], 0));
         var useCase = new UseCase(repository);
 
-        var result = await ListProductsEndpoint.ExecuteAsync(null, null, useCase, CancellationToken.None);
+        var result = await ListProductsEndpoint.ExecuteAsync(null, null, null, useCase, CancellationToken.None);
 
         var ok = Assert.IsType<Ok<ProductListResponse>>(result.Result);
         Assert.Equal(0, ok.Value!.Offset);
@@ -69,7 +70,7 @@ public sealed class ListProductsEndpointTests
         var repository = new ProductListRepositoryFake(new ProductListPage([], 0));
         var useCase = new UseCase(repository);
 
-        var result = await ListProductsEndpoint.ExecuteAsync(offset, limit, useCase, CancellationToken.None);
+        var result = await ListProductsEndpoint.ExecuteAsync(offset, limit, null, useCase, CancellationToken.None);
 
         var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
         Assert.Equal("Invalid product paging", badRequest.Value!.Title);
@@ -85,8 +86,36 @@ public sealed class ListProductsEndpointTests
         source.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            ListProductsEndpoint.ExecuteAsync(null, null, useCase, source.Token));
+            ListProductsEndpoint.ExecuteAsync(null, null, null, useCase, source.Token));
 
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_FiltersByProductType()
+    {
+        var repository = new ProductListRepositoryFake(new ProductListPage([], 0));
+        var useCase = new UseCase(repository);
+        var productTypeId = Guid.NewGuid();
+
+        var result = await ListProductsEndpoint.ExecuteAsync(
+            null, null, productTypeId, useCase, CancellationToken.None);
+
+        Assert.IsType<Ok<ProductListResponse>>(result.Result);
+        Assert.Equal(ProductTypeId.From(productTypeId), repository.ProductTypeId);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenProductTypeIdIsEmpty_ReturnsBadRequest()
+    {
+        var repository = new ProductListRepositoryFake(new ProductListPage([], 0));
+        var useCase = new UseCase(repository);
+
+        var result = await ListProductsEndpoint.ExecuteAsync(
+            null, null, Guid.Empty, useCase, CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
+        Assert.Equal("Invalid product type filter", badRequest.Value!.Title);
         Assert.Equal(0, repository.ListCalls);
     }
 
@@ -95,15 +124,18 @@ public sealed class ListProductsEndpointTests
         public int ListCalls { get; private set; }
         public int Offset { get; private set; }
         public int Limit { get; private set; }
+        public ProductTypeId? ProductTypeId { get; private set; }
 
         public Task<ProductListPage> ListAsync(
             int offset,
             int limit,
+            ProductTypeId? productTypeId,
             CancellationToken cancellationToken)
         {
             ListCalls++;
             Offset = offset;
             Limit = limit;
+            ProductTypeId = productTypeId;
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(page);
         }

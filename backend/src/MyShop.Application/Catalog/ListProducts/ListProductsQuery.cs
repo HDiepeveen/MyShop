@@ -1,3 +1,8 @@
+using MyShop.Domain.Catalog;
+
 namespace MyShop.Application.Catalog.ListProducts;
 
-public sealed record ListProductsQuery(int Offset, int Limit);
+public sealed record ListProductsQuery(
+    int Offset,
+    int Limit,
+    ProductTypeId? ProductTypeId = null);

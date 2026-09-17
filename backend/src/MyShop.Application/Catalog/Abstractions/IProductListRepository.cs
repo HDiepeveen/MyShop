@@ -1,8 +1,14 @@
+using MyShop.Domain.Catalog;
+
 namespace MyShop.Application.Catalog.Abstractions;
 
 public interface IProductListRepository
 {
-    Task<ProductListPage> ListAsync(int offset, int limit, CancellationToken cancellationToken);
+    Task<ProductListPage> ListAsync(
+        int offset,
+        int limit,
+        ProductTypeId? productTypeId,
+        CancellationToken cancellationToken);
 }
 
 public sealed record ProductListItem(

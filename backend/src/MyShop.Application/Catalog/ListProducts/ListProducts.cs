@@ -1,4 +1,5 @@
 using MyShop.Application.Catalog.Abstractions;
+using MyShop.Domain.Catalog;
 
 namespace MyShop.Application.Catalog.ListProducts;
 
@@ -25,7 +26,13 @@ public sealed class ListProducts
             throw new ArgumentOutOfRangeException(
                 nameof(query.Limit),
                 $"Limit must be between 1 and {MaximumLimit}.");
+        if (query.ProductTypeId == default(ProductTypeId))
+            throw new ArgumentException("Product type ID must not be empty.", nameof(query.ProductTypeId));
 
-        return await _products.ListAsync(query.Offset, query.Limit, cancellationToken);
+        return await _products.ListAsync(
+            query.Offset,
+            query.Limit,
+            query.ProductTypeId,
+            cancellationToken);
     }
 }
