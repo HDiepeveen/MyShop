@@ -7,7 +7,8 @@ using MyShop.Infrastructure.Persistence.Models;
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
 internal sealed class ProductTypeRepository
-    : IProductTypeRepository, IProductTypeListRepository, IProductTypeWriter, IProductTypeUsageRepository
+    : IProductTypeRepository, IProductTypeListRepository, IProductTypeWriter,
+      IProductTypeUsageRepository, IProductTypeDeleter
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -88,4 +89,13 @@ internal sealed class ProductTypeRepository
         IQueryable<ProductPersistence> products,
         ProductTypeId productTypeId) =>
         products.AsNoTracking().Where(product => product.ProductTypeId == productTypeId.Value);
+
+    public async Task DeleteAsync(ProductTypeId productTypeId, CancellationToken cancellationToken)
+    {
+        var persistence = await _dbContext.ProductTypes.SingleOrDefaultAsync(
+            row => row.Id == productTypeId.Value, cancellationToken)
+            ?? throw new InvalidOperationException($"Product type '{productTypeId}' no longer exists.");
+        _dbContext.ProductTypes.Remove(persistence);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 }
