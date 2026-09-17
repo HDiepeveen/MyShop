@@ -180,6 +180,11 @@ public sealed class ListProductsEndpointTests
         Assert.Equal(0, repository.ListCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ListProductsEndpoint.ExecuteAsync(
+            null, null, null, null, null, null!, CancellationToken.None));
+
     private sealed class ProductListRepositoryFake(ProductListPage page) : IProductListRepository
     {
         public int ListCalls { get; private set; }
