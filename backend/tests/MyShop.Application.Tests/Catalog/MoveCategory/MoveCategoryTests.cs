@@ -73,6 +73,18 @@ public sealed class MoveCategoryTests
         Assert.Equal(0, store.Saves);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_MissingParent_ReturnsNotFoundWithoutWrite()
+    {
+        var category = Category.CreateRoot("Shirts");
+        var store = new StoreFake(category);
+        var result = await new UseCase(store, store, store).ExecuteAsync(
+            new(category.Id, CategoryId.New()), CancellationToken.None);
+        Assert.Equal(MoveCategoryResult.ParentNotFound, result);
+        Assert.True(category.IsRoot);
+        Assert.Equal(0, store.Saves);
+    }
+
     private sealed class StoreFake(params Category[] categories)
         : ICategoryRepository, ICategoryHierarchyRepository, ICategoryWriter
     {
