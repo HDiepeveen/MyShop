@@ -26,6 +26,18 @@ public sealed class RenameProductTypeAttributeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyIds()
+    {
+        var store = new StoreFake(null);
+        var useCase = new UseCase(store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new(default, AttributeDefinitionId.New(), "Size"), CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new(ProductTypeId.New(), default, "Size"), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RenamesExistingAttribute()
     {
         var store = new StoreFake(ProductType.Create("Type"));
