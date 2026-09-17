@@ -16,6 +16,16 @@ public sealed class RenameProductTypeAttributeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake(null);
+        var command = new RenameProductTypeAttributeCommand(
+            ProductTypeId.New(), AttributeDefinitionId.New(), "Size");
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store).ExecuteAsync(command, new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RenamesExistingAttribute()
     {
         var store = new StoreFake(ProductType.Create("Type"));
