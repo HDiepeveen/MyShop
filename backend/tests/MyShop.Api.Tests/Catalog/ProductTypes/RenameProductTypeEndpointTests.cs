@@ -61,6 +61,11 @@ public sealed class RenameProductTypeEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => RenameProductTypeEndpoint.ExecuteAsync(
             Guid.NewGuid(), null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => RenameProductTypeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), new("New"), null!, CancellationToken.None));
+
     private sealed class StoreFake : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; set; }
