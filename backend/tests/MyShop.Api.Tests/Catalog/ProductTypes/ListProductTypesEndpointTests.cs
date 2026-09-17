@@ -108,6 +108,11 @@ public sealed class ListProductTypesEndpointTests
         Assert.Equal(0, repository.ListCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ListProductTypesEndpoint.ExecuteAsync(
+            null, null!, CancellationToken.None));
+
     private sealed class ProductTypeListRepositoryFake(IReadOnlyList<ProductTypeListItem> productTypes)
         : IProductTypeListRepository
     {
