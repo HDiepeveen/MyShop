@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class SetProductVariantSkuEndpointTests
 {
     [Fact]
+    public void MapSetProductVariantSku_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => SetProductVariantSkuEndpoint.MapSetProductVariantSku(null!));
+
+    [Fact]
     public void MapSetProductVariantSku_MapsNamedPutRouteAndReturnsSameBuilder()
     {
         var builder = WebApplication.CreateBuilder();
