@@ -6,6 +6,8 @@ public sealed class ProductVariant
 {
     private readonly List<AttributeValue> _attributeValues = [];
     private readonly ReadOnlyCollection<AttributeValue> _readOnlyAttributeValues;
+    private readonly List<PriceRule> _priceRules = [];
+    private readonly ReadOnlyCollection<PriceRule> _readOnlyPriceRules;
 
     internal ProductVariant(ProductVariantId id, string name)
     {
@@ -15,6 +17,7 @@ public sealed class ProductVariant
         Id = id;
         Name = ValidateName(name);
         _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _readOnlyPriceRules = _priceRules.AsReadOnly();
     }
 
     private ProductVariant(
@@ -22,7 +25,8 @@ public sealed class ProductVariant
         string name,
         Sku? sku,
         List<AttributeValue> attributeValues,
-        Money? price)
+        Money? price,
+        List<PriceRule> priceRules)
     {
         Id = id;
         Name = name;
@@ -30,11 +34,14 @@ public sealed class ProductVariant
         Price = price;
         _attributeValues.AddRange(attributeValues);
         _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _priceRules.AddRange(priceRules);
+        _readOnlyPriceRules = _priceRules.AsReadOnly();
     }
 
     public ProductVariantId Id { get; }
     public string Name { get; private set; }
     public Money? Price { get; private set; }
+    public IReadOnlyCollection<PriceRule> PriceRules => _readOnlyPriceRules;
     public Sku? Sku { get; private set; }
     public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
 
@@ -43,7 +50,8 @@ public sealed class ProductVariant
         string name,
         Sku? sku,
         IEnumerable<AttributeValue> attributeValues,
-        Money? price = null)
+        Money? price = null,
+        IEnumerable<PriceRule>? priceRules = null)
     {
         ArgumentNullException.ThrowIfNull(attributeValues);
 
@@ -54,7 +62,10 @@ public sealed class ProductVariant
             throw new ArgumentException("Product variant ID must not be empty.", nameof(id));
 
         var validatedName = ValidateName(name);
-        return new ProductVariant(id, validatedName, sku, values, price);
+        var rules = (priceRules ?? []).ToList();
+        if (rules.Any(rule => rule is null)) throw new InvalidOperationException("A variant cannot contain null price rules.");
+        if (rules.GroupBy(rule => rule.Id).Any(group => group.Count() > 1)) throw new InvalidOperationException("A variant cannot contain duplicate price rules.");
+        return new ProductVariant(id, validatedName, sku, values, price, rules);
     }
 
     internal void Rename(string name) => Name = ValidateName(name);
@@ -70,6 +81,30 @@ public sealed class ProductVariant
     internal void SetPrice(Money price) => Price = price;
 
     internal void ClearPrice() => Price = null;
+
+    internal void AddPriceRule(PriceRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        if (_priceRules.Any(existing => existing.Id == rule.Id)) throw new InvalidOperationException("This price rule is already assigned.");
+        _priceRules.Add(rule);
+    }
+
+    internal void RemovePriceRule(Guid ruleId)
+    {
+        var rule = _priceRules.SingleOrDefault(candidate => candidate.Id == ruleId)
+            ?? throw new InvalidOperationException("The price rule is not assigned to this variant.");
+        _priceRules.Remove(rule);
+    }
+
+    public Money CalculatePrice(DateTimeOffset at)
+    {
+        var basePrice = Price ?? throw new InvalidOperationException("A base price must be set before calculating a price.");
+        var rule = _priceRules.Where(candidate => candidate.IsActiveAt(at))
+            .OrderByDescending(candidate => candidate.Priority)
+            .ThenBy(candidate => candidate.Id)
+            .FirstOrDefault();
+        return rule?.Apply(basePrice) ?? basePrice;
+    }
 
     internal void SetAttributeValue(AttributeValue value)
     {

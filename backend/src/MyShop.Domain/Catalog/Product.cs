@@ -139,6 +139,10 @@ public sealed class Product
 
     public void ClearVariantPrice(ProductVariantId variantId) => FindVariant(variantId).ClearPrice();
 
+    public void AddVariantPriceRule(ProductVariantId variantId, PriceRule rule) => FindVariant(variantId).AddPriceRule(rule);
+
+    public void RemoveVariantPriceRule(ProductVariantId variantId, Guid ruleId) => FindVariant(variantId).RemovePriceRule(ruleId);
+
     public void SetAttributeValue(AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);

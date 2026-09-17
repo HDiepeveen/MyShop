@@ -14,5 +14,22 @@ public sealed class PriceRuleTests
     [Fact] public void Create_RejectsPercentageAboveHundred() => Assert.Throws<ArgumentOutOfRangeException>(() => PriceRule.Create("x", PriceAdjustmentType.PercentageDiscount, 101, 1));
     [Fact] public void Create_RejectsReversedPeriod() => Assert.Throws<ArgumentException>(() => PriceRule.Create("x", PriceAdjustmentType.FixedDiscount, 1, 1, At, At.AddSeconds(-1)));
     [Fact] public void Create_TrimsName() => Assert.Equal("Sale", PriceRule.Create(" Sale ", PriceAdjustmentType.FixedDiscount, 1, 1).Name);
+    [Fact] public void Variant_CalculatesOnlyHighestPriorityActiveRule()
+    {
+        var product = Product.Create("Demo", ProductTypeId.New(), "Default");
+        var variant = Assert.Single(product.Variants);
+        product.SetVariantPrice(variant.Id, Money.Create(100, "EUR"));
+        product.AddVariantPriceRule(variant.Id, PriceRule.Create("Low", PriceAdjustmentType.PercentageDiscount, 10, 1));
+        product.AddVariantPriceRule(variant.Id, PriceRule.Create("High", PriceAdjustmentType.PercentageDiscount, 25, 2));
+        Assert.Equal(Money.Create(75, "EUR"), variant.CalculatePrice(At));
+    }
+    [Fact] public void Variant_UsesBasePriceWhenNoRuleIsActive()
+    {
+        var product = Product.Create("Demo", ProductTypeId.New(), "Default");
+        var variant = Assert.Single(product.Variants);
+        product.SetVariantPrice(variant.Id, Money.Create(100, "EUR"));
+        product.AddVariantPriceRule(variant.Id, PriceRule.Create("Future", PriceAdjustmentType.FixedDiscount, 10, 1, At.AddDays(1)));
+        Assert.Equal(Money.Create(100, "EUR"), variant.CalculatePrice(At));
+    }
     private static PriceRule Rule(decimal value, DateTimeOffset? start = null, DateTimeOffset? end = null) => PriceRule.Create("Sale", PriceAdjustmentType.PercentageDiscount, value, 1, start, end);
 }
