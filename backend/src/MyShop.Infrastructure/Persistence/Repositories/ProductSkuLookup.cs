@@ -19,14 +19,7 @@ internal sealed class ProductSkuLookup : IProductSkuLookup
     {
         ArgumentNullException.ThrowIfNull(sku);
 
-        var result = await _dbContext.ProductVariants
-            .AsNoTracking()
-            .Where(variant => variant.Sku == sku.Value)
-            .Select(variant => new
-            {
-                variant.ProductId,
-                ProductVariantId = variant.Id
-            })
+        var result = await OwnerQuery(_dbContext.ProductVariants, sku)
             .SingleOrDefaultAsync(cancellationToken);
 
         return result is null
@@ -35,4 +28,19 @@ internal sealed class ProductSkuLookup : IProductSkuLookup
                 ProductId.From(result.ProductId),
                 ProductVariantId.From(result.ProductVariantId));
     }
+
+    internal static IQueryable<ProductSkuOwnerProjection> OwnerQuery(
+        IQueryable<Models.ProductVariantPersistence> variants,
+        Sku sku)
+    {
+        ArgumentNullException.ThrowIfNull(variants);
+        ArgumentNullException.ThrowIfNull(sku);
+
+        return variants
+            .AsNoTracking()
+            .Where(variant => variant.Sku == sku.Value)
+            .Select(variant => new ProductSkuOwnerProjection(variant.ProductId, variant.Id));
+    }
+
+    internal sealed record ProductSkuOwnerProjection(Guid ProductId, Guid ProductVariantId);
 }
