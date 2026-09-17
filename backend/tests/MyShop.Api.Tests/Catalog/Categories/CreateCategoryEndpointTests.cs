@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
 using MyShop.Api.Catalog.Categories;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
@@ -8,6 +10,17 @@ namespace MyShop.Api.Tests.Catalog.Categories;
 
 public sealed class CreateCategoryEndpointTests
 {
+    [Fact]
+    public void MapCreateCategory_MapsNamedPostRoute()
+    {
+        var app = WebApplication.CreateBuilder().Build();
+        Assert.Same(app, app.MapCreateCategory());
+        var endpoint = Assert.IsType<RouteEndpoint>(Assert.Single(((IEndpointRouteBuilder)app).DataSources).Endpoints.Single());
+        Assert.Equal("/api/categories", endpoint.RoutePattern.RawText);
+        Assert.Equal("CreateCategory", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
+        Assert.Equal(["POST"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
+    }
+
     [Fact]
     public async Task ExecuteAsync_CreatesRootCategory()
     {
