@@ -16,6 +16,15 @@ public sealed class CreateCategoryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store).ExecuteAsync(
+                new CreateCategoryCommand("Clothing"), new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_CreatesRootWithoutParentLookup()
     {
         var store = new StoreFake();
