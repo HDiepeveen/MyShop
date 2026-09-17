@@ -9,9 +9,14 @@ public sealed class ListProductTypes
     public ListProductTypes(IProductTypeListRepository productTypes) =>
         _productTypes = productTypes ?? throw new ArgumentNullException(nameof(productTypes));
 
-    public async Task<IReadOnlyList<ProductTypeListItem>> ExecuteAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ProductTypeListItem>> ExecuteAsync(
+        ListProductTypesQuery query,
+        CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(query);
         cancellationToken.ThrowIfCancellationRequested();
-        return await _productTypes.ListAsync(cancellationToken);
+        if (query.SearchTerm is not null && string.IsNullOrWhiteSpace(query.SearchTerm))
+            throw new ArgumentException("Search term must not be empty or whitespace.", nameof(query.SearchTerm));
+        return await _productTypes.ListAsync(query.SearchTerm?.Trim(), cancellationToken);
     }
 }

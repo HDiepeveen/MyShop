@@ -29,16 +29,24 @@ internal sealed class ProductTypeRepository : IProductTypeRepository, IProductTy
             : ProductTypePersistenceMapper.ToDomain(persistence);
     }
 
-    public async Task<IReadOnlyList<ProductTypeListItem>> ListAsync(CancellationToken cancellationToken) =>
-        await ListQuery(_dbContext.ProductTypes).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<ProductTypeListItem>> ListAsync(
+        string? searchTerm,
+        CancellationToken cancellationToken) =>
+        await ListQuery(_dbContext.ProductTypes, searchTerm).ToListAsync(cancellationToken);
 
     internal static IQueryable<ProductTypeListItem> ListQuery(
-        IQueryable<ProductTypePersistence> productTypes) =>
-        productTypes
+        IQueryable<ProductTypePersistence> productTypes,
+        string? searchTerm)
+    {
+        if (searchTerm is not null)
+            productTypes = productTypes.Where(productType => productType.Name.Contains(searchTerm));
+
+        return productTypes
             .AsNoTracking()
             .OrderBy(productType => productType.Name)
             .ThenBy(productType => productType.Id)
             .Select(productType => new ProductTypeListItem(
                 productType.Id,
                 productType.Name));
+    }
 }

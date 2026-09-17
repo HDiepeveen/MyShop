@@ -1,4 +1,5 @@
 using MyShop.Application.Catalog.Abstractions;
+using MyShop.Application.Catalog.ListProductTypes;
 using UseCase = MyShop.Application.Catalog.ListProductTypes.ListProductTypes;
 
 namespace MyShop.Application.Tests.Catalog.ListProductTypes;
@@ -15,11 +16,12 @@ public sealed class ListProductTypesTests
         var useCase = new UseCase(repository);
         using var source = new CancellationTokenSource();
 
-        var result = await useCase.ExecuteAsync(source.Token);
+        var result = await useCase.ExecuteAsync(new ListProductTypesQuery("  cloth  "), source.Token);
 
         Assert.Same(repository.ProductTypes, result);
         Assert.Equal(source.Token, repository.Token);
         Assert.Equal(1, repository.ListCalls);
+        Assert.Equal("cloth", repository.SearchTerm);
     }
 
     [Fact]
@@ -31,7 +33,7 @@ public sealed class ListProductTypesTests
         source.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            useCase.ExecuteAsync(source.Token));
+            useCase.ExecuteAsync(new ListProductTypesQuery(), source.Token));
 
         Assert.Equal(0, repository.ListCalls);
     }
@@ -45,7 +47,7 @@ public sealed class ListProductTypesTests
         var useCase = new UseCase(repository);
 
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            useCase.ExecuteAsync(CancellationToken.None));
+            useCase.ExecuteAsync(new ListProductTypesQuery(), CancellationToken.None));
 
         Assert.Same(expected, exception);
     }
@@ -54,16 +56,34 @@ public sealed class ListProductTypesTests
     public void Constructor_RejectsNullRepository() =>
         Assert.Throws<ArgumentNullException>(() => new UseCase(null!));
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task ExecuteAsync_RejectsEmptySearchBeforeRepositoryAccess(string search)
+    {
+        var repository = new ProductTypeListRepositoryFake();
+        var useCase = new UseCase(repository);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            useCase.ExecuteAsync(new ListProductTypesQuery(search), CancellationToken.None));
+
+        Assert.Equal(0, repository.ListCalls);
+    }
+
     private sealed class ProductTypeListRepositoryFake : IProductTypeListRepository
     {
         public IReadOnlyList<ProductTypeListItem> ProductTypes { get; set; } = [];
         public Exception? Exception { get; set; }
         public int ListCalls { get; private set; }
         public CancellationToken Token { get; private set; }
+        public string? SearchTerm { get; private set; }
 
-        public Task<IReadOnlyList<ProductTypeListItem>> ListAsync(CancellationToken cancellationToken)
+        public Task<IReadOnlyList<ProductTypeListItem>> ListAsync(
+            string? searchTerm,
+            CancellationToken cancellationToken)
         {
             ListCalls++;
+            SearchTerm = searchTerm;
             Token = cancellationToken;
             if (Exception is not null)
                 return Task.FromException<IReadOnlyList<ProductTypeListItem>>(Exception);

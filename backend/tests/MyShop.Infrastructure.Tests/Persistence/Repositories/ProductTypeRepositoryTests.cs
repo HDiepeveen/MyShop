@@ -16,7 +16,7 @@ public sealed class ProductTypeRepositoryTests
     {
         using var context = CreateContext();
 
-        var query = ProductTypeRepository.ListQuery(context.Set<ProductTypePersistence>());
+        var query = ProductTypeRepository.ListQuery(context.Set<ProductTypePersistence>(), null);
         var expression = query.Expression.ToString();
         var sql = query.ToQueryString();
 
@@ -26,6 +26,19 @@ public sealed class ProductTypeRepositoryTests
         Assert.Contains("FROM [ProductTypes]", sql);
         Assert.Contains("ORDER BY", sql);
         Assert.DoesNotContain("JOIN", sql);
+    }
+
+    [Fact]
+    public void ListQuery_WithSearchTerm_UsesSqlServerNamePredicate()
+    {
+        using var context = CreateContext();
+
+        var sql = ProductTypeRepository.ListQuery(
+            context.Set<ProductTypePersistence>(), "cloth").ToQueryString();
+
+        Assert.Contains("[p].[Name]", sql);
+        Assert.Contains("LIKE", sql);
+        Assert.Contains("WHERE", sql);
     }
 
     private static MyShopDbContext CreateContext()
