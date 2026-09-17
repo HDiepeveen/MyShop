@@ -25,6 +25,16 @@ public sealed class RenameProductTypeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyProductTypeId()
+    {
+        var store = new StoreFake();
+        var useCase = new UseCase(store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new RenameProductTypeCommand(default, "New"), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RenamesAndPersistsExistingProductType()
     {
         var store = new StoreFake { ProductType = ProductType.Create("Old") };
