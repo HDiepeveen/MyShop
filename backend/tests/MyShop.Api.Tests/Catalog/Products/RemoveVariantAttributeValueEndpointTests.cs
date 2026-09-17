@@ -116,6 +116,11 @@ public sealed class RemoveVariantAttributeValueEndpointTests
         Assert.Equal(0, scenario.Products.SaveCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => RemoveVariantAttributeValueEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario(bool withValue = false)
