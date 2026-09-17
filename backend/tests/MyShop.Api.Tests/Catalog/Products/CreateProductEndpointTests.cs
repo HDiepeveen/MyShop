@@ -119,6 +119,11 @@ public sealed class CreateProductEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => CreateProductEndpoint.ExecuteAsync(
             null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => CreateProductEndpoint.ExecuteAsync(
+            new(Guid.NewGuid(), "Product", "Default"), null!, CancellationToken.None));
+
     private sealed class Scenario : IProductTypeRepository
     {
         public Scenario()
