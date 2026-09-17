@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using MyShop.Infrastructure.Persistence;
 using MyShop.Infrastructure.Persistence.Models;
 
@@ -6,6 +7,29 @@ namespace MyShop.Infrastructure.Tests.Persistence;
 
 public sealed class CatalogPersistenceModelContractTests
 {
+    public static TheoryData<Type, string> NeverGeneratedProperties => new()
+    {
+        { typeof(ProductPersistence), "Id" },
+        { typeof(ProductPersistence), "Version" },
+        { typeof(ProductVariantPersistence), "Id" },
+        { typeof(ProductTypePersistence), "Id" },
+        { typeof(AttributeDefinitionPersistence), "Id" },
+        { typeof(CategoryPersistence), "Id" },
+        { typeof(ProductCategoryPersistence), "ProductId" },
+        { typeof(ProductCategoryPersistence), "CategoryId" },
+        { typeof(ProductAttributeValuePersistence), "ProductId" },
+        { typeof(ProductAttributeValuePersistence), "AttributeDefinitionId" },
+        { typeof(ProductAttributeMultiChoiceValuePersistence), "ProductId" },
+        { typeof(ProductAttributeMultiChoiceValuePersistence), "AttributeDefinitionId" },
+        { typeof(ProductVariantAttributeValuePersistence), "ProductVariantId" },
+        { typeof(ProductVariantAttributeValuePersistence), "AttributeDefinitionId" },
+        { typeof(ProductVariantAttributeMultiChoiceValuePersistence), "ProductVariantId" },
+        { typeof(ProductVariantAttributeMultiChoiceValuePersistence), "AttributeDefinitionId" },
+        { typeof(ProductAttributeValuePersistence), "Ordinal" },
+        { typeof(ProductVariantAttributeValuePersistence), "Ordinal" },
+        { typeof(ProductAttributeMultiChoiceValuePersistence), "Ordinal" },
+        { typeof(ProductVariantAttributeMultiChoiceValuePersistence), "Ordinal" }
+    };
     public static TheoryData<Type, string> TableMappings => new()
     {
         { typeof(ProductPersistence), "Products" },
@@ -97,6 +121,15 @@ public sealed class CatalogPersistenceModelContractTests
     {
         using var context = CreateContext();
         Assert.Equal(tableName, context.Model.FindEntityType(entityType)!.GetTableName());
+    }
+
+    [Theory]
+    [MemberData(nameof(NeverGeneratedProperties))]
+    public void Property_IsApplicationManaged(Type entityType, string propertyName)
+    {
+        using var context = CreateContext();
+        var property = context.Model.FindEntityType(entityType)!.FindProperty(propertyName)!;
+        Assert.Equal(ValueGenerated.Never, property.ValueGenerated);
     }
 
     [Theory]
