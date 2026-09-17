@@ -61,6 +61,11 @@ public sealed class DeleteCategoryEndpointTests
         Assert.Contains("3 product assignments", conflict.Value.Detail);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => DeleteCategoryEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, CancellationToken.None));
+
     private sealed class StoreFake : ICategoryRepository, ICategoryUsageRepository, ICategoryWriter
     {
         public Category? Category { get; set; }
