@@ -13,6 +13,7 @@ app.MapCreateProduct();
 app.MapGetCategory();
 app.MapListCategories();
 app.MapGetProduct();
+app.MapGetProductBySku();
 app.MapListProducts();
 app.MapListProductTypes();
 app.MapGetProductType();

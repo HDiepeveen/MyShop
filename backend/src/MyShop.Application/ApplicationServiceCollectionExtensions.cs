@@ -4,6 +4,7 @@ using MyShop.Application.Catalog.AssignProductToCategory;
 using MyShop.Application.Catalog.CreateProduct;
 using MyShop.Application.Catalog.GetCategory;
 using MyShop.Application.Catalog.GetProduct;
+using MyShop.Application.Catalog.GetProductBySku;
 using MyShop.Application.Catalog.GetProductType;
 using MyShop.Application.Catalog.ListCategories;
 using MyShop.Application.Catalog.ListProducts;
@@ -31,6 +32,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<CreateProduct>();
         services.AddScoped<GetCategory>();
         services.AddScoped<GetProduct>();
+        services.AddScoped<GetProductBySku>();
         services.AddScoped<GetProductType>();
         services.AddScoped<ListCategories>();
         services.AddScoped<ListProducts>();
