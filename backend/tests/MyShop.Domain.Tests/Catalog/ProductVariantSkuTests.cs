@@ -173,6 +173,60 @@ public sealed class ProductVariantSkuTests
     }
 
     [Fact]
+    public void ClearVariantSku_RemovesAssignedSku()
+    {
+        var product = CreateProduct();
+        var variant = Assert.Single(product.Variants);
+        product.SetVariantSku(variant.Id, Sku.Create("ABC-123"));
+
+        product.ClearVariantSku(variant.Id);
+
+        Assert.Null(variant.Sku);
+    }
+
+    [Fact]
+    public void ClearVariantSku_WithoutAssignedSku_IsIdempotent()
+    {
+        var product = CreateProduct();
+        var variant = Assert.Single(product.Variants);
+
+        product.ClearVariantSku(variant.Id);
+
+        Assert.Null(variant.Sku);
+    }
+
+    [Fact]
+    public void ClearVariantSku_DoesNotAffectOtherVariant()
+    {
+        var product = CreateProduct();
+        var first = Assert.Single(product.Variants);
+        var second = product.AddVariant("Other");
+        product.SetVariantSku(first.Id, Sku.Create("FIRST"));
+        product.SetVariantSku(second.Id, Sku.Create("SECOND"));
+
+        product.ClearVariantSku(first.Id);
+
+        Assert.Null(first.Sku);
+        Assert.Equal("SECOND", second.Sku!.Value);
+    }
+
+    [Fact]
+    public void ClearVariantSku_WithMissingVariant_Throws()
+    {
+        var product = CreateProduct();
+
+        Assert.Throws<InvalidOperationException>(() => product.ClearVariantSku(ProductVariantId.New()));
+    }
+
+    [Fact]
+    public void ClearVariantSku_WithDefaultVariantId_Throws()
+    {
+        var product = CreateProduct();
+
+        Assert.Throws<ArgumentException>(() => product.ClearVariantSku(default));
+    }
+
+    [Fact]
     public void Create_SignatureRemainsNameProductTypeAndInitialVariantName()
     {
         var product = Product.Create("Product", ProductTypeId.New(), "Standard");

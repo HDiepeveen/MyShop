@@ -61,6 +61,8 @@ public sealed class ProductVariant
         Sku = sku;
     }
 
+    internal void ClearSku() => Sku = null;
+
     internal void SetAttributeValue(AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);

@@ -11,6 +11,7 @@ var app = builder.Build();
 
 app.MapCreateProduct();
 app.MapDeleteProduct();
+app.MapClearProductVariantSku();
 app.MapCreateCategory();
 app.MapCreateProductType();
 app.MapDeleteCategory();

@@ -127,6 +127,14 @@ public sealed class Product
         variant.SetSku(sku);
     }
 
+    public void ClearVariantSku(ProductVariantId variantId)
+    {
+        if (variantId == default)
+            throw new ArgumentException("Product variant ID must not be empty.", nameof(variantId));
+
+        FindVariant(variantId).ClearSku();
+    }
+
     public void SetAttributeValue(AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);
