@@ -35,6 +35,7 @@ public sealed class InfrastructureServiceCollectionExtensionsTests
         Assert.Same(services, returned);
         AssertScoped<MyShopDbContext>(services);
         AssertScopedFactory<IProductRepository>(services);
+        AssertScopedFactory<IProductListRepository>(services);
         AssertScopedFactory<IProductTypeRepository>(services);
         AssertScopedFactory<IProductTypeListRepository>(services);
         AssertScopedFactory<ICategoryRepository>(services);

@@ -19,6 +19,8 @@ public static class InfrastructureServiceCollectionExtensions
             options.UseSqlServer(connectionString));
         services.AddScoped<IProductRepository>(provider =>
             new ProductRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IProductListRepository>(provider =>
+            new ProductListRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IProductTypeRepository>(provider =>
             new ProductTypeRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IProductTypeListRepository>(provider =>
