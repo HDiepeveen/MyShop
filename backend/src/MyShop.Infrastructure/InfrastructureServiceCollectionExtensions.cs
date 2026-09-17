@@ -25,6 +25,8 @@ public static class InfrastructureServiceCollectionExtensions
             new ProductTypeRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<ICategoryRepository>(provider =>
             new CategoryRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<ICategoryListRepository>(provider =>
+            new CategoryRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IProductSkuLookup>(provider =>
             new ProductSkuLookup(provider.GetRequiredService<MyShopDbContext>()));
 
