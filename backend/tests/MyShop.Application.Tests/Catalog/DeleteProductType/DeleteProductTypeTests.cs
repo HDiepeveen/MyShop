@@ -64,6 +64,18 @@ public sealed class DeleteProductTypeTests
         Assert.Equal(0, store.UsageCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_ForwardsProductTypeIdAndCancellationToken()
+    {
+        var store = new StoreFake { ProductType = ProductType.Create("Unused") };
+        using var source = new CancellationTokenSource();
+        await new UseCase(store, store, store).ExecuteAsync(store.ProductType.Id, source.Token);
+        Assert.Equal(store.ProductType.Id, store.LookupId);
+        Assert.Equal(store.ProductType.Id, store.UsageId);
+        Assert.Equal(store.ProductType.Id, store.DeletedId);
+        Assert.Equal(source.Token, store.Token);
+    }
+
     private sealed class StoreFake
         : IProductTypeRepository, IProductTypeUsageRepository, IProductTypeDeleter
     {
@@ -71,16 +83,26 @@ public sealed class DeleteProductTypeTests
         public int ProductCount { get; set; }
         public int UsageCalls { get; private set; }
         public ProductTypeId? DeletedId { get; private set; }
-        public Task<ProductType?> GetByIdAsync(ProductTypeId id, CancellationToken token) =>
-            Task.FromResult(ProductType);
+        public ProductTypeId? LookupId { get; private set; }
+        public ProductTypeId? UsageId { get; private set; }
+        public CancellationToken Token { get; private set; }
+        public Task<ProductType?> GetByIdAsync(ProductTypeId id, CancellationToken token)
+        {
+            LookupId = id;
+            Token = token;
+            return Task.FromResult(ProductType);
+        }
         public Task<int> CountProductsAsync(ProductTypeId id, CancellationToken token)
         {
             UsageCalls++;
+            UsageId = id;
+            Token = token;
             return Task.FromResult(ProductCount);
         }
         public Task DeleteAsync(ProductTypeId id, CancellationToken token)
         {
             DeletedId = id;
+            Token = token;
             return Task.CompletedTask;
         }
     }
