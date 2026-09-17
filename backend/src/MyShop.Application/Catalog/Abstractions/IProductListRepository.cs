@@ -9,6 +9,7 @@ public interface IProductListRepository
         int limit,
         ProductTypeId? productTypeId,
         CategoryId? categoryId,
+        string? searchTerm,
         CancellationToken cancellationToken);
 }
 

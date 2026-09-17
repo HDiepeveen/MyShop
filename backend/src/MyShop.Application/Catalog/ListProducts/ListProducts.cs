@@ -30,12 +30,15 @@ public sealed class ListProducts
             throw new ArgumentException("Product type ID must not be empty.", nameof(query.ProductTypeId));
         if (query.CategoryId == default(CategoryId))
             throw new ArgumentException("Category ID must not be empty.", nameof(query.CategoryId));
+        if (query.SearchTerm is not null && string.IsNullOrWhiteSpace(query.SearchTerm))
+            throw new ArgumentException("Search term must not be empty or whitespace.", nameof(query.SearchTerm));
 
         return await _products.ListAsync(
             query.Offset,
             query.Limit,
             query.ProductTypeId,
             query.CategoryId,
+            query.SearchTerm?.Trim(),
             cancellationToken);
     }
 }

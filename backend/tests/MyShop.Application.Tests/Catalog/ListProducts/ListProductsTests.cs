@@ -17,7 +17,7 @@ public sealed class ListProductsTests
         var useCase = new UseCase(repository);
         var productTypeId = ProductTypeId.New();
         var categoryId = CategoryId.New();
-        var query = new ListProductsQuery(5, 10, productTypeId, categoryId);
+        var query = new ListProductsQuery(5, 10, productTypeId, categoryId, "  shirt  ");
         using var source = new CancellationTokenSource();
 
         var result = await useCase.ExecuteAsync(query, source.Token);
@@ -27,6 +27,7 @@ public sealed class ListProductsTests
         Assert.Equal(10, repository.Limit);
         Assert.Equal(productTypeId, repository.ProductTypeId);
         Assert.Equal(categoryId, repository.CategoryId);
+        Assert.Equal("shirt", repository.SearchTerm);
         Assert.Equal(source.Token, repository.Token);
     }
 
@@ -85,6 +86,22 @@ public sealed class ListProductsTests
         Assert.Equal(0, repository.ListCalls);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task ExecuteAsync_RejectsEmptySearchTermBeforeRepositoryAccess(string searchTerm)
+    {
+        var repository = new ProductListRepositoryFake();
+        var useCase = new UseCase(repository);
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            useCase.ExecuteAsync(
+                new ListProductsQuery(0, 50, SearchTerm: searchTerm),
+                CancellationToken.None));
+
+        Assert.Equal(0, repository.ListCalls);
+    }
+
     [Fact]
     public async Task ExecuteAsync_WhenPreCancelled_DoesNotAccessRepository()
     {
@@ -126,6 +143,7 @@ public sealed class ListProductsTests
         public int Limit { get; private set; }
         public ProductTypeId? ProductTypeId { get; private set; }
         public CategoryId? CategoryId { get; private set; }
+        public string? SearchTerm { get; private set; }
         public CancellationToken Token { get; private set; }
 
         public Task<ProductListPage> ListAsync(
@@ -133,6 +151,7 @@ public sealed class ListProductsTests
             int limit,
             ProductTypeId? productTypeId,
             CategoryId? categoryId,
+            string? searchTerm,
             CancellationToken cancellationToken)
         {
             ListCalls++;
@@ -140,6 +159,7 @@ public sealed class ListProductsTests
             Limit = limit;
             ProductTypeId = productTypeId;
             CategoryId = categoryId;
+            SearchTerm = searchTerm;
             Token = cancellationToken;
             if (Exception is not null)
                 return Task.FromException<ProductListPage>(Exception);

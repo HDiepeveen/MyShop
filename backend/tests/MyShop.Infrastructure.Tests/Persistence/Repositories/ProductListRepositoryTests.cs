@@ -39,7 +39,7 @@ public sealed class ProductListRepositoryTests
         var productTypeId = ProductTypeId.New();
 
         var query = ProductListRepository.FilterQuery(
-            context.Set<ProductPersistence>(), productTypeId, null);
+            context.Set<ProductPersistence>(), productTypeId, null, null);
         var sql = query.ToQueryString();
 
         Assert.Contains("[p].[ProductTypeId]", sql);
@@ -54,12 +54,26 @@ public sealed class ProductListRepositoryTests
         var categoryId = CategoryId.New();
 
         var query = ProductListRepository.FilterQuery(
-            context.Set<ProductPersistence>(), null, categoryId);
+            context.Set<ProductPersistence>(), null, categoryId, null);
         var sql = query.ToQueryString();
 
         Assert.Contains("[ProductCategories]", sql);
         Assert.Contains("EXISTS", sql);
         Assert.Contains("WHERE", sql);
+    }
+
+    [Fact]
+    public void FilterQuery_WithSearchTerm_UsesSqlServerNamePredicate()
+    {
+        using var context = CreateContext();
+
+        var query = ProductListRepository.FilterQuery(
+            context.Set<ProductPersistence>(), null, null, "shirt");
+        var sql = query.ToQueryString();
+
+        Assert.Contains("[p].[Name]", sql);
+        Assert.Contains("WHERE", sql);
+        Assert.Contains("LIKE", sql);
     }
 
     private static MyShopDbContext CreateContext()
