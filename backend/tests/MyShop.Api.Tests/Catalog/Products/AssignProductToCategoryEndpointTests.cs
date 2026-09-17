@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class AssignProductToCategoryEndpointTests
 {
     [Fact]
+    public void MapAssignProductToCategory_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => AssignProductToCategoryEndpoint.MapAssignProductToCategory(null!));
+
+    [Fact]
     public void MapAssignProductToCategory_MapsNamedPutRoute()
     {
         var builder = WebApplication.CreateBuilder();
