@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class CreateProductEndpointTests
 {
     [Fact]
+    public void MapCreateProduct_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => CreateProductEndpoint.MapCreateProduct(null!));
+
+    [Fact]
     public void MapCreateProduct_MapsNamedPostRouteAndReturnsSameBuilder()
     {
         var builder = WebApplication.CreateBuilder();
