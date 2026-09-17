@@ -30,6 +30,7 @@ using MyShop.Application.Catalog.RenameProductTypeAttribute;
 using MyShop.Application.Catalog.RenameProductVariant;
 using MyShop.Application.Catalog.SetProductAttributeValue;
 using MyShop.Application.Catalog.SetProductVariantSku;
+using MyShop.Application.Catalog.SetProductVariantPrice;
 using MyShop.Application.Catalog.SetVariantAttributeValue;
 
 namespace MyShop.Application;
@@ -71,6 +72,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<RenameProductVariant>();
         services.AddScoped<SetProductAttributeValue>();
         services.AddScoped<SetProductVariantSku>();
+        services.AddScoped<SetProductVariantPrice>();
         services.AddScoped<SetVariantAttributeValue>();
 
         return services;
