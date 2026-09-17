@@ -11,7 +11,7 @@ public sealed class ListProductTypesTests
     {
         var repository = new ProductTypeListRepositoryFake
         {
-            ProductTypes = [new(Guid.NewGuid(), "Clothing"), new(Guid.NewGuid(), "Shoes")]
+            ProductTypes = [new(Guid.NewGuid(), "Clothing", 3), new(Guid.NewGuid(), "Shoes", 2)]
         };
         var useCase = new UseCase(repository);
         using var source = new CancellationTokenSource();

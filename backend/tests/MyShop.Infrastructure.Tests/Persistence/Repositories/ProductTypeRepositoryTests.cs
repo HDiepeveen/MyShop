@@ -26,6 +26,7 @@ public sealed class ProductTypeRepositoryTests
         Assert.Contains("FROM [ProductTypes]", sql);
         Assert.Contains("ORDER BY", sql);
         Assert.DoesNotContain("JOIN", sql);
+        Assert.Contains("COUNT(*)", sql);
     }
 
     [Fact]

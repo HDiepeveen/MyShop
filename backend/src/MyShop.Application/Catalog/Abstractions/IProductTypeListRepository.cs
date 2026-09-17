@@ -7,4 +7,7 @@ public interface IProductTypeListRepository
         CancellationToken cancellationToken);
 }
 
-public sealed record ProductTypeListItem(Guid Id, string Name);
+public sealed record ProductTypeListItem(
+    Guid Id,
+    string Name,
+    int AttributeDefinitionCount);

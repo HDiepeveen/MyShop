@@ -33,7 +33,8 @@ public static class ListProductTypesEndpoint
             IReadOnlyList<ProductTypeSummaryResponse> response = productTypes
                 .Select(productType => new ProductTypeSummaryResponse(
                     productType.Id,
-                    productType.Name))
+                    productType.Name,
+                    productType.AttributeDefinitionCount))
                 .ToArray();
             return TypedResults.Ok(response);
         }
@@ -48,4 +49,7 @@ public static class ListProductTypesEndpoint
     }
 }
 
-public sealed record ProductTypeSummaryResponse(Guid Id, string Name);
+public sealed record ProductTypeSummaryResponse(
+    Guid Id,
+    string Name,
+    int AttributeDefinitionCount);

@@ -47,6 +47,7 @@ internal sealed class ProductTypeRepository : IProductTypeRepository, IProductTy
             .ThenBy(productType => productType.Id)
             .Select(productType => new ProductTypeListItem(
                 productType.Id,
-                productType.Name));
+                productType.Name,
+                productType.AttributeDefinitions.Count));
     }
 }

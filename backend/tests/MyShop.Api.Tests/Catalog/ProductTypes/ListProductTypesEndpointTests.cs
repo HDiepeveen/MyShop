@@ -27,8 +27,8 @@ public sealed class ListProductTypesEndpointTests
     [Fact]
     public async Task ExecuteAsync_MapsRepositoryResults()
     {
-        var first = new ProductTypeListItem(Guid.NewGuid(), "Clothing");
-        var second = new ProductTypeListItem(Guid.NewGuid(), "Shoes");
+        var first = new ProductTypeListItem(Guid.NewGuid(), "Clothing", 3);
+        var second = new ProductTypeListItem(Guid.NewGuid(), "Shoes", 2);
         var repository = new ProductTypeListRepositoryFake([first, second]);
         var useCase = new UseCase(repository);
 
@@ -40,11 +40,13 @@ public sealed class ListProductTypesEndpointTests
             {
                 Assert.Equal(first.Id, item.Id);
                 Assert.Equal(first.Name, item.Name);
+                Assert.Equal(first.AttributeDefinitionCount, item.AttributeDefinitionCount);
             },
             item =>
             {
                 Assert.Equal(second.Id, item.Id);
                 Assert.Equal(second.Name, item.Name);
+                Assert.Equal(second.AttributeDefinitionCount, item.AttributeDefinitionCount);
             });
     }
 
