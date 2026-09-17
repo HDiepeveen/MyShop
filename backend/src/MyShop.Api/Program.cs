@@ -21,6 +21,7 @@ app.MapRenameProductType();
 app.MapGetProductType();
 app.MapRenameProduct();
 app.MapAddProductVariant();
+app.MapAddProductTypeAttribute();
 app.MapRenameProductVariant();
 app.MapSetProductVariantSku();
 app.MapRemoveProductVariant();
