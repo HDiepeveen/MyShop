@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class AddProductVariantEndpointTests
 {
     [Fact]
+    public void MapAddProductVariant_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => AddProductVariantEndpoint.MapAddProductVariant(null!));
+
+    [Fact]
     public void MapAddProductVariant_MapsNamedPostRouteAndReturnsSameBuilder()
     {
         var builder = WebApplication.CreateBuilder();
