@@ -45,6 +45,11 @@ public sealed class CreateCategoryEndpointTests
         Assert.IsType<NotFound<Microsoft.AspNetCore.Mvc.ProblemDetails>>(result.Result);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => CreateCategoryEndpoint.ExecuteAsync(
+            null!, null!, CancellationToken.None));
+
     private sealed class StoreFake : ICategoryRepository, ICategoryWriter
     {
         public Task<Category?> GetByIdAsync(CategoryId id, CancellationToken token) => Task.FromResult<Category?>(null);
