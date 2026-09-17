@@ -17,6 +17,15 @@ public sealed class DeleteCategoryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store, store).ExecuteAsync(
+                CategoryId.New(), new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnusedCategory_IsDeleted()
     {
         var store = new StoreFake { Category = Category.CreateRoot("Old") };
