@@ -8,6 +8,14 @@ namespace MyShop.Application.Tests.Catalog.RenameProductType;
 public sealed class RenameProductTypeTests
 {
     [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake();
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RenamesAndPersistsExistingProductType()
     {
         var store = new StoreFake { ProductType = ProductType.Create("Old") };
