@@ -59,6 +59,16 @@ public sealed class RemoveProductTypeAttributeTests
         Assert.Equal(0, store.Saves);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_MissingProductType_ReturnsNotFoundWithoutPersisting()
+    {
+        var store = new StoreFake(null);
+        var result = await new UseCase(store, store).ExecuteAsync(
+            new(ProductTypeId.New(), AttributeDefinitionId.New()), CancellationToken.None);
+        Assert.Equal(ProductTypeAttributeUpdateResult.ProductTypeNotFound, result);
+        Assert.Equal(0, store.Saves);
+    }
+
     private sealed class StoreFake(ProductType? productType) : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; } = productType;
