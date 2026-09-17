@@ -13,6 +13,10 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class SetProductAttributeValueEndpointTests
 {
     [Fact]
+    public void MapSetProductAttributeValue_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => SetProductAttributeValueEndpoint.MapSetProductAttributeValue(null!));
+
+    [Fact]
     public void MapSetProductAttributeValue_MapsNamedPutRoute()
     {
         var builder = WebApplication.CreateBuilder();
