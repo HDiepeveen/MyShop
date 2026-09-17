@@ -47,6 +47,11 @@ public sealed class DeleteProductTypeEndpointTests
         Assert.Contains("4 products", conflict.Value.Detail);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => DeleteProductTypeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, CancellationToken.None));
+
     private sealed class StoreFake : IProductTypeRepository, IProductTypeUsageRepository, IProductTypeDeleter
     {
         public ProductType? ProductType { get; set; }
