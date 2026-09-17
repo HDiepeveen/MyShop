@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using MyShop.Api.Catalog.ProductTypes;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
@@ -9,6 +11,17 @@ namespace MyShop.Api.Tests.Catalog.ProductTypes;
 
 public sealed class RenameProductTypeEndpointTests
 {
+    [Fact]
+    public void MapRenameProductType_MapsNamedPatchRoute()
+    {
+        var app = WebApplication.CreateBuilder().Build();
+        Assert.Same(app, app.MapRenameProductType());
+        var endpoint = Assert.IsType<RouteEndpoint>(Assert.Single(((IEndpointRouteBuilder)app).DataSources).Endpoints.Single());
+        Assert.Equal("/api/product-types/{productTypeId:guid}/name", endpoint.RoutePattern.RawText);
+        Assert.Equal("RenameProductType", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
+        Assert.Equal(["PATCH"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
+    }
+
     [Fact]
     public async Task ExecuteAsync_ExistingProductType_ReturnsNoContent()
     {
