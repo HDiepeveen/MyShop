@@ -86,7 +86,11 @@ internal static class ProductPersistenceMapper
             ProductVariantId.From(persistence.Id),
             persistence.Name,
             persistence.Sku is null ? null : Sku.Create(persistence.Sku),
-            attributeValues);
+            attributeValues,
+            persistence.PriceAmount is null && persistence.PriceCurrency is null
+                ? null
+                : Money.Create(persistence.PriceAmount ?? throw InvalidStructure(productId, "Variant price amount is missing."), persistence.PriceCurrency ?? throw InvalidStructure(productId, "Variant price currency is missing.")),
+            persistence.PriceRules.OrderBy(rule => rule.Priority).Select(rule => PriceRule.Rehydrate(rule.Id, rule.Name, (PriceAdjustmentType)rule.AdjustmentType, rule.Value, rule.Priority, rule.StartsAt, rule.EndsAt)));
     }
 
     private static IReadOnlyList<T> OrderByOrdinal<T>(

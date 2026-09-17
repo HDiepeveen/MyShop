@@ -188,12 +188,33 @@ internal static class ProductPersistenceSynchronizer
 
             persistedVariant.Name = domainVariant.Name;
             persistedVariant.Sku = domainVariant.Sku?.Value;
+            persistedVariant.PriceAmount = domainVariant.Price?.Amount;
+            persistedVariant.PriceCurrency = domainVariant.Price?.Currency;
             persistedVariant.Ordinal = ordinal++;
+            SynchronizePriceRules(domainVariant, persistedVariant);
             SynchronizeVariantAttributeValues(domainVariant, persistedVariant);
         }
 
         foreach (var variant in existing.Values.Where(variant => !retainedIds.Contains(variant.Id)))
             persistence.Variants.Remove(variant);
+    }
+
+    private static void SynchronizePriceRules(ProductVariant domainVariant, ProductVariantPersistence persistence)
+    {
+        var existing = persistence.PriceRules.ToDictionary(rule => rule.Id);
+        var retained = new HashSet<Guid>();
+        foreach (var domainRule in domainVariant.PriceRules)
+        {
+            retained.Add(domainRule.Id);
+            if (!existing.TryGetValue(domainRule.Id, out var rule))
+            {
+                rule = new PriceRulePersistence { Id = domainRule.Id, ProductVariantId = persistence.Id, ProductVariant = persistence };
+                persistence.PriceRules.Add(rule);
+            }
+            rule.Name = domainRule.Name; rule.AdjustmentType = (int)domainRule.AdjustmentType; rule.Value = domainRule.Value;
+            rule.Priority = domainRule.Priority; rule.StartsAt = domainRule.StartsAt; rule.EndsAt = domainRule.EndsAt;
+        }
+        foreach (var rule in existing.Values.Where(rule => !retained.Contains(rule.Id))) persistence.PriceRules.Remove(rule);
     }
 
     private static void SynchronizeCategories(Product product, ProductPersistence persistence)

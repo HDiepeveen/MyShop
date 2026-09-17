@@ -26,6 +26,14 @@ public sealed class PriceRule
         return new PriceRule(Guid.NewGuid(), name.Trim(), adjustmentType, decimal.Round(value, 2), priority, startsAt, endsAt);
     }
 
+    internal static PriceRule Rehydrate(Guid id, string name, PriceAdjustmentType adjustmentType, decimal value, int priority,
+        DateTimeOffset? startsAt, DateTimeOffset? endsAt)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("Price rule ID must not be empty.", nameof(id));
+        var rule = Create(name, adjustmentType, value, priority, startsAt, endsAt);
+        return new PriceRule(id, rule.Name, rule.AdjustmentType, rule.Value, rule.Priority, rule.StartsAt, rule.EndsAt);
+    }
+
     public bool IsActiveAt(DateTimeOffset instant) =>
         (StartsAt is null || instant >= StartsAt) && (EndsAt is null || instant <= EndsAt);
 
