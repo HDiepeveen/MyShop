@@ -209,6 +209,11 @@ public sealed class SetVariantAttributeValueEndpointTests
         }
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => SetVariantAttributeValueEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), null!, null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario(
