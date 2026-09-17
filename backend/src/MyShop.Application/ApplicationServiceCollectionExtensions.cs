@@ -6,6 +6,7 @@ using MyShop.Application.Catalog.CreateProduct;
 using MyShop.Application.Catalog.CreateCategory;
 using MyShop.Application.Catalog.CreateProductType;
 using MyShop.Application.Catalog.DeleteCategory;
+using MyShop.Application.Catalog.DeleteProductType;
 using MyShop.Application.Catalog.ConfigureProductTypeAttribute;
 using MyShop.Application.Catalog.GetCategory;
 using MyShop.Application.Catalog.GetProduct;
@@ -44,6 +45,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<CreateCategory>();
         services.AddScoped<CreateProductType>();
         services.AddScoped<DeleteCategory>();
+        services.AddScoped<DeleteProductType>();
         services.AddScoped<ConfigureProductTypeAttribute>();
         services.AddScoped<GetCategory>();
         services.AddScoped<GetProduct>();

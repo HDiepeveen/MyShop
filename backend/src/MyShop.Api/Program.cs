@@ -13,6 +13,7 @@ app.MapCreateProduct();
 app.MapCreateCategory();
 app.MapCreateProductType();
 app.MapDeleteCategory();
+app.MapDeleteProductType();
 app.MapConfigureProductTypeAttribute();
 app.MapGetCategory();
 app.MapListCategories();
