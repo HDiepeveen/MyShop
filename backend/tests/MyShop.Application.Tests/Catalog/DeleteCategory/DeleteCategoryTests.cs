@@ -8,6 +8,15 @@ namespace MyShop.Application.Tests.Catalog.DeleteCategory;
 public sealed class DeleteCategoryTests
 {
     [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake();
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, store, null!));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnusedCategory_IsDeleted()
     {
         var store = new StoreFake { Category = Category.CreateRoot("Old") };
