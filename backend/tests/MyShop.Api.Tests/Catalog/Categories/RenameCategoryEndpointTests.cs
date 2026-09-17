@@ -54,6 +54,11 @@ public sealed class RenameCategoryEndpointTests
         Assert.Equal("Invalid category rename", Assert.IsType<BadRequest<ProblemDetails>>(result.Result).Value!.Title);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => RenameCategoryEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, null!, CancellationToken.None));
+
     private sealed class StoreFake : ICategoryRepository, ICategoryWriter
     {
         public Category? Category { get; set; }
