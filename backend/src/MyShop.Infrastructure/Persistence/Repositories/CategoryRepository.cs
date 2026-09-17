@@ -28,12 +28,19 @@ internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRep
             : CategoryPersistenceMapper.ToDomain(persistence);
     }
 
-    public async Task<IReadOnlyList<CategoryListItem>> ListAsync(CancellationToken cancellationToken) =>
-        await ListQuery(_dbContext.Categories).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<CategoryListItem>> ListAsync(
+        string? searchTerm,
+        CancellationToken cancellationToken) =>
+        await ListQuery(_dbContext.Categories, searchTerm).ToListAsync(cancellationToken);
 
     internal static IQueryable<CategoryListItem> ListQuery(
-        IQueryable<CategoryPersistence> categories) =>
-        categories
+        IQueryable<CategoryPersistence> categories,
+        string? searchTerm)
+    {
+        if (searchTerm is not null)
+            categories = categories.Where(category => category.Name.Contains(searchTerm));
+
+        return categories
             .AsNoTracking()
             .OrderBy(category => category.Name)
             .ThenBy(category => category.Id)
@@ -41,4 +48,5 @@ internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRep
                 category.Id,
                 category.Name,
                 category.ParentCategoryId));
+    }
 }

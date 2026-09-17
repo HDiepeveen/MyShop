@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using MyShop.Api.Catalog.Categories;
 using MyShop.Application.Catalog.Abstractions;
@@ -31,9 +32,10 @@ public sealed class ListCategoriesEndpointTests
         var child = new CategoryListItem(Guid.NewGuid(), "Shirts", parentId);
         var useCase = new UseCase(new CategoryListRepositoryFake([root, child]));
 
-        var result = await ListCategoriesEndpoint.ExecuteAsync(useCase, CancellationToken.None);
+        var result = await ListCategoriesEndpoint.ExecuteAsync(null, useCase, CancellationToken.None);
 
-        Assert.Collection(Assert.IsAssignableFrom<IReadOnlyList<CategorySummaryResponse>>(result.Value),
+        var ok = Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
+        Assert.Collection(Assert.IsAssignableFrom<IReadOnlyList<CategorySummaryResponse>>(ok.Value),
             item =>
             {
                 Assert.Equal(root.Id, item.Id);
@@ -55,9 +57,10 @@ public sealed class ListCategoriesEndpointTests
     {
         var useCase = new UseCase(new CategoryListRepositoryFake([]));
 
-        var result = await ListCategoriesEndpoint.ExecuteAsync(useCase, CancellationToken.None);
+        var result = await ListCategoriesEndpoint.ExecuteAsync(null, useCase, CancellationToken.None);
 
-        Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<CategorySummaryResponse>>(result.Value));
+        var ok = Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
+        Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<CategorySummaryResponse>>(ok.Value));
     }
 
     [Fact]
@@ -69,8 +72,37 @@ public sealed class ListCategoriesEndpointTests
         source.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            ListCategoriesEndpoint.ExecuteAsync(useCase, source.Token));
+            ListCategoriesEndpoint.ExecuteAsync(null, useCase, source.Token));
 
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_TrimsAndForwardsSearch()
+    {
+        var repository = new CategoryListRepositoryFake([]);
+        var useCase = new UseCase(repository);
+
+        var result = await ListCategoriesEndpoint.ExecuteAsync(
+            "  shirt  ", useCase, CancellationToken.None);
+
+        Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
+        Assert.Equal("shirt", repository.SearchTerm);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    public async Task ExecuteAsync_WhenSearchIsEmpty_ReturnsBadRequest(string search)
+    {
+        var repository = new CategoryListRepositoryFake([]);
+        var useCase = new UseCase(repository);
+
+        var result = await ListCategoriesEndpoint.ExecuteAsync(
+            search, useCase, CancellationToken.None);
+
+        var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
+        Assert.Equal("Invalid category search", badRequest.Value!.Title);
         Assert.Equal(0, repository.ListCalls);
     }
 
@@ -78,10 +110,14 @@ public sealed class ListCategoriesEndpointTests
         : ICategoryListRepository
     {
         public int ListCalls { get; private set; }
+        public string? SearchTerm { get; private set; }
 
-        public Task<IReadOnlyList<CategoryListItem>> ListAsync(CancellationToken cancellationToken)
+        public Task<IReadOnlyList<CategoryListItem>> ListAsync(
+            string? searchTerm,
+            CancellationToken cancellationToken)
         {
             ListCalls++;
+            SearchTerm = searchTerm;
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(categories);
         }

@@ -16,7 +16,7 @@ public sealed class CategoryRepositoryTests
     {
         using var context = CreateContext();
 
-        var query = CategoryRepository.ListQuery(context.Set<CategoryPersistence>());
+        var query = CategoryRepository.ListQuery(context.Set<CategoryPersistence>(), null);
         var expression = query.Expression.ToString();
         var sql = query.ToQueryString();
 
@@ -26,6 +26,19 @@ public sealed class CategoryRepositoryTests
         Assert.Contains("FROM [Categories]", sql);
         Assert.Contains("ORDER BY", sql);
         Assert.DoesNotContain("JOIN", sql);
+    }
+
+    [Fact]
+    public void ListQuery_WithSearchTerm_UsesSqlServerNamePredicate()
+    {
+        using var context = CreateContext();
+
+        var sql = CategoryRepository.ListQuery(
+            context.Set<CategoryPersistence>(), "shirt").ToQueryString();
+
+        Assert.Contains("[c].[Name]", sql);
+        Assert.Contains("LIKE", sql);
+        Assert.Contains("WHERE", sql);
     }
 
     private static MyShopDbContext CreateContext()
