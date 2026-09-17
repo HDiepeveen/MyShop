@@ -8,6 +8,14 @@ namespace MyShop.Application.Tests.Catalog.ConfigureProductTypeAttribute;
 public sealed class ConfigureProductTypeAttributeTests
 {
     [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake(null);
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UpdatesBothFlagsAndPersistsOnce()
     {
         var store = new StoreFake(ProductType.Create("Type"));
