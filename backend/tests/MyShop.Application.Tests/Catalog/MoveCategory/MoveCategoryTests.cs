@@ -17,6 +17,15 @@ public sealed class MoveCategoryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        var command = new MoveCategoryCommand(CategoryId.New(), null);
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store, store).ExecuteAsync(command, new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_MovesCategoryUnderValidParent()
     {
         var category = Category.CreateRoot("Shirts");
