@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.ProductTypes;
 public sealed class RemoveProductTypeAttributeEndpointTests
 {
     [Fact]
+    public void MapRemoveProductTypeAttribute_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => RemoveProductTypeAttributeEndpoint.MapRemoveProductTypeAttribute(null!));
+
+    [Fact]
     public void MapRemoveProductTypeAttribute_MapsNamedDeleteRoute()
     {
         var app = WebApplication.CreateBuilder().Build();
