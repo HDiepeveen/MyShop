@@ -26,6 +26,18 @@ public sealed class ConfigureProductTypeAttributeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyIds()
+    {
+        var store = new StoreFake(null);
+        var useCase = new UseCase(store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new(default, AttributeDefinitionId.New(), true, true), CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new(ProductTypeId.New(), default, true, true), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UpdatesBothFlagsAndPersistsOnce()
     {
         var store = new StoreFake(ProductType.Create("Type"));
