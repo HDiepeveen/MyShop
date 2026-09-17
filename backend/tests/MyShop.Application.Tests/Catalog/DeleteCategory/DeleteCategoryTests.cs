@@ -26,6 +26,14 @@ public sealed class DeleteCategoryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsEmptyCategoryId()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new UseCase(store, store, store).ExecuteAsync(default, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnusedCategory_IsDeleted()
     {
         var store = new StoreFake { Category = Category.CreateRoot("Old") };
