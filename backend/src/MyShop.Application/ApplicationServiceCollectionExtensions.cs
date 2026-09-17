@@ -5,6 +5,7 @@ using MyShop.Application.Catalog.CreateProduct;
 using MyShop.Application.Catalog.GetCategory;
 using MyShop.Application.Catalog.GetProduct;
 using MyShop.Application.Catalog.GetProductType;
+using MyShop.Application.Catalog.ListProductTypes;
 using MyShop.Application.Catalog.RemoveProductAttributeValue;
 using MyShop.Application.Catalog.RemoveProductFromCategory;
 using MyShop.Application.Catalog.RemoveProductVariant;
@@ -29,6 +30,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<GetCategory>();
         services.AddScoped<GetProduct>();
         services.AddScoped<GetProductType>();
+        services.AddScoped<ListProductTypes>();
         services.AddScoped<RemoveProductAttributeValue>();
         services.AddScoped<RemoveProductFromCategory>();
         services.AddScoped<RemoveProductVariant>();

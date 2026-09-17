@@ -1,0 +1,85 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
+using MyShop.Api.Catalog.ProductTypes;
+using MyShop.Application.Catalog.Abstractions;
+using UseCase = MyShop.Application.Catalog.ListProductTypes.ListProductTypes;
+
+namespace MyShop.Api.Tests.Catalog.ProductTypes;
+
+public sealed class ListProductTypesEndpointTests
+{
+    [Fact]
+    public void MapListProductTypes_MapsNamedGetRoute()
+    {
+        var builder = WebApplication.CreateBuilder();
+        var app = builder.Build();
+
+        Assert.Same(app, app.MapListProductTypes());
+        var routes = (IEndpointRouteBuilder)app;
+        var endpoint = Assert.IsType<RouteEndpoint>(Assert.Single(routes.DataSources).Endpoints.Single());
+        Assert.Equal("/api/product-types", endpoint.RoutePattern.RawText);
+        Assert.Equal("ListProductTypes", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
+        Assert.Equal(["GET"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MapsRepositoryResults()
+    {
+        var first = new ProductTypeListItem(Guid.NewGuid(), "Clothing");
+        var second = new ProductTypeListItem(Guid.NewGuid(), "Shoes");
+        var repository = new ProductTypeListRepositoryFake([first, second]);
+        var useCase = new UseCase(repository);
+
+        var result = await ListProductTypesEndpoint.ExecuteAsync(useCase, CancellationToken.None);
+
+        Assert.Collection(Assert.IsAssignableFrom<IReadOnlyList<ProductTypeSummaryResponse>>(result.Value),
+            item =>
+            {
+                Assert.Equal(first.Id, item.Id);
+                Assert.Equal(first.Name, item.Name);
+            },
+            item =>
+            {
+                Assert.Equal(second.Id, item.Id);
+                Assert.Equal(second.Name, item.Name);
+            });
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenNoProductTypesExist_ReturnsEmptyList()
+    {
+        var useCase = new UseCase(new ProductTypeListRepositoryFake([]));
+
+        var result = await ListProductTypesEndpoint.ExecuteAsync(useCase, CancellationToken.None);
+
+        Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<ProductTypeSummaryResponse>>(result.Value));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ForwardsCancellation()
+    {
+        var repository = new ProductTypeListRepositoryFake([]);
+        var useCase = new UseCase(repository);
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            ListProductTypesEndpoint.ExecuteAsync(useCase, source.Token));
+
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    private sealed class ProductTypeListRepositoryFake(IReadOnlyList<ProductTypeListItem> productTypes)
+        : IProductTypeListRepository
+    {
+        public int ListCalls { get; private set; }
+
+        public Task<IReadOnlyList<ProductTypeListItem>> ListAsync(CancellationToken cancellationToken)
+        {
+            ListCalls++;
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(productTypes);
+        }
+    }
+}

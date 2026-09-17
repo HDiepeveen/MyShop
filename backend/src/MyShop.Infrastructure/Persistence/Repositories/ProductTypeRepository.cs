@@ -2,10 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
 using MyShop.Infrastructure.Persistence.Mappers;
+using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class ProductTypeRepository : IProductTypeRepository
+internal sealed class ProductTypeRepository : IProductTypeRepository, IProductTypeListRepository
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -27,4 +28,17 @@ internal sealed class ProductTypeRepository : IProductTypeRepository
             ? null
             : ProductTypePersistenceMapper.ToDomain(persistence);
     }
+
+    public async Task<IReadOnlyList<ProductTypeListItem>> ListAsync(CancellationToken cancellationToken) =>
+        await ListQuery(_dbContext.ProductTypes).ToListAsync(cancellationToken);
+
+    internal static IQueryable<ProductTypeListItem> ListQuery(
+        IQueryable<ProductTypePersistence> productTypes) =>
+        productTypes
+            .AsNoTracking()
+            .OrderBy(productType => productType.Name)
+            .ThenBy(productType => productType.Id)
+            .Select(productType => new ProductTypeListItem(
+                productType.Id,
+                productType.Name));
 }

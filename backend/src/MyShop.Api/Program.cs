@@ -12,6 +12,7 @@ var app = builder.Build();
 app.MapCreateProduct();
 app.MapGetCategory();
 app.MapGetProduct();
+app.MapListProductTypes();
 app.MapGetProductType();
 app.MapRenameProduct();
 app.MapAddProductVariant();

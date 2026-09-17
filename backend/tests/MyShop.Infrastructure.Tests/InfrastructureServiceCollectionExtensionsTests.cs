@@ -36,6 +36,7 @@ public sealed class InfrastructureServiceCollectionExtensionsTests
         AssertScoped<MyShopDbContext>(services);
         AssertScopedFactory<IProductRepository>(services);
         AssertScopedFactory<IProductTypeRepository>(services);
+        AssertScopedFactory<IProductTypeListRepository>(services);
         AssertScopedFactory<ICategoryRepository>(services);
         AssertScopedFactory<IProductSkuLookup>(services);
     }
