@@ -25,6 +25,16 @@ public sealed class RenameCategoryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyCategoryId()
+    {
+        var store = new StoreFake();
+        var useCase = new UseCase(store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new RenameCategoryCommand(default, "New"), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RenamesAndPersistsExistingCategory()
     {
         var store = new StoreFake { Category = Category.CreateRoot("Old") };
