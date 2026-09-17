@@ -12,6 +12,14 @@ public sealed class ProductSkuLookupTests
         Assert.Throws<ArgumentNullException>(() => new ProductSkuLookup(null!));
 
     [Fact]
+    public async Task FindOwnerAsync_RejectsNullSkuBeforeDatabaseAccess()
+    {
+        await using var context = CreateContext();
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            new ProductSkuLookup(context).FindOwnerAsync(null!, CancellationToken.None));
+    }
+
+    [Fact]
     public void OwnerQuery_UsesNoTrackingSqlServerProjectionAndSkuPredicate()
     {
         using var context = CreateContext();
