@@ -115,6 +115,11 @@ public sealed class GetProductEndpointTests
                 source.Token));
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => GetProductEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario()
