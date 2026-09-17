@@ -56,6 +56,11 @@ public sealed class RenameProductTypeEndpointTests
         Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => RenameProductTypeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, null!, CancellationToken.None));
+
     private sealed class StoreFake : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; set; }
