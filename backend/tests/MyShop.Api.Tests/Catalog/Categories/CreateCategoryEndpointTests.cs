@@ -33,5 +33,6 @@ public sealed class CreateCategoryEndpointTests
         public Task<Category?> GetByIdAsync(CategoryId id, CancellationToken token) => Task.FromResult<Category?>(null);
         public Task AddAsync(Category category, CancellationToken token) => Task.CompletedTask;
         public Task SaveAsync(Category category, CancellationToken token) => throw new NotSupportedException();
+        public Task DeleteAsync(CategoryId categoryId, CancellationToken token) => throw new NotSupportedException();
     }
 }

@@ -49,6 +49,15 @@ internal sealed class CategoryRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task DeleteAsync(CategoryId categoryId, CancellationToken cancellationToken)
+    {
+        var persistence = await _dbContext.Categories.SingleOrDefaultAsync(
+            row => row.Id == categoryId.Value, cancellationToken)
+            ?? throw new InvalidOperationException($"Category '{categoryId}' no longer exists.");
+        _dbContext.Categories.Remove(persistence);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<bool> IsDescendantOfAsync(
         CategoryId candidateId,
         CategoryId ancestorId,

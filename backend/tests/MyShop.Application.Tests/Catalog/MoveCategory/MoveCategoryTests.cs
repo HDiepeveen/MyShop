@@ -54,5 +54,6 @@ public sealed class MoveCategoryTests
             Task.FromResult(IsDescendant);
         public Task AddAsync(Category category, CancellationToken token) => throw new NotSupportedException();
         public Task SaveAsync(Category category, CancellationToken token) { Saves++; return Task.CompletedTask; }
+        public Task DeleteAsync(CategoryId categoryId, CancellationToken token) => throw new NotSupportedException();
     }
 }

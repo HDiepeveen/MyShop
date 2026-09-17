@@ -41,5 +41,6 @@ public sealed class RenameCategoryTests
         public Task<Category?> GetByIdAsync(CategoryId id, CancellationToken token) => Task.FromResult(Category);
         public Task AddAsync(Category category, CancellationToken token) => throw new NotSupportedException();
         public Task SaveAsync(Category category, CancellationToken token) { Saves++; return Task.CompletedTask; }
+        public Task DeleteAsync(CategoryId categoryId, CancellationToken token) => throw new NotSupportedException();
     }
 }
