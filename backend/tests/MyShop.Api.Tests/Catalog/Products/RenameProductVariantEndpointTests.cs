@@ -132,6 +132,11 @@ public sealed class RenameProductVariantEndpointTests
         Assert.Equal(0, scenario.Products.SaveCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => RenameProductVariantEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), null!, null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario()
