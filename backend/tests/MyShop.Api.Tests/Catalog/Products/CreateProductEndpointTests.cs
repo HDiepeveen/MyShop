@@ -12,10 +12,6 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class CreateProductEndpointTests
 {
     [Fact]
-    public void MapCreateProduct_NullBuilder_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => CreateProductEndpoint.MapCreateProduct(null!));
-
-    [Fact]
     public void MapCreateProduct_MapsNamedPostRouteAndReturnsSameBuilder()
     {
         var builder = WebApplication.CreateBuilder();
@@ -117,6 +113,11 @@ public sealed class CreateProductEndpointTests
 
         Assert.Null(scenario.Products.AddedProduct);
     }
+
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => CreateProductEndpoint.ExecuteAsync(
+            null!, null!, CancellationToken.None));
 
     private sealed class Scenario : IProductTypeRepository
     {
