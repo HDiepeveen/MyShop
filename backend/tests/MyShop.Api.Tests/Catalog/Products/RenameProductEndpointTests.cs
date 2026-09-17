@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class RenameProductEndpointTests
 {
     [Fact]
+    public void MapRenameProduct_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => RenameProductEndpoint.MapRenameProduct(null!));
+
+    [Fact]
     public void MapRenameProduct_MapsNamedPatchRouteAndReturnsSameBuilder()
     {
         var builder = WebApplication.CreateBuilder();
