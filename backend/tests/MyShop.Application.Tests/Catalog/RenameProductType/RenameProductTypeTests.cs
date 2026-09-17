@@ -64,6 +64,16 @@ public sealed class RenameProductTypeTests
         Assert.Equal(0, store.SaveCount);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_InvalidName_DoesNotPersist()
+    {
+        var store = new StoreFake { ProductType = ProductType.Create("Original") };
+        await Assert.ThrowsAsync<ArgumentException>(() => new UseCase(store, store).ExecuteAsync(
+            new RenameProductTypeCommand(store.ProductType.Id, ""), CancellationToken.None));
+        Assert.Equal("Original", store.ProductType.Name);
+        Assert.Equal(0, store.SaveCount);
+    }
+
     private sealed class StoreFake : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; set; }
