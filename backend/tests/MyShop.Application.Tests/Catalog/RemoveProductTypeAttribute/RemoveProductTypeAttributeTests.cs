@@ -8,6 +8,14 @@ namespace MyShop.Application.Tests.Catalog.RemoveProductTypeAttribute;
 public sealed class RemoveProductTypeAttributeTests
 {
     [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake(null);
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RemovesExistingAttributeAndPersists()
     {
         var store = new StoreFake(ProductType.Create("Type"));
