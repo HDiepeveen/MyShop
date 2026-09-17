@@ -58,6 +58,39 @@ public sealed class CatalogPersistenceModelContractTests
         { typeof(ProductVariantAttributeValuePersistence), "TextValue", true }
     };
 
+    public static TheoryData<Type, Type, DeleteBehavior> Relationships => new()
+    {
+        { typeof(ProductPersistence), typeof(ProductTypePersistence), DeleteBehavior.NoAction },
+        { typeof(ProductVariantPersistence), typeof(ProductPersistence), DeleteBehavior.Cascade },
+        { typeof(CategoryPersistence), typeof(CategoryPersistence), DeleteBehavior.Restrict },
+        { typeof(AttributeDefinitionPersistence), typeof(ProductTypePersistence), DeleteBehavior.Cascade },
+        { typeof(ProductCategoryPersistence), typeof(ProductPersistence), DeleteBehavior.Cascade },
+        { typeof(ProductAttributeValuePersistence), typeof(ProductPersistence), DeleteBehavior.Cascade },
+        { typeof(ProductAttributeMultiChoiceValuePersistence), typeof(ProductAttributeValuePersistence), DeleteBehavior.Cascade },
+        { typeof(ProductVariantAttributeValuePersistence), typeof(ProductVariantPersistence), DeleteBehavior.Cascade },
+        { typeof(ProductVariantAttributeMultiChoiceValuePersistence), typeof(ProductVariantAttributeValuePersistence), DeleteBehavior.Cascade }
+    };
+
+    public static TheoryData<Type, string, string> ColumnTypes => new()
+    {
+        { typeof(ProductAttributeValuePersistence), "DataType", "int" },
+        { typeof(ProductAttributeValuePersistence), "Ordinal", "int" },
+        { typeof(ProductAttributeValuePersistence), "TextValue", "nvarchar(max)" },
+        { typeof(ProductAttributeValuePersistence), "IntegerValue", "bigint" },
+        { typeof(ProductAttributeValuePersistence), "DecimalScale", "tinyint" },
+        { typeof(ProductAttributeValuePersistence), "BooleanValue", "bit" },
+        { typeof(ProductAttributeValuePersistence), "DateValue", "date" },
+        { typeof(ProductAttributeValuePersistence), "ChoiceValue", "nvarchar(max)" },
+        { typeof(ProductVariantAttributeValuePersistence), "DataType", "int" },
+        { typeof(ProductVariantAttributeValuePersistence), "Ordinal", "int" },
+        { typeof(ProductVariantAttributeValuePersistence), "TextValue", "nvarchar(max)" },
+        { typeof(ProductVariantAttributeValuePersistence), "IntegerValue", "bigint" },
+        { typeof(ProductVariantAttributeValuePersistence), "DecimalScale", "tinyint" },
+        { typeof(ProductVariantAttributeValuePersistence), "BooleanValue", "bit" },
+        { typeof(ProductVariantAttributeValuePersistence), "DateValue", "date" },
+        { typeof(ProductVariantAttributeValuePersistence), "ChoiceValue", "nvarchar(max)" }
+    };
+
     [Theory]
     [MemberData(nameof(TableMappings))]
     public void Entity_UsesExpectedTable(Type entityType, string tableName)
@@ -82,6 +115,28 @@ public sealed class CatalogPersistenceModelContractTests
         using var context = CreateContext();
         var property = context.Model.FindEntityType(entityType)!.FindProperty(propertyName)!;
         Assert.Equal(nullable, property.IsNullable);
+    }
+
+    [Theory]
+    [MemberData(nameof(Relationships))]
+    public void Relationship_UsesExpectedDeleteBehavior(
+        Type dependentType, Type principalType, DeleteBehavior deleteBehavior)
+    {
+        using var context = CreateContext();
+        var entity = context.Model.FindEntityType(dependentType)!;
+        var foreignKey = Assert.Single(entity.GetForeignKeys(),
+            candidate => candidate.PrincipalEntityType.ClrType == principalType);
+        Assert.Equal(deleteBehavior, foreignKey.DeleteBehavior);
+    }
+
+    [Theory]
+    [MemberData(nameof(ColumnTypes))]
+    public void Property_UsesExpectedSqlServerColumnType(
+        Type entityType, string propertyName, string columnType)
+    {
+        using var context = CreateContext();
+        var property = context.Model.FindEntityType(entityType)!.FindProperty(propertyName)!;
+        Assert.Equal(columnType, property.GetColumnType());
     }
 
     private static MyShopDbContext CreateContext()
