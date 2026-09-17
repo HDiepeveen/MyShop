@@ -157,6 +157,11 @@ public sealed class SetProductVariantSkuEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => SetProductVariantSkuEndpoint.ExecuteAsync(
             Guid.NewGuid(), Guid.NewGuid(), null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => SetProductVariantSkuEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new("SKU-001"), null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario()
