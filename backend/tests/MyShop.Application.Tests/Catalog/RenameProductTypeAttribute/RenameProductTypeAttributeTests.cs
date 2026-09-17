@@ -60,6 +60,18 @@ public sealed class RenameProductTypeAttributeTests
         Assert.Equal(0, store.Saves);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_UnchangedDisplayName_DoesNotPersist()
+    {
+        var store = new StoreFake(ProductType.Create("Type"));
+        var attribute = store.ProductType!.AddAttribute(AttributeDefinitionId.New(),
+            AttributeCode.Create("size"), "Size", AttributeDataType.Text, false, false, AttributeScope.Product);
+        var result = await new UseCase(store, store).ExecuteAsync(
+            new(store.ProductType.Id, attribute.Id, "Size"), CancellationToken.None);
+        Assert.Equal(ProductTypeAttributeUpdateResult.Succeeded, result);
+        Assert.Equal(0, store.Saves);
+    }
+
     private sealed class StoreFake(ProductType? productType) : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; } = productType;
