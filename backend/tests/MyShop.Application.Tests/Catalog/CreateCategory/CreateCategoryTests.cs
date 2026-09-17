@@ -8,6 +8,14 @@ namespace MyShop.Application.Tests.Catalog.CreateCategory;
 public sealed class CreateCategoryTests
 {
     [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake();
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_CreatesRootWithoutParentLookup()
     {
         var store = new StoreFake();
