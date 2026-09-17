@@ -85,6 +85,11 @@ public sealed class GetCategoryEndpointTests
         Assert.Equal(0, scenario.Repository.GetCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => GetCategoryEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario(bool isRoot)
