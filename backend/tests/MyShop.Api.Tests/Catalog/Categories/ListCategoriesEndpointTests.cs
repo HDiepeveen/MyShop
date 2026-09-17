@@ -155,6 +155,11 @@ public sealed class ListCategoriesEndpointTests
         Assert.Equal(0, repository.ListCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ListCategoriesEndpoint.ExecuteAsync(
+            null, null, null, null!, CancellationToken.None));
+
     private sealed class CategoryListRepositoryFake(IReadOnlyList<CategoryListItem> categories)
         : ICategoryListRepository
     {
