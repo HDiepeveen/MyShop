@@ -59,6 +59,11 @@ public sealed class RenameCategoryEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => RenameCategoryEndpoint.ExecuteAsync(
             Guid.NewGuid(), null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => RenameCategoryEndpoint.ExecuteAsync(
+            Guid.NewGuid(), new("New"), null!, CancellationToken.None));
+
     private sealed class StoreFake : ICategoryRepository, ICategoryWriter
     {
         public Category? Category { get; set; }
