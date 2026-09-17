@@ -156,6 +156,11 @@ public sealed class SetProductAttributeValueEndpointTests
         return new AttributeValueRequest(dataType, document.RootElement.Clone());
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => SetProductAttributeValueEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), null!, null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario(
