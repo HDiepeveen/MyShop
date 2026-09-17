@@ -10,6 +10,7 @@ builder.Services.AddMyShop(builder.Configuration);
 var app = builder.Build();
 
 app.MapCreateProduct();
+app.MapCreateCategory();
 app.MapCreateProductType();
 app.MapConfigureProductTypeAttribute();
 app.MapGetCategory();

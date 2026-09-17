@@ -6,7 +6,7 @@ using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRepository
+internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRepository, ICategoryWriter
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -26,6 +26,15 @@ internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRep
         return persistence is null
             ? null
             : CategoryPersistenceMapper.ToDomain(persistence);
+    }
+
+    public async Task AddAsync(Category category, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(category);
+        var persistence = new CategoryPersistence { Id = category.Id.Value };
+        CategoryPersistenceWriter.Write(category, persistence);
+        _dbContext.Categories.Add(persistence);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<CategoryListItem>> ListAsync(
