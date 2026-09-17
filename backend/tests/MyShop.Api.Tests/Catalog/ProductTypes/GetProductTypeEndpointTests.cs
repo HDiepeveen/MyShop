@@ -113,6 +113,11 @@ public sealed class GetProductTypeEndpointTests
         Assert.Equal(definition.IsFilterable, response.IsFilterable);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => GetProductTypeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, CancellationToken.None));
+
     private sealed class Scenario
     {
         public Scenario()
