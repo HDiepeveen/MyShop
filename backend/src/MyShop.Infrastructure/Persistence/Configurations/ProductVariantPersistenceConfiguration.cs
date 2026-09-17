@@ -18,6 +18,8 @@ internal sealed class ProductVariantPersistenceConfiguration : IEntityTypeConfig
             .HasMaxLength(64)
             .UseCollation("Latin1_General_100_BIN2");
         builder.Property(variant => variant.Ordinal).IsRequired();
+        builder.Property(variant => variant.PriceAmount).IsRequired(false).HasPrecision(18, 2);
+        builder.Property(variant => variant.PriceCurrency).IsRequired(false).HasMaxLength(3).HasColumnType("char(3)");
 
         builder.HasOne(variant => variant.Product)
             .WithMany(product => product.Variants)

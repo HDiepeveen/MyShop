@@ -41,7 +41,7 @@ public sealed class PersistenceSqlServerPropertyContractTests
     public void Properties_AreMappedToSqlServer(Type modelType) => Assert.All(Entity(modelType).GetProperties(), p => Assert.NotNull(p.DeclaringType.GetTableName()));
 
     [Fact]
-    public void PropertyModel_HasTenEntities() => Assert.Equal(10, Model().GetEntityTypes().Count());
+    public void PropertyModel_HasElevenEntities() => Assert.Equal(11, Model().GetEntityTypes().Count());
 
     [Fact]
     public void PropertyModel_HasNoShadowProperties() => Assert.All(Model().GetEntityTypes(), e => Assert.All(e.GetProperties(), p => Assert.NotNull(p.PropertyInfo)));
