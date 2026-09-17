@@ -61,6 +61,17 @@ public sealed class AddProductTypeAttributeTests
         Assert.Equal(0, store.SaveCount);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_InvalidAttributeCode_DoesNotPersist()
+    {
+        var store = new StoreFake { ProductType = ProductType.Create("Clothing") };
+        await Assert.ThrowsAsync<ArgumentException>(() => new UseCase(store, store).ExecuteAsync(new(
+            store.ProductType.Id, "", "Colour", AttributeDataType.Choice,
+            false, true, AttributeScope.Product), CancellationToken.None));
+        Assert.Equal(0, store.SaveCount);
+        Assert.Empty(store.ProductType.AttributeDefinitions);
+    }
+
     private sealed class StoreFake : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; set; }
