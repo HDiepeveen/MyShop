@@ -23,6 +23,7 @@ app.MapRenameProductType();
 app.MapRenameProductTypeAttribute();
 app.MapGetProductType();
 app.MapRenameProduct();
+app.MapRenameCategory();
 app.MapAddProductVariant();
 app.MapAddProductTypeAttribute();
 app.MapRenameProductVariant();
