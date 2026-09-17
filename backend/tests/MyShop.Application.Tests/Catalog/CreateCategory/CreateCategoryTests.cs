@@ -25,6 +25,16 @@ public sealed class CreateCategoryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyParentId()
+    {
+        var store = new StoreFake();
+        var useCase = new UseCase(store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new CreateCategoryCommand("Child", default(CategoryId)), CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_CreatesRootWithoutParentLookup()
     {
         var store = new StoreFake();
