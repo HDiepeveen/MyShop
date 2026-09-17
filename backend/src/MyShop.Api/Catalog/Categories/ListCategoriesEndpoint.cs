@@ -42,7 +42,8 @@ public static class ListCategoriesEndpoint
                     category.Id,
                     category.Name,
                     category.ParentCategoryId,
-                    category.ParentCategoryId is null))
+                    category.ParentCategoryId is null,
+                    category.DirectChildCount))
                 .ToArray();
             return TypedResults.Ok(response);
         }
@@ -61,4 +62,5 @@ public sealed record CategorySummaryResponse(
     Guid Id,
     string Name,
     Guid? ParentCategoryId,
-    bool IsRoot);
+    bool IsRoot,
+    int DirectChildCount);

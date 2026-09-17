@@ -14,8 +14,8 @@ public sealed class ListCategoriesTests
         {
             Categories =
             [
-                new CategoryListItem(Guid.NewGuid(), "Clothing", null),
-                new CategoryListItem(Guid.NewGuid(), "Shirts", Guid.NewGuid())
+                new CategoryListItem(Guid.NewGuid(), "Clothing", null, 2),
+                new CategoryListItem(Guid.NewGuid(), "Shirts", Guid.NewGuid(), 0)
             ]
         };
         var useCase = new UseCase(repository);

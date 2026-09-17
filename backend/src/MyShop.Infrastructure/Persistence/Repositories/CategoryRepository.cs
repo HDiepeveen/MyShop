@@ -58,6 +58,7 @@ internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRep
             .Select(category => new CategoryListItem(
                 category.Id,
                 category.Name,
-                category.ParentCategoryId));
+                category.ParentCategoryId,
+                category.Children.Count));
     }
 }

@@ -11,4 +11,8 @@ public interface ICategoryListRepository
         CancellationToken cancellationToken);
 }
 
-public sealed record CategoryListItem(Guid Id, string Name, Guid? ParentCategoryId);
+public sealed record CategoryListItem(
+    Guid Id,
+    string Name,
+    Guid? ParentCategoryId,
+    int DirectChildCount);

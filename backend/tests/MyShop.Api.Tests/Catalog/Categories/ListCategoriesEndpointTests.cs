@@ -29,8 +29,8 @@ public sealed class ListCategoriesEndpointTests
     public async Task ExecuteAsync_MapsRootAndChildCategories()
     {
         var parentId = Guid.NewGuid();
-        var root = new CategoryListItem(parentId, "Clothing", null);
-        var child = new CategoryListItem(Guid.NewGuid(), "Shirts", parentId);
+        var root = new CategoryListItem(parentId, "Clothing", null, 1);
+        var child = new CategoryListItem(Guid.NewGuid(), "Shirts", parentId, 0);
         var useCase = new UseCase(new CategoryListRepositoryFake([root, child]));
 
         var result = await ListCategoriesEndpoint.ExecuteAsync(null, null, null, useCase, CancellationToken.None);
@@ -43,6 +43,7 @@ public sealed class ListCategoriesEndpointTests
                 Assert.Equal(root.Name, item.Name);
                 Assert.Null(item.ParentCategoryId);
                 Assert.True(item.IsRoot);
+                Assert.Equal(root.DirectChildCount, item.DirectChildCount);
             },
             item =>
             {
@@ -50,6 +51,7 @@ public sealed class ListCategoriesEndpointTests
                 Assert.Equal(child.Name, item.Name);
                 Assert.Equal(parentId, item.ParentCategoryId);
                 Assert.False(item.IsRoot);
+                Assert.Equal(child.DirectChildCount, item.DirectChildCount);
             });
     }
 

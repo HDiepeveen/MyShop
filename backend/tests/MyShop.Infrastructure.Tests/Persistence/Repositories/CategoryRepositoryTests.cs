@@ -27,6 +27,7 @@ public sealed class CategoryRepositoryTests
         Assert.Contains("FROM [Categories]", sql);
         Assert.Contains("ORDER BY", sql);
         Assert.DoesNotContain("JOIN", sql);
+        Assert.Contains("COUNT(*)", sql);
     }
 
     [Fact]
