@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.Categories;
 public sealed class DeleteCategoryEndpointTests
 {
     [Fact]
+    public void MapDeleteCategory_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => DeleteCategoryEndpoint.MapDeleteCategory(null!));
+
+    [Fact]
     public void MapDeleteCategory_MapsNamedDeleteRoute()
     {
         var app = WebApplication.CreateBuilder().Build();
