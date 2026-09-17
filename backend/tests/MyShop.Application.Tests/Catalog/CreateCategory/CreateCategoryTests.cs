@@ -53,5 +53,6 @@ public sealed class CreateCategoryTests
             Added = category;
             return Task.CompletedTask;
         }
+        public Task SaveAsync(Category category, CancellationToken token) => throw new NotSupportedException();
     }
 }

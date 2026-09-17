@@ -37,6 +37,16 @@ internal sealed class CategoryRepository : ICategoryRepository, ICategoryListRep
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task SaveAsync(Category category, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(category);
+        var persistence = await _dbContext.Categories.SingleOrDefaultAsync(
+            row => row.Id == category.Id.Value, cancellationToken)
+            ?? throw new InvalidOperationException($"Category '{category.Id}' no longer exists.");
+        CategoryPersistenceWriter.Write(category, persistence);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<CategoryListItem>> ListAsync(
         string? searchTerm,
         CategoryId? parentCategoryId,
