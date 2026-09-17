@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
+using MyShop.Api.Catalog;
 using MyShop.Api.Catalog.ProductTypes;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
@@ -30,14 +31,14 @@ public sealed class AddProductTypeAttributeEndpointTests
     {
         var store = new StoreFake { ProductType = ProductType.Create("Clothing") };
         var request = new AddProductTypeAttributeRequest(
-            "colour", "Colour", AttributeDataType.Choice, false, true, AttributeScope.Variant);
+            "colour", "Colour", ApiAttributeDataType.Choice, false, true, ApiAttributeScope.Variant);
         var result = await AddProductTypeAttributeEndpoint.ExecuteAsync(
             store.ProductType.Id.Value, request, new UseCase(store, store), CancellationToken.None);
 
         var created = Assert.IsType<Created<AddProductTypeAttributeResponse>>(result.Result);
         Assert.Equal("colour", created.Value!.Code);
-        Assert.Equal(AttributeDataTypeResponse.Choice, created.Value.DataType);
-        Assert.Equal(AttributeScopeResponse.Variant, created.Value.Scope);
+        Assert.Equal(ApiAttributeDataType.Choice, created.Value.DataType);
+        Assert.Equal(ApiAttributeScope.Variant, created.Value.Scope);
         Assert.Contains(created.Value.Id.ToString(), created.Location);
     }
 
@@ -46,7 +47,7 @@ public sealed class AddProductTypeAttributeEndpointTests
     {
         var store = new StoreFake();
         var result = await AddProductTypeAttributeEndpoint.ExecuteAsync(
-            Guid.NewGuid(), new("code", "Name", AttributeDataType.Text, false, false, AttributeScope.Product),
+            Guid.NewGuid(), new("code", "Name", ApiAttributeDataType.Text, false, false, ApiAttributeScope.Product),
             new UseCase(store, store), CancellationToken.None);
         Assert.IsType<NotFound<Microsoft.AspNetCore.Mvc.ProblemDetails>>(result.Result);
     }
@@ -59,7 +60,7 @@ public sealed class AddProductTypeAttributeEndpointTests
     [Fact]
     public async Task ExecuteAsync_NullUseCase_Throws() =>
         await Assert.ThrowsAsync<ArgumentNullException>(() => AddProductTypeAttributeEndpoint.ExecuteAsync(
-            Guid.NewGuid(), new("size", "Size", AttributeDataType.Text, false, false, AttributeScope.Product),
+            Guid.NewGuid(), new("size", "Size", ApiAttributeDataType.Text, false, false, ApiAttributeScope.Product),
             null!, CancellationToken.None));
 
     private sealed class StoreFake : IProductTypeRepository, IProductTypeWriter

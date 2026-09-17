@@ -1,12 +1,11 @@
 using System.Globalization;
 using System.Text.Json;
 using MyShop.Application.Catalog;
-using MyShop.Domain.Catalog;
 
 namespace MyShop.Api.Catalog.Products;
 
 public sealed record AttributeValueRequest(
-    AttributeDataType DataType,
+    ApiAttributeDataType DataType,
     JsonElement Value);
 
 internal static class AttributeValueRequestMapper
@@ -14,13 +13,13 @@ internal static class AttributeValueRequestMapper
     public static CatalogAttributeValueInput Map(AttributeValueRequest request) =>
         request.DataType switch
         {
-            AttributeDataType.Text => new TextAttributeValueInput(ReadString(request.Value, "text")),
-            AttributeDataType.Integer => new IntegerAttributeValueInput(ReadInteger(request.Value)),
-            AttributeDataType.Decimal => new DecimalAttributeValueInput(ReadDecimal(request.Value)),
-            AttributeDataType.Boolean => new BooleanAttributeValueInput(ReadBoolean(request.Value)),
-            AttributeDataType.Date => new DateAttributeValueInput(ReadDate(request.Value)),
-            AttributeDataType.Choice => new ChoiceAttributeValueInput(ReadString(request.Value, "choice")),
-            AttributeDataType.MultiChoice => new MultiChoiceAttributeValueInput(ReadStrings(request.Value)),
+            ApiAttributeDataType.Text => new TextAttributeValueInput(ReadString(request.Value, "text")),
+            ApiAttributeDataType.Integer => new IntegerAttributeValueInput(ReadInteger(request.Value)),
+            ApiAttributeDataType.Decimal => new DecimalAttributeValueInput(ReadDecimal(request.Value)),
+            ApiAttributeDataType.Boolean => new BooleanAttributeValueInput(ReadBoolean(request.Value)),
+            ApiAttributeDataType.Date => new DateAttributeValueInput(ReadDate(request.Value)),
+            ApiAttributeDataType.Choice => new ChoiceAttributeValueInput(ReadString(request.Value, "choice")),
+            ApiAttributeDataType.MultiChoice => new MultiChoiceAttributeValueInput(ReadStrings(request.Value)),
             _ => throw new ArgumentException(
                 $"Attribute data type '{request.DataType}' is not supported.", nameof(request))
         };

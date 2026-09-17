@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MyShop.Api.Catalog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -153,7 +154,9 @@ public sealed class SetProductAttributeValueEndpointTests
     private static AttributeValueRequest Request(AttributeDataType dataType, string json)
     {
         using var document = JsonDocument.Parse(json);
-        return new AttributeValueRequest(dataType, document.RootElement.Clone());
+        return new AttributeValueRequest(
+            (ApiAttributeDataType)(int)dataType,
+            document.RootElement.Clone());
     }
 
     [Fact]
@@ -164,7 +167,7 @@ public sealed class SetProductAttributeValueEndpointTests
     [Fact]
     public async Task ExecuteAsync_NullUseCase_Throws() =>
         await Assert.ThrowsAsync<ArgumentNullException>(() => SetProductAttributeValueEndpoint.ExecuteAsync(
-            Guid.NewGuid(), Guid.NewGuid(), new(AttributeDataType.Text, default), null!, CancellationToken.None));
+            Guid.NewGuid(), Guid.NewGuid(), new(ApiAttributeDataType.Text, default), null!, CancellationToken.None));
 
     private sealed class Scenario
     {

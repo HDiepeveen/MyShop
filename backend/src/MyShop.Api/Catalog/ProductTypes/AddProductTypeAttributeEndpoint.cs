@@ -30,7 +30,8 @@ public static class AddProductTypeAttributeEndpoint
         {
             var attribute = await useCase.ExecuteAsync(new AddProductTypeAttributeCommand(
                 ProductTypeId.From(productTypeId), request.Code, request.DisplayName,
-                request.DataType, request.IsRequired, request.IsFilterable, request.Scope),
+                MapRequestDataType(request.DataType), request.IsRequired, request.IsFilterable,
+                MapRequestScope(request.Scope)),
                 cancellationToken);
             if (attribute is null)
                 return TypedResults.NotFound(new ProblemDetails { Title = "Product type not found" });
@@ -58,47 +59,49 @@ public static class AddProductTypeAttributeEndpoint
         }
     }
 
-    private static AttributeDataTypeResponse MapDataType(AttributeDataType dataType) => dataType switch
+    private static ApiAttributeDataType MapDataType(AttributeDataType dataType) => dataType switch
     {
-        AttributeDataType.Text => AttributeDataTypeResponse.Text,
-        AttributeDataType.Integer => AttributeDataTypeResponse.Integer,
-        AttributeDataType.Decimal => AttributeDataTypeResponse.Decimal,
-        AttributeDataType.Boolean => AttributeDataTypeResponse.Boolean,
-        AttributeDataType.Date => AttributeDataTypeResponse.Date,
-        AttributeDataType.Choice => AttributeDataTypeResponse.Choice,
-        AttributeDataType.MultiChoice => AttributeDataTypeResponse.MultiChoice,
+        AttributeDataType.Text => ApiAttributeDataType.Text,
+        AttributeDataType.Integer => ApiAttributeDataType.Integer,
+        AttributeDataType.Decimal => ApiAttributeDataType.Decimal,
+        AttributeDataType.Boolean => ApiAttributeDataType.Boolean,
+        AttributeDataType.Date => ApiAttributeDataType.Date,
+        AttributeDataType.Choice => ApiAttributeDataType.Choice,
+        AttributeDataType.MultiChoice => ApiAttributeDataType.MultiChoice,
         _ => throw new ArgumentOutOfRangeException(nameof(dataType), dataType, "Unsupported attribute data type.")
     };
 
-    private static AttributeScopeResponse MapScope(AttributeScope scope) => scope switch
+    private static AttributeDataType MapRequestDataType(ApiAttributeDataType dataType) => dataType switch
     {
-        AttributeScope.Product => AttributeScopeResponse.Product,
-        AttributeScope.Variant => AttributeScopeResponse.Variant,
+        ApiAttributeDataType.Text => AttributeDataType.Text,
+        ApiAttributeDataType.Integer => AttributeDataType.Integer,
+        ApiAttributeDataType.Decimal => AttributeDataType.Decimal,
+        ApiAttributeDataType.Boolean => AttributeDataType.Boolean,
+        ApiAttributeDataType.Date => AttributeDataType.Date,
+        ApiAttributeDataType.Choice => AttributeDataType.Choice,
+        ApiAttributeDataType.MultiChoice => AttributeDataType.MultiChoice,
+        _ => throw new ArgumentOutOfRangeException(nameof(dataType), dataType, "Unsupported attribute data type.")
+    };
+
+    private static ApiAttributeScope MapScope(AttributeScope scope) => scope switch
+    {
+        AttributeScope.Product => ApiAttributeScope.Product,
+        AttributeScope.Variant => ApiAttributeScope.Variant,
+        _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, "Unsupported attribute scope.")
+    };
+
+    private static AttributeScope MapRequestScope(ApiAttributeScope scope) => scope switch
+    {
+        ApiAttributeScope.Product => AttributeScope.Product,
+        ApiAttributeScope.Variant => AttributeScope.Variant,
         _ => throw new ArgumentOutOfRangeException(nameof(scope), scope, "Unsupported attribute scope.")
     };
 }
 
 public sealed record AddProductTypeAttributeRequest(
-    string Code, string DisplayName, AttributeDataType DataType,
-    bool IsRequired, bool IsFilterable, AttributeScope Scope);
+    string Code, string DisplayName, ApiAttributeDataType DataType,
+    bool IsRequired, bool IsFilterable, ApiAttributeScope Scope);
 
 public sealed record AddProductTypeAttributeResponse(
-    Guid Id, string Code, string DisplayName, AttributeDataTypeResponse DataType,
-    bool IsRequired, bool IsFilterable, AttributeScopeResponse Scope);
-
-public enum AttributeDataTypeResponse
-{
-    Text = 0,
-    Integer = 1,
-    Decimal = 2,
-    Boolean = 3,
-    Date = 4,
-    Choice = 5,
-    MultiChoice = 6
-}
-
-public enum AttributeScopeResponse
-{
-    Product = 0,
-    Variant = 1
-}
+    Guid Id, string Code, string DisplayName, ApiAttributeDataType DataType,
+    bool IsRequired, bool IsFilterable, ApiAttributeScope Scope);

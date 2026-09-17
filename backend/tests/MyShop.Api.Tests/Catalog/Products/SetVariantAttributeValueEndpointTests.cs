@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MyShop.Api.Catalog;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -177,7 +178,9 @@ public sealed class SetVariantAttributeValueEndpointTests
     private static AttributeValueRequest Request(AttributeDataType dataType, string json)
     {
         using var document = JsonDocument.Parse(json);
-        return new AttributeValueRequest(dataType, document.RootElement.Clone());
+        return new AttributeValueRequest(
+            (ApiAttributeDataType)(int)dataType,
+            document.RootElement.Clone());
     }
 
     private static void AssertMappedValue(AttributeValue value, AttributeDataType dataType)
@@ -218,7 +221,7 @@ public sealed class SetVariantAttributeValueEndpointTests
     public async Task ExecuteAsync_NullUseCase_Throws() =>
         await Assert.ThrowsAsync<ArgumentNullException>(() => SetVariantAttributeValueEndpoint.ExecuteAsync(
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-            new(AttributeDataType.Text, default), null!, CancellationToken.None));
+            new(ApiAttributeDataType.Text, default), null!, CancellationToken.None));
 
     private sealed class Scenario
     {
