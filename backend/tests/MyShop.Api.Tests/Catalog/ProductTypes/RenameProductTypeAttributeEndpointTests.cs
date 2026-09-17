@@ -47,6 +47,11 @@ public sealed class RenameProductTypeAttributeEndpointTests
         Assert.Equal("Product type not found", Assert.IsType<NotFound<ProblemDetails>>(result.Result).Value!.Title);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => RenameProductTypeAttributeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), null!, null!, CancellationToken.None));
+
     private sealed class StoreFake(ProductType? productType) : IProductTypeRepository, IProductTypeWriter
     {
         public ProductType? ProductType { get; } = productType;
