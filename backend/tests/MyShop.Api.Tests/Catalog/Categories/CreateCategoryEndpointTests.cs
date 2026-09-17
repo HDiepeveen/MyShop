@@ -50,6 +50,11 @@ public sealed class CreateCategoryEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => CreateCategoryEndpoint.ExecuteAsync(
             null!, null!, CancellationToken.None));
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => CreateCategoryEndpoint.ExecuteAsync(
+            new("Clothing"), null!, CancellationToken.None));
+
     private sealed class StoreFake : ICategoryRepository, ICategoryWriter
     {
         public Task<Category?> GetByIdAsync(CategoryId id, CancellationToken token) => Task.FromResult<Category?>(null);
