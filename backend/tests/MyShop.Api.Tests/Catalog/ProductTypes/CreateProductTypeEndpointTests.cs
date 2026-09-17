@@ -50,6 +50,11 @@ public sealed class CreateProductTypeEndpointTests
         Assert.Equal("Invalid product type", badRequest.Value!.Title);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => CreateProductTypeEndpoint.ExecuteAsync(
+            null!, null!, CancellationToken.None));
+
     private sealed class WriterFake : IProductTypeWriter
     {
         public ProductType? Added { get; private set; }
