@@ -26,6 +26,14 @@ public sealed class DeleteProductTypeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RejectsEmptyProductTypeId()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new UseCase(store, store, store).ExecuteAsync(default, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_UnusedProductType_IsDeleted()
     {
         var store = new StoreFake { ProductType = ProductType.Create("Old") };
