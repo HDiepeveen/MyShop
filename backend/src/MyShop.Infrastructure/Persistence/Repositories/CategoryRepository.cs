@@ -7,7 +7,8 @@ using MyShop.Infrastructure.Persistence.Models;
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
 internal sealed class CategoryRepository
-    : ICategoryRepository, ICategoryListRepository, ICategoryWriter, ICategoryHierarchyRepository
+    : ICategoryRepository, ICategoryListRepository, ICategoryWriter,
+      ICategoryHierarchyRepository, ICategoryUsageRepository
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -71,6 +72,27 @@ internal sealed class CategoryRepository
         categories.AsNoTracking()
             .Where(category => category.Id == categoryId)
             .Select(category => category.ParentCategoryId);
+
+    public async Task<CategoryUsage> GetUsageAsync(
+        CategoryId categoryId,
+        CancellationToken cancellationToken)
+    {
+        var childCount = await DirectChildCountQuery(_dbContext.Categories, categoryId)
+            .CountAsync(cancellationToken);
+        var assignmentCount = await ProductAssignmentCountQuery(_dbContext.ProductCategories, categoryId)
+            .CountAsync(cancellationToken);
+        return new CategoryUsage(childCount, assignmentCount);
+    }
+
+    internal static IQueryable<CategoryPersistence> DirectChildCountQuery(
+        IQueryable<CategoryPersistence> categories,
+        CategoryId categoryId) =>
+        categories.AsNoTracking().Where(category => category.ParentCategoryId == categoryId.Value);
+
+    internal static IQueryable<ProductCategoryPersistence> ProductAssignmentCountQuery(
+        IQueryable<ProductCategoryPersistence> assignments,
+        CategoryId categoryId) =>
+        assignments.AsNoTracking().Where(assignment => assignment.CategoryId == categoryId.Value);
 
     public async Task<IReadOnlyList<CategoryListItem>> ListAsync(
         string? searchTerm,

@@ -76,6 +76,20 @@ public sealed class CategoryRepositoryTests
         Assert.Contains("WHERE [c].[Id]", sql);
     }
 
+    [Fact]
+    public void UsageQueries_UseSqlServerPredicatesWithoutConnection()
+    {
+        using var context = CreateContext();
+        var id = CategoryId.New();
+        var childrenSql = CategoryRepository.DirectChildCountQuery(context.Categories, id).ToQueryString();
+        var assignmentsSql = CategoryRepository.ProductAssignmentCountQuery(context.ProductCategories, id)
+            .ToQueryString();
+        Assert.Contains("[c].[ParentCategoryId]", childrenSql);
+        Assert.Contains("[p].[CategoryId]", assignmentsSql);
+        Assert.Contains("WHERE", childrenSql);
+        Assert.Contains("WHERE", assignmentsSql);
+    }
+
     private static MyShopDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()

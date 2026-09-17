@@ -35,6 +35,8 @@ public static class InfrastructureServiceCollectionExtensions
             new CategoryRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<ICategoryHierarchyRepository>(provider =>
             new CategoryRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<ICategoryUsageRepository>(provider =>
+            new CategoryRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IProductSkuLookup>(provider =>
             new ProductSkuLookup(provider.GetRequiredService<MyShopDbContext>()));
 
