@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyShop.Application.Catalog.AddProductVariant;
 using MyShop.Application.Catalog.AssignProductToCategory;
 using MyShop.Application.Catalog.CreateProduct;
+using MyShop.Application.Catalog.CreateProductType;
 using MyShop.Application.Catalog.GetCategory;
 using MyShop.Application.Catalog.GetProduct;
 using MyShop.Application.Catalog.GetProductBySku;
@@ -30,6 +31,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<AddProductVariant>();
         services.AddScoped<AssignProductToCategory>();
         services.AddScoped<CreateProduct>();
+        services.AddScoped<CreateProductType>();
         services.AddScoped<GetCategory>();
         services.AddScoped<GetProduct>();
         services.AddScoped<GetProductBySku>();
