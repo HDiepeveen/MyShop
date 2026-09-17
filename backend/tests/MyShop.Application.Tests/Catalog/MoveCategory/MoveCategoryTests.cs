@@ -8,6 +8,15 @@ namespace MyShop.Application.Tests.Catalog.MoveCategory;
 public sealed class MoveCategoryTests
 {
     [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake();
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, store, null!));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_MovesCategoryUnderValidParent()
     {
         var category = Category.CreateRoot("Shirts");
