@@ -16,6 +16,15 @@ public sealed class RenameProductTypeTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        var command = new RenameProductTypeCommand(ProductTypeId.New(), "New");
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store).ExecuteAsync(command, new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RenamesAndPersistsExistingProductType()
     {
         var store = new StoreFake { ProductType = ProductType.Create("Old") };
