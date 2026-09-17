@@ -1,22 +1,22 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Catalog.Abstractions;
-using MyShop.Application.Catalog.SetVariantAttributeValue;
+using MyShop.Application.Catalog.SetProductAttributeValue;
 using MyShop.Domain.Catalog;
-using UseCase = MyShop.Application.Catalog.SetVariantAttributeValue.SetVariantAttributeValue;
+using UseCase = MyShop.Application.Catalog.SetProductAttributeValue.SetProductAttributeValue;
 
 namespace MyShop.Api.Catalog.Products;
 
-public static class SetVariantAttributeValueEndpoint
+public static class SetProductAttributeValueEndpoint
 {
-    public static IEndpointRouteBuilder MapSetVariantAttributeValue(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapSetProductAttributeValue(this IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
 
         endpoints.MapPut(
-                "/api/products/{productId:guid}/variants/{variantId:guid}/attributes/{attributeDefinitionId:guid}",
+                "/api/products/{productId:guid}/attributes/{attributeDefinitionId:guid}",
                 ExecuteAsync)
-            .WithName("SetVariantAttributeValue");
+            .WithName("SetProductAttributeValue");
 
         return endpoints;
     }
@@ -27,7 +27,6 @@ public static class SetVariantAttributeValueEndpoint
         BadRequest<ProblemDetails>,
         Conflict<ProblemDetails>>> ExecuteAsync(
         Guid productId,
-        Guid variantId,
         Guid attributeDefinitionId,
         AttributeValueRequest request,
         [FromServices] UseCase useCase,
@@ -39,32 +38,29 @@ public static class SetVariantAttributeValueEndpoint
         try
         {
             var result = await useCase.ExecuteAsync(
-                new SetVariantAttributeValueCommand(
+                new SetProductAttributeValueCommand(
                     ProductId.From(productId),
-                    ProductVariantId.From(variantId),
                     AttributeDefinitionId.From(attributeDefinitionId),
                     AttributeValueRequestMapper.Map(request)),
                 cancellationToken);
 
             return result.Failure switch
             {
-                SetVariantAttributeValueFailure.ProductNotFound => NotFound(
+                SetProductAttributeValueFailure.ProductNotFound => NotFound(
                     "Product not found", $"Product '{productId}' does not exist."),
-                SetVariantAttributeValueFailure.VariantNotFound => NotFound(
-                    "Product variant not found", $"Product variant '{variantId}' does not exist."),
-                SetVariantAttributeValueFailure.ProductTypeNotFound => NotFound(
+                SetProductAttributeValueFailure.ProductTypeNotFound => NotFound(
                     "Product type not found", "The product type does not exist."),
-                SetVariantAttributeValueFailure.AttributeDefinitionNotFound => NotFound(
+                SetProductAttributeValueFailure.AttributeDefinitionNotFound => NotFound(
                     "Attribute definition not found",
                     $"Attribute definition '{attributeDefinitionId}' does not exist on the product type."),
-                SetVariantAttributeValueFailure.WrongAttributeScope => Conflict(
-                    "Wrong attribute scope", "The attribute definition is not scoped to variants."),
-                SetVariantAttributeValueFailure.WrongAttributeDataType => Conflict(
+                SetProductAttributeValueFailure.WrongAttributeScope => Conflict(
+                    "Wrong attribute scope", "The attribute definition is not scoped to products."),
+                SetProductAttributeValueFailure.WrongAttributeDataType => Conflict(
                     "Wrong attribute data type",
                     $"The attribute definition does not accept '{request.DataType}' values."),
                 null => TypedResults.NoContent(),
                 _ => throw new InvalidOperationException(
-                    $"Set variant attribute failure '{result.Failure}' is not supported.")
+                    $"Set product attribute failure '{result.Failure}' is not supported.")
             };
         }
         catch (ProductConcurrencyException exception)
@@ -75,7 +71,7 @@ public static class SetVariantAttributeValueEndpoint
         {
             return TypedResults.BadRequest(new ProblemDetails
             {
-                Title = "Invalid product variant attribute value",
+                Title = "Invalid product attribute value",
                 Detail = exception.Message
             });
         }

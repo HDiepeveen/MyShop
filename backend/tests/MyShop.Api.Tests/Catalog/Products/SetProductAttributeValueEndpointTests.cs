@@ -6,55 +6,44 @@ using Microsoft.AspNetCore.Routing;
 using MyShop.Api.Catalog.Products;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
-using UseCase = MyShop.Application.Catalog.SetVariantAttributeValue.SetVariantAttributeValue;
+using UseCase = MyShop.Application.Catalog.SetProductAttributeValue.SetProductAttributeValue;
 
 namespace MyShop.Api.Tests.Catalog.Products;
 
-public sealed class SetVariantAttributeValueEndpointTests
+public sealed class SetProductAttributeValueEndpointTests
 {
     [Fact]
-    public void MapSetVariantAttributeValue_MapsNamedPutRoute()
+    public void MapSetProductAttributeValue_MapsNamedPutRoute()
     {
         var builder = WebApplication.CreateBuilder();
         var app = builder.Build();
 
-        Assert.Same(app, app.MapSetVariantAttributeValue());
+        Assert.Same(app, app.MapSetProductAttributeValue());
         var routes = (IEndpointRouteBuilder)app;
         var endpoint = Assert.IsType<RouteEndpoint>(Assert.Single(routes.DataSources).Endpoints.Single());
         Assert.Equal(
-            "/api/products/{productId:guid}/variants/{variantId:guid}/attributes/{attributeDefinitionId:guid}",
+            "/api/products/{productId:guid}/attributes/{attributeDefinitionId:guid}",
             endpoint.RoutePattern.RawText);
-        Assert.Equal("SetVariantAttributeValue", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
+        Assert.Equal("SetProductAttributeValue", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
         Assert.Equal(["PUT"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
     }
 
-    [Theory]
-    [InlineData(AttributeDataType.Text, "\"Blue\"")]
-    [InlineData(AttributeDataType.Integer, "42")]
-    [InlineData(AttributeDataType.Decimal, "19.95")]
-    [InlineData(AttributeDataType.Boolean, "true")]
-    [InlineData(AttributeDataType.Date, "\"2026-09-17\"")]
-    [InlineData(AttributeDataType.Choice, "\"blue\"")]
-    [InlineData(AttributeDataType.MultiChoice, "[\"blue\",\"red\"]")]
-    public async Task ExecuteAsync_MapsEveryValueTypeAndReturnsNoContent(
-        AttributeDataType dataType,
-        string json)
+    [Fact]
+    public async Task ExecuteAsync_SetsValueAndReturnsNoContent()
     {
-        var scenario = new Scenario(dataType);
+        var scenario = new Scenario();
 
-        var result = await scenario.ExecuteAsync(Request(dataType, json));
+        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Cotton\""));
 
         Assert.IsType<NoContent>(result.Result);
-        var value = Assert.Single(scenario.Variant.AttributeValues);
-        Assert.Equal(dataType, value.DataType);
+        var value = Assert.IsType<TextAttributeValue>(Assert.Single(scenario.Product.AttributeValues));
+        Assert.Equal("Cotton", value.Value);
         Assert.Equal(scenario.DefinitionId, value.AttributeDefinitionId);
-        AssertMappedValue(value, dataType);
         Assert.Equal(1, scenario.Products.SaveCalls);
     }
 
     [Theory]
     [InlineData("product", "Product not found")]
-    [InlineData("variant", "Product variant not found")]
     [InlineData("productType", "Product type not found")]
     [InlineData("definition", "Attribute definition not found")]
     public async Task ExecuteAsync_WhenDependencyDoesNotExist_ReturnsSpecificNotFound(
@@ -64,11 +53,10 @@ public sealed class SetVariantAttributeValueEndpointTests
         var scenario = new Scenario();
         if (missing == "product") scenario.ProductIsMissing = true;
         if (missing == "productType") scenario.ProductTypeIsMissing = true;
-        var variantId = missing == "variant" ? ProductVariantId.New() : scenario.Variant.Id;
         var definitionId = missing == "definition" ? AttributeDefinitionId.New() : scenario.DefinitionId;
 
         var result = await scenario.ExecuteAsync(
-            Request(AttributeDataType.Text, "\"Blue\""), variantId, definitionId);
+            Request(AttributeDataType.Text, "\"Cotton\""), definitionId);
 
         var notFound = Assert.IsType<NotFound<ProblemDetails>>(result.Result);
         Assert.Equal(expectedTitle, notFound.Value!.Title);
@@ -76,11 +64,11 @@ public sealed class SetVariantAttributeValueEndpointTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenAttributeHasProductScope_ReturnsConflict()
+    public async Task ExecuteAsync_WhenAttributeHasVariantScope_ReturnsConflict()
     {
-        var scenario = new Scenario(scope: AttributeScope.Product);
+        var scenario = new Scenario(scope: AttributeScope.Variant);
 
-        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Blue\""));
+        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Cotton\""));
 
         var conflict = Assert.IsType<Conflict<ProblemDetails>>(result.Result);
         Assert.Equal("Wrong attribute scope", conflict.Value!.Title);
@@ -92,7 +80,7 @@ public sealed class SetVariantAttributeValueEndpointTests
     {
         var scenario = new Scenario(AttributeDataType.Integer);
 
-        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Blue\""));
+        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Cotton\""));
 
         var conflict = Assert.IsType<Conflict<ProblemDetails>>(result.Result);
         Assert.Equal("Wrong attribute data type", conflict.Value!.Title);
@@ -100,48 +88,36 @@ public sealed class SetVariantAttributeValueEndpointTests
     }
 
     [Theory]
-    [InlineData(AttributeDataType.Text, "42")]
-    [InlineData(AttributeDataType.Integer, "1.5")]
-    [InlineData(AttributeDataType.Decimal, "true")]
-    [InlineData(AttributeDataType.Boolean, "\"true\"")]
-    [InlineData(AttributeDataType.Date, "\"17-09-2026\"")]
-    [InlineData(AttributeDataType.MultiChoice, "[\"blue\",42]")]
-    [InlineData((AttributeDataType)99, "\"value\"")]
-    public async Task ExecuteAsync_WhenValueIsInvalid_ReturnsBadRequest(
-        AttributeDataType dataType,
-        string json)
-    {
-        var scenario = new Scenario();
-
-        var result = await scenario.ExecuteAsync(Request(dataType, json));
-
-        var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
-        Assert.Equal("Invalid product variant attribute value", badRequest.Value!.Title);
-        Assert.Equal(0, scenario.Products.GetCalls);
-        Assert.Equal(0, scenario.Products.SaveCalls);
-    }
-
-    [Theory]
-    [InlineData(true, false, false)]
-    [InlineData(false, true, false)]
-    [InlineData(false, false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
     public async Task ExecuteAsync_WhenIdIsInvalid_ReturnsBadRequest(
         bool emptyProductId,
-        bool emptyVariantId,
         bool emptyDefinitionId)
     {
         var scenario = new Scenario();
 
-        var result = await SetVariantAttributeValueEndpoint.ExecuteAsync(
+        var result = await SetProductAttributeValueEndpoint.ExecuteAsync(
             emptyProductId ? Guid.Empty : scenario.Product.Id.Value,
-            emptyVariantId ? Guid.Empty : scenario.Variant.Id.Value,
             emptyDefinitionId ? Guid.Empty : scenario.DefinitionId.Value,
-            Request(AttributeDataType.Text, "\"Blue\""),
+            Request(AttributeDataType.Text, "\"Cotton\""),
             scenario.UseCase,
             CancellationToken.None);
 
         var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
-        Assert.Equal("Invalid product variant attribute value", badRequest.Value!.Title);
+        Assert.Equal("Invalid product attribute value", badRequest.Value!.Title);
+        Assert.Equal(0, scenario.Products.SaveCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenValueIsInvalid_ReturnsBadRequestBeforeRepositoryAccess()
+    {
+        var scenario = new Scenario();
+
+        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "42"));
+
+        var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
+        Assert.Equal("Invalid product attribute value", badRequest.Value!.Title);
+        Assert.Equal(0, scenario.Products.GetCalls);
         Assert.Equal(0, scenario.Products.SaveCalls);
     }
 
@@ -150,7 +126,7 @@ public sealed class SetVariantAttributeValueEndpointTests
     {
         var scenario = new Scenario { HasConcurrencyConflict = true };
 
-        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Blue\""));
+        var result = await scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Cotton\""));
 
         var conflict = Assert.IsType<Conflict<ProblemDetails>>(result.Result);
         Assert.Equal("Product was modified", conflict.Value!.Title);
@@ -165,7 +141,7 @@ public sealed class SetVariantAttributeValueEndpointTests
         source.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Blue\""), cancellationToken: source.Token));
+            scenario.ExecuteAsync(Request(AttributeDataType.Text, "\"Cotton\""), cancellationToken: source.Token));
 
         Assert.Equal(0, scenario.Products.SaveCalls);
     }
@@ -176,52 +152,22 @@ public sealed class SetVariantAttributeValueEndpointTests
         return new AttributeValueRequest(dataType, document.RootElement.Clone());
     }
 
-    private static void AssertMappedValue(AttributeValue value, AttributeDataType dataType)
-    {
-        switch (dataType)
-        {
-            case AttributeDataType.Text:
-                Assert.Equal("Blue", Assert.IsType<TextAttributeValue>(value).Value);
-                break;
-            case AttributeDataType.Integer:
-                Assert.Equal(42, Assert.IsType<IntegerAttributeValue>(value).Value);
-                break;
-            case AttributeDataType.Decimal:
-                Assert.Equal(19.95m, Assert.IsType<DecimalAttributeValue>(value).Value);
-                break;
-            case AttributeDataType.Boolean:
-                Assert.True(Assert.IsType<BooleanAttributeValue>(value).Value);
-                break;
-            case AttributeDataType.Date:
-                Assert.Equal(new DateOnly(2026, 9, 17), Assert.IsType<DateAttributeValue>(value).Value);
-                break;
-            case AttributeDataType.Choice:
-                Assert.Equal("blue", Assert.IsType<ChoiceAttributeValue>(value).Value.Value);
-                break;
-            case AttributeDataType.MultiChoice:
-                Assert.Equal(["blue", "red"], Assert.IsType<MultiChoiceAttributeValue>(value).Values
-                    .Select(choice => choice.Value));
-                break;
-        }
-    }
-
     private sealed class Scenario
     {
         public Scenario(
             AttributeDataType dataType = AttributeDataType.Text,
-            AttributeScope scope = AttributeScope.Variant)
+            AttributeScope scope = AttributeScope.Product)
         {
             ProductType = ProductType.Create("Clothing");
             ProductType.AddAttribute(
                 DefinitionId,
-                AttributeCode.Create("attribute"),
-                "Attribute",
+                AttributeCode.Create("material"),
+                "Material",
                 dataType,
                 false,
                 false,
                 scope);
             Product = Product.Create("Shirt", ProductType.Id, "Medium");
-            Variant = Product.Variants.Single();
             Products = new ProductRepositoryFake(this);
             ProductTypes = new ProductTypeRepositoryFake(this);
             UseCase = new UseCase(Products, ProductTypes);
@@ -229,7 +175,6 @@ public sealed class SetVariantAttributeValueEndpointTests
 
         public ProductType ProductType { get; }
         public Product Product { get; }
-        public ProductVariant Variant { get; }
         public AttributeDefinitionId DefinitionId { get; } = AttributeDefinitionId.New();
         public bool ProductIsMissing { get; set; }
         public bool ProductTypeIsMissing { get; set; }
@@ -241,12 +186,10 @@ public sealed class SetVariantAttributeValueEndpointTests
         public Task<Results<NoContent, NotFound<ProblemDetails>, BadRequest<ProblemDetails>, Conflict<ProblemDetails>>>
             ExecuteAsync(
                 AttributeValueRequest request,
-                ProductVariantId? variantId = null,
                 AttributeDefinitionId? definitionId = null,
                 CancellationToken cancellationToken = default) =>
-            SetVariantAttributeValueEndpoint.ExecuteAsync(
+            SetProductAttributeValueEndpoint.ExecuteAsync(
                 Product.Id.Value,
-                (variantId ?? Variant.Id).Value,
                 (definitionId ?? DefinitionId).Value,
                 request,
                 UseCase,
