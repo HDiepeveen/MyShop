@@ -61,6 +61,16 @@ public sealed class RenameCategoryTests
             new(CategoryId.New(), "New"), CancellationToken.None));
     }
 
+    [Fact]
+    public async Task ExecuteAsync_InvalidName_DoesNotPersist()
+    {
+        var store = new StoreFake { Category = Category.CreateRoot("Original") };
+        await Assert.ThrowsAsync<ArgumentException>(() => new UseCase(store, store).ExecuteAsync(
+            new(store.Category.Id, ""), CancellationToken.None));
+        Assert.Equal("Original", store.Category.Name);
+        Assert.Equal(0, store.Saves);
+    }
+
     private sealed class StoreFake : ICategoryRepository, ICategoryWriter
     {
         public Category? Category { get; set; }
