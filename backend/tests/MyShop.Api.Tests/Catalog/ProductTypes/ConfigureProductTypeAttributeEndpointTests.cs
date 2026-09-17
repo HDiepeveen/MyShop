@@ -12,6 +12,10 @@ namespace MyShop.Api.Tests.Catalog.ProductTypes;
 public sealed class ConfigureProductTypeAttributeEndpointTests
 {
     [Fact]
+    public void MapConfigureProductTypeAttribute_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => ConfigureProductTypeAttributeEndpoint.MapConfigureProductTypeAttribute(null!));
+
+    [Fact]
     public void MapConfigureProductTypeAttribute_MapsNamedPutRoute()
     {
         var app = WebApplication.CreateBuilder().Build();
