@@ -18,5 +18,6 @@ app.MapAssignProductToCategory();
 app.MapRemoveProductFromCategory();
 app.MapRemoveProductAttributeValue();
 app.MapRemoveVariantAttributeValue();
+app.MapSetVariantAttributeValue();
 
 app.Run();
