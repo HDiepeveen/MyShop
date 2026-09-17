@@ -6,7 +6,8 @@ using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class ProductTypeRepository : IProductTypeRepository, IProductTypeListRepository
+internal sealed class ProductTypeRepository
+    : IProductTypeRepository, IProductTypeListRepository, IProductTypeWriter
 {
     private readonly MyShopDbContext _dbContext;
 
@@ -27,6 +28,29 @@ internal sealed class ProductTypeRepository : IProductTypeRepository, IProductTy
         return persistence is null
             ? null
             : ProductTypePersistenceMapper.ToDomain(persistence);
+    }
+
+    public async Task AddAsync(ProductType productType, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(productType);
+
+        var persistence = new ProductTypePersistence { Id = productType.Id.Value };
+        ProductTypePersistenceSynchronizer.Synchronize(productType, persistence);
+        _dbContext.ProductTypes.Add(persistence);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task SaveAsync(ProductType productType, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(productType);
+
+        var persistence = await CompleteGraph(_dbContext.ProductTypes)
+            .SingleOrDefaultAsync(row => row.Id == productType.Id.Value, cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Product type '{productType.Id}' no longer exists.");
+
+        ProductTypePersistenceSynchronizer.Synchronize(productType, persistence);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyList<ProductTypeListItem>> ListAsync(
@@ -50,4 +74,8 @@ internal sealed class ProductTypeRepository : IProductTypeRepository, IProductTy
                 productType.Name,
                 productType.AttributeDefinitions.Count));
     }
+
+    internal static IQueryable<ProductTypePersistence> CompleteGraph(
+        IQueryable<ProductTypePersistence> productTypes) =>
+        productTypes.Include(productType => productType.AttributeDefinitions);
 }

@@ -42,6 +42,18 @@ public sealed class ProductTypeRepositoryTests
         Assert.Contains("WHERE", sql);
     }
 
+    [Fact]
+    public void CompleteGraph_UsesSqlServerAttributeDefinitionInclude()
+    {
+        using var context = CreateContext();
+
+        var query = ProductTypeRepository.CompleteGraph(context.Set<ProductTypePersistence>());
+        var sql = query.ToQueryString();
+
+        Assert.Contains("LEFT JOIN [AttributeDefinitions]", sql);
+        Assert.Contains("ORDER BY", sql);
+    }
+
     private static MyShopDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()
