@@ -82,6 +82,11 @@ public sealed class GetProductBySkuEndpointTests
         Assert.Equal(0, lookup.FindCalls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => GetProductBySkuEndpoint.ExecuteAsync(
+            "SKU-001", null!, CancellationToken.None));
+
     private sealed class ProductSkuLookupFake(ProductSkuOwner? owner) : IProductSkuLookup
     {
         public int FindCalls { get; private set; }
