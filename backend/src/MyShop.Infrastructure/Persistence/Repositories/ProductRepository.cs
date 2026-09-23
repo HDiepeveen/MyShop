@@ -98,6 +98,8 @@ internal sealed class ProductRepository : IProductRepository, IProductDeleter
         .Include(product => product.Variants)
             .ThenInclude(variant => variant.AttributeValues)
                 .ThenInclude(value => value.MultiChoiceValues)
+        .Include(product => product.Variants)
+            .ThenInclude(variant => variant.PriceRules)
         .Include(product => product.Categories)
         .Include(product => product.AttributeValues)
             .ThenInclude(value => value.MultiChoiceValues);

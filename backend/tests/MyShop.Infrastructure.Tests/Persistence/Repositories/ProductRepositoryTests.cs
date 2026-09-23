@@ -152,6 +152,62 @@ public sealed class ProductRepositoryTests
         Assert.Contains("FROM [Products]", query.ToQueryString());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CompleteGraph_LoadsVariantPriceRulesInTrackedAndUntrackedQueries(bool noTracking)
+    {
+        using var context = CreateContext(new SavingGraphInterceptor());
+        var query = ProductRepository.CompleteGraph(context.Products);
+        if (noTracking)
+            query = query.AsNoTracking();
+
+        // A single query exposes all included tables without executing a database command.
+        // Production keeps its split-query strategy.
+        var sql = query.AsSingleQuery().ToQueryString();
+
+        Assert.Contains("[PriceRules]", sql);
+        Assert.Contains("[ProductVariantId]", sql);
+        Assert.Contains("[AdjustmentType]", sql);
+        Assert.Contains("[StartsAt]", sql);
+        Assert.Contains("[EndsAt]", sql);
+    }
+
+    [Fact]
+    public async Task SaveTrackedAsync_PreservesRetainedPriceRuleAndDeletesRemovedRule()
+    {
+        var capture = new SavingGraphInterceptor();
+        await using var context = CreateContext(capture);
+        var repository = new ProductRepository(context);
+        var product = CompleteProduct();
+        var variant = product.Variants.First();
+        product.SetVariantPrice(variant.Id, Money.Create(100m, "EUR"));
+        var retained = PriceRule.Create("Retained", PriceAdjustmentType.PercentageDiscount, 10m, 1);
+        var removed = PriceRule.Create("Removed", PriceAdjustmentType.PercentageDiscount, 20m, 2);
+        product.AddVariantPriceRule(variant.Id, retained);
+        product.AddVariantPriceRule(variant.Id, removed);
+        var revision = Guid.NewGuid();
+        var persistence = Persisted(product, revision);
+        context.Attach(persistence);
+        var persistedVariant = persistence.Variants.Single(row => row.Id == variant.Id.Value);
+        var retainedRow = persistedVariant.PriceRules.Single(row => row.Id == retained.Id);
+        var removedRow = persistedVariant.PriceRules.Single(row => row.Id == removed.Id);
+        var snapshot = MyShop.Infrastructure.Persistence.Mappers.ProductPersistenceMapper.ToSnapshot(persistence);
+        var rehydratedVariant = snapshot.Product.Variants.Single(row => row.Id == variant.Id);
+        Assert.Equal(2, rehydratedVariant.PriceRules.Count);
+        snapshot.Product.RemoveVariantPriceRule(variant.Id, removed.Id);
+        snapshot.Product.SetVariantPrice(variant.Id, Money.Create(200m, "EUR"));
+
+        await repository.SaveTrackedAsync(snapshot.Product, snapshot.ConcurrencyToken, persistence, CancellationToken.None);
+
+        Assert.Same(retainedRow, Assert.Single(persistedVariant.PriceRules));
+        Assert.Equal(EntityState.Unchanged, context.Entry(retainedRow).State);
+        Assert.Equal(EntityState.Deleted, context.Entry(removedRow).State);
+        Assert.Equal(200m, persistedVariant.PriceAmount);
+        Assert.Equal("EUR", persistedVariant.PriceCurrency);
+        Assert.Equal(Money.Create(180m, "EUR"), rehydratedVariant.CalculatePrice(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)));
+    }
+
     private static MyShopDbContext CreateContext(SaveChangesInterceptor interceptor)
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()
