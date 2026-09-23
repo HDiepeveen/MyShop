@@ -45,7 +45,7 @@ public sealed class CatalogEndpointHandlerContractTests
 
     [Fact]
     public void CatalogEndpointHandlerInventory_ContainsExpectedNumberOfEndpoints() =>
-        Assert.Equal(33, EndpointTypes.Length);
+        Assert.Equal(36, EndpointTypes.Length);
 
     [Fact]
     public void CatalogEndpointHandlerInventory_ContainsOnlyPublicStaticClasses() =>

@@ -10,21 +10,27 @@ public sealed record SetProductVariantPriceResult(SetProductVariantPriceFailure?
     public bool IsSuccess => Failure is null;
 }
 
-public sealed class SetProductVariantPrice(IProductRepository products)
+public sealed class SetProductVariantPrice
 {
+    private readonly IProductRepository _products;
+
+    public SetProductVariantPrice(IProductRepository products) =>
+        _products = products ?? throw new ArgumentNullException(nameof(products));
+
     public async Task<SetProductVariantPriceResult> ExecuteAsync(SetProductVariantPriceCommand command, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(command);
         cancellationToken.ThrowIfCancellationRequested();
         if (command.ProductId == default) throw new ArgumentException("Product ID must not be empty.", nameof(command.ProductId));
         if (command.ProductVariantId == default) throw new ArgumentException("Product variant ID must not be empty.", nameof(command.ProductVariantId));
-        var snapshot = await products.GetByIdAsync(command.ProductId, cancellationToken);
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
         if (snapshot is null) return new(SetProductVariantPriceFailure.ProductNotFound);
-        if (!snapshot.Product.Variants.Any(variant => variant.Id == command.ProductVariantId)) return new(SetProductVariantPriceFailure.VariantNotFound);
+        var variant = snapshot.Product.Variants.SingleOrDefault(candidate => candidate.Id == command.ProductVariantId);
+        if (variant is null) return new(SetProductVariantPriceFailure.VariantNotFound);
         var price = Money.Create(command.Amount, command.Currency);
-        if (snapshot.Product.Variants.Single(variant => variant.Id == command.ProductVariantId).Price == price) return new(null);
+        if (variant.Price == price) return new(null);
         snapshot.Product.SetVariantPrice(command.ProductVariantId, price);
-        await products.SaveAsync(snapshot.Product, snapshot.ConcurrencyToken, cancellationToken);
+        await _products.SaveAsync(snapshot.Product, snapshot.ConcurrencyToken, cancellationToken);
         return new(null);
     }
 }

@@ -62,6 +62,8 @@ public sealed class ProductVariant
             throw new ArgumentException("Product variant ID must not be empty.", nameof(id));
 
         var validatedName = ValidateName(name);
+        if (price is { } suppliedPrice && suppliedPrice == default)
+            throw new ArgumentException("Price must be specified.", nameof(price));
         var rules = (priceRules ?? []).ToList();
         if (rules.Any(rule => rule is null)) throw new InvalidOperationException("A variant cannot contain null price rules.");
         if (rules.GroupBy(rule => rule.Id).Any(group => group.Count() > 1)) throw new InvalidOperationException("A variant cannot contain duplicate price rules.");
@@ -78,7 +80,12 @@ public sealed class ProductVariant
 
     internal void ClearSku() => Sku = null;
 
-    internal void SetPrice(Money price) => Price = price;
+    internal void SetPrice(Money price)
+    {
+        if (price == default)
+            throw new ArgumentException("Price must be specified.", nameof(price));
+        Price = price;
+    }
 
     internal void ClearPrice() => Price = null;
 

@@ -19,11 +19,15 @@ public sealed class PriceRule
         DateTimeOffset? startsAt = null, DateTimeOffset? endsAt = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        var normalizedName = name.Trim();
+        if (normalizedName.Length > 200)
+            throw new ArgumentException("Price rule name must not exceed 200 characters.", nameof(name));
         if (!Enum.IsDefined(adjustmentType)) throw new ArgumentOutOfRangeException(nameof(adjustmentType));
-        if (value <= 0) throw new ArgumentOutOfRangeException(nameof(value));
+        var roundedValue = decimal.Round(value, 2, MidpointRounding.ToEven);
+        if (roundedValue <= 0 || roundedValue > 9999999999999999.99m) throw new ArgumentOutOfRangeException(nameof(value));
         if (adjustmentType == PriceAdjustmentType.PercentageDiscount && value > 100) throw new ArgumentOutOfRangeException(nameof(value));
         if (startsAt is not null && endsAt is not null && endsAt < startsAt) throw new ArgumentException("End must not precede start.", nameof(endsAt));
-        return new PriceRule(Guid.NewGuid(), name.Trim(), adjustmentType, decimal.Round(value, 2), priority, startsAt, endsAt);
+        return new PriceRule(Guid.NewGuid(), normalizedName, adjustmentType, roundedValue, priority, startsAt, endsAt);
     }
 
     internal static PriceRule Rehydrate(Guid id, string name, PriceAdjustmentType adjustmentType, decimal value, int priority,

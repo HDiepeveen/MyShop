@@ -34,11 +34,21 @@ internal static class ProductPersistenceSynchronizer
             persistence.Id,
             "variant IDs");
         ValidateUniqueOrdinals(variants, variant => variant.Ordinal, persistence.Id, "variant ordinals");
+        var priceRuleIds = new HashSet<Guid>();
         foreach (var variant in variants)
         {
             if (variant.ProductId != persistence.Id)
                 throw InvalidStructure(persistence.Id,
                     $"Variant '{variant.Id}' belongs to Product '{variant.ProductId}'.");
+
+            var rules = ValidateCollection(variant.PriceRules, persistence.Id, "variant price rules");
+            foreach (var rule in rules)
+            {
+                if (rule.Id == Guid.Empty || !priceRuleIds.Add(rule.Id))
+                    throw InvalidStructure(persistence.Id, "Price rule IDs must be non-empty and unique across variants.");
+                if (rule.ProductVariantId != variant.Id)
+                    throw InvalidStructure(persistence.Id, $"Price rule '{rule.Id}' belongs to another variant.");
+            }
 
             ValidateVariantAttributeValues(variant, persistence.Id);
         }

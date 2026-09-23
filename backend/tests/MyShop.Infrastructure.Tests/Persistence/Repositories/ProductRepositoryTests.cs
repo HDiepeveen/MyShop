@@ -208,6 +208,44 @@ public sealed class ProductRepositoryTests
         Assert.Equal(Money.Create(180m, "EUR"), rehydratedVariant.CalculatePrice(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)));
     }
 
+    [Fact]
+    public async Task SaveTrackedAsync_AddsPriceRuleAndClearsBasePriceWithoutReplacingRetainedRule()
+    {
+        await using var context = CreateContext(new SavingGraphInterceptor());
+        var product = CompleteProduct();
+        var variant = product.Variants.First();
+        product.SetVariantPrice(variant.Id, Money.Create(20m, "EUR"));
+        var retained = PriceRule.Create("Existing", PriceAdjustmentType.FixedDiscount, 1m, 0);
+        product.AddVariantPriceRule(variant.Id, retained);
+        var persistence = Persisted(product, Guid.NewGuid());
+        context.Attach(persistence);
+        var row = persistence.Variants.Single(candidate => candidate.Id == variant.Id.Value);
+        var retainedRow = Assert.Single(row.PriceRules);
+        var snapshot = MyShop.Infrastructure.Persistence.Mappers.ProductPersistenceMapper.ToSnapshot(persistence);
+        var added = PriceRule.Create("New", PriceAdjustmentType.PercentageDiscount, 25m, 5,
+            new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        snapshot.Product.AddVariantPriceRule(variant.Id, added);
+        snapshot.Product.ClearVariantPrice(variant.Id);
+
+        await new ProductRepository(context).SaveTrackedAsync(
+            snapshot.Product, snapshot.ConcurrencyToken, persistence, CancellationToken.None);
+
+        Assert.Null(row.PriceAmount);
+        Assert.Null(row.PriceCurrency);
+        Assert.Equal(2, row.PriceRules.Count);
+        Assert.Same(retainedRow, row.PriceRules.Single(rule => rule.Id == retained.Id));
+        Assert.Equal(EntityState.Unchanged, context.Entry(retainedRow).State);
+        var addedRow = row.PriceRules.Single(rule => rule.Id == added.Id);
+        Assert.Equal(EntityState.Added, context.Entry(addedRow).State);
+        Assert.Equal(row.Id, addedRow.ProductVariantId);
+        Assert.Same(row, addedRow.ProductVariant);
+        Assert.Equal("New", addedRow.Name);
+        Assert.Equal(25m, addedRow.Value);
+        Assert.Equal(5, addedRow.Priority);
+        Assert.Equal(added.StartsAt, addedRow.StartsAt);
+        Assert.Equal((int)PriceAdjustmentType.PercentageDiscount, addedRow.AdjustmentType);
+    }
+
     private static MyShopDbContext CreateContext(SaveChangesInterceptor interceptor)
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()

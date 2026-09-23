@@ -18,4 +18,34 @@ public sealed class MoneyTests
         product.ClearVariantPrice(variant.Id);
         Assert.Null(variant.Price);
     }
+    [Fact]
+    public void SetVariantPrice_RejectsDefaultWithoutChangingExistingPrice()
+    {
+        var product = Product.Create("Demo", ProductTypeId.New(), "Default");
+        var variant = Assert.Single(product.Variants);
+        product.SetVariantPrice(variant.Id, Money.Create(25m, "EUR"));
+        Assert.Throws<ArgumentException>(() => product.SetVariantPrice(variant.Id, default));
+        Assert.Equal(Money.Create(25m, "EUR"), variant.Price);
+    }
+
+    [Fact]
+    public void Rehydrate_RejectsPresentDefaultPrice() =>
+        Assert.Throws<ArgumentException>(() => ProductVariant.Rehydrate(
+            ProductVariantId.New(), "Default", null, [], default(Money)));
+
+    [Fact]
+    public void Rehydrate_AllowsAbsentAndZeroPrices()
+    {
+        Assert.Null(ProductVariant.Rehydrate(ProductVariantId.New(), "Default", null, []).Price);
+        Assert.Equal(Money.Create(0m, "EUR"), ProductVariant.Rehydrate(
+            ProductVariantId.New(), "Default", null, [], Money.Create(0m, "EUR")).Price);
+    }
+    [Fact]
+    public void Create_RejectsAmountBeyondSupportedPrecision() =>
+        Assert.Throws<ArgumentOutOfRangeException>(() => Money.Create(10000000000000000m, "EUR"));
+
+    [Fact]
+    public void Create_AllowsLargestSupportedAmount() =>
+        Assert.Equal(9999999999999999.99m, Money.Create(9999999999999999.99m, "EUR").Amount);
+
 }

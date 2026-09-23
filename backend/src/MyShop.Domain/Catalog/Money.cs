@@ -7,11 +7,12 @@ public readonly record struct Money
     public string Currency { get; }
     public static Money Create(decimal amount, string currency)
     {
-        if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
+        var roundedAmount = decimal.Round(amount, 2, MidpointRounding.ToEven);
+        if (amount < 0 || roundedAmount > 9999999999999999.99m) throw new ArgumentOutOfRangeException(nameof(amount));
         ArgumentException.ThrowIfNullOrWhiteSpace(currency);
         var normalized = currency.Trim().ToUpperInvariant();
         if (normalized.Length != 3 || normalized.Any(c => c is < 'A' or > 'Z'))
             throw new ArgumentException("Currency must be a three-letter ISO code.", nameof(currency));
-        return new Money(decimal.Round(amount, 2, MidpointRounding.ToEven), normalized);
+        return new Money(roundedAmount, normalized);
     }
 }

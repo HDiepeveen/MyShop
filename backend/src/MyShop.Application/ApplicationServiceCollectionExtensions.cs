@@ -1,8 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using MyShop.Application.Catalog.AddProductVariant;
+using MyShop.Application.Catalog.AddProductVariantPriceRule;
 using MyShop.Application.Catalog.AddProductTypeAttribute;
 using MyShop.Application.Catalog.AssignProductToCategory;
 using MyShop.Application.Catalog.ClearProductVariantSku;
+using MyShop.Application.Catalog.ClearProductVariantPrice;
 using MyShop.Application.Catalog.CreateProduct;
 using MyShop.Application.Catalog.CreateCategory;
 using MyShop.Application.Catalog.CreateProductType;
@@ -22,6 +24,7 @@ using MyShop.Application.Catalog.RemoveProductAttributeValue;
 using MyShop.Application.Catalog.RemoveProductTypeAttribute;
 using MyShop.Application.Catalog.RemoveProductFromCategory;
 using MyShop.Application.Catalog.RemoveProductVariant;
+using MyShop.Application.Catalog.RemoveProductVariantPriceRule;
 using MyShop.Application.Catalog.RemoveVariantAttributeValue;
 using MyShop.Application.Catalog.RenameProduct;
 using MyShop.Application.Catalog.RenameCategory;
@@ -42,9 +45,11 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddScoped<AddProductVariant>();
+        services.AddScoped<AddProductVariantPriceRule>();
         services.AddScoped<AddProductTypeAttribute>();
         services.AddScoped<AssignProductToCategory>();
         services.AddScoped<ClearProductVariantSku>();
+        services.AddScoped<ClearProductVariantPrice>();
         services.AddScoped<CreateProduct>();
         services.AddScoped<CreateCategory>();
         services.AddScoped<CreateProductType>();
@@ -64,6 +69,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<RemoveProductTypeAttribute>();
         services.AddScoped<RemoveProductFromCategory>();
         services.AddScoped<RemoveProductVariant>();
+        services.AddScoped<RemoveProductVariantPriceRule>();
         services.AddScoped<RemoveVariantAttributeValue>();
         services.AddScoped<RenameProduct>();
         services.AddScoped<RenameCategory>();

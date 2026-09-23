@@ -5,80 +5,55 @@ using Microsoft.AspNetCore.Routing;
 using MyShop.Api.Catalog.Products;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
-using UseCase = MyShop.Application.Catalog.SetProductVariantPrice.SetProductVariantPrice;
+using UseCase = MyShop.Application.Catalog.AddProductVariantPriceRule.AddProductVariantPriceRule;
 
 namespace MyShop.Api.Tests.Catalog.Products;
 
-public sealed class SetProductVariantPriceEndpointTests
+public sealed class AddProductVariantPriceRuleEndpointTests
 {
     [Fact]
-    public void MapSetProductVariantPrice_NullBuilder_Throws() =>
-        Assert.Throws<ArgumentNullException>(() => SetProductVariantPriceEndpoint.MapSetProductVariantPrice(null!));
+    public void MapAddProductVariantPriceRule_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => AddProductVariantPriceRuleEndpoint.MapAddProductVariantPriceRule(null!));
 
     [Fact]
-    public void MapSetProductVariantPrice_MapsNamedPutRouteAndReturnsSameBuilder()
+    public void MapAddProductVariantPriceRule_MapsNamedPostRouteAndReturnsSameBuilder()
     {
         var builder = WebApplication.CreateBuilder();
         var app = builder.Build();
 
-        var returned = app.MapSetProductVariantPrice();
+        var returned = app.MapAddProductVariantPriceRule();
 
         Assert.Same(app, returned);
         var routes = (IEndpointRouteBuilder)app;
         var endpoint = Assert.IsType<RouteEndpoint>(Assert.Single(routes.DataSources).Endpoints.Single());
         Assert.Equal(
-            "/api/products/{productId:guid}/variants/{variantId:guid}/price",
+            "/api/products/{productId:guid}/variants/{variantId:guid}/price-rules",
             endpoint.RoutePattern.RawText);
-        Assert.Equal("SetProductVariantPrice", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
-        Assert.Equal(["PUT"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
+        Assert.Equal("AddProductVariantPriceRule", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
+        Assert.Equal(["POST"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
     }
 
     [Fact]
-    public async Task ExecuteAsync_SetsNormalizedPriceAndReturnsNoContent()
+    public async Task ExecuteAsync_AddsRuleAndReturnsCreatedWithIdentity()
     {
         var scenario = new Scenario();
 
-        var result = await SetProductVariantPriceEndpoint.ExecuteAsync(
+        var result = await AddProductVariantPriceRuleEndpoint.ExecuteAsync(
             scenario.Product.Id.Value,
             scenario.Variant.Id.Value,
-            new SetProductVariantPriceRequest(12.345m, " eur "),
+            new AddProductVariantPriceRuleRequest(" Sale ", 1, 10m, 5),
             scenario.UseCase,
             CancellationToken.None);
 
-        Assert.IsType<NoContent>(result.Result);
-        Assert.Equal(Money.Create(12.34m, "EUR"), scenario.Variant.Price);
+        var created = Assert.IsType<Created<AddProductVariantPriceRuleResponse>>(result.Result);
+        var rule = Assert.Single(scenario.Variant.PriceRules);
+        Assert.Equal(rule.Id, created.Value!.Id);
+        Assert.Equal("Sale", rule.Name);
+        Assert.Equal(10m, rule.Value);
+        Assert.Equal(5, rule.Priority);
+        Assert.Equal(PriceAdjustmentType.PercentageDiscount, rule.AdjustmentType);
+        Assert.Equal($"/api/products/{scenario.Product.Id.Value}/variants/{scenario.Variant.Id.Value}/price-rules/{rule.Id}", created.Location);
         Assert.Equal(1, scenario.Products.SaveCalls);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_WhenNormalizedPriceIsUnchanged_DoesNotSave()
-    {
-        var scenario = new Scenario();
-        scenario.Product.SetVariantPrice(scenario.Variant.Id, Money.Create(12.34m, "EUR"));
-
-        var result = await SetProductVariantPriceEndpoint.ExecuteAsync(
-            scenario.Product.Id.Value, scenario.Variant.Id.Value,
-            new(12.345m, " eur "), scenario.UseCase, CancellationToken.None);
-
-        Assert.IsType<NoContent>(result.Result);
-        Assert.Equal(0, scenario.Products.SaveCalls);
-    }
-
-    [Fact]
-    public async Task ExecuteAsync_AllowsZeroPriceAndForwardsTokenToReadAndSave()
-    {
-        var scenario = new Scenario();
-        using var source = new CancellationTokenSource();
-
-        var result = await SetProductVariantPriceEndpoint.ExecuteAsync(
-            scenario.Product.Id.Value, scenario.Variant.Id.Value,
-            new(0m, "EUR"), scenario.UseCase, source.Token);
-
-        Assert.IsType<NoContent>(result.Result);
-        Assert.Equal(Money.Create(0m, "EUR"), scenario.Variant.Price);
-        Assert.Equal(1, scenario.Products.SaveCalls);
-        Assert.Equal(source.Token, scenario.Products.ReadCancellationToken);
-        Assert.Equal(source.Token, scenario.Products.SaveCancellationToken);
     }
 
     [Theory]
@@ -90,10 +65,10 @@ public sealed class SetProductVariantPriceEndpointTests
         var scenario = new Scenario { ProductIsMissing = productIsMissing };
         var variantId = productIsMissing ? scenario.Variant.Id : ProductVariantId.New();
 
-        var result = await SetProductVariantPriceEndpoint.ExecuteAsync(
+        var result = await AddProductVariantPriceRuleEndpoint.ExecuteAsync(
             scenario.Product.Id.Value,
             variantId.Value,
-            new SetProductVariantPriceRequest(12.34m, "EUR"),
+            new AddProductVariantPriceRuleRequest("Sale", 1, 10m, 5),
             scenario.UseCase,
             CancellationToken.None);
 
@@ -105,30 +80,36 @@ public sealed class SetProductVariantPriceEndpointTests
     }
 
     [Theory]
-    [InlineData(true, false, 10, "EUR")]
-    [InlineData(false, true, 10, "EUR")]
-    [InlineData(false, false, -1, "EUR")]
-    [InlineData(false, false, 10, null)]
-    [InlineData(false, false, 10, "")]
-    [InlineData(false, false, 10, "EURO")]
-    [InlineData(false, false, 10, "E1R")]
-    public async Task ExecuteAsync_WhenRequestIsInvalid_ReturnsBadRequest(
-        bool emptyProductId,
-        bool emptyVariantId,
-        int amount,
-        string? currency)
+    [InlineData("product")]
+    [InlineData("variant")]
+    [InlineData("name")]
+    [InlineData("type")]
+    [InlineData("value")]
+    [InlineData("period")]
+    [InlineData("long name")]
+    [InlineData("large value")]
+    public async Task ExecuteAsync_InvalidRequestReturnsBadRequestWithoutSave(string invalidField)
     {
         var scenario = new Scenario();
-
-        var result = await SetProductVariantPriceEndpoint.ExecuteAsync(
-            emptyProductId ? Guid.Empty : scenario.Product.Id.Value,
-            emptyVariantId ? Guid.Empty : scenario.Variant.Id.Value,
-            new SetProductVariantPriceRequest(amount, currency!),
-            scenario.UseCase,
-            CancellationToken.None);
-
-        var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
-        Assert.Equal("Invalid product variant price", badRequest.Value!.Title);
+        var at = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var request = new AddProductVariantPriceRuleRequest("Sale", 1, 10m, 5);
+        request = invalidField switch
+        {
+            "long name" => request with { Name = new string('x', 201) },
+            "large value" => request with { AdjustmentType = 2, Value = 10000000000000000m },
+            "name" => request with { Name = " " },
+            "type" => request with { AdjustmentType = 99 },
+            "value" => request with { Value = 101m },
+            "period" => request with { StartsAt = at, EndsAt = at.AddDays(-1) },
+            _ => request
+        };
+        var result = await AddProductVariantPriceRuleEndpoint.ExecuteAsync(
+            invalidField == "product" ? Guid.Empty : scenario.Product.Id.Value,
+            invalidField == "variant" ? Guid.Empty : scenario.Variant.Id.Value,
+            request, scenario.UseCase, CancellationToken.None);
+        Assert.Equal("Invalid product variant price rule",
+            Assert.IsType<BadRequest<ProblemDetails>>(result.Result).Value!.Title);
+        Assert.Empty(scenario.Variant.PriceRules);
         Assert.Equal(0, scenario.Products.SaveCalls);
     }
 
@@ -137,10 +118,10 @@ public sealed class SetProductVariantPriceEndpointTests
     {
         var scenario = new Scenario { HasConcurrencyConflict = true };
 
-        var result = await SetProductVariantPriceEndpoint.ExecuteAsync(
+        var result = await AddProductVariantPriceRuleEndpoint.ExecuteAsync(
             scenario.Product.Id.Value,
             scenario.Variant.Id.Value,
-            new SetProductVariantPriceRequest(12.34m, "EUR"),
+            new AddProductVariantPriceRuleRequest("Sale", 1, 10m, 5),
             scenario.UseCase,
             CancellationToken.None);
 
@@ -157,10 +138,10 @@ public sealed class SetProductVariantPriceEndpointTests
         source.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            SetProductVariantPriceEndpoint.ExecuteAsync(
+            AddProductVariantPriceRuleEndpoint.ExecuteAsync(
                 scenario.Product.Id.Value,
                 scenario.Variant.Id.Value,
-                new SetProductVariantPriceRequest(12.34m, "EUR"),
+                new AddProductVariantPriceRuleRequest("Sale", 1, 10m, 5),
                 scenario.UseCase,
                 source.Token));
 
@@ -169,25 +150,13 @@ public sealed class SetProductVariantPriceEndpointTests
 
     [Fact]
     public async Task ExecuteAsync_NullRequest_Throws() =>
-        await Assert.ThrowsAsync<ArgumentNullException>(() => SetProductVariantPriceEndpoint.ExecuteAsync(
+        await Assert.ThrowsAsync<ArgumentNullException>(() => AddProductVariantPriceRuleEndpoint.ExecuteAsync(
             Guid.NewGuid(), Guid.NewGuid(), null!, null!, CancellationToken.None));
 
     [Fact]
     public async Task ExecuteAsync_NullUseCase_Throws() =>
-        await Assert.ThrowsAsync<ArgumentNullException>(() => SetProductVariantPriceEndpoint.ExecuteAsync(
-            Guid.NewGuid(), Guid.NewGuid(), new(12.34m, "EUR"), null!, CancellationToken.None));
-
-    [Fact]
-    public async Task ExecuteAsync_AmountBeyondSupportedPrecisionReturnsBadRequest()
-    {
-        var scenario = new Scenario();
-        var result = await SetProductVariantPriceEndpoint.ExecuteAsync(
-            scenario.Product.Id.Value, scenario.Variant.Id.Value,
-            new(10000000000000000m, "EUR"), scenario.UseCase, CancellationToken.None);
-        Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
-        Assert.Null(scenario.Variant.Price);
-        Assert.Equal(0, scenario.Products.SaveCalls);
-    }
+        await Assert.ThrowsAsync<ArgumentNullException>(() => AddProductVariantPriceRuleEndpoint.ExecuteAsync(
+            Guid.NewGuid(), Guid.NewGuid(), new("Sale", 1, 10m, 5), null!, CancellationToken.None));
 
     private sealed class Scenario
     {
