@@ -23,6 +23,8 @@ internal sealed class ProductTypeManagementScenario : IAsyncDisposable
         builder.Services.AddScoped<MyShop.Application.Catalog.RenameProductTypeAttribute.RenameProductTypeAttribute>();
         builder.Services.AddScoped<MyShop.Application.Catalog.ConfigureProductTypeAttribute.ConfigureProductTypeAttribute>();
         builder.Services.AddScoped<MyShop.Application.Catalog.RemoveProductTypeAttribute.RemoveProductTypeAttribute>();
+        builder.Services.AddScoped<MyShop.Application.Catalog.GetProductTypeAttribute.GetProductTypeAttribute>();
+        builder.Services.AddScoped<MyShop.Application.Catalog.GetProductTypeUsage.GetProductTypeUsage>();
         var app = builder.Build();
         app.MapCreateProductType();
         app.MapGetProductType();
@@ -32,6 +34,8 @@ internal sealed class ProductTypeManagementScenario : IAsyncDisposable
         app.MapRenameProductTypeAttribute();
         app.MapConfigureProductTypeAttribute();
         app.MapRemoveProductTypeAttribute();
+        app.MapGetProductTypeAttribute();
+        app.MapGetProductTypeUsage();
         Http = new CatalogManagementHttp(app);
     }
 

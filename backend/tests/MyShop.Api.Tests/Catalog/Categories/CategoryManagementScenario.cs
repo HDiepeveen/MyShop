@@ -20,12 +20,14 @@ internal sealed class CategoryManagementScenario : IAsyncDisposable
         builder.Services.AddScoped<MyShop.Application.Catalog.RenameCategory.RenameCategory>();
         builder.Services.AddScoped<MyShop.Application.Catalog.MoveCategory.MoveCategory>();
         builder.Services.AddScoped<MyShop.Application.Catalog.DeleteCategory.DeleteCategory>();
+        builder.Services.AddScoped<MyShop.Application.Catalog.GetCategoryUsage.GetCategoryUsage>();
         var app = builder.Build();
         app.MapCreateCategory();
         app.MapGetCategory();
         app.MapRenameCategory();
         app.MapMoveCategory();
         app.MapDeleteCategory();
+        app.MapGetCategoryUsage();
         Http = new CatalogManagementHttp(app);
     }
 

@@ -29,3 +29,5 @@ recorded in `.nvmrc` for Node version managers that support it.
 - `backend/tests/`: Automated backend tests
 
 The backend contains catalog management, product variants, attributes, pricing, and persistence tests. See [Catalog browsing API](docs/catalog-browsing.md) for list endpoints, paging, filters, and response examples.
+
+See [Catalog management queries](docs/catalog-management-queries.md) for individual attribute definitions and category/product type usage counts.

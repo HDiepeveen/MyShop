@@ -35,6 +35,9 @@ using MyShop.Application.Catalog.SetProductAttributeValue;
 using MyShop.Application.Catalog.SetProductVariantSku;
 using MyShop.Application.Catalog.SetProductVariantPrice;
 using MyShop.Application.Catalog.SetVariantAttributeValue;
+using MyShop.Application.Catalog.GetProductTypeUsage;
+using MyShop.Application.Catalog.GetCategoryUsage;
+using MyShop.Application.Catalog.GetProductTypeAttribute;
 using MyShop.Application.Catalog.GetVariantAttributeValue;
 using MyShop.Application.Catalog.GetProductAttributeValue;
 using MyShop.Application.Catalog.GetProductVariant;
@@ -95,6 +98,10 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<GetProductVariant>();
         services.AddScoped<GetProductAttributeValue>();
         services.AddScoped<GetVariantAttributeValue>();
+
+        services.AddScoped<GetProductTypeAttribute>();
+        services.AddScoped<GetCategoryUsage>();
+        services.AddScoped<GetProductTypeUsage>();
 
         return services;
     }
