@@ -41,6 +41,7 @@ public sealed class CatalogEndpointContractTests
         new("RenameProductTypeAttribute", "PATCH", "/api/product-types/{productTypeId:guid}/attributes/{attributeId:guid}/name"),
         new("RenameProductVariant", "PATCH", "/api/products/{productId:guid}/variants/{variantId:guid}/name"),
         new("SetProductAttributeValue", "PUT", "/api/products/{productId:guid}/attributes/{attributeDefinitionId:guid}"),
+        new("SetProductVariantPrice", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/price"),
         new("SetProductVariantSku", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/sku"),
         new("SetVariantAttributeValue", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/attributes/{attributeDefinitionId:guid}")
     ];
@@ -164,6 +165,7 @@ public sealed class CatalogEndpointContractTests
         endpoints.MapAddProductTypeAttribute();
         endpoints.MapRenameProductVariant();
         endpoints.MapSetProductVariantSku();
+        endpoints.MapSetProductVariantPrice();
         endpoints.MapRemoveProductVariant();
         endpoints.MapAssignProductToCategory();
         endpoints.MapRemoveProductFromCategory();

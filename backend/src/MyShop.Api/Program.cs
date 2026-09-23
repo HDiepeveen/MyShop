@@ -33,6 +33,7 @@ app.MapAddProductVariant();
 app.MapAddProductTypeAttribute();
 app.MapRenameProductVariant();
 app.MapSetProductVariantSku();
+app.MapSetProductVariantPrice();
 app.MapRemoveProductVariant();
 app.MapAssignProductToCategory();
 app.MapRemoveProductFromCategory();

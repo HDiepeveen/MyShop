@@ -86,7 +86,7 @@ public sealed class CatalogRequestContractTests
 
     [Fact]
     public void CatalogRequestInventory_ContainsExpectedNumberOfRequests() =>
-        Assert.Equal(14, RequestTypes.Length);
+        Assert.Equal(15, RequestTypes.Length);
 
     [Fact]
     public void CatalogRequestInventory_HasUniqueTypeNames() =>
