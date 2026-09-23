@@ -74,7 +74,7 @@ public sealed class CatalogResponseContractTests
 
     [Fact]
     public void CatalogResponseInventory_ContainsExpectedNumberOfResponses() =>
-        Assert.Equal(22, ResponseTypes.Length);
+        Assert.Equal(23, ResponseTypes.Length);
 
     [Fact]
     public void CatalogResponseInventory_HasUniqueTypeNames() =>

@@ -51,8 +51,8 @@ public sealed class SetProductAttributeValue
             return SetProductAttributeValueResult.Failed(SetProductAttributeValueFailure.WrongAttributeDataType);
 
         var value = CatalogAttributeValueFactory.Create(command.AttributeDefinitionId, command.Value);
-        product.SetAttributeValue(value);
-        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
+        if (product.SetAttributeValue(value))
+            await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return SetProductAttributeValueResult.Succeeded;
     }

@@ -59,7 +59,7 @@ public sealed class CatalogFailureContractTests
 
     [Fact]
     public void CatalogFailureInventory_ContainsExpectedNumberOfFailureTypes() =>
-        Assert.Equal(25, FailureTypes.Length);
+        Assert.Equal(27, FailureTypes.Length);
 
     [Fact]
     public void CatalogFailureInventory_DoesNotUseFlagsEnums() =>

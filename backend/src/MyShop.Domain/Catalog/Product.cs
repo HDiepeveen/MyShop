@@ -158,10 +158,10 @@ public sealed class Product
 
     public void RemoveVariantPriceRule(ProductVariantId variantId, Guid ruleId) => FindVariant(variantId).RemovePriceRule(ruleId);
 
-    public void SetAttributeValue(AttributeValue value)
+    public bool SetAttributeValue(AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        SetAttributeValue(_attributeValues, value);
+        return SetAttributeValue(_attributeValues, value);
     }
 
     public void RemoveAttributeValue(AttributeDefinitionId attributeDefinitionId) =>
@@ -184,10 +184,10 @@ public sealed class Product
                 $"Category with ID '{categoryId}' is not assigned to this product.");
     }
 
-    public void SetVariantAttributeValue(ProductVariantId variantId, AttributeValue value)
+    public bool SetVariantAttributeValue(ProductVariantId variantId, AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);
-        FindVariant(variantId).SetAttributeValue(value);
+        return FindVariant(variantId).SetAttributeValue(value);
     }
 
     public void RemoveVariantAttributeValue(
@@ -209,15 +209,18 @@ public sealed class Product
         _variants.SingleOrDefault(variant => variant.Id == variantId)
         ?? throw new InvalidOperationException($"Variant with ID '{variantId}' does not belong to this product.");
 
-    private static void SetAttributeValue(List<AttributeValue> values, AttributeValue value)
+    private static bool SetAttributeValue(List<AttributeValue> values, AttributeValue value)
     {
         var existingIndex = values.FindIndex(existing =>
             existing.AttributeDefinitionId == value.AttributeDefinitionId);
 
+        if (existingIndex >= 0 && values[existingIndex] == value)
+            return false;
         if (existingIndex >= 0)
             values[existingIndex] = value;
         else
             values.Add(value);
+        return true;
     }
 
     private static void RemoveAttributeValue(

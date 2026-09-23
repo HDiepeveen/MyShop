@@ -56,6 +56,51 @@ public sealed class SetProductAttributeValueTests
         yield return [new MultiChoiceAttributeValueInput(["blue", "red"]), typeof(MultiChoiceAttributeValue)];
     }
 
+    [Theory]
+    [MemberData(nameof(ValidAssignments))]
+    public async Task ExecuteAsync_EqualValueDoesNotSaveOrReplaceExistingValue(
+        CatalogAttributeValueInput input, Type expectedValueType)
+    {
+        var scenario = CreateScenario(input.DataType);
+        var command = CreateCommand(scenario, input);
+        await scenario.UseCase.ExecuteAsync(command, CancellationToken.None);
+        var original = Assert.Single(scenario.Product.AttributeValues);
+
+        var result = await scenario.UseCase.ExecuteAsync(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.IsType(expectedValueType, original);
+        Assert.Same(original, Assert.Single(scenario.Product.AttributeValues));
+        Assert.Equal(1, scenario.Products.SaveCallCount);
+        Assert.Equal(2, scenario.ProductTypes.GetByIdCallCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MultiChoiceOrderChangeStillSaves()
+    {
+        var scenario = CreateScenario(AttributeDataType.MultiChoice);
+        await scenario.UseCase.ExecuteAsync(CreateCommand(scenario,
+            new MultiChoiceAttributeValueInput(["red", "blue"])), CancellationToken.None);
+        await scenario.UseCase.ExecuteAsync(CreateCommand(scenario,
+            new MultiChoiceAttributeValueInput(["blue", "red"])), CancellationToken.None);
+        Assert.Equal(2, scenario.Products.SaveCallCount);
+        Assert.Equal(new[] { "blue", "red" },
+            Assert.IsType<MultiChoiceAttributeValue>(Assert.Single(scenario.Product.AttributeValues)).Values.Select(value => value.Value));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_EqualStoredValueDoesNotBypassScopeValidation()
+    {
+        var scenario = CreateScenario(AttributeDataType.Text, AttributeScope.Variant);
+        var original = TextAttributeValue.Create(scenario.AttributeDefinitionId, "Red");
+        scenario.Product.SetAttributeValue(original);
+        var result = await scenario.UseCase.ExecuteAsync(CreateCommand(scenario,
+            new TextAttributeValueInput("Red")), CancellationToken.None);
+        Assert.Equal(SetProductAttributeValueFailure.WrongAttributeScope, result.Failure);
+        Assert.Same(original, Assert.Single(scenario.Product.AttributeValues));
+        Assert.Equal(0, scenario.Products.SaveCallCount);
+    }
+
     [Fact]
     public void MultiChoiceInput_DefensivelyCopiesSourceValues()
     {

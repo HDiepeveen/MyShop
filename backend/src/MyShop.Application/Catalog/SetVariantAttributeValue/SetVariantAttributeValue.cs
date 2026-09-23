@@ -56,8 +56,8 @@ public sealed class SetVariantAttributeValue
             return SetVariantAttributeValueResult.Failed(SetVariantAttributeValueFailure.WrongAttributeDataType);
 
         var value = CatalogAttributeValueFactory.Create(command.AttributeDefinitionId, command.Value);
-        product.SetVariantAttributeValue(command.ProductVariantId, value);
-        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
+        if (product.SetVariantAttributeValue(command.ProductVariantId, value))
+            await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
 
         return SetVariantAttributeValueResult.Succeeded;
     }

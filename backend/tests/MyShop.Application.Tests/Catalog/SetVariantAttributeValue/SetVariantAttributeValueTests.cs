@@ -8,6 +8,49 @@ namespace MyShop.Application.Tests.Catalog.SetVariantAttributeValue;
 
 public sealed class SetVariantAttributeValueTests
 {
+    public static IEnumerable<object[]> ValidAssignments()
+    {
+        yield return [new TextAttributeValueInput("A title"), typeof(TextAttributeValue)];
+        yield return [new IntegerAttributeValueInput(42), typeof(IntegerAttributeValue)];
+        yield return [new DecimalAttributeValueInput(19.95m), typeof(DecimalAttributeValue)];
+        yield return [new BooleanAttributeValueInput(true), typeof(BooleanAttributeValue)];
+        yield return [new DateAttributeValueInput(new DateOnly(2026, 8, 29)), typeof(DateAttributeValue)];
+        yield return [new ChoiceAttributeValueInput("blue"), typeof(ChoiceAttributeValue)];
+        yield return [new MultiChoiceAttributeValueInput(["blue", "red"]), typeof(MultiChoiceAttributeValue)];
+    }
+
+    [Theory]
+    [MemberData(nameof(ValidAssignments))]
+    public async Task ExecuteAsync_EqualValueDoesNotSaveOrReplaceExistingValue(
+        CatalogAttributeValueInput input, Type expectedValueType)
+    {
+        var scenario = new Scenario(input.DataType);
+        var command = scenario.Command(input);
+        await scenario.Handler.ExecuteAsync(command, CancellationToken.None);
+        var original = Assert.Single(scenario.Variant.AttributeValues);
+
+        var result = await scenario.Handler.ExecuteAsync(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.IsType(expectedValueType, original);
+        Assert.Same(original, Assert.Single(scenario.Variant.AttributeValues));
+        Assert.Equal(1, scenario.Products.SaveCalls);
+        Assert.Equal(2, scenario.ProductTypes.GetCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MultiChoiceOrderChangeStillSaves()
+    {
+        var scenario = new Scenario(AttributeDataType.MultiChoice);
+        await scenario.Handler.ExecuteAsync(scenario.Command(
+            new MultiChoiceAttributeValueInput(["red", "blue"])), CancellationToken.None);
+        await scenario.Handler.ExecuteAsync(scenario.Command(
+            new MultiChoiceAttributeValueInput(["blue", "red"])), CancellationToken.None);
+        Assert.Equal(2, scenario.Products.SaveCalls);
+        Assert.Equal(new[] { "blue", "red" },
+            Assert.IsType<MultiChoiceAttributeValue>(Assert.Single(scenario.Variant.AttributeValues)).Values.Select(value => value.Value));
+    }
+
     [Theory]
     [InlineData(true, false, false)]
     [InlineData(false, true, false)]

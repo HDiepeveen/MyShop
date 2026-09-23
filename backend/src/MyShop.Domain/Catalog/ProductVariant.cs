@@ -133,17 +133,20 @@ public sealed class ProductVariant
             .ThenBy(candidate => candidate.Id)
             .FirstOrDefault();
 
-    internal void SetAttributeValue(AttributeValue value)
+    internal bool SetAttributeValue(AttributeValue value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
         var existingIndex = _attributeValues.FindIndex(existing =>
             existing.AttributeDefinitionId == value.AttributeDefinitionId);
 
+        if (existingIndex >= 0 && _attributeValues[existingIndex] == value)
+            return false;
         if (existingIndex >= 0)
             _attributeValues[existingIndex] = value;
         else
             _attributeValues.Add(value);
+        return true;
     }
 
     internal void RemoveAttributeValue(AttributeDefinitionId attributeDefinitionId)
