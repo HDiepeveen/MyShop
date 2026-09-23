@@ -84,6 +84,9 @@ public sealed class Product
             .GroupBy(variant => variant.Sku)
             .Any(group => group.Count() > 1))
             throw new InvalidOperationException("A product cannot contain duplicate variant SKUs.");
+        if (variantList.SelectMany(variant => variant.PriceRules)
+            .GroupBy(rule => rule.Id).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate price rule identities.");
         if (categoryIdList.Any(categoryId => categoryId == default))
             throw new ArgumentException("Category ID must not be empty.", nameof(categoryIds));
         if (categoryIdList.Distinct().Count() != categoryIdList.Count)
@@ -139,7 +142,14 @@ public sealed class Product
 
     public void ClearVariantPrice(ProductVariantId variantId) => FindVariant(variantId).ClearPrice();
 
-    public void AddVariantPriceRule(ProductVariantId variantId, PriceRule rule) => FindVariant(variantId).AddPriceRule(rule);
+    public void AddVariantPriceRule(ProductVariantId variantId, PriceRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        var variant = FindVariant(variantId);
+        if (_variants.SelectMany(candidate => candidate.PriceRules).Any(existing => existing.Id == rule.Id))
+            throw new InvalidOperationException("This price rule is already assigned to a variant of this product.");
+        variant.AddPriceRule(rule);
+    }
 
     public bool UpdateVariantPriceRule(ProductVariantId variantId, Guid ruleId, string name,
         PriceAdjustmentType adjustmentType, decimal value, int priority,

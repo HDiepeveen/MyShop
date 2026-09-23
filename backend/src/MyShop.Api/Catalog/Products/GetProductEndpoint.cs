@@ -65,34 +65,10 @@ public static class GetProductEndpoint
             product.ProductTypeId.Value,
             product.Name,
             product.CategoryIds.Select(categoryId => categoryId.Value).ToArray(),
-            product.AttributeValues.Select(Map).ToArray(),
-            product.Variants.Select(variant => new ProductVariantResponse(
-                variant.Id.Value,
-                variant.Name,
-                variant.Sku?.Value,
-                variant.AttributeValues.Select(Map).ToArray(),
-                variant.Price is { } price ? new MoneyResponse(price.Amount, price.Currency) : null,
-                variant.PriceRules.OrderByDescending(rule => rule.Priority).ThenBy(rule => rule.Id)
-                    .Select(PriceRuleResponse.FromDomain).ToArray())).ToArray(),
+            product.AttributeValues.Select(AttributeValueResponse.FromDomain).ToArray(),
+            product.Variants.Select(ProductVariantResponse.FromDomain).ToArray(),
             snapshot.ConcurrencyToken.Revision);
     }
-
-    private static AttributeValueResponse Map(AttributeValue value) =>
-        new(
-            value.AttributeDefinitionId.Value,
-            value.DataType.ToString(),
-            value switch
-            {
-                TextAttributeValue text => text.Value,
-                IntegerAttributeValue integer => integer.Value,
-                DecimalAttributeValue decimalValue => decimalValue.Value,
-                BooleanAttributeValue boolean => boolean.Value,
-                DateAttributeValue date => date.Value,
-                ChoiceAttributeValue choice => choice.Value.Value,
-                MultiChoiceAttributeValue multiChoice =>
-                    multiChoice.Values.Select(choice => choice.Value).ToArray(),
-                _ => throw new ArgumentOutOfRangeException(nameof(value), "Attribute value type is not supported.")
-            });
 }
 
 public sealed record GetProductResponse(
@@ -110,11 +86,39 @@ public sealed record ProductVariantResponse(
     string? Sku,
     IReadOnlyList<AttributeValueResponse> AttributeValues,
     MoneyResponse? Price,
-    IReadOnlyList<PriceRuleResponse> PriceRules);
+    IReadOnlyList<PriceRuleResponse> PriceRules)
+{
+    internal static ProductVariantResponse FromDomain(ProductVariant variant) => new(
+        variant.Id.Value,
+        variant.Name,
+        variant.Sku?.Value,
+        variant.AttributeValues.Select(AttributeValueResponse.FromDomain).ToArray(),
+        variant.Price is { } price ? new MoneyResponse(price.Amount, price.Currency) : null,
+        variant.PriceRules.OrderByDescending(rule => rule.Priority).ThenBy(rule => rule.Id)
+            .Select(PriceRuleResponse.FromDomain).ToArray());
+}
 
 public sealed record AttributeValueResponse(
     Guid AttributeDefinitionId,
     string DataType,
-    object Value);
+    object Value)
+{
+    internal static AttributeValueResponse FromDomain(AttributeValue value) =>
+        new(
+            value.AttributeDefinitionId.Value,
+            value.DataType.ToString(),
+            value switch
+            {
+                TextAttributeValue text => text.Value,
+                IntegerAttributeValue integer => integer.Value,
+                DecimalAttributeValue decimalValue => decimalValue.Value,
+                BooleanAttributeValue boolean => boolean.Value,
+                DateAttributeValue date => date.Value,
+                ChoiceAttributeValue choice => choice.Value.Value,
+                MultiChoiceAttributeValue multiChoice =>
+                    multiChoice.Values.Select(choice => choice.Value).ToArray(),
+                _ => throw new ArgumentOutOfRangeException(nameof(value), "Attribute value type is not supported.")
+            });
+}
 
 public sealed record MoneyResponse(decimal Amount, string Currency);

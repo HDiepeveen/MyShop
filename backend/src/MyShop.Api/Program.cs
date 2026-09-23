@@ -34,6 +34,8 @@ app.MapAddProductTypeAttribute();
 app.MapRenameProductVariant();
 app.MapSetProductVariantSku();
 app.MapSetProductVariantPrice();
+app.MapGetProductVariant();
+app.MapListProductVariantPriceRules();
 app.MapGetProductVariantPriceRule();
 app.MapGetProductVariantPrice();
 app.MapUpdateProductVariantPriceRule();

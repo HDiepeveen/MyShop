@@ -30,12 +30,45 @@ public sealed class GetProductVariantPriceTests
         Assert.True(result.IsSuccess);
         Assert.Equal(Money.Create(amount, "EUR"), quote.Price);
         Assert.Equal(Money.Create(100m, "EUR"), quote.BasePrice);
+        Assert.Equal(variant.PriceRules.Single(rule => rule.Name == (hours is 0 or 1 ? "Scheduled" : "Always")).Id,
+            quote.AppliedPriceRuleId);
         Assert.Equal(at, quote.At);
         Assert.Equal(at.Offset, quote.At.Offset);
         Assert.Equal(repository.Token.Revision, quote.Revision);
         Assert.Equal(source.Token, repository.ReadCancellation);
         Assert.Equal(Money.Create(100m, "EUR"), variant.Price);
         Assert.Equal(2, variant.PriceRules.Count);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteAsync_NoActiveRuleReturnsNullAppliedRuleId(bool expired)
+    {
+        var repository = new RepositoryFake();
+        var variant = repository.Product.Variants.Single();
+        repository.Product.SetVariantPrice(variant.Id, Money.Create(20m, "EUR"));
+        if (expired)
+            repository.Product.AddVariantPriceRule(variant.Id,
+                PriceRule.Create("Past", PriceAdjustmentType.FixedDiscount, 5m, 0, null, Start.AddTicks(-1)));
+        var result = await new UseCase(repository).ExecuteAsync(
+            new(repository.Product.Id, variant.Id, Start), CancellationToken.None);
+        Assert.Null(result.Quote!.AppliedPriceRuleId);
+        Assert.Equal(result.Quote.BasePrice, result.Quote.Price);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AppliedRuleIsReportedEvenWhenZeroPriceDoesNotChange()
+    {
+        var repository = new RepositoryFake();
+        var variant = repository.Product.Variants.Single();
+        repository.Product.SetVariantPrice(variant.Id, Money.Create(0m, "EUR"));
+        var rule = PriceRule.Create("Sale", PriceAdjustmentType.FixedDiscount, 5m, 0);
+        repository.Product.AddVariantPriceRule(variant.Id, rule);
+        var result = await new UseCase(repository).ExecuteAsync(
+            new(repository.Product.Id, variant.Id, Start), CancellationToken.None);
+        Assert.Equal(rule.Id, result.Quote!.AppliedPriceRuleId);
+        Assert.Equal(0m, result.Quote.Price.Amount);
     }
 
     [Fact]

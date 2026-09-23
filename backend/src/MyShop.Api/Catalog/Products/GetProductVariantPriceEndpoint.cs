@@ -36,7 +36,7 @@ public static class GetProductVariantPriceEndpoint
 
             var quote = result.Quote ?? throw new InvalidOperationException("A successful price result must contain a quote.");
             return TypedResults.Ok(new ProductVariantPriceResponse(
-                quote.BasePrice.Amount, quote.Price.Amount, quote.Price.Currency, quote.At, quote.Revision));
+                quote.BasePrice.Amount, quote.Price.Amount, quote.Price.Currency, quote.At, quote.Revision, quote.AppliedPriceRuleId));
         }
         catch (ArgumentException exception)
         {
@@ -46,4 +46,4 @@ public static class GetProductVariantPriceEndpoint
 }
 
 public sealed record ProductVariantPriceResponse(
-    decimal BaseAmount, decimal Amount, string Currency, DateTimeOffset At, Guid Revision);
+    decimal BaseAmount, decimal Amount, string Currency, DateTimeOffset At, Guid Revision, Guid? AppliedPriceRuleId = null);

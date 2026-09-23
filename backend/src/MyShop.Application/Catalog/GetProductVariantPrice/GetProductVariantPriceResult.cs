@@ -2,7 +2,7 @@ using MyShop.Domain.Catalog;
 
 namespace MyShop.Application.Catalog.GetProductVariantPrice;
 
-public sealed record ProductVariantPriceQuote(Money BasePrice, Money Price, DateTimeOffset At, Guid Revision);
+public sealed record ProductVariantPriceQuote(Money BasePrice, Money Price, DateTimeOffset At, Guid Revision, Guid? AppliedPriceRuleId = null);
 
 public sealed class GetProductVariantPriceResult
 {

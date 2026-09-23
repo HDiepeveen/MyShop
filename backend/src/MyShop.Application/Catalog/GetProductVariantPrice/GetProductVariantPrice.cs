@@ -29,6 +29,7 @@ public sealed class GetProductVariantPrice
             return GetProductVariantPriceResult.Failed(GetProductVariantPriceFailure.PriceNotSet);
 
         return GetProductVariantPriceResult.Succeeded(new ProductVariantPriceQuote(
-            basePrice, variant.CalculatePrice(query.At), query.At, snapshot.ConcurrencyToken.Revision));
+            basePrice, variant.CalculatePrice(query.At), query.At, snapshot.ConcurrencyToken.Revision,
+            variant.GetApplicablePriceRule(query.At)?.Id));
     }
 }

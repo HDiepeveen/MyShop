@@ -124,12 +124,14 @@ public sealed class ProductVariant
     public Money CalculatePrice(DateTimeOffset at)
     {
         var basePrice = Price ?? throw new InvalidOperationException("A base price must be set before calculating a price.");
-        var rule = _priceRules.Where(candidate => candidate.IsActiveAt(at))
+        return GetApplicablePriceRule(at)?.Apply(basePrice) ?? basePrice;
+    }
+
+    public PriceRule? GetApplicablePriceRule(DateTimeOffset at) =>
+        _priceRules.Where(candidate => candidate.IsActiveAt(at))
             .OrderByDescending(candidate => candidate.Priority)
             .ThenBy(candidate => candidate.Id)
             .FirstOrDefault();
-        return rule?.Apply(basePrice) ?? basePrice;
-    }
 
     internal void SetAttributeValue(AttributeValue value)
     {
