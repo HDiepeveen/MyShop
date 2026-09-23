@@ -31,6 +31,8 @@ public sealed class ListCategoriesTests
         Assert.Equal("shirt", repository.SearchTerm);
         Assert.Equal(parentId, repository.ParentCategoryId);
         Assert.False(repository.RootsOnly);
+        Assert.Equal(0, repository.Offset);
+        Assert.Equal(50, repository.Limit);
     }
 
     [Fact]
@@ -105,10 +107,39 @@ public sealed class ListCategoriesTests
         Assert.Equal(0, repository.ListCalls);
     }
 
+    [Theory]
+    [InlineData(-1, 50)]
+    [InlineData(0, 0)]
+    [InlineData(0, -1)]
+    [InlineData(0, 101)]
+    public async Task ExecuteAsync_RejectsInvalidPageBeforeRead(int offset, int limit)
+    {
+        var repository = new CategoryListRepositoryFake();
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => new UseCase(repository).ExecuteAsync(
+            new ListCategoriesQuery(Offset: offset, Limit: limit), CancellationToken.None));
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(2, 100)]
+    [InlineData(2147483647, 50)]
+    public async Task ExecuteAsync_ForwardsValidPageAndRootFilter(int offset, int limit)
+    {
+        var repository = new CategoryListRepositoryFake();
+        await new UseCase(repository).ExecuteAsync(
+            new ListCategoriesQuery(RootsOnly: true, Offset: offset, Limit: limit), CancellationToken.None);
+        Assert.Equal(offset, repository.Offset);
+        Assert.Equal(limit, repository.Limit);
+        Assert.True(repository.RootsOnly);
+    }
+
     private sealed class CategoryListRepositoryFake : ICategoryListRepository
     {
         public IReadOnlyList<CategoryListItem> Categories { get; set; } = [];
         public Exception? Exception { get; set; }
+        public int Offset { get; private set; }
+        public int Limit { get; private set; }
         public int ListCalls { get; private set; }
         public CancellationToken Token { get; private set; }
         public string? SearchTerm { get; private set; }
@@ -116,11 +147,15 @@ public sealed class ListCategoriesTests
         public bool RootsOnly { get; private set; }
 
         public Task<IReadOnlyList<CategoryListItem>> ListAsync(
+            int offset,
+            int limit,
             string? searchTerm,
             CategoryId? parentCategoryId,
             bool rootsOnly,
             CancellationToken cancellationToken)
         {
+            Offset = offset;
+            Limit = limit;
             ListCalls++;
             SearchTerm = searchTerm;
             ParentCategoryId = parentCategoryId;

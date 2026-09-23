@@ -22,6 +22,8 @@ public sealed class ListProductTypesTests
         Assert.Equal(source.Token, repository.Token);
         Assert.Equal(1, repository.ListCalls);
         Assert.Equal("cloth", repository.SearchTerm);
+        Assert.Equal(0, repository.Offset);
+        Assert.Equal(50, repository.Limit);
     }
 
     [Fact]
@@ -70,18 +72,51 @@ public sealed class ListProductTypesTests
         Assert.Equal(0, repository.ListCalls);
     }
 
+    [Theory]
+    [InlineData(-1, 50)]
+    [InlineData(0, 0)]
+    [InlineData(0, -1)]
+    [InlineData(0, 101)]
+    public async Task ExecuteAsync_RejectsInvalidPageBeforeRead(int offset, int limit)
+    {
+        var repository = new ProductTypeListRepositoryFake();
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => new UseCase(repository).ExecuteAsync(
+            new ListProductTypesQuery(Offset: offset, Limit: limit), CancellationToken.None));
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(2, 100)]
+    [InlineData(2147483647, 50)]
+    public async Task ExecuteAsync_ForwardsValidPageAndTrimmedSearch(int offset, int limit)
+    {
+        var repository = new ProductTypeListRepositoryFake();
+        await new UseCase(repository).ExecuteAsync(
+            new ListProductTypesQuery("  type  ", offset, limit), CancellationToken.None);
+        Assert.Equal(offset, repository.Offset);
+        Assert.Equal(limit, repository.Limit);
+        Assert.Equal("type", repository.SearchTerm);
+    }
+
     private sealed class ProductTypeListRepositoryFake : IProductTypeListRepository
     {
         public IReadOnlyList<ProductTypeListItem> ProductTypes { get; set; } = [];
         public Exception? Exception { get; set; }
+        public int Offset { get; private set; }
+        public int Limit { get; private set; }
         public int ListCalls { get; private set; }
         public CancellationToken Token { get; private set; }
         public string? SearchTerm { get; private set; }
 
         public Task<IReadOnlyList<ProductTypeListItem>> ListAsync(
+            int offset,
+            int limit,
             string? searchTerm,
             CancellationToken cancellationToken)
         {
+            Offset = offset;
+            Limit = limit;
             ListCalls++;
             SearchTerm = searchTerm;
             Token = cancellationToken;

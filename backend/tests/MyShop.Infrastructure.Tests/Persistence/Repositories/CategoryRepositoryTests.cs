@@ -67,6 +67,53 @@ public sealed class CategoryRepositoryTests
     }
 
     [Fact]
+    public void ListQuery_AppliesSqlPagingAfterFiltersWithStableOrdering()
+    {
+        using var context = CreateContext();
+        var sql = CategoryRepository.ListQuery(context.Categories, "shirt", CategoryId.New(), false, 10, 5).ToQueryString();
+        Assert.Contains("WHERE", sql);
+        Assert.Contains("LIKE", sql);
+        Assert.Contains("[c].[ParentCategoryId]", sql);
+        Assert.Contains("ORDER BY [c].[Name], [c].[Id]", sql);
+        Assert.Contains("OFFSET", sql);
+        Assert.Contains("FETCH NEXT", sql);
+        Assert.Contains("= 10;", sql);
+        Assert.Contains("= 5;", sql);
+        Assert.Empty(context.ChangeTracker.Entries());
+    }
+
+    [Theory]
+    [InlineData(0, 2, 2)]
+    [InlineData(2, 2, 1)]
+    [InlineData(3, 2, 0)]
+    [InlineData(2147483647, 2, 0)]
+    public void ListQuery_PagesFilteredRowsAndPreservesSummaryCounts(int offset, int limit, int expectedCount)
+    {
+        var parent = CategoryId.New();
+        var rows = Enumerable.Range(1, 3).Select(index => new CategoryPersistence
+        {
+            Id = new Guid(index, 0, 0, new byte[8]), Name = "Match", ParentCategoryId = parent.Value,
+            Children = [new CategoryPersistence { Id = Guid.NewGuid(), Name = "Child" }]
+        }).Reverse().ToList();
+        rows.Add(new CategoryPersistence { Id = Guid.NewGuid(), Name = "Excluded" });
+
+        var result = CategoryRepository.ListQuery(rows.AsQueryable(), "Match", parent, false, offset, limit).ToArray();
+
+        Assert.Equal(expectedCount, result.Length);
+        Assert.All(result, item => Assert.Equal(1, item.DirectChildCount));
+        Assert.Equal(Enumerable.Range(1, 3).Skip(offset).Take(limit).Select(index => new Guid(index, 0, 0, new byte[8])),
+            result.Select(item => item.Id));
+    }
+
+    [Fact]
+    public void ListQuery_DefaultPageIsBounded()
+    {
+        var rows = Enumerable.Range(1, 60).Select(index => new CategoryPersistence
+            { Id = new Guid(index, 0, 0, new byte[8]), Name = "Category" }).AsQueryable();
+        Assert.Equal(50, CategoryRepository.ListQuery(rows, null, null, false).Count());
+    }
+
+    [Fact]
     public void ParentIdQuery_UsesSqlServerScalarProjectionWithoutConnection()
     {
         using var context = CreateContext();

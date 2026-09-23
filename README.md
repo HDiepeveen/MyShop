@@ -1,6 +1,6 @@
 # MyShop
 
-MyShop is an e-commerce application currently in its initial setup phase.
+MyShop is an e-commerce application with an ASP.NET Core catalog API and a modular backend. The Angular frontend is planned.
 
 ## Local Development Requirements
 
@@ -28,4 +28,4 @@ recorded in `.nvmrc` for Node version managers that support it.
 - `backend/src/`: ASP.NET Core backend projects, separated into Api, Application, Domain, and Infrastructure
 - `backend/tests/`: Automated backend tests
 
-No application has been created yet.
+The backend contains catalog management, product variants, attributes, pricing, and persistence tests. See [Catalog browsing API](docs/catalog-browsing.md) for list endpoints, paging, filters, and response examples.

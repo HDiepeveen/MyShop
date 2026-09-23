@@ -37,7 +37,8 @@ public sealed class ListCategoriesEndpointTests
         var child = new CategoryListItem(Guid.NewGuid(), "Shirts", parentId, 0);
         var useCase = new UseCase(new CategoryListRepositoryFake([root, child]));
 
-        var result = await ListCategoriesEndpoint.ExecuteAsync(null, null, null, useCase, CancellationToken.None);
+        var result = await ListCategoriesEndpoint.ExecuteAsync(
+            null, null, null, null, null, useCase, CancellationToken.None);
 
         var ok = Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
         Assert.Collection(Assert.IsAssignableFrom<IReadOnlyList<CategorySummaryResponse>>(ok.Value),
@@ -64,7 +65,8 @@ public sealed class ListCategoriesEndpointTests
     {
         var useCase = new UseCase(new CategoryListRepositoryFake([]));
 
-        var result = await ListCategoriesEndpoint.ExecuteAsync(null, null, null, useCase, CancellationToken.None);
+        var result = await ListCategoriesEndpoint.ExecuteAsync(
+            null, null, null, null, null, useCase, CancellationToken.None);
 
         var ok = Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
         Assert.Empty(Assert.IsAssignableFrom<IReadOnlyList<CategorySummaryResponse>>(ok.Value));
@@ -79,7 +81,8 @@ public sealed class ListCategoriesEndpointTests
         source.Cancel();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            ListCategoriesEndpoint.ExecuteAsync(null, null, null, useCase, source.Token));
+            ListCategoriesEndpoint.ExecuteAsync(
+                null, null, null, null, null, useCase, source.Token));
 
         Assert.Equal(0, repository.ListCalls);
     }
@@ -91,7 +94,7 @@ public sealed class ListCategoriesEndpointTests
         var useCase = new UseCase(repository);
 
         var result = await ListCategoriesEndpoint.ExecuteAsync(
-            "  shirt  ", null, null, useCase, CancellationToken.None);
+            null, null, "  shirt  ", null, null, useCase, CancellationToken.None);
 
         Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
         Assert.Equal("shirt", repository.SearchTerm);
@@ -106,7 +109,7 @@ public sealed class ListCategoriesEndpointTests
         var useCase = new UseCase(repository);
 
         var result = await ListCategoriesEndpoint.ExecuteAsync(
-            search, null, null, useCase, CancellationToken.None);
+            null, null, search, null, null, useCase, CancellationToken.None);
 
         var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
         Assert.Equal("Invalid category filter", badRequest.Value!.Title);
@@ -121,7 +124,7 @@ public sealed class ListCategoriesEndpointTests
         var parentId = Guid.NewGuid();
 
         var result = await ListCategoriesEndpoint.ExecuteAsync(
-            null, parentId, null, useCase, CancellationToken.None);
+            null, null, null, parentId, null, useCase, CancellationToken.None);
 
         Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
         Assert.Equal(CategoryId.From(parentId), repository.ParentCategoryId);
@@ -135,7 +138,7 @@ public sealed class ListCategoriesEndpointTests
         var useCase = new UseCase(repository);
 
         var result = await ListCategoriesEndpoint.ExecuteAsync(
-            null, null, true, useCase, CancellationToken.None);
+            null, null, null, null, true, useCase, CancellationToken.None);
 
         Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
         Assert.True(repository.RootsOnly);
@@ -148,7 +151,7 @@ public sealed class ListCategoriesEndpointTests
         var useCase = new UseCase(repository);
 
         var result = await ListCategoriesEndpoint.ExecuteAsync(
-            null, Guid.NewGuid(), true, useCase, CancellationToken.None);
+            null, null, null, Guid.NewGuid(), true, useCase, CancellationToken.None);
 
         var badRequest = Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
         Assert.Equal("Invalid category filter", badRequest.Value!.Title);
@@ -158,22 +161,56 @@ public sealed class ListCategoriesEndpointTests
     [Fact]
     public async Task ExecuteAsync_NullUseCase_Throws() =>
         await Assert.ThrowsAsync<ArgumentNullException>(() => ListCategoriesEndpoint.ExecuteAsync(
-            null, null, null, null!, CancellationToken.None));
+            null, null, null, null, null, null!, CancellationToken.None));
+
+    [Theory]
+    [InlineData(-1, 50)]
+    [InlineData(0, 0)]
+    [InlineData(0, -1)]
+    [InlineData(0, 101)]
+    public async Task ExecuteAsync_InvalidPageReturnsBadRequestBeforeRead(int offset, int limit)
+    {
+        var repository = new CategoryListRepositoryFake([]);
+        var result = await ListCategoriesEndpoint.ExecuteAsync(
+            offset, limit, null, null, null, new UseCase(repository), CancellationToken.None);
+        Assert.Equal("Invalid category paging", Assert.IsType<BadRequest<ProblemDetails>>(result.Result).Value!.Title);
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Theory]
+    [InlineData(null, null, 0, 50)]
+    [InlineData(0, 1, 0, 1)]
+    [InlineData(2147483647, 100, 2147483647, 100)]
+    public async Task ExecuteAsync_ForwardsEffectivePage(int? offset, int? limit, int expectedOffset, int expectedLimit)
+    {
+        var repository = new CategoryListRepositoryFake([]);
+        var result = await ListCategoriesEndpoint.ExecuteAsync(
+            offset, limit, null, null, null, new UseCase(repository), CancellationToken.None);
+        Assert.IsType<Ok<IReadOnlyList<CategorySummaryResponse>>>(result.Result);
+        Assert.Equal(expectedOffset, repository.Offset);
+        Assert.Equal(expectedLimit, repository.Limit);
+    }
 
     private sealed class CategoryListRepositoryFake(IReadOnlyList<CategoryListItem> categories)
         : ICategoryListRepository
     {
+        public int Offset { get; private set; }
+        public int Limit { get; private set; }
         public int ListCalls { get; private set; }
         public string? SearchTerm { get; private set; }
         public CategoryId? ParentCategoryId { get; private set; }
         public bool RootsOnly { get; private set; }
 
         public Task<IReadOnlyList<CategoryListItem>> ListAsync(
+            int offset,
+            int limit,
             string? searchTerm,
             CategoryId? parentCategoryId,
             bool rootsOnly,
             CancellationToken cancellationToken)
         {
+            Offset = offset;
+            Limit = limit;
             ListCalls++;
             SearchTerm = searchTerm;
             ParentCategoryId = parentCategoryId;

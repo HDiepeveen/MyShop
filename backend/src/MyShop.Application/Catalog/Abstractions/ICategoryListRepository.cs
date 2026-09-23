@@ -5,6 +5,8 @@ namespace MyShop.Application.Catalog.Abstractions;
 public interface ICategoryListRepository
 {
     Task<IReadOnlyList<CategoryListItem>> ListAsync(
+        int offset,
+        int limit,
         string? searchTerm,
         CategoryId? parentCategoryId,
         bool rootsOnly,

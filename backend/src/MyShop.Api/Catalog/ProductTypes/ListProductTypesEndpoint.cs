@@ -20,6 +20,8 @@ public static class ListProductTypesEndpoint
     public static async Task<Results<
         Ok<IReadOnlyList<ProductTypeSummaryResponse>>,
         BadRequest<ProblemDetails>>> ExecuteAsync(
+        [FromQuery] int? offset,
+        [FromQuery] int? limit,
         [FromQuery] string? search,
         [FromServices] UseCase useCase,
         CancellationToken cancellationToken)
@@ -29,7 +31,7 @@ public static class ListProductTypesEndpoint
         try
         {
             var productTypes = await useCase.ExecuteAsync(
-                new ListProductTypesQuery(search), cancellationToken);
+                new ListProductTypesQuery(search, offset ?? 0, limit ?? UseCase.DefaultLimit), cancellationToken);
             IReadOnlyList<ProductTypeSummaryResponse> response = productTypes
                 .Select(productType => new ProductTypeSummaryResponse(
                     productType.Id,
@@ -37,6 +39,14 @@ public static class ListProductTypesEndpoint
                     productType.AttributeDefinitionCount))
                 .ToArray();
             return TypedResults.Ok(response);
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid product type paging",
+                Detail = exception.Message
+            });
         }
         catch (ArgumentException exception)
         {

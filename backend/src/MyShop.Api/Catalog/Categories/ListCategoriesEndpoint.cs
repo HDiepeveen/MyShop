@@ -21,6 +21,8 @@ public static class ListCategoriesEndpoint
     public static async Task<Results<
         Ok<IReadOnlyList<CategorySummaryResponse>>,
         BadRequest<ProblemDetails>>> ExecuteAsync(
+        [FromQuery] int? offset,
+        [FromQuery] int? limit,
         [FromQuery] string? search,
         [FromQuery] Guid? parentCategoryId,
         [FromQuery] bool? rootsOnly,
@@ -35,7 +37,9 @@ public static class ListCategoriesEndpoint
                 new ListCategoriesQuery(
                     search,
                     parentCategoryId is null ? null : CategoryId.From(parentCategoryId.Value),
-                    rootsOnly ?? false),
+                    rootsOnly ?? false,
+                    offset ?? 0,
+                    limit ?? UseCase.DefaultLimit),
                 cancellationToken);
             IReadOnlyList<CategorySummaryResponse> response = categories
                 .Select(category => new CategorySummaryResponse(
@@ -46,6 +50,14 @@ public static class ListCategoriesEndpoint
                     category.DirectChildCount))
                 .ToArray();
             return TypedResults.Ok(response);
+        }
+        catch (ArgumentOutOfRangeException exception)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid category paging",
+                Detail = exception.Message
+            });
         }
         catch (ArgumentException exception)
         {

@@ -104,19 +104,23 @@ internal sealed class CategoryRepository
         assignments.AsNoTracking().Where(assignment => assignment.CategoryId == categoryId.Value);
 
     public async Task<IReadOnlyList<CategoryListItem>> ListAsync(
+        int offset,
+        int limit,
         string? searchTerm,
         CategoryId? parentCategoryId,
         bool rootsOnly,
         CancellationToken cancellationToken) =>
         await ListQuery(
-            _dbContext.Categories, searchTerm, parentCategoryId, rootsOnly)
+            _dbContext.Categories, searchTerm, parentCategoryId, rootsOnly, offset, limit)
             .ToListAsync(cancellationToken);
 
     internal static IQueryable<CategoryListItem> ListQuery(
         IQueryable<CategoryPersistence> categories,
         string? searchTerm,
         CategoryId? parentCategoryId,
-        bool rootsOnly)
+        bool rootsOnly,
+        int offset = 0,
+        int limit = 50)
     {
         if (searchTerm is not null)
             categories = categories.Where(category => category.Name.Contains(searchTerm));
@@ -134,6 +138,8 @@ internal sealed class CategoryRepository
                 category.Id,
                 category.Name,
                 category.ParentCategoryId,
-                category.Children.Count));
+                category.Children.Count))
+            .Skip(offset)
+            .Take(limit);
     }
 }

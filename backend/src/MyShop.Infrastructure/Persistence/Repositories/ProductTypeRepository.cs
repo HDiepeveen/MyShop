@@ -55,13 +55,17 @@ internal sealed class ProductTypeRepository
     }
 
     public async Task<IReadOnlyList<ProductTypeListItem>> ListAsync(
+        int offset,
+        int limit,
         string? searchTerm,
         CancellationToken cancellationToken) =>
-        await ListQuery(_dbContext.ProductTypes, searchTerm).ToListAsync(cancellationToken);
+        await ListQuery(_dbContext.ProductTypes, searchTerm, offset, limit).ToListAsync(cancellationToken);
 
     internal static IQueryable<ProductTypeListItem> ListQuery(
         IQueryable<ProductTypePersistence> productTypes,
-        string? searchTerm)
+        string? searchTerm,
+        int offset = 0,
+        int limit = 50)
     {
         if (searchTerm is not null)
             productTypes = productTypes.Where(productType => productType.Name.Contains(searchTerm));
@@ -73,7 +77,9 @@ internal sealed class ProductTypeRepository
             .Select(productType => new ProductTypeListItem(
                 productType.Id,
                 productType.Name,
-                productType.AttributeDefinitions.Count));
+                productType.AttributeDefinitions.Count))
+            .Skip(offset)
+            .Take(limit);
     }
 
     internal static IQueryable<ProductTypePersistence> CompleteGraph(
