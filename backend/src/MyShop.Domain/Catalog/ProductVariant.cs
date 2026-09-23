@@ -96,6 +96,24 @@ public sealed class ProductVariant
         _priceRules.Add(rule);
     }
 
+    internal bool UpdatePriceRule(Guid ruleId, string name, PriceAdjustmentType adjustmentType,
+        decimal value, int priority, DateTimeOffset? startsAt, DateTimeOffset? endsAt)
+    {
+        if (ruleId == Guid.Empty)
+            throw new ArgumentException("Price rule ID must not be empty.", nameof(ruleId));
+        var index = _priceRules.FindIndex(rule => rule.Id == ruleId);
+        if (index < 0)
+            throw new InvalidOperationException("The price rule is not assigned to this variant.");
+        var current = _priceRules[index];
+        var updated = current.WithChanges(name, adjustmentType, value, priority, startsAt, endsAt);
+        if (current.Name == updated.Name && current.AdjustmentType == updated.AdjustmentType &&
+            current.Value == updated.Value && current.Priority == updated.Priority &&
+            current.StartsAt == updated.StartsAt && current.EndsAt == updated.EndsAt)
+            return false;
+        _priceRules[index] = updated;
+        return true;
+    }
+
     internal void RemovePriceRule(Guid ruleId)
     {
         var rule = _priceRules.SingleOrDefault(candidate => candidate.Id == ruleId)

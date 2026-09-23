@@ -70,7 +70,10 @@ public static class GetProductEndpoint
                 variant.Id.Value,
                 variant.Name,
                 variant.Sku?.Value,
-                variant.AttributeValues.Select(Map).ToArray())).ToArray(),
+                variant.AttributeValues.Select(Map).ToArray(),
+                variant.Price is { } price ? new MoneyResponse(price.Amount, price.Currency) : null,
+                variant.PriceRules.OrderByDescending(rule => rule.Priority).ThenBy(rule => rule.Id)
+                    .Select(PriceRuleResponse.FromDomain).ToArray())).ToArray(),
             snapshot.ConcurrencyToken.Revision);
     }
 
@@ -105,9 +108,13 @@ public sealed record ProductVariantResponse(
     Guid Id,
     string Name,
     string? Sku,
-    IReadOnlyList<AttributeValueResponse> AttributeValues);
+    IReadOnlyList<AttributeValueResponse> AttributeValues,
+    MoneyResponse? Price,
+    IReadOnlyList<PriceRuleResponse> PriceRules);
 
 public sealed record AttributeValueResponse(
     Guid AttributeDefinitionId,
     string DataType,
     object Value);
+
+public sealed record MoneyResponse(decimal Amount, string Currency);

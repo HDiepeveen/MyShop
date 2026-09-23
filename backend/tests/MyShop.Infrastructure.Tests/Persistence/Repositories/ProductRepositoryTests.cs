@@ -246,6 +246,46 @@ public sealed class ProductRepositoryTests
         Assert.Equal((int)PriceAdjustmentType.PercentageDiscount, addedRow.AdjustmentType);
     }
 
+    [Fact]
+    public async Task SaveTrackedAsync_UpdatesPriceRuleInPlaceWithExpectedRevision()
+    {
+        var capture = new SavingGraphInterceptor();
+        await using var context = CreateContext(capture);
+        var product = CompleteProduct();
+        var variant = product.Variants.First();
+        var rule = PriceRule.Create("Old", PriceAdjustmentType.FixedDiscount, 1m, 0);
+        product.AddVariantPriceRule(variant.Id, rule);
+        var revision = Guid.NewGuid();
+        var persistence = Persisted(product, revision);
+        context.Attach(persistence);
+        var variantRow = persistence.Variants.Single(candidate => candidate.Id == variant.Id.Value);
+        var ruleRow = Assert.Single(variantRow.PriceRules);
+        var snapshot = MyShop.Infrastructure.Persistence.Mappers.ProductPersistenceMapper.ToSnapshot(persistence);
+        var startsAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.FromHours(2));
+        snapshot.Product.UpdateVariantPriceRule(variant.Id, rule.Id, "Updated",
+            PriceAdjustmentType.PercentageDiscount, 25m, 5, startsAt, startsAt.AddDays(1));
+
+        var token = await new ProductRepository(context).SaveTrackedAsync(
+            snapshot.Product, snapshot.ConcurrencyToken, persistence, CancellationToken.None);
+
+        Assert.Same(ruleRow, Assert.Single(variantRow.PriceRules));
+        Assert.Equal(rule.Id, ruleRow.Id);
+        Assert.Equal(variant.Id.Value, ruleRow.ProductVariantId);
+        Assert.Same(variantRow, ruleRow.ProductVariant);
+        Assert.Equal(EntityState.Modified, context.Entry(ruleRow).State);
+        Assert.Equal("Updated", ruleRow.Name);
+        Assert.Equal((int)PriceAdjustmentType.PercentageDiscount, ruleRow.AdjustmentType);
+        Assert.Equal(25m, ruleRow.Value);
+        Assert.Equal(5, ruleRow.Priority);
+        Assert.Equal(startsAt, ruleRow.StartsAt);
+        Assert.Equal(startsAt.Offset, ruleRow.StartsAt!.Value.Offset);
+        Assert.Equal(startsAt.AddDays(1), ruleRow.EndsAt);
+        Assert.Equal(revision, capture.OriginalRevision);
+        Assert.NotEqual(revision, token.Revision);
+        Assert.NotEqual(Guid.Empty, token.Revision);
+        Assert.Equal(token.Revision, capture.CurrentRevision);
+    }
+
     private static MyShopDbContext CreateContext(SaveChangesInterceptor interceptor)
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()

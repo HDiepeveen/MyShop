@@ -14,12 +14,13 @@ internal static class ProductPersistenceMapper
         var productTypeId = ProductTypeId.From(persistence.ProductTypeId);
         var token = ProductConcurrencyToken.Create(productId, persistence.Version);
 
+        var priceRuleIds = new HashSet<Guid>();
         var variants = OrderByOrdinal(
                 persistence.Variants,
                 variant => variant.Ordinal,
                 persistence.Id,
                 "variants")
-            .Select(variant => ToDomain(variant, persistence.Id))
+            .Select(variant => ToDomain(variant, persistence.Id, priceRuleIds))
             .ToList();
 
         var categories = OrderByOrdinal(
@@ -61,7 +62,7 @@ internal static class ProductPersistenceMapper
         return new ProductSnapshot(product, token);
     }
 
-    private static ProductVariant ToDomain(ProductVariantPersistence persistence, Guid productId)
+    private static ProductVariant ToDomain(ProductVariantPersistence persistence, Guid productId, HashSet<Guid> priceRuleIds)
     {
         if (persistence.ProductId != productId)
             throw InvalidStructure(productId,
@@ -81,6 +82,18 @@ internal static class ProductPersistenceMapper
                 return AttributeValuePersistenceMapper.ToDomain(value);
             })
             .ToList();
+
+        if (persistence.PriceRules is null)
+            throw InvalidStructure(productId, "The price rules collection is null.");
+        foreach (var rule in persistence.PriceRules)
+        {
+            if (rule is null)
+                throw InvalidStructure(productId, "The price rules collection contains a null entry.");
+            if (rule.Id == Guid.Empty || !priceRuleIds.Add(rule.Id))
+                throw InvalidStructure(productId, "Price rule IDs must be non-empty and unique across variants.");
+            if (rule.ProductVariantId != persistence.Id)
+                throw InvalidStructure(productId, $"Price rule '{rule.Id}' belongs to another variant.");
+        }
 
         return ProductVariant.Rehydrate(
             ProductVariantId.From(persistence.Id),

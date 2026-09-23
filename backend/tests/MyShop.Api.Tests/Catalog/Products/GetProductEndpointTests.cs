@@ -120,6 +120,72 @@ public sealed class GetProductEndpointTests
         await Assert.ThrowsAsync<ArgumentNullException>(() => GetProductEndpoint.ExecuteAsync(
             Guid.NewGuid(), null!, CancellationToken.None));
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ExecuteAsync_MapsAbsentAndZeroBasePriceDistinctly(bool hasPrice)
+    {
+        var scenario = new Scenario();
+        if (hasPrice)
+            scenario.Product.SetVariantPrice(scenario.Variant.Id, Money.Create(0m, "EUR"));
+
+        var result = await GetProductEndpoint.ExecuteAsync(
+            scenario.Product.Id.Value, scenario.UseCase, CancellationToken.None);
+        var variant = Assert.Single(Assert.IsType<Ok<GetProductResponse>>(result.Result).Value!.Variants);
+        if (hasPrice)
+            Assert.Equal(new MoneyResponse(0m, "EUR"), variant.Price);
+        else
+            Assert.Null(variant.Price);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_PricesBelongToCorrectVariantsAndRemainBasePrices()
+    {
+        var scenario = new Scenario();
+        var second = scenario.Product.AddVariant("Second");
+        scenario.Product.SetVariantPrice(scenario.Variant.Id, Money.Create(100m, "EUR"));
+        scenario.Product.SetVariantPrice(second.Id, Money.Create(25m, "USD"));
+        scenario.Product.AddVariantPriceRule(scenario.Variant.Id,
+            PriceRule.Create("Sale", PriceAdjustmentType.PercentageDiscount, 50m, 1));
+
+        var result = await GetProductEndpoint.ExecuteAsync(
+            scenario.Product.Id.Value, scenario.UseCase, CancellationToken.None);
+        var variants = Assert.IsType<Ok<GetProductResponse>>(result.Result).Value!.Variants;
+        Assert.Equal(new MoneyResponse(100m, "EUR"), variants.Single(v => v.Id == scenario.Variant.Id.Value).Price);
+        Assert.Equal(new MoneyResponse(25m, "USD"), variants.Single(v => v.Id == second.Id.Value).Price);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MapsAllRulesWithStableOrderAndKeepsVariantsSeparate()
+    {
+        var scenario = new Scenario();
+        var second = scenario.Product.AddVariant("Second");
+        var at = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.FromHours(2));
+        var low = PriceRule.Create("Low", PriceAdjustmentType.FixedDiscount, 2m, 0);
+        var high = PriceRule.Create("Scheduled", PriceAdjustmentType.PercentageDiscount, 25m, 5, at, at.AddDays(1));
+        var tied = PriceRule.Create("Tied", PriceAdjustmentType.FixedDiscount, 3m, 5);
+        scenario.Product.AddVariantPriceRule(scenario.Variant.Id, low);
+        scenario.Product.AddVariantPriceRule(scenario.Variant.Id, high);
+        scenario.Product.AddVariantPriceRule(scenario.Variant.Id, tied);
+
+        var result = await GetProductEndpoint.ExecuteAsync(
+            scenario.Product.Id.Value, scenario.UseCase, CancellationToken.None);
+        var variants = Assert.IsType<Ok<GetProductResponse>>(result.Result).Value!.Variants;
+        var rules = variants.Single(v => v.Id == scenario.Variant.Id.Value).PriceRules;
+
+        Assert.Equal(new[] { high.Id, tied.Id }.Order().Append(low.Id), rules.Select(rule => rule.Id));
+        var response = rules.Single(rule => rule.Id == high.Id);
+        Assert.Equal("Scheduled", response.Name);
+        Assert.Equal(1, response.AdjustmentType);
+        Assert.Equal(25m, response.Value);
+        Assert.Equal(5, response.Priority);
+        Assert.Equal(at, response.StartsAt);
+        Assert.Equal(at.Offset, response.StartsAt!.Value.Offset);
+        Assert.Equal(at.AddDays(1), response.EndsAt);
+        Assert.Empty(variants.Single(v => v.Id == second.Id.Value).PriceRules);
+        Assert.Equal(3, scenario.Variant.PriceRules.Count);
+    }
+
     private sealed class Scenario
     {
         public Scenario()

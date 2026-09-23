@@ -38,6 +38,10 @@ public sealed class PriceRule
         return new PriceRule(id, rule.Name, rule.AdjustmentType, rule.Value, rule.Priority, rule.StartsAt, rule.EndsAt);
     }
 
+    internal PriceRule WithChanges(string name, PriceAdjustmentType adjustmentType, decimal value,
+        int priority, DateTimeOffset? startsAt, DateTimeOffset? endsAt) =>
+        Rehydrate(Id, name, adjustmentType, value, priority, startsAt, endsAt);
+
     public bool IsActiveAt(DateTimeOffset instant) =>
         (StartsAt is null || instant >= StartsAt) && (EndsAt is null || instant <= EndsAt);
 

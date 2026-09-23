@@ -14,7 +14,7 @@ public sealed class ProductPriceRuleValidationTests
     [InlineData("foreign owner")]
     [InlineData("empty owner")]
     [InlineData("duplicate across variants")]
-    public void Synchronize_RejectsInvalidRulesBeforeAnyMutation(string corruption)
+    public void ReadAndSynchronize_RejectInvalidRulesBeforeAnyMutation(string corruption)
     {
         var product = Product.Create("Original", ProductTypeId.New(), "First");
         var first = product.Variants.Single();
@@ -38,6 +38,8 @@ public sealed class ProductPriceRuleValidationTests
             case "empty owner": rule.ProductVariantId = Guid.Empty; break;
             case "duplicate across variants": rule.Id = firstRow.PriceRules.Single().Id; break;
         }
+        Assert.Throws<InvalidOperationException>(() => ProductPersistenceMapper.ToSnapshot(persistence));
+
         product.Rename("Changed");
         product.SetVariantPrice(first.Id, Money.Create(99m, "EUR"));
         product.RemoveVariant(second.Id);
@@ -49,5 +51,35 @@ public sealed class ProductPriceRuleValidationTests
         Assert.Equal(version, persistence.Version);
         Assert.Equal(2, persistence.Variants.Count);
         Assert.Same(secondRow, persistence.Variants.Last());
+    }
+
+    [Fact]
+    public void ToSnapshot_PreservesCompletePriceRulePayloadAndDoesNotMutateRows()
+    {
+        var product = Product.Create("Product", ProductTypeId.New(), "Variant");
+        var variant = product.Variants.Single();
+        product.SetVariantPrice(variant.Id, Money.Create(25m, "EUR"));
+        var start = new DateTimeOffset(2026, 9, 1, 0, 0, 0, TimeSpan.FromHours(2));
+        var rule = PriceRule.Create("Sale", PriceAdjustmentType.PercentageDiscount, 12.5m, -1, start, start.AddDays(1));
+        product.AddVariantPriceRule(variant.Id, rule);
+        var persistence = new ProductPersistence { Id = product.Id.Value, Version = Guid.NewGuid() };
+        ProductPersistenceSynchronizer.Synchronize(product, persistence);
+        var row = persistence.Variants.Single().PriceRules.Single();
+
+        var snapshot = ProductPersistenceMapper.ToSnapshot(persistence);
+
+        var restoredVariant = snapshot.Product.Variants.Single();
+        var restored = Assert.Single(restoredVariant.PriceRules);
+        Assert.Equal(variant.Price, restoredVariant.Price);
+        Assert.Equal(rule.Id, restored.Id);
+        Assert.Equal(rule.Name, restored.Name);
+        Assert.Equal(rule.AdjustmentType, restored.AdjustmentType);
+        Assert.Equal(rule.Value, restored.Value);
+        Assert.Equal(rule.Priority, restored.Priority);
+        Assert.Equal(rule.StartsAt, restored.StartsAt);
+        Assert.Equal(rule.EndsAt, restored.EndsAt);
+        Assert.Same(row, persistence.Variants.Single().PriceRules.Single());
+        Assert.Equal(rule.Id, row.Id);
+        Assert.Equal(persistence.Version, snapshot.ConcurrencyToken.Revision);
     }
 }

@@ -141,6 +141,11 @@ public sealed class Product
 
     public void AddVariantPriceRule(ProductVariantId variantId, PriceRule rule) => FindVariant(variantId).AddPriceRule(rule);
 
+    public bool UpdateVariantPriceRule(ProductVariantId variantId, Guid ruleId, string name,
+        PriceAdjustmentType adjustmentType, decimal value, int priority,
+        DateTimeOffset? startsAt = null, DateTimeOffset? endsAt = null) =>
+        FindVariant(variantId).UpdatePriceRule(ruleId, name, adjustmentType, value, priority, startsAt, endsAt);
+
     public void RemoveVariantPriceRule(ProductVariantId variantId, Guid ruleId) => FindVariant(variantId).RemovePriceRule(ruleId);
 
     public void SetAttributeValue(AttributeValue value)

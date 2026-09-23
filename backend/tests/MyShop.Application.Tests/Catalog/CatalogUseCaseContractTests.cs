@@ -47,7 +47,7 @@ public sealed class CatalogUseCaseContractTests
 
     [Fact]
     public void CatalogUseCaseInventory_ContainsExpectedNumberOfUseCases() =>
-        Assert.Equal(36, UseCases.Length);
+        Assert.Equal(39, UseCases.Length);
 
     [Fact]
     public void CatalogUseCaseInventory_ContainsOnlyPublicSealedClasses() =>
