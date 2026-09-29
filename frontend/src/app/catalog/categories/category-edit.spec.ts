@@ -2,13 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CategoryEdit } from './category-edit';
+import { CategoryEditState } from './category-edit-state';
 
 describe('CategoryEdit', () => {
   let http: HttpTestingController;
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [CategoryEdit],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [CategoryEditState, provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -53,5 +54,15 @@ describe('CategoryEdit', () => {
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain(
       'niet meer beschikbaar',
     );
+  });
+  it('blocks rename while another category operation is pending', () => {
+    const editor = setup().componentInstance;
+    editor.name = 'New';
+    TestBed.inject(CategoryEditState).busy.set(true);
+    editor.rename();
+    http.expectNone('/api/categories/c/name');
+    TestBed.inject(CategoryEditState).busy.set(false);
+    editor.rename();
+    http.expectOne('/api/categories/c/name').flush(null);
   });
 });

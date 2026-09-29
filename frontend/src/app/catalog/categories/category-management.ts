@@ -6,6 +6,7 @@ import { CatalogApi } from '../catalog.api';
 import { Category, CategorySummary } from '../catalog.models';
 import { errorMessage } from '../error-message';
 import { loadState } from '../load-state';
+import { CategoryEditState } from './category-edit-state';
 
 @Component({
   selector: 'app-category-management',
@@ -31,7 +32,12 @@ import { loadState } from '../load-state';
           </p>
         }
       }
-      <button type="button" class="secondary" [disabled]="busy() || usage()?.loading" (click)="reloadUsage()">
+      <button
+        type="button"
+        class="secondary"
+        [disabled]="busy() || usage()?.loading"
+        (click)="reloadUsage()"
+      >
         Gebruik opnieuw ophalen
       </button>
       <details>
@@ -61,16 +67,39 @@ import { loadState } from '../load-state';
         <form (ngSubmit)="move()">
           <label class="field"
             >Bovenliggende categorie
-            <select name="parent" [(ngModel)]="parentId" [disabled]="busy()">
+            <select
+              name="parent"
+              [(ngModel)]="parentId"
+              (ngModelChange)="rememberParent()"
+              [disabled]="busy() || !!categories()?.loading"
+            >
               <option [ngValue]="null">Hoofdniveau</option>
+              @if (parentId && !parentOnPage()) {
+                <option [ngValue]="parentId">
+                  {{ selectedParentName || 'Huidige bovenliggende categorie' }}
+                </option>
+              }
               @for (option of options(); track option.id) {
                 <option [ngValue]="option.id">{{ option.name }}</option>
               }
             </select>
           </label>
           <button [disabled]="busy() || parentId === category().parentCategoryId">Opslaan</button>
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="busy() || parentId === category().parentCategoryId"
+            (click)="resetParent()"
+          >
+            Keuze terugzetten
+          </button>
         </form>
         @if (categories()?.data; as page) {
+          @if (!options().length) {
+            <p class="muted">
+              Geen andere categorieën gevonden. Pas je zoekopdracht aan of blader terug.
+            </p>
+          }
           <div class="pager">
             <span>Pagina {{ categoryOffset() / 20 + 1 }}</span>
             <div class="actions">
@@ -131,7 +160,7 @@ export class CategoryManagement {
   readonly category = input.required<Category>();
   readonly saved = output<string>();
   readonly removed = output<void>();
-  readonly busy = signal(false);
+  readonly busy = inject(CategoryEditState).busy;
   readonly confirming = signal(false);
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
@@ -150,10 +179,11 @@ export class CategoryManagement {
   );
   readonly categoryOffset = signal(0);
   parentId: string | null = null;
+  selectedParentName = '';
   categorySearch = '';
   constructor() {
     effect(() => {
-      this.parentId = this.category().parentCategoryId;
+      this.resetParent();
       this.confirming.set(false);
       this.error.set('');
     });
@@ -162,6 +192,17 @@ export class CategoryManagement {
     return (this.categories()?.data ?? []).filter(
       (option: CategorySummary) => option.id !== this.category().id,
     );
+  }
+  parentOnPage() {
+    return this.options().some((option) => option.id === this.parentId);
+  }
+  rememberParent() {
+    this.selectedParentName =
+      this.options().find((option) => option.id === this.parentId)?.name ?? '';
+  }
+  resetParent() {
+    this.parentId = this.category().parentCategoryId;
+    this.selectedParentName = '';
   }
   searchCategories() {
     if (this.busy()) return;
@@ -193,6 +234,10 @@ export class CategoryManagement {
   }
   move() {
     if (this.busy() || this.parentId === this.category().parentCategoryId) return;
+    if (this.parentId === this.category().id) {
+      this.error.set('Een categorie kan niet onder zichzelf worden geplaatst.');
+      return;
+    }
     this.write(
       this.api.moveCategory(this.category().id, this.parentId),
       'De categoriehiërarchie is bijgewerkt.',
@@ -214,7 +259,11 @@ export class CategoryManagement {
       },
       error: (error) => {
         this.busy.set(false);
-        this.error.set(errorMessage(error));
+        this.error.set(
+          !message && error.status === 409
+            ? 'Deze categorie is inmiddels in gebruik en kan niet worden verwijderd.'
+            : errorMessage(error),
+        );
         if (!message) this.reloadUsage();
       },
     });

@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi } from '../catalog.api';
 import { Category } from '../catalog.models';
 import { errorMessage } from '../error-message';
+import { CategoryEditState } from './category-edit-state';
 
 @Component({
   selector: 'app-category-edit',
@@ -28,7 +29,7 @@ import { errorMessage } from '../error-message';
 export class CategoryEdit {
   readonly category = input.required<Category>();
   readonly saved = output<void>();
-  readonly busy = signal(false);
+  readonly busy = inject(CategoryEditState).busy;
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -36,6 +37,7 @@ export class CategoryEdit {
   constructor() {
     effect(() => {
       this.name = this.category().name;
+      this.error.set('');
     });
   }
   rename() {
