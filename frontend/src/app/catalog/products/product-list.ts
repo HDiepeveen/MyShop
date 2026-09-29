@@ -72,6 +72,9 @@ import { readProductListQuery } from './product-list-query';
       @if (skuError()) {
         <p class="error" role="alert">{{ skuError() }}</p>
       }
+      <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
+        Overzicht verversen
+      </button>
       @if (state()?.loading) {
         <p class="loading" role="status">Producten ophalen…</p>
       }
@@ -117,8 +120,13 @@ import { readProductListQuery } from './product-list-query';
           </div>
         } @else {
           <div class="empty">
-            <h2>Geen producten gevonden</h2>
-            <p class="muted">Pas je zoekopdracht of filters aan, of voeg een product toe.</p>
+            @if (offset() > 0) {
+              <h2>Geen producten op deze pagina</h2>
+              <p class="muted">Ga terug naar de eerste pagina om het overzicht te bekijken.</p>
+            } @else {
+              <h2>Geen producten gevonden</h2>
+              <p class="muted">Pas je zoekopdracht of filters aan, of voeg een product toe.</p>
+            }
           </div>
         }
         <div class="pager">
@@ -127,6 +135,11 @@ import { readProductListQuery } from './product-list-query';
             {{ offset() / 20 + 1 }}</span
           >
           <div class="actions">
+            @if (offset() > 0) {
+              <button type="button" class="secondary" (click)="changePage(-offset())">
+                Eerste pagina
+              </button>
+            }
             <button class="secondary" [disabled]="offset() === 0" (click)="changePage(-20)">
               Vorige</button
             ><button
@@ -191,6 +204,10 @@ export class ProductList {
     });
   }
   search() {
+    if (this.listQuery().search === this.searchText.trim() && this.offset() === 0) {
+      this.retry();
+      return;
+    }
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { search: this.searchText.trim() || null, offset: null },

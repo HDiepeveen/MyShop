@@ -51,6 +51,9 @@ import { loadState } from '../load-state';
           <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
         }
       </form>
+      <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
+        Overzicht verversen
+      </button>
       @if (state()?.loading) {
         <p class="loading" role="status">Producttypen ophalen…</p>
       }
@@ -87,13 +90,23 @@ import { loadState } from '../load-state';
           </div>
         } @else {
           <div class="empty">
-            <h2>Geen producttypen gevonden</h2>
-            <p class="muted">Maak hierboven een producttype aan of pas je zoekopdracht aan.</p>
+            @if (offset() > 0) {
+              <h2>Geen producttypen op deze pagina</h2>
+              <p class="muted">Ga terug naar de eerste pagina om het overzicht te bekijken.</p>
+            } @else {
+              <h2>Geen producttypen gevonden</h2>
+              <p class="muted">Maak hierboven een producttype aan of pas je zoekopdracht aan.</p>
+            }
           </div>
         }
         <div class="pager">
           <span>Pagina {{ offset() / 20 + 1 }}</span>
           <div class="actions">
+            @if (offset() > 0) {
+              <button type="button" class="secondary" (click)="changePage(-offset())">
+                Eerste pagina
+              </button>
+            }
             <button class="secondary" [disabled]="offset() === 0" (click)="changePage(-20)">
               Vorige</button
             ><button class="secondary" [disabled]="items.length < 20" (click)="changePage(20)">
