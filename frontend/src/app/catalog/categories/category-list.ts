@@ -1,4 +1,5 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, switchMap } from 'rxjs';
@@ -7,7 +8,7 @@ import { errorMessage } from '../error-message';
 import { loadState } from '../load-state';
 
 @Component({
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: ` <div class="eyebrow">Structuur in je assortiment</div>
     <div class="page-head">
       <div>
@@ -68,7 +69,9 @@ import { loadState } from '../load-state';
               <tbody>
                 @for (item of items; track item.id) {
                   <tr>
-                    <td>{{ item.name }}</td>
+                    <td>
+                      <a [routerLink]="['/categorieen', item.id]">{{ item.name }}</a>
+                    </td>
                     <td>
                       <span class="badge">{{
                         item.isRoot ? 'Hoofdcategorie' : 'Subcategorie'

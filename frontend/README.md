@@ -29,16 +29,20 @@ De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal o
 - Overzicht met navigatie op desktop en smalle schermen.
 - Producten zoeken en pagineren, details en bestaande varianten bekijken.
 - Producttypen zoeken, pagineren en aanmaken.
-- Categorieën zoeken, pagineren en hoofdcategorieën aanmaken.
+- Categorieën zoeken, pagineren, bekijken, hernoemen en hoofdcategorieën aanmaken.
 - Product aanmaken met een gekozen producttype en eerste variant.
-- Productnaam wijzigen en varianten toevoegen.
+- Productnaam wijzigen, varianten toevoegen en variantnamen wijzigen.
+- Artikelnummers en basisprijzen per variant opslaan en wissen.
+- Producten aan categorieën koppelen en ontkoppelen met een doorzoekbare, gepagineerde kiezer.
 - Bestaande kenmerken, artikelnummers en basisprijzen bekijken.
 - Kenmerkcontrole met begrijpelijke meldingen per product of variant.
 
-De producttypekiezer heeft eigen zoekfunctie en paginering; hij beperkt de keuze niet tot de eerste pagina.
+De producttypekiezer en categoriekiezer hebben een eigen zoekfunctie en paginering; ze beperken de keuze niet tot de eerste pagina.
 Categorie- en producttypelijsten hebben volgens het huidige backendcontract geen totaaltelling. Na een precies volle laatste pagina kan nog een lege pagina volgen; terugbladeren blijft mogelijk.
 
-Nog niet opgenomen: attribuutdefinities/-waarden bewerken, prijzen/kortingsregels of SKU's wijzigen, categoriehiërarchie wijzigen, producttoewijzingen beheren, verwijderen, inloggen, klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
+Nog niet opgenomen: attribuutdefinities/-waarden bewerken, kortingsregels wijzigen, categoriehiërarchie wijzigen, producten/varianten/categorieën verwijderen, inloggen, klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
+
+Basisprijzen accepteren een komma of punt en maximaal twee decimalen. Nul is een geldige prijs; wissen maakt de prijs afwezig. Bedragen die JavaScript niet exact op centen kan versturen worden geweigerd. De valuta bestaat uit drie letters, bijvoorbeeld EUR. Artikelnummers bevatten maximaal 64 tekens zonder spaties en worden in hoofdletters opgeslagen. Een mislukte wijziging behoudt de ingevoerde gegevens; er zijn geen automatische herhaalpogingen voor schrijfacties.
 
 ## Controle
 

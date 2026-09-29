@@ -3,6 +3,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { VariantEdit } from './variant-edit';
+import { ProductEdit } from './product-edit';
+import { ProductCategories } from './product-categories';
 import { ProductDetail } from './product-detail';
 
 describe('ProductDetail', () => {
@@ -24,16 +28,14 @@ describe('ProductDetail', () => {
   afterEach(() => http.verify());
   it('loads current product type and renders safe text', () => {
     const fixture = TestBed.createComponent(ProductDetail);
-    http
-      .expectOne('/api/products/first')
-      .flush({
-        id: 'first',
-        name: '<img src=x>',
-        productTypeId: 'type',
-        variants: [],
-        categoryIds: [],
-        attributeValues: [],
-      });
+    http.expectOne('/api/products/first').flush({
+      id: 'first',
+      name: '<img src=x>',
+      productTypeId: 'type',
+      variants: [],
+      categoryIds: [],
+      attributeValues: [],
+    });
     http
       .expectOne('/api/product-types/type')
       .flush({ id: 'type', name: 'Type', attributeDefinitions: [] });
@@ -42,6 +44,62 @@ describe('ProductDetail', () => {
     http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('<img src=x>');
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
+  });
+
+  it('serializes writes across editors, then reloads the persisted product after saving', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    const product = {
+      id: 'first',
+      name: 'Product',
+      productTypeId: 'type',
+      categoryIds: [],
+      attributeValues: [],
+      variants: [{ id: 'v', name: 'Variant', sku: null, price: null, attributeValues: [] }],
+    };
+    http.expectOne('/api/products/first').flush(product);
+    http
+      .expectOne('/api/product-types/type')
+      .flush({ id: 'type', name: 'Type', attributeDefinitions: [] });
+    fixture.detectChanges();
+    TestBed.tick();
+    http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
+    const variant = fixture.debugElement.query(By.directive(VariantEdit))
+      .componentInstance as VariantEdit;
+    const editor = fixture.debugElement.query(By.directive(ProductEdit))
+      .componentInstance as ProductEdit;
+    const categories = fixture.debugElement.query(By.directive(ProductCategories))
+      .componentInstance as ProductCategories;
+    fixture.componentInstance.notice.set('Previous save');
+    variant.sku = 'SKU';
+    variant.saveSku();
+    fixture.detectChanges();
+    expect(fixture.componentInstance.notice()).toBe('');
+    editor.name = 'Other';
+    editor.rename();
+    categories.assign('c');
+    http.expectNone('/api/products/first/name');
+    http.expectNone('/api/products/first/categories/c');
+    http.expectOne('/api/products/first/variants/v/sku').flush(null);
+    expect(fixture.componentInstance.notice()).toContain('artikelnummer');
+    expect(fixture.componentInstance.state()?.loading).toBe(true);
+    http
+      .expectOne('/api/products/first')
+      .flush({ ...product, variants: [{ ...product.variants[0], sku: 'SKU' }] });
+    http
+      .expectOne('/api/product-types/type')
+      .flush({ id: 'type', name: 'Type', attributeDefinitions: [] });
+    expect(fixture.componentInstance.state()?.data?.product.variants[0].sku).toBe('SKU');
+    expect(fixture.componentInstance.editState.busy()).toBe(false);
+  });
+  it('clears stale notices and releases the page lock when changing products', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    http.expectOne('/api/products/first').flush({}, { status: 404, statusText: 'Missing' });
+    fixture.componentInstance.notice.set('Previous success');
+    fixture.componentInstance.editState.busy.set(true);
+    params.next(convertToParamMap({ id: 'second' }));
+    http.expectOne('/api/products/second').flush({}, { status: 404, statusText: 'Missing' });
+    expect(fixture.componentInstance.notice()).toBe('');
+    expect(fixture.componentInstance.editState.busy()).toBe(false);
   });
   it('cancels the old product read on route changes', () => {
     const fixture = TestBed.createComponent(ProductDetail);

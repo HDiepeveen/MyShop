@@ -48,6 +48,34 @@ describe('CatalogApi', () => {
     request.flush({}, { status: 409, statusText: 'Conflict' });
     http.expectNone('/api/products/id/name');
   });
+  it('encodes variant identifiers and sends normalized writes', () => {
+    api.renameVariant('p/a', 'v/b', ' New ').subscribe();
+    const rename = http.expectOne('/api/products/p%2Fa/variants/v%2Fb/name');
+    expect(rename.request.method).toBe('PATCH');
+    expect(rename.request.body).toEqual({ name: 'New' });
+    rename.flush(null);
+    api.setVariantSku('p', 'v', ' SKU-1 ').subscribe();
+    const sku = http.expectOne('/api/products/p/variants/v/sku');
+    expect(sku.request.method).toBe('PUT');
+    expect(sku.request.body).toEqual({ sku: 'SKU-1' });
+    sku.flush(null);
+    api.setVariantPrice('p', 'v', 12.5, ' eur ').subscribe();
+    const price = http.expectOne('/api/products/p/variants/v/price');
+    expect(price.request.method).toBe('PUT');
+    expect(price.request.body).toEqual({ amount: 12.5, currency: 'EUR' });
+    price.flush(null);
+  });
+  it('clears optional variant values with DELETE and does not retry failures', () => {
+    api.clearVariantSku('p', 'v').subscribe();
+    const sku = http.expectOne('/api/products/p/variants/v/sku');
+    expect(sku.request.method).toBe('DELETE');
+    sku.flush(null);
+    api.clearVariantPrice('p', 'v').subscribe({ error: () => {} });
+    const price = http.expectOne('/api/products/p/variants/v/price');
+    expect(price.request.method).toBe('DELETE');
+    price.flush({}, { status: 409, statusText: 'Conflict' });
+    http.expectNone('/api/products/p/variants/v/price');
+  });
   it('translates failures without leaking server internals', () => {
     const message = errorMessage(
       new HttpErrorResponse({ status: 500, error: { detail: 'SQL password' } }),

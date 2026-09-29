@@ -1,3 +1,4 @@
+import { ProductEditState } from './product-edit-state';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -8,7 +9,7 @@ describe('ProductEdit', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ProductEdit],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [ProductEditState, provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
   });

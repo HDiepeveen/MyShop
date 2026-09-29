@@ -1,16 +1,27 @@
+import { ProductEditState } from './product-edit-state';
 import { ProductValidation } from './product-validation';
+import { VariantEdit } from './variant-edit';
+import { ProductCategories } from './product-categories';
 import { ProductEdit } from './product-edit';
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, combineLatest, map, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, tap, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { AttributeDefinition, AttributeValue } from '../catalog.models';
 import { loadState } from '../load-state';
 
 @Component({
-  imports: [RouterLink, CurrencyPipe, ProductEdit, ProductValidation],
+  providers: [ProductEditState],
+  imports: [
+    RouterLink,
+    CurrencyPipe,
+    ProductEdit,
+    ProductValidation,
+    VariantEdit,
+    ProductCategories,
+  ],
   template: ` <a class="back" routerLink="/producten">← Alle producten</a>
     @if (state()?.loading) {
       <p class="loading" role="status">Product ophalen…</p>
@@ -19,6 +30,9 @@ import { loadState } from '../load-state';
       <div class="error" role="alert">
         {{ state()?.error }} <button class="secondary" (click)="reload()">Opnieuw proberen</button>
       </div>
+    }
+    @if (editState.busy()) {
+      <p role="status">Wijziging opslaan…</p>
     }
     @if (notice()) {
       <p class="success" role="status">{{ notice() }}</p>
@@ -31,7 +45,8 @@ import { loadState } from '../load-state';
           <p class="muted">
             {{ detail.product.variants.length }}
             {{ detail.product.variants.length === 1 ? 'variant' : 'varianten' }} ·
-            {{ detail.product.categoryIds.length }} categorieën
+            {{ detail.product.categoryIds.length }}
+            {{ detail.product.categoryIds.length === 1 ? 'categorie' : 'categorieën' }}
           </p>
         </div>
       </div>
@@ -50,12 +65,18 @@ import { loadState } from '../load-state';
           }
         </dl>
       </section>
+      <app-product-categories [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-validation [product]="detail.product" [type]="detail.type" />
       <h2>Varianten</h2>
       <div class="grid">
         @for (variant of detail.product.variants; track variant.id) {
           <section class="panel">
             <h3>{{ variant.name }}</h3>
+            <app-variant-edit
+              [productId]="detail.product.id"
+              [variant]="variant"
+              (saved)="onSaved($event)"
+            />
             <dl class="detail-list">
               <dt>Artikelnummer</dt>
               <dd>{{ variant.sku || 'Nog niet ingevuld' }}</dd>
@@ -86,11 +107,22 @@ import { loadState } from '../load-state';
     }`,
 })
 export class ProductDetail {
+  readonly editState = inject(ProductEditState);
   private readonly api = inject(CatalogApi);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
+  readonly notice = signal('');
   readonly state = toSignal(
-    combineLatest([this.route.paramMap, this.refresh]).pipe(
+    combineLatest([
+      this.route.paramMap.pipe(
+        distinctUntilChanged((a, b) => a.get('id') === b.get('id')),
+        tap(() => {
+          this.notice.set('');
+          this.editState.busy.set(false);
+        }),
+      ),
+      this.refresh,
+    ]).pipe(
       switchMap(([params]) =>
         loadState(
           this.api
@@ -104,7 +136,11 @@ export class ProductDetail {
       ),
     ),
   );
-  readonly notice = signal('');
+  constructor() {
+    effect(() => {
+      if (this.editState.busy()) this.notice.set('');
+    });
+  }
   onSaved(message: string) {
     this.notice.set(message);
     this.reload();

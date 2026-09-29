@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import {
   AttributeValidation,
   CategorySummary,
+  Category,
   CreatedProduct,
   Product,
   ProductPage,
@@ -31,6 +32,31 @@ export class CatalogApi {
     return this.http.get<CategorySummary[]>('/api/categories', {
       params: this.paging(offset, search),
     });
+  }
+  removeCategory(productId: string, categoryId: string) {
+    return this.http.delete<void>(
+      '/api/products/' +
+        encodeURIComponent(productId) +
+        '/categories/' +
+        encodeURIComponent(categoryId),
+    );
+  }
+  assignCategory(productId: string, categoryId: string) {
+    return this.http.put<void>(
+      '/api/products/' +
+        encodeURIComponent(productId) +
+        '/categories/' +
+        encodeURIComponent(categoryId),
+      null,
+    );
+  }
+  renameCategory(id: string, name: string) {
+    return this.http.patch<void>('/api/categories/' + encodeURIComponent(id) + '/name', {
+      name: name.trim(),
+    });
+  }
+  category(id: string) {
+    return this.http.get<Category>('/api/categories/' + encodeURIComponent(id));
   }
   createType(name: string) {
     return this.http.post<{ id: string; name: string }>('/api/product-types', {
@@ -64,6 +90,34 @@ export class CatalogApi {
   validation(id: string) {
     return this.http.get<AttributeValidation>(
       '/api/products/' + encodeURIComponent(id) + '/attribute-validation',
+    );
+  }
+  renameVariant(productId: string, variantId: string, name: string) {
+    return this.http.patch<void>(this.variantUrl(productId, variantId) + '/name', {
+      name: name.trim(),
+    });
+  }
+  setVariantSku(productId: string, variantId: string, sku: string) {
+    return this.http.put<void>(this.variantUrl(productId, variantId) + '/sku', { sku: sku.trim() });
+  }
+  clearVariantSku(productId: string, variantId: string) {
+    return this.http.delete<void>(this.variantUrl(productId, variantId) + '/sku');
+  }
+  setVariantPrice(productId: string, variantId: string, amount: number, currency: string) {
+    return this.http.put<void>(this.variantUrl(productId, variantId) + '/price', {
+      amount,
+      currency: currency.trim().toUpperCase(),
+    });
+  }
+  clearVariantPrice(productId: string, variantId: string) {
+    return this.http.delete<void>(this.variantUrl(productId, variantId) + '/price');
+  }
+  private variantUrl(productId: string, variantId: string) {
+    return (
+      '/api/products/' +
+      encodeURIComponent(productId) +
+      '/variants/' +
+      encodeURIComponent(variantId)
     );
   }
   private paging(offset: number, search: string) {

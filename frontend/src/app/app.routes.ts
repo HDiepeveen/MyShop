@@ -18,6 +18,12 @@ export const routes: Routes = [
     title: 'Producten · MyShop',
   },
   {
+    path: 'categorieen/:id',
+    loadComponent: () =>
+      import('./catalog/categories/category-detail').then((m) => m.CategoryDetail),
+    title: 'Categoriedetails · MyShop',
+  },
+  {
     path: 'categorieen',
     loadComponent: () => import('./catalog/categories/category-list').then((m) => m.CategoryList),
     title: 'Categorieën · MyShop',

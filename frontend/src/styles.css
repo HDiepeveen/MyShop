@@ -343,3 +343,39 @@ small {
   color: #7a6543;
   font-size: 14px;
 }
+
+details {
+  margin: 12px 0 20px;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #285941;
+  padding: 8px 0;
+}
+summary:focus-visible {
+  outline: 3px solid #86ad60;
+  outline-offset: 3px;
+}
+details form {
+  margin-top: 16px;
+}
+
+.category-links {
+  list-style: none;
+  padding: 0;
+}
+.category-links li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e5d9;
+}
+.category-links li > span,
+.category-links li > a {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}

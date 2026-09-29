@@ -1,3 +1,4 @@
+import { ProductEditState } from './product-edit-state';
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -38,9 +39,6 @@ import { errorMessage } from '../error-message';
         </form>
       </section>
     </div>
-    @if (busy()) {
-      <p role="status">Wijziging opslaan…</p>
-    }
     @if (error()) {
       <p class="error" role="alert">{{ error() }}</p>
     }`,
@@ -48,7 +46,7 @@ import { errorMessage } from '../error-message';
 export class ProductEdit {
   readonly product = input.required<Product>();
   readonly saved = output<string>();
-  readonly busy = signal(false);
+  readonly busy = inject(ProductEditState).busy;
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);

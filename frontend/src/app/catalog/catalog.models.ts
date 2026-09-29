@@ -15,6 +15,12 @@ export interface TypeSummary {
   name: string;
   attributeDefinitionCount: number;
 }
+export interface Category {
+  id: string;
+  name: string;
+  parentCategoryId: string | null;
+  isRoot: boolean;
+}
 export interface CategorySummary {
   id: string;
   name: string;
