@@ -1,4 +1,5 @@
 import { OrphanValues } from './orphan-values';
+import { PriceRuleEdit } from './price-rule-edit';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -181,12 +182,10 @@ describe('ProductDetail', () => {
     http.expectOne('/api/product-types/type').flush(type);
     fixture.detectChanges();
     TestBed.tick();
-    http
-      .expectOne('/api/products/first/attribute-validation')
-      .flush({
-        isValid: false,
-        issues: [{ attributeDefinitionId: 'gone', variantId: 'v', code: 'UnknownDefinition' }],
-      });
+    http.expectOne('/api/products/first/attribute-validation').flush({
+      isValid: false,
+      issues: [{ attributeDefinitionId: 'gone', variantId: 'v', code: 'UnknownDefinition' }],
+    });
     expect(fixture.nativeElement.querySelector('a[href="/producttypen/type"]')).not.toBeNull();
     const editors = fixture.debugElement
       .queryAll(By.directive(OrphanValues))
@@ -207,6 +206,48 @@ describe('ProductDetail', () => {
     expect(fixture.nativeElement.textContent).not.toContain('Waarden van verwijderde kenmerken');
     expect(fixture.nativeElement.textContent).toContain('Alle kenmerken passen');
   });
+  it('renders variant price rules with the shared editor state', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    const product = {
+      id: 'first',
+      name: 'Product',
+      productTypeId: 'type',
+      categoryIds: [],
+      attributeValues: [],
+      variants: [
+        {
+          id: 'v',
+          name: 'Variant',
+          sku: null,
+          price: null,
+          priceRules: [
+            {
+              id: 'r',
+              name: 'Sale',
+              adjustmentType: 1,
+              value: 10,
+              priority: 1,
+              startsAt: null,
+              endsAt: null,
+            },
+          ],
+          attributeValues: [],
+        },
+      ],
+    };
+    http.expectOne('/api/products/first').flush(product);
+    http
+      .expectOne('/api/product-types/type')
+      .flush({ id: 'type', name: 'Type', attributeDefinitions: [] });
+    fixture.detectChanges();
+    TestBed.tick();
+    http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
+    const editor = fixture.debugElement.query(By.directive(PriceRuleEdit))
+      .componentInstance as PriceRuleEdit;
+    expect(editor.variant().priceRules[0].name).toBe('Sale');
+    expect(editor.busy).toBe(fixture.componentInstance.editState.busy);
+  });
+
   it('cancels the old product read on route changes', () => {
     const fixture = TestBed.createComponent(ProductDetail);
     const first = http.expectOne('/api/products/first');

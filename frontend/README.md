@@ -36,6 +36,7 @@ De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal o
 - Product aanmaken met een gekozen producttype en eerste variant.
 - Productnaam wijzigen, varianten toevoegen en variantnamen wijzigen.
 - Artikelnummers en basisprijzen per variant opslaan en wissen.
+- Kortingsregels per variant bekijken, toevoegen, wijzigen en na bevestiging wissen.
 - Producten aan categorieën koppelen en ontkoppelen met een doorzoekbare, gepagineerde kiezer.
 - Bestaande kenmerken, artikelnummers en basisprijzen bekijken.
 - Kenmerkcontrole met begrijpelijke meldingen per product of variant.
@@ -43,7 +44,7 @@ De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal o
 De producttypekiezer en categoriekiezer hebben een eigen zoekfunctie en paginering; ze beperken de keuze niet tot de eerste pagina.
 Categorie- en producttypelijsten hebben volgens het huidige backendcontract geen totaaltelling. Na een precies volle laatste pagina kan nog een lege pagina volgen; terugbladeren blijft mogelijk.
 
-Nog niet opgenomen: kortingsregels wijzigen, categoriehiërarchie wijzigen, producten/varianten/categorieën verwijderen, inloggen, klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
+Nog niet opgenomen: categoriehiërarchie wijzigen, producten/varianten/categorieën verwijderen, inloggen, klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
 
 Basisprijzen accepteren een komma of punt en maximaal twee decimalen. Nul is een geldige prijs; wissen maakt de prijs afwezig. Bedragen die JavaScript niet exact op centen kan versturen worden geweigerd. De valuta bestaat uit drie letters, bijvoorbeeld EUR. Artikelnummers bevatten maximaal 64 tekens zonder spaties en worden in hoofdletters opgeslagen. Een mislukte wijziging behoudt de ingevoerde gegevens; er zijn geen automatische herhaalpogingen voor schrijfacties.
 
@@ -78,3 +79,5 @@ Referenties: [Angular standalone-projecten](https://angular.dev/cli/new), [ontwi
 Kenmerkbeheer gebruikt de bestaande backendregels: code, soort en niveau blijven vast. Hernoemen en verplicht/filterbaar wijzigen gelden voor alle producten van het type. Een definitie verwijderen wist geen ingevulde waarden; die blijven zichtbaar bij het product en kunnen daar per waarde worden opgeruimd. De kenmerkcontrole wordt daarna opnieuw opgehaald.
 
 Het scherm verwerkt één schrijfactie tegelijk per product of producttype. Verwijderen van een producttype is alleen beschikbaar na een geslaagde gebruikscontrole met nul producten en vraagt bevestiging. De backend controleert gebruik opnieuw; bij een conflict haalt de interface het gebruik opnieuw op. Een leesfout wordt nooit als nul gebruik geïnterpreteerd.
+
+Kortingsregels gebruiken het bestaande prijsregelcontract. Er zijn percentagekortingen en vaste kortingen, met een naam, positieve waarde, prioriteit en optionele start- en einddatum. De einddatum mag niet vóór de startdatum liggen. De getoonde basisprijs wordt door deze beheerinterface niet vooraf berekend; de backend blijft verantwoordelijk voor de uiteindelijke actieve kortingsuitkomst.

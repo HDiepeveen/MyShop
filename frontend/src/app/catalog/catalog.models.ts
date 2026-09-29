@@ -55,11 +55,22 @@ export interface AttributeValue {
   dataType: string;
   value: string | number | boolean | string[];
 }
+export interface PriceRule {
+  id: string;
+  name: string;
+  adjustmentType: number;
+  value: number;
+  priority: number;
+  startsAt: string | null;
+  endsAt: string | null;
+}
+
 export interface Variant {
   id: string;
   name: string;
   sku: string | null;
   price: { amount: number; currency: string } | null;
+  priceRules: PriceRule[];
   attributeValues: AttributeValue[];
 }
 export interface Product {

@@ -1,4 +1,5 @@
 import { OrphanValues } from './orphan-values';
+import { PriceRuleEdit } from './price-rule-edit';
 import { AttributeEdit } from './attribute-edit';
 import { ProductEditState } from './product-edit-state';
 import { ProductValidation } from './product-validation';
@@ -25,6 +26,7 @@ import { loadState } from '../load-state';
     ProductCategories,
     AttributeEdit,
     OrphanValues,
+    PriceRuleEdit,
   ],
   template: ` <a class="back" routerLink="/producten">← Alle producten</a>
     @if (state()?.loading) {
@@ -96,6 +98,11 @@ import { loadState } from '../load-state';
           <section class="panel">
             <h3>{{ variant.name }}</h3>
             <app-variant-edit
+              [productId]="detail.product.id"
+              [variant]="variant"
+              (saved)="onSaved($event)"
+            />
+            <app-price-rule-edit
               [productId]="detail.product.id"
               [variant]="variant"
               (saved)="onSaved($event)"

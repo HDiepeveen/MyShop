@@ -94,6 +94,46 @@ describe('CatalogApi', () => {
     expect(clear.request.method).toBe('DELETE');
     clear.flush(null);
   });
+
+  it('uses encoded variant price-rule URLs and preserves rule values', () => {
+    api.listPriceRules('p/a', 'v/b').subscribe();
+    const list = http.expectOne('/api/products/p%2Fa/variants/v%2Fb/price-rules');
+    expect(list.request.method).toBe('GET');
+    list.flush({ rules: [], revision: 'r' });
+    api
+      .addPriceRule('p', 'v', {
+        name: ' Sale ',
+        adjustmentType: 1,
+        value: 12.5,
+        priority: 2,
+        startsAt: null,
+        endsAt: null,
+      })
+      .subscribe();
+    const add = http.expectOne('/api/products/p/variants/v/price-rules');
+    expect(add.request.method).toBe('POST');
+    expect(add.request.body.name).toBe('Sale');
+    expect(add.request.body.value).toBe(12.5);
+    add.flush({ id: 'new' });
+    api
+      .updatePriceRule('p', 'v', {
+        id: 'r/1',
+        name: 'New',
+        adjustmentType: 2,
+        value: 5,
+        priority: 1,
+        startsAt: null,
+        endsAt: null,
+      })
+      .subscribe();
+    const update = http.expectOne('/api/products/p/variants/v/price-rules/r%2F1');
+    expect(update.request.method).toBe('PUT');
+    update.flush(null);
+    api.removePriceRule('p', 'v', 'r/1').subscribe();
+    const remove = http.expectOne('/api/products/p/variants/v/price-rules/r%2F1');
+    expect(remove.request.method).toBe('DELETE');
+    remove.flush(null);
+  });
   it('translates failures without leaking server internals', () => {
     const message = errorMessage(
       new HttpErrorResponse({ status: 500, error: { detail: 'SQL password' } }),

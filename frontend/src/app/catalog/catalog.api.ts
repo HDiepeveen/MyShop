@@ -114,6 +114,68 @@ export class CatalogApi {
       definition,
     );
   }
+  listPriceRules(productId: string, variantId: string) {
+    return this.http.get<{ rules: import('./catalog.models').PriceRule[]; revision: string }>(
+      '/api/products/' +
+        encodeURIComponent(productId) +
+        '/variants/' +
+        encodeURIComponent(variantId) +
+        '/price-rules',
+    );
+  }
+  addPriceRule(
+    productId: string,
+    variantId: string,
+    rule: Omit<import('./catalog.models').PriceRule, 'id'>,
+  ) {
+    return this.http.post<{ id: string }>(
+      '/api/products/' +
+        encodeURIComponent(productId) +
+        '/variants/' +
+        encodeURIComponent(variantId) +
+        '/price-rules',
+      {
+        name: rule.name.trim(),
+        adjustmentType: rule.adjustmentType,
+        value: rule.value,
+        priority: rule.priority,
+        startsAt: rule.startsAt,
+        endsAt: rule.endsAt,
+      },
+    );
+  }
+  updatePriceRule(
+    productId: string,
+    variantId: string,
+    rule: import('./catalog.models').PriceRule,
+  ) {
+    return this.http.put<void>(
+      '/api/products/' +
+        encodeURIComponent(productId) +
+        '/variants/' +
+        encodeURIComponent(variantId) +
+        '/price-rules/' +
+        encodeURIComponent(rule.id),
+      {
+        name: rule.name.trim(),
+        adjustmentType: rule.adjustmentType,
+        value: rule.value,
+        priority: rule.priority,
+        startsAt: rule.startsAt,
+        endsAt: rule.endsAt,
+      },
+    );
+  }
+  removePriceRule(productId: string, variantId: string, id: string) {
+    return this.http.delete<void>(
+      '/api/products/' +
+        encodeURIComponent(productId) +
+        '/variants/' +
+        encodeURIComponent(variantId) +
+        '/price-rules/' +
+        encodeURIComponent(id),
+    );
+  }
   deleteType(id: string) {
     return this.http.delete<void>('/api/product-types/' + encodeURIComponent(id));
   }
