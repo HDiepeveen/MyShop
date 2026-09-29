@@ -73,6 +73,35 @@ describe('CategoryManagement', () => {
     fixture.componentInstance.remove();
     http.expectNone((r) => r.method === 'DELETE');
   });
+  it('refreshes usage after refused deletion and requires new confirmation', () => {
+    const editor = setup();
+    editor.confirming.set(true);
+    editor.remove();
+    http.expectOne('/api/categories/c%2Fa').flush({}, { status: 409, statusText: 'Conflict' });
+    expect(editor.confirming()).toBe(false);
+    expect(editor.canDelete()).toBe(false);
+    expect(editor.error()).toBeTruthy();
+    http.expectOne('/api/categories/c%2Fa/usage').flush({
+      categoryId: 'c/a', directChildCount: 0, productAssignmentCount: 1, isInUse: true,
+    });
+    expect(editor.canDelete()).toBe(false);
+    editor.remove();
+    http.expectNone((request) => request.method === 'DELETE');
+  });
+  it('keeps deletion unavailable on a usage read failure and can retry', () => {
+    const editor = setup();
+    editor.confirming.set(true);
+    editor.reloadUsage();
+    expect(editor.confirming()).toBe(false);
+    expect(editor.canDelete()).toBe(false);
+    http.expectOne('/api/categories/c%2Fa/usage').flush({}, { status: 503, statusText: 'Unavailable' });
+    expect(editor.canDelete()).toBe(false);
+    editor.reloadUsage();
+    http.expectOne('/api/categories/c%2Fa/usage').flush({
+      categoryId: 'c/a', directChildCount: 0, productAssignmentCount: 0, isInUse: false,
+    });
+    expect(editor.canDelete()).toBe(true);
+  });
   it('keeps the applied search while paging and resets the page for a new search', () => {
     const editor = setup();
     editor.categorySearch = 'kleding';

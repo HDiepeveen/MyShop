@@ -1,7 +1,7 @@
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { Category, CategorySummary } from '../catalog.models';
 import { errorMessage } from '../error-message';
@@ -31,6 +31,9 @@ import { loadState } from '../load-state';
           </p>
         }
       }
+      <button type="button" class="secondary" [disabled]="busy() || usage()?.loading" (click)="reloadUsage()">
+        Gebruik opnieuw ophalen
+      </button>
       <details>
         <summary>In hiërarchie plaatsen</summary>
         @if (categories()?.loading) {
@@ -134,9 +137,10 @@ export class CategoryManagement {
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly categoryQuery = new BehaviorSubject({ offset: 0, search: '' });
+  private readonly usageRefresh = new BehaviorSubject(0);
   readonly usage = toSignal(
-    toObservable(this.category).pipe(
-      switchMap((category) => loadState(this.api.categoryUsage(category.id))),
+    combineLatest([toObservable(this.category), this.usageRefresh]).pipe(
+      switchMap(([category]) => loadState(this.api.categoryUsage(category.id))),
     ),
   );
   readonly categories = toSignal(
@@ -176,10 +180,16 @@ export class CategoryManagement {
     const information = this.usage()?.data;
     return (
       !!information &&
+      information.categoryId === this.category().id &&
       !information.isInUse &&
       information.directChildCount === 0 &&
       information.productAssignmentCount === 0
     );
+  }
+  reloadUsage() {
+    if (this.busy()) return;
+    this.confirming.set(false);
+    this.usageRefresh.next(this.usageRefresh.value + 1);
   }
   move() {
     if (this.busy() || this.parentId === this.category().parentCategoryId) return;
@@ -205,6 +215,7 @@ export class CategoryManagement {
       error: (error) => {
         this.busy.set(false);
         this.error.set(errorMessage(error));
+        if (!message) this.reloadUsage();
       },
     });
   }
