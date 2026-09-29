@@ -6,7 +6,8 @@ import { DefinitionCreate } from './definition-create';
 import { Component, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, combineLatest, distinctUntilChanged, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, switchMap, tap, map } from 'rxjs';
+import { readListQuery } from '../list-query';
 import { CatalogApi } from '../catalog.api';
 import { loadState } from '../load-state';
 import { attributeTypeLabel } from '../attribute-types';
@@ -15,7 +16,9 @@ import { attributeTypeLabel } from '../attribute-types';
   providers: [TypeEditState],
   imports: [RouterLink, DefinitionCreate, TypeEdit, TypeUsage, DefinitionEdit],
   template: `
-    <a class="back" routerLink="/producttypen">← Alle producttypen</a>
+    <a class="back" routerLink="/producttypen" [queryParams]="listQuery()"
+      >← Terug naar producttypen</a
+    >
     @if (state()?.loading) {
       <p role="status">Producttype ophalen…</p>
     }
@@ -35,7 +38,11 @@ import { attributeTypeLabel } from '../attribute-types';
       @if (notice()) {
         <p class="success" role="status">{{ notice() }}</p>
       }
-      <app-type-usage [typeId]="type.id" [typeName]="type.name" />
+      <app-type-usage
+        [typeId]="type.id"
+        [typeName]="type.name"
+        [listSearch]="listQuery()?.search ?? ''"
+      />
       <app-type-edit [type]="type" (saved)="onRenamed()" />
       <app-definition-create [typeId]="type.id" (started)="notice.set('')" (saved)="onSaved()" />
       <section class="panel">
@@ -77,6 +84,7 @@ export class TypeDetail {
   }
   private readonly api = inject(CatalogApi);
   private readonly route = inject(ActivatedRoute);
+  readonly listQuery = toSignal(this.route.queryParamMap.pipe(map(readListQuery)));
   private readonly refresh = new BehaviorSubject(0);
   readonly notice = signal('');
   onChanged(message: string) {

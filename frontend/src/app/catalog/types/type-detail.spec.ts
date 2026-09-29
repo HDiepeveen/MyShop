@@ -19,12 +19,31 @@ describe('TypeDetail', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: params,
+            queryParamMap: new BehaviorSubject(
+              convertToParamMap({ search: 'shirt', offset: '20' }),
+            ),
+          },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('preserves list search and page in the back link', () => {
+    const fixture = TestBed.createComponent(TypeDetail);
+    http.expectOne('/api/product-types/t').flush({}, { status: 404, statusText: 'Missing' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a.back').getAttribute('href')).toContain(
+      'search=shirt',
+    );
+    expect(fixture.nativeElement.querySelector('a.back').getAttribute('href')).toContain(
+      'offset=20',
+    );
+  });
   it('shows definition labels, scope and constraints', () => {
     const fixture = TestBed.createComponent(TypeDetail);
     http.expectOne('/api/product-types/t').flush({

@@ -1,8 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { readListQuery } from '../list-query';
 import { CatalogApi } from '../catalog.api';
 import { errorMessage } from '../error-message';
 import { loadState } from '../load-state';
@@ -46,6 +47,9 @@ import { loadState } from '../load-state';
             [(ngModel)]="searchText"
             placeholder="Zoeken op naam" /></label
         ><button class="secondary">Zoeken</button>
+        @if (listQuery().search) {
+          <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
+        }
       </form>
       @if (state()?.loading) {
         <p class="loading" role="status">Categorieën ophalen…</p>
@@ -70,7 +74,9 @@ import { loadState } from '../load-state';
                 @for (item of items; track item.id) {
                   <tr>
                     <td>
-                      <a [routerLink]="['/categorieen', item.id]">{{ item.name }}</a>
+                      <a [routerLink]="['/categorieen', item.id]" [queryParams]="listQuery()">{{
+                        item.name
+                      }}</a>
                     </td>
                     <td>
                       <span class="badge">{{
@@ -105,26 +111,55 @@ import { loadState } from '../load-state';
 export class CategoryList {
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly query = new BehaviorSubject({ offset: 0, search: '' });
-  readonly state = toSignal(
-    this.query.pipe(switchMap((q) => loadState(this.api.categories(q.offset, q.search)))),
-  );
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly refresh = new BehaviorSubject(0);
+  readonly listQuery = signal({ offset: 0, search: '' });
   readonly offset = signal(0);
+  searchText = '';
+  readonly state = toSignal(
+    this.route.queryParamMap.pipe(
+      map(readListQuery),
+      distinctUntilChanged((a, b) => a.search === b.search && a.offset === b.offset),
+      switchMap((query) => {
+        if (query.search !== this.listQuery().search) this.searchText = query.search;
+        this.listQuery.set(query);
+        this.offset.set(query.offset);
+        return this.refresh.pipe(
+          switchMap(() => loadState(this.api.categories(query.offset, query.search))),
+        );
+      }),
+    ),
+  );
   readonly saving = signal(false);
   readonly saveError = signal('');
   readonly saved = signal('');
   name = '';
-  searchText = '';
   search() {
-    this.offset.set(0);
-    this.query.next({ offset: 0, search: this.searchText });
+    if (this.listQuery().search === this.searchText.trim() && this.offset() === 0) {
+      this.retry();
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: this.searchText.trim() || null, offset: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  clearSearch() {
+    this.searchText = '';
+    this.search();
   }
   changePage(delta: number) {
-    this.offset.update((value) => Math.max(0, value + delta));
-    this.query.next({ ...this.query.value, offset: this.offset() });
+    const offset = Math.max(0, this.offset() + delta);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { offset: offset || null },
+      queryParamsHandling: 'merge',
+    });
   }
   retry() {
-    this.query.next(this.query.value);
+    this.refresh.next(this.refresh.value + 1);
   }
   create() {
     if (this.saving() || !this.name.trim()) return;

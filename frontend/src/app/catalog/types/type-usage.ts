@@ -70,6 +70,7 @@ import { loadState } from '../load-state';
 export class TypeUsage {
   readonly typeId = input.required<string>();
   readonly typeName = input('');
+  readonly listSearch = input('');
   readonly busy = inject(TypeEditState).busy;
   readonly confirming = signal(false);
   readonly error = signal('');
@@ -109,7 +110,9 @@ export class TypeUsage {
       .subscribe({
         next: () => {
           this.busy.set(false);
-          void this.router.navigate(['/producttypen']);
+          void this.router.navigate(['/producttypen'], {
+            queryParams: { search: this.listSearch() || null },
+          });
         },
         error: (error) => {
           this.busy.set(false);

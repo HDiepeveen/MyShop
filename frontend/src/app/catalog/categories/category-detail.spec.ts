@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { CategoryDetail } from './category-detail';
 import { By } from '@angular/platform-browser';
@@ -19,12 +19,36 @@ describe('CategoryDetail', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: params,
+            queryParamMap: new BehaviorSubject(
+              convertToParamMap({ search: 'shirt', offset: '20' }),
+            ),
+          },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('preserves list context in the back link and resets the page after deletion', () => {
+    const fixture = TestBed.createComponent(CategoryDetail);
+    http.expectOne('/api/categories/c').flush({}, { status: 404, statusText: 'Missing' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a.back').getAttribute('href')).toContain(
+      'search=shirt',
+    );
+    expect(fixture.nativeElement.querySelector('a.back').getAttribute('href')).toContain(
+      'offset=20',
+    );
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.componentInstance.onRemoved();
+    expect(navigate).toHaveBeenCalledWith(['/categorieen'], {
+      queryParams: { search: 'shirt', offset: null },
+    });
+  });
   it('coordinates rename and hierarchy writes through the detail provider', () => {
     const fixture = TestBed.createComponent(CategoryDetail);
     http

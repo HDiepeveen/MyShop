@@ -44,6 +44,7 @@ describe('TypeUsage', () => {
     const f = setup(),
       c = f.componentInstance;
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    f.componentRef.setInput('listSearch', 'shirt');
     c.confirming.set(true);
     c.remove();
     http.expectNone((r) => r.method === 'DELETE');
@@ -60,7 +61,7 @@ describe('TypeUsage', () => {
     expect(req.request.method).toBe('DELETE');
     expect(navigate).not.toHaveBeenCalled();
     req.flush(null);
-    expect(navigate).toHaveBeenCalledWith(['/producttypen']);
+    expect(navigate).toHaveBeenCalledWith(['/producttypen'], { queryParams: { search: 'shirt' } });
   });
   it('blocks used types and refreshes usage after a concurrent-use conflict', () => {
     const c = setup().componentInstance;

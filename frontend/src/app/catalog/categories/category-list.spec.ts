@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import { CategoryList } from './category-list';
 
 describe('CategoryList', () => {
@@ -11,7 +12,17 @@ describe('CategoryList', () => {
       imports: [CategoryList],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
+    const query = new BehaviorSubject(convertToParamMap({}));
+    TestBed.overrideProvider(ActivatedRoute, { useValue: { queryParamMap: query } });
     http = TestBed.inject(HttpTestingController);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation((_commands, extras) => {
+      const values: Record<string, unknown> = {};
+      for (const key of query.value.keys) values[key] = query.value.get(key);
+      Object.assign(values, extras?.queryParams);
+      for (const key of Object.keys(values)) if (values[key] === null) delete values[key];
+      query.next(convertToParamMap(values));
+      return Promise.resolve(true);
+    });
   });
   afterEach(() => http.verify());
   it('creates only a root category and prevents double submission', () => {

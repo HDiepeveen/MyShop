@@ -4,7 +4,16 @@ import { Component, effect, inject, signal } from '@angular/core';
 import { CategoryEditState } from './category-edit-state';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, combineLatest, of, tap, distinctUntilChanged, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  combineLatest,
+  of,
+  tap,
+  distinctUntilChanged,
+  switchMap,
+  map,
+} from 'rxjs';
+import { readListQuery } from '../list-query';
 import { CatalogApi } from '../catalog.api';
 import { loadState } from '../load-state';
 
@@ -12,7 +21,9 @@ import { loadState } from '../load-state';
   providers: [CategoryEditState],
   imports: [RouterLink, CategoryEdit, CategoryManagement],
   template: `
-    <a class="back" routerLink="/categorieen">← Alle categorieën</a>
+    <a class="back" routerLink="/categorieen" [queryParams]="listQuery()"
+      >← Terug naar categorieën</a
+    >
     @if (state()?.loading) {
       <p class="loading" role="status">Categorie ophalen…</p>
     }
@@ -82,6 +93,7 @@ export class CategoryDetail {
   }
   private readonly api = inject(CatalogApi);
   private readonly route = inject(ActivatedRoute);
+  readonly listQuery = toSignal(this.route.queryParamMap.pipe(map(readListQuery)));
   private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
   readonly notice = signal('');
@@ -118,7 +130,9 @@ export class CategoryDetail {
     this.reload();
   }
   onRemoved() {
-    void this.router.navigate(['/categorieen']);
+    void this.router.navigate(['/categorieen'], {
+      queryParams: { ...this.listQuery(), offset: null },
+    });
   }
   reload() {
     this.refresh.next(this.refresh.value + 1);

@@ -58,6 +58,8 @@ Keuzes zijn vrije waarden volgens het bestaande backendcontract, zonder vooraf b
 
 ## Controle
 
+Ook categorie- en producttypeoverzichten bewaren `search` en `offset` in de URL. De teruglink vanuit details behoudt de zoekterm en pagina. Na verwijderen blijft de zoekterm behouden en start de lijst op pagina één. Na aanmaken wordt de lijst zonder zoekterm op pagina één vernieuwd.
+
 Het productoverzicht bewaart de toegepaste naamzoekterm (`search`) en pagina (`offset`) naast de filters in de URL. Vernieuwen en browsernavigatie herstellen dit overzicht. Links naar details en nieuw product nemen deze context mee; de teruglink brengt je terug naar het overzicht. Na verwijderen gaat het overzicht naar pagina één met dezelfde filters en zoekterm. Ongeldige offsets vallen terug op pagina één. Met 'Zoekterm wissen' wis je alleen de naamzoekterm.
 
 ```powershell
