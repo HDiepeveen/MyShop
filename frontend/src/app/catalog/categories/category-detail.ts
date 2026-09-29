@@ -1,13 +1,14 @@
 import { CategoryEdit } from './category-edit';
+import { CategoryManagement } from './category-management';
 import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, combineLatest, tap, distinctUntilChanged, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { loadState } from '../load-state';
 
 @Component({
-  imports: [RouterLink, CategoryEdit],
+  imports: [RouterLink, CategoryEdit, CategoryManagement],
   template: `
     <a class="back" routerLink="/categorieen">← Alle categorieën</a>
     @if (state()?.loading) {
@@ -25,6 +26,11 @@ import { loadState } from '../load-state';
       <div class="eyebrow">{{ category.isRoot ? 'Hoofdcategorie' : 'Subcategorie' }}</div>
       <h1>{{ category.name }}</h1>
       <app-category-edit [category]="category" (saved)="onSaved()" />
+      <app-category-management
+        [category]="category"
+        (saved)="onManaged($event)"
+        (removed)="onRemoved()"
+      />
       <section class="panel">
         <h2>Plek in het assortiment</h2>
         @if (category.parentCategoryId) {
@@ -41,6 +47,7 @@ import { loadState } from '../load-state';
 export class CategoryDetail {
   private readonly api = inject(CatalogApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
   readonly notice = signal('');
   readonly state = toSignal(
@@ -55,6 +62,13 @@ export class CategoryDetail {
   onSaved() {
     this.notice.set('De categorienaam is bijgewerkt.');
     this.reload();
+  }
+  onManaged(message: string) {
+    this.notice.set(message);
+    this.reload();
+  }
+  onRemoved() {
+    void this.router.navigate(['/categorieen']);
   }
   reload() {
     this.refresh.next(this.refresh.value + 1);

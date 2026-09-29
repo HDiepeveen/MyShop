@@ -90,6 +90,36 @@ import { errorMessage } from '../error-message';
           Basisprijs wissen
         </button>
       }
+      @if (variantCount() > 1) {
+        <div class="remove-section">
+          @if (confirmingRemove()) {
+            <p>
+              Variant “{{ variant().name }}” en alle waarden en kortingsregels definitief
+              verwijderen?
+            </p>
+            <button type="button" [disabled]="busy()" (click)="removeVariant()">
+              Ja, variant verwijderen
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="busy()"
+              (click)="confirmingRemove.set(false)"
+            >
+              Annuleren
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="busy()"
+              (click)="confirmingRemove.set(true)"
+            >
+              Variant verwijderen
+            </button>
+          }
+        </div>
+      }
       @if (error()) {
         <p class="error" role="alert">{{ error() }}</p>
       }
@@ -99,9 +129,11 @@ import { errorMessage } from '../error-message';
 export class VariantEdit {
   readonly productId = input.required<string>();
   readonly variant = input.required<Variant>();
+  readonly variantCount = input(1);
   readonly saved = output<string>();
   readonly busy = inject(ProductEditState).busy;
   readonly error = signal('');
+  readonly confirmingRemove = signal(false);
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
   name = '';
@@ -177,12 +209,20 @@ export class VariantEdit {
       'De basisprijs is gewist.',
     );
   }
+  removeVariant() {
+    if (this.busy() || !this.confirmingRemove() || this.variantCount() < 2) return;
+    this.save(
+      this.api.removeVariant(this.productId(), this.variant().id),
+      'De variant is verwijderd.',
+    );
+  }
   private save(request: Observable<void>, message: string, conflictMessage?: string) {
     this.busy.set(true);
     this.error.set('');
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.busy.set(false);
+        this.confirmingRemove.set(false);
         this.saved.emit(message);
       },
       error: (error) => {

@@ -141,4 +141,33 @@ describe('CatalogApi', () => {
     expect(message).not.toContain('SQL');
     expect(errorMessage(new HttpErrorResponse({ status: 0 }))).toContain('niet bereikbaar');
   });
+
+  it('uses encoded category and product removal URLs and preserves hierarchy payloads', () => {
+    api.categoryUsage('c/a').subscribe();
+    const usage = http.expectOne('/api/categories/c%2Fa/usage');
+    expect(usage.request.method).toBe('GET');
+    usage.flush({
+      categoryId: 'c/a',
+      directChildCount: 0,
+      productAssignmentCount: 0,
+      isInUse: false,
+    });
+    api.moveCategory('c/a', 'parent/b').subscribe();
+    const move = http.expectOne('/api/categories/c%2Fa/parent');
+    expect(move.request.method).toBe('PUT');
+    expect(move.request.body).toEqual({ parentCategoryId: 'parent/b' });
+    move.flush(null);
+    api.deleteCategory('c/a').subscribe();
+    const category = http.expectOne('/api/categories/c%2Fa');
+    expect(category.request.method).toBe('DELETE');
+    category.flush(null);
+    api.removeVariant('p/a', 'v/b').subscribe();
+    const variant = http.expectOne('/api/products/p%2Fa/variants/v%2Fb');
+    expect(variant.request.method).toBe('DELETE');
+    variant.flush(null);
+    api.deleteProduct('p/a').subscribe();
+    const product = http.expectOne('/api/products/p%2Fa');
+    expect(product.request.method).toBe('DELETE');
+    product.flush(null);
+  });
 });

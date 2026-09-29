@@ -28,6 +28,12 @@ export interface CategorySummary {
   isRoot: boolean;
   directChildCount: number;
 }
+export interface CategoryUsage {
+  categoryId: string;
+  directChildCount: number;
+  productAssignmentCount: number;
+  isInUse: boolean;
+}
 export interface AttributeDefinition {
   id: string;
   code: string;

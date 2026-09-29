@@ -196,4 +196,22 @@ describe('VariantEdit', () => {
     http.expectOne('/api/products/p/variants/v/name').flush(null);
     expect(editor.error()).toBe('');
   });
+
+  it('requires confirmation before removing a variant and keeps the last variant protected', () => {
+    const fixture = setup();
+    const editor = fixture.componentInstance;
+    editor.removeVariant();
+    http.expectNone((r) => r.method === 'DELETE');
+    editor.confirmingRemove.set(true);
+    editor.removeVariant();
+    http.expectNone((r) => r.method === 'DELETE');
+    fixture.componentRef.setInput('variantCount', 2);
+    fixture.detectChanges();
+    editor.removeVariant();
+    editor.removeVariant();
+    const request = http.expectOne('/api/products/p/variants/v');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+    expect(editor.confirmingRemove()).toBe(false);
+  });
 });

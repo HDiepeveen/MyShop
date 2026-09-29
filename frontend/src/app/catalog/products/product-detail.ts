@@ -1,5 +1,6 @@
 import { OrphanValues } from './orphan-values';
 import { PriceRuleEdit } from './price-rule-edit';
+import { ProductDelete } from './product-delete';
 import { AttributeEdit } from './attribute-edit';
 import { ProductEditState } from './product-edit-state';
 import { ProductValidation } from './product-validation';
@@ -8,7 +9,7 @@ import { ProductCategories } from './product-categories';
 import { ProductEdit } from './product-edit';
 import { Component, effect, inject, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, combineLatest, tap, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
@@ -27,6 +28,7 @@ import { loadState } from '../load-state';
     AttributeEdit,
     OrphanValues,
     PriceRuleEdit,
+    ProductDelete,
   ],
   template: ` <a class="back" routerLink="/producten">← Alle producten</a>
     @if (state()?.loading) {
@@ -60,6 +62,11 @@ import { loadState } from '../load-state';
         </div>
       </div>
       <app-product-edit [product]="detail.product" (saved)="onSaved($event)" />
+      <app-product-delete
+        [productId]="detail.product.id"
+        [productName]="detail.product.name"
+        (removed)="onRemoved()"
+      />
       <section class="panel">
         <h2>Productgegevens</h2>
         @if (!detail.product.attributeValues.length) {
@@ -100,6 +107,7 @@ import { loadState } from '../load-state';
             <app-variant-edit
               [productId]="detail.product.id"
               [variant]="variant"
+              [variantCount]="detail.product.variants.length"
               (saved)="onSaved($event)"
             />
             <app-price-rule-edit
@@ -158,6 +166,7 @@ export class ProductDetail {
   readonly editState = inject(ProductEditState);
   private readonly api = inject(CatalogApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
   readonly notice = signal('');
   readonly state = toSignal(
@@ -192,6 +201,9 @@ export class ProductDetail {
   onSaved(message: string) {
     this.notice.set(message);
     this.reload();
+  }
+  onRemoved() {
+    void this.router.navigate(['/producten']);
   }
   reload() {
     this.refresh.next(this.refresh.value + 1);

@@ -62,6 +62,30 @@ export class CatalogApi {
   category(id: string) {
     return this.http.get<Category>('/api/categories/' + encodeURIComponent(id));
   }
+  categoryUsage(id: string) {
+    return this.http.get<import('./catalog.models').CategoryUsage>(
+      '/api/categories/' + encodeURIComponent(id) + '/usage',
+    );
+  }
+  moveCategory(id: string, parentCategoryId: string | null) {
+    return this.http.put<void>('/api/categories/' + encodeURIComponent(id) + '/parent', {
+      parentCategoryId,
+    });
+  }
+  deleteCategory(id: string) {
+    return this.http.delete<void>('/api/categories/' + encodeURIComponent(id));
+  }
+  removeVariant(productId: string, variantId: string) {
+    return this.http.delete<void>(
+      '/api/products/' +
+        encodeURIComponent(productId) +
+        '/variants/' +
+        encodeURIComponent(variantId),
+    );
+  }
+  deleteProduct(id: string) {
+    return this.http.delete<void>('/api/products/' + encodeURIComponent(id));
+  }
   setAttribute(
     productId: string,
     definitionId: string,

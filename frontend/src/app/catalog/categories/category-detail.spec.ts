@@ -28,6 +28,10 @@ describe('CategoryDetail', () => {
       .expectOne('/api/categories/c')
       .flush({ id: 'c', name: 'Shirts', isRoot: false, parentCategoryId: 'parent' });
     fixture.detectChanges();
+    http
+      .expectOne('/api/categories/c/usage')
+      .flush({ categoryId: 'c', directChildCount: 0, productAssignmentCount: 0, isInUse: false });
+    http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Shirts');
     expect(
       fixture.nativeElement.querySelector('a[href="/categorieen/parent"]').textContent,
@@ -37,9 +41,22 @@ describe('CategoryDetail', () => {
   it('clears the previous category success message on route changes', () => {
     const fixture = TestBed.createComponent(CategoryDetail);
     http.expectOne('/api/categories/c').flush({ id: 'c', name: 'Category', isRoot: true });
+    fixture.detectChanges();
+    http
+      .expectOne('/api/categories/c/usage')
+      .flush({ categoryId: 'c', directChildCount: 0, productAssignmentCount: 0, isInUse: false });
+    http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
     fixture.componentInstance.notice.set('Previous success');
     params.next(convertToParamMap({ id: 'other' }));
     http.expectOne('/api/categories/other').flush({ id: 'other', name: 'Other', isRoot: true });
+    fixture.detectChanges();
+    http.expectOne('/api/categories/other/usage').flush({
+      categoryId: 'other',
+      directChildCount: 0,
+      productAssignmentCount: 0,
+      isInUse: false,
+    });
+    http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
     expect(fixture.componentInstance.notice()).toBe('');
   });
   it('cancels stale category reads and can retry a failure', () => {
@@ -48,12 +65,21 @@ describe('CategoryDetail', () => {
     params.next(convertToParamMap({ id: 'new' }));
     expect(old.cancelled).toBe(true);
     http.expectOne('/api/categories/new').flush({}, { status: 404, statusText: 'Missing' });
+    http
+      .match('/api/categories/new/usage')
+      .forEach((request) => request.flush({}, { status: 404, statusText: 'Missing' }));
+    http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
     expect(fixture.componentInstance.state()?.data).toBeNull();
     expect(fixture.componentInstance.state()?.error).toBeTruthy();
     fixture.componentInstance.reload();
     http
       .expectOne('/api/categories/new')
       .flush({ id: 'new', name: 'New', isRoot: true, parentCategoryId: null });
+    fixture.detectChanges();
+    http
+      .expectOne('/api/categories/new/usage')
+      .flush({ categoryId: 'new', directChildCount: 0, productAssignmentCount: 0, isInUse: false });
+    http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
     expect(fixture.componentInstance.state()?.error).toBe('');
   });
 });
