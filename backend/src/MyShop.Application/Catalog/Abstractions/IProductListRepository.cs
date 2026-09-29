@@ -17,7 +17,8 @@ public sealed record ProductListItem(
     Guid Id,
     Guid ProductTypeId,
     string Name,
-    int VariantCount);
+    int VariantCount,
+    bool IsPublished = false);
 
 public sealed record ProductListPage(
     IReadOnlyList<ProductListItem> Items,

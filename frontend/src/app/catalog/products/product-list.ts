@@ -90,6 +90,7 @@ import { readProductListQuery } from './product-list-query';
               <thead>
                 <tr>
                   <th>Product</th>
+                  <th>Status</th>
                   <th>Varianten</th>
                   <th>Bekijken</th>
                 </tr>
@@ -101,6 +102,11 @@ import { readProductListQuery } from './product-list-query';
                       <a [routerLink]="['/producten', product.id]" [queryParams]="listQuery()">{{
                         product.name
                       }}</a>
+                    </td>
+                    <td>
+                      <span class="badge">{{
+                        product.isPublished ? 'Gepubliceerd' : 'Concept'
+                      }}</span>
                     </td>
                     <td>
                       <span class="badge">{{ product.variantCount }} varianten</span>

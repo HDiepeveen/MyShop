@@ -12,7 +12,8 @@ public sealed class ProductPersistenceConfigurationTests
     public void Model_ContainsExactlyElevenPersistenceEntities()
     {
         using var context = CreateContext();
-        var types = context.Model.GetEntityTypes().Select(entity => entity.ClrType).ToHashSet();
+        var types = context.Model.GetEntityTypes().Select(entity => entity.ClrType)
+            .Where(type => type.Namespace == typeof(ProductPersistence).Namespace).ToHashSet();
 
         Assert.Equal(11, types.Count);
         Assert.True(types.SetEquals([

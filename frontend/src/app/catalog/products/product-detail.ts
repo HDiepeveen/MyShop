@@ -1,3 +1,4 @@
+import { ProductPresentationEdit } from './product-presentation';
 import { OrphanValues } from './orphan-values';
 import { PriceRuleEdit } from './price-rule-edit';
 import { ProductDelete } from './product-delete';
@@ -23,6 +24,7 @@ import { readProductListQuery } from './product-list-query';
     RouterLink,
     CurrencyPipe,
     ProductEdit,
+    ProductPresentationEdit,
     ProductValidation,
     VariantEdit,
     ProductCategories,
@@ -64,6 +66,7 @@ import { readProductListQuery } from './product-list-query';
           </p>
         </div>
       </div>
+      <app-product-presentation [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-edit [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-delete
         [productId]="detail.product.id"

@@ -42,7 +42,8 @@ internal sealed class ProductListRepository
                 product.Id,
                 product.ProductTypeId,
                 product.Name,
-                product.Variants.Count));
+                product.Variants.Count,
+                product.IsPublished));
 
     internal static IQueryable<ProductPersistence> FilterQuery(
         IQueryable<ProductPersistence> products,

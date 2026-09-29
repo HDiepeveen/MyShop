@@ -26,6 +26,12 @@ export class CatalogApi {
     if (filters.productTypeId) params = params.set('productTypeId', filters.productTypeId);
     return this.http.get<ProductPage>('/api/products', { params });
   }
+  setPresentation(
+    id: string,
+    value: import('./catalog.models').ProductPresentation & { revision: string },
+  ) {
+    return this.http.put<void>('/api/products/' + encodeURIComponent(id) + '/presentation', value);
+  }
   product(id: string) {
     return this.http
       .get('/api/products/' + encodeURIComponent(id), { responseType: 'text' })

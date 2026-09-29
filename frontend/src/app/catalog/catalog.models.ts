@@ -3,6 +3,7 @@ export interface ProductSummary {
   productTypeId: string;
   name: string;
   variantCount: number;
+  isPublished?: boolean;
 }
 export interface ProductPage {
   items: ProductSummary[];
@@ -79,7 +80,14 @@ export interface Variant {
   priceRules: PriceRule[];
   attributeValues: AttributeValue[];
 }
+export interface ProductPresentation {
+  description: string;
+  imageUrl: string | null;
+  imageAlt: string;
+  isPublished: boolean;
+}
 export interface Product {
+  presentation?: ProductPresentation;
   id: string;
   productTypeId: string;
   name: string;

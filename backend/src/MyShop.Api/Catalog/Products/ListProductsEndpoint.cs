@@ -48,7 +48,8 @@ public static class ListProductsEndpoint
                 item.Id,
                 item.ProductTypeId,
                 item.Name,
-                item.VariantCount)).ToArray();
+                item.VariantCount,
+                item.IsPublished)).ToArray();
 
             return TypedResults.Ok(new ProductListResponse(
                 items,
@@ -85,4 +86,5 @@ public sealed record ProductSummaryResponse(
     Guid Id,
     Guid ProductTypeId,
     string Name,
-    int VariantCount);
+    int VariantCount,
+    bool IsPublished = false);

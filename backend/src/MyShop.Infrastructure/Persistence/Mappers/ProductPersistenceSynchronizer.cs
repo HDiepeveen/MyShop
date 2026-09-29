@@ -14,6 +14,10 @@ internal static class ProductPersistenceSynchronizer
 
         persistence.ProductTypeId = product.ProductTypeId.Value;
         persistence.Name = product.Name;
+        persistence.Description = product.Presentation.Description;
+        persistence.ImageUrl = product.Presentation.ImageUrl;
+        persistence.ImageAlt = product.Presentation.ImageAlt;
+        persistence.IsPublished = product.Presentation.IsPublished;
 
         SynchronizeVariants(product, persistence);
         SynchronizeCategories(product, persistence);

@@ -11,7 +11,7 @@ public sealed class CatalogMigrationTests
     public void MigrationSnapshotMatchesCurrentSqlServerModel()
     {
         using var context = new MyShopDesignTimeDbContextFactory().CreateDbContext([]);
-        Assert.EndsWith("_InitialCatalog", Assert.Single(context.Database.GetMigrations()));
+        Assert.EndsWith("_ProductPresentation", context.Database.GetMigrations().Last());
         Assert.False(context.Database.HasPendingModelChanges());
     }
 
@@ -24,7 +24,7 @@ public sealed class CatalogMigrationTests
             Assert.Contains($"CREATE TABLE [{table}]", script);
         Assert.Contains("[__EFMigrationsHistory]", script);
         Assert.Contains("IF NOT EXISTS", script);
-        Assert.Contains(Assert.Single(context.Database.GetMigrations()), script);
+        foreach (var migration in context.Database.GetMigrations()) Assert.Contains(migration, script);
         Assert.Contains("BEGIN TRANSACTION", script);
     }
 
@@ -32,7 +32,7 @@ public sealed class CatalogMigrationTests
     public void DownScriptRemovesCatalogTables()
     {
         using var context = new MyShopDesignTimeDbContextFactory().CreateDbContext([]);
-        var migration = Assert.Single(context.Database.GetMigrations());
+        var migration = context.Database.GetMigrations().Last();
         var script = context.GetService<IMigrator>().GenerateScript(migration, Migration.InitialDatabase);
         foreach (var table in context.Model.GetEntityTypes().Select(entity => entity.GetTableName()).Distinct())
             Assert.Contains($"DROP TABLE [{table}]", script);

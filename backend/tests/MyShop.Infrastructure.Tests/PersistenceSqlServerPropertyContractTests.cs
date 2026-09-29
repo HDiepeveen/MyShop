@@ -41,7 +41,7 @@ public sealed class PersistenceSqlServerPropertyContractTests
     public void Properties_AreMappedToSqlServer(Type modelType) => Assert.All(Entity(modelType).GetProperties(), p => Assert.NotNull(p.DeclaringType.GetTableName()));
 
     [Fact]
-    public void PropertyModel_HasElevenEntities() => Assert.Equal(11, Model().GetEntityTypes().Count());
+    public void PropertyModel_HasEighteenEntities() => Assert.Equal(18, Model().GetEntityTypes().Count());
 
     [Fact]
     public void PropertyModel_HasNoShadowProperties() => Assert.All(Model().GetEntityTypes(), e => Assert.All(e.GetProperties(), p => Assert.NotNull(p.PropertyInfo)));
@@ -65,7 +65,7 @@ public sealed class PersistenceSqlServerPropertyContractTests
     public void PropertyModel_AllEntitiesHaveProperties() => Assert.All(Model().GetEntityTypes(), e => Assert.NotEmpty(e.GetProperties()));
 
     [Fact]
-    public void PropertyModel_UsesExpectedEntityTypes() => Assert.Equal(Models.OrderBy(t => t.FullName), Model().GetEntityTypes().Select(e => e.ClrType).OrderBy(t => t.FullName));
+    public void PropertyModel_UsesExpectedCatalogEntityTypes() => Assert.Equal(Models.OrderBy(t => t.FullName), Model().GetEntityTypes().Select(e => e.ClrType).Where(t => t.Namespace == typeof(ProductPersistence).Namespace).OrderBy(t => t.FullName));
 
     [Fact]
     public void PropertyModel_UsesSqlServerProvider() { using var c = CreateContext(); Assert.Contains("SqlServer", c.Database.ProviderName, StringComparison.OrdinalIgnoreCase); }

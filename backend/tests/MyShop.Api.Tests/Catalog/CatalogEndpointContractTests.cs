@@ -45,6 +45,7 @@ public sealed class CatalogEndpointContractTests
         new("ClearProductVariantPrice", "DELETE", "/api/products/{productId:guid}/variants/{variantId:guid}/price"),
         new("AddProductVariantPriceRule", "POST", "/api/products/{productId:guid}/variants/{variantId:guid}/price-rules"),
         new("RemoveProductVariantPriceRule", "DELETE", "/api/products/{productId:guid}/variants/{variantId:guid}/price-rules/{priceRuleId:guid}"),
+        new("UpdateProductPresentation", "PUT", "/api/products/{productId:guid}/presentation"),
         new("UpdateProductVariantPriceRule", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/price-rules/{priceRuleId:guid}"),
         new("GetProductVariantPrice", "GET", "/api/products/{productId:guid}/variants/{variantId:guid}/price"),
         new("GetProductVariantPriceRule", "GET", "/api/products/{productId:guid}/variants/{variantId:guid}/price-rules/{priceRuleId:guid}"),
@@ -191,6 +192,7 @@ public sealed class CatalogEndpointContractTests
         endpoints.MapGetProductVariantPriceRule();
         endpoints.MapGetProductVariantPrice();
         endpoints.MapUpdateProductVariantPriceRule();
+        endpoints.MapUpdateProductPresentation();
         endpoints.MapRemoveProductVariantPriceRule();
         endpoints.MapAddProductVariantPriceRule();
         endpoints.MapClearProductVariantPrice();

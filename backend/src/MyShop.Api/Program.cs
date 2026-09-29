@@ -1,60 +1,25 @@
+using MyShop.Api.Security;
 using MyShop.Api;
-using MyShop.Api.Catalog.Categories;
-using MyShop.Api.Catalog.Products;
-using MyShop.Api.Catalog.ProductTypes;
+using MyShop.Api.Catalog;
 
-var builder = WebApplication.CreateBuilder(args);
+
+
+var builder = WebApplication.CreateBuilder(args.Where(arg => arg is not "--create-admin" and not "--reset-admin").ToArray());
 
 builder.Services.AddMyShop(builder.Configuration);
 
-var app = builder.Build();
+builder.Services.AddAdminSecurity(builder.Environment.IsDevelopment());
 
-app.MapCreateProduct();
-app.MapDeleteProduct();
-app.MapClearProductVariantSku();
-app.MapCreateCategory();
-app.MapCreateProductType();
-app.MapDeleteCategory();
-app.MapDeleteProductType();
-app.MapConfigureProductTypeAttribute();
-app.MapGetCategory();
-app.MapListCategories();
-app.MapGetProduct();
-app.MapGetProductAttributeValidation();
-app.MapGetProductBySku();
-app.MapListProducts();
-app.MapListProductTypes();
-app.MapMoveCategory();
-app.MapRenameProductType();
-app.MapRenameProductTypeAttribute();
-app.MapGetProductType();
-app.MapRenameProduct();
-app.MapRenameCategory();
-app.MapAddProductVariant();
-app.MapAddProductTypeAttribute();
-app.MapRenameProductVariant();
-app.MapSetProductVariantSku();
-app.MapSetProductVariantPrice();
-app.MapGetProductTypeUsage();
-app.MapGetCategoryUsage();
-app.MapGetProductTypeAttribute();
-app.MapGetVariantAttributeValue();
-app.MapGetProductAttributeValue();
-app.MapGetProductVariant();
-app.MapListProductVariantPriceRules();
-app.MapGetProductVariantPriceRule();
-app.MapGetProductVariantPrice();
-app.MapUpdateProductVariantPriceRule();
-app.MapRemoveProductVariantPriceRule();
-app.MapAddProductVariantPriceRule();
-app.MapClearProductVariantPrice();
-app.MapRemoveProductVariant();
-app.MapAssignProductToCategory();
-app.MapRemoveProductFromCategory();
-app.MapRemoveProductAttributeValue();
-app.MapRemoveProductTypeAttribute();
-app.MapRemoveVariantAttributeValue();
-app.MapSetVariantAttributeValue();
-app.MapSetProductAttributeValue();
+var app = builder.Build();
+if (args.Contains("--create-admin") || args.Contains("--reset-admin"))
+{
+    await AdminAccountCommand.RunAsync(app.Services, args.Contains("--reset-admin"));
+    return;
+}
+if (!app.Environment.IsDevelopment()) { app.UseHsts(); app.UseHttpsRedirection(); }
+app.UseAdminSecurity();
+app.MapAdminEndpoints();
+
+app.MapCatalog();
 
 app.Run();

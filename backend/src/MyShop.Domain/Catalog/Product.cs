@@ -47,6 +47,10 @@ public sealed class Product
     public ProductId Id { get; }
     public ProductTypeId ProductTypeId { get; }
     public string Name { get; private set; }
+    public ProductPresentation Presentation { get; private set; } = ProductPresentation.Draft;
+
+    public void SetPresentation(ProductPresentation presentation) =>
+        Presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
     public IReadOnlyCollection<ProductVariant> Variants => _readOnlyVariants;
     public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
     public IReadOnlyCollection<CategoryId> CategoryIds => _readOnlyCategoryIds;
@@ -60,7 +64,8 @@ public sealed class Product
         string name,
         IEnumerable<ProductVariant> variants,
         IEnumerable<CategoryId> categoryIds,
-        IEnumerable<AttributeValue> attributeValues)
+        IEnumerable<AttributeValue> attributeValues,
+        ProductPresentation? presentation = null)
     {
         ArgumentNullException.ThrowIfNull(variants);
         ArgumentNullException.ThrowIfNull(categoryIds);
@@ -102,7 +107,7 @@ public sealed class Product
             ValidateName(name),
             variantList,
             categoryIdList,
-            values);
+            values) { Presentation = presentation ?? ProductPresentation.Draft };
     }
 
     public void Rename(string name) => Name = ValidateName(name);

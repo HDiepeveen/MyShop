@@ -1,6 +1,12 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './auth/auth-routing';
 import { Home } from './home';
-export const routes: Routes = [
+const protectedRoutes: Routes = [
+  {
+    path: 'account',
+    loadComponent: () => import('./auth/password').then((m) => m.Password),
+    title: 'Wachtwoord wijzigen · MyShop',
+  },
   { path: '', component: Home, title: 'Overzicht · MyShop' },
   {
     path: 'producten/nieuw',
@@ -43,4 +49,18 @@ export const routes: Routes = [
     loadComponent: () => import('./not-found').then((m) => m.NotFound),
     title: 'Pagina niet gevonden · MyShop',
   },
+];
+
+export const routes: Routes = [
+  {
+    path: 'inloggen',
+    loadComponent: () => import('./auth/login').then((m) => m.Login),
+    title: 'Inloggen · MyShop',
+  },
+  {
+    path: 'geen-toegang',
+    loadComponent: () => import('./auth/forbidden').then((m) => m.Forbidden),
+    title: 'Geen toegang · MyShop',
+  },
+  ...protectedRoutes.map((route) => ({ ...route, canActivate: [adminGuard] })),
 ];

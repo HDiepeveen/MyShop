@@ -13,6 +13,10 @@ internal sealed class ProductPersistenceConfiguration : IEntityTypeConfiguration
         builder.Property(product => product.Id).ValueGeneratedNever();
         builder.Property(product => product.ProductTypeId).IsRequired();
         builder.Property(product => product.Name).IsRequired();
+        builder.Property(product => product.Description).IsRequired().HasMaxLength(10000);
+        builder.Property(product => product.ImageUrl).HasMaxLength(2048);
+        builder.Property(product => product.ImageAlt).IsRequired().HasMaxLength(250);
+        builder.Property(product => product.IsPublished).IsRequired();
         builder.Property(product => product.Version)
             .IsRequired()
             .HasColumnType("uniqueidentifier")

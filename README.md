@@ -37,3 +37,7 @@ See [Database development](docs/database-development.md) for migrations, local d
 See [Product attribute validation](docs/product-attribute-validation.md) for missing required values and mismatches against current product type definitions.
 
 See [Frontend setup and scope](frontend/README.md) to start the management interface and see which operations it supports.
+
+See [Beveiligd beheer](docs/admin-security.md) for the account migration, initial administrator setup, login and password recovery.
+
+See [Productpresentatie](docs/product-presentation.md) for descriptions, image links, draft/publication status and revision checks.

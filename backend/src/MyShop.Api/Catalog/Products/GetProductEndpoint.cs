@@ -67,7 +67,8 @@ public static class GetProductEndpoint
             product.CategoryIds.Select(categoryId => categoryId.Value).ToArray(),
             product.AttributeValues.Select(AttributeValueResponse.FromDomain).ToArray(),
             product.Variants.Select(ProductVariantResponse.FromDomain).ToArray(),
-            snapshot.ConcurrencyToken.Revision);
+            snapshot.ConcurrencyToken.Revision,
+            new ProductPresentationResponse(product.Presentation.Description, product.Presentation.ImageUrl, product.Presentation.ImageAlt, product.Presentation.IsPublished));
     }
 }
 
@@ -78,7 +79,10 @@ public sealed record GetProductResponse(
     IReadOnlyList<Guid> CategoryIds,
     IReadOnlyList<AttributeValueResponse> AttributeValues,
     IReadOnlyList<ProductVariantResponse> Variants,
-    Guid Revision);
+    Guid Revision,
+    ProductPresentationResponse? Presentation = null);
+
+public sealed record ProductPresentationResponse(string Description, string? ImageUrl, string ImageAlt, bool IsPublished);
 
 public sealed record ProductVariantResponse(
     Guid Id,

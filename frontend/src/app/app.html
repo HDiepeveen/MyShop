@@ -17,9 +17,20 @@
   </aside>
   <div class="body">
     <header class="topbar">
-      <span>Mijn winkel <span class="divider">/</span> Beheer</span
-      ><span class="avatar" aria-hidden="true">M</span>
+      <span>Mijn winkel <span class="divider">/</span> Beheer</span>
+      @if (auth.session()?.authenticated) {
+        <span>{{ auth.session()?.name }}</span>
+        @if (auth.session()?.administrator) {
+          <a routerLink="/account">Wachtwoord wijzigen</a>
+        }
+        <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">
+          Uitloggen
+        </button>
+      }
     </header>
+    @if (logoutError()) {
+      <p class="error" role="alert">{{ logoutError() }}</p>
+    }
     <main #content id="content" tabindex="-1"><router-outlet /></main>
     <footer>MyShop <span>Een goed assortiment begint bij de details.</span></footer>
   </div>

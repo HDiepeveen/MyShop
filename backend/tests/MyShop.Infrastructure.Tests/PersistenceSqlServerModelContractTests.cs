@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using MyShop.Infrastructure.Persistence;
@@ -15,6 +16,13 @@ public sealed class PersistenceSqlServerModelContractTests
 
     private static readonly IReadOnlyDictionary<Type, string> ExpectedTables = new Dictionary<Type, string>
     {
+        [typeof(IdentityUser)] = "AspNetUsers",
+        [typeof(IdentityRole)] = "AspNetRoles",
+        [typeof(IdentityUserRole<string>)] = "AspNetUserRoles",
+        [typeof(IdentityUserClaim<string>)] = "AspNetUserClaims",
+        [typeof(IdentityRoleClaim<string>)] = "AspNetRoleClaims",
+        [typeof(IdentityUserLogin<string>)] = "AspNetUserLogins",
+        [typeof(IdentityUserToken<string>)] = "AspNetUserTokens",
         [typeof(AttributeDefinitionPersistence)] = "AttributeDefinitions",
         [typeof(CategoryPersistence)] = "Categories",
         [typeof(ProductPersistence)] = "Products",
@@ -76,15 +84,15 @@ public sealed class PersistenceSqlServerModelContractTests
         Assert.Null(Entity(modelType).GetViewName());
 
     [Fact]
-    public void SqlServerModel_ContainsExpectedEntityCount() => Assert.Equal(11, Model().GetEntityTypes().Count());
+    public void SqlServerModel_ContainsExpectedEntityCount() => Assert.Equal(18, Model().GetEntityTypes().Count());
 
     [Fact]
     public void SqlServerModel_ContainsExpectedClrTypes() =>
-        Assert.Equal(Models.OrderBy(type => type.FullName), Model().GetEntityTypes().Select(entity => entity.ClrType).OrderBy(type => type.FullName));
+        Assert.Equal(ExpectedTables.Keys.OrderBy(type => type.FullName), Model().GetEntityTypes().Select(entity => entity.ClrType).OrderBy(type => type.FullName));
 
     [Fact]
     public void SqlServerModel_ContainsUniqueTableNames() =>
-        Assert.Equal(11, Model().GetEntityTypes().Select(entity => entity.GetTableName()).Distinct().Count());
+        Assert.Equal(18, Model().GetEntityTypes().Select(entity => entity.GetTableName()).Distinct().Count());
 
     [Fact]
     public void SqlServerModel_ContainsOnlyExpectedTables() =>

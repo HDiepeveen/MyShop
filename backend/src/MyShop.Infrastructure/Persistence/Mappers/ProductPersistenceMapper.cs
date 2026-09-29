@@ -57,7 +57,8 @@ internal static class ProductPersistenceMapper
             persistence.Name,
             variants,
             categories,
-            attributeValues);
+            attributeValues,
+            ProductPresentation.Create(persistence.Description, persistence.ImageUrl, persistence.ImageAlt, persistence.IsPublished));
 
         return new ProductSnapshot(product, token);
     }

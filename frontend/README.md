@@ -22,7 +22,7 @@ npm start
 
 Open [MyShop beheer](http://127.0.0.1:4200). De ontwikkelserver stuurt `/api/**` door naar `http://localhost:5032` volgens `proxy.conf.json`. Hiervoor zijn geen wijzigingen aan de CORS-instellingen van de backend nodig.
 
-De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal ontwikkelen; beveiliging en productiehosting zijn volgende stappen. De frontend bindt standaard aan 127.0.0.1. Een productiebuild vereist een host met SPA-fallback en een passende `/api`-reverse proxy.
+De interface en API vereisen een MyShop-beheerdersaccount. Volg eerst [Beveiligd beheer](../docs/admin-security.md) om de accountmigratie toe te passen en je eigen account lokaal aan te maken. Productiehosting blijft een afzonderlijke stap. De frontend bindt standaard aan 127.0.0.1. Een productiebuild vereist een host met SPA-fallback en een passende `/api`-reverse proxy.
 
 ## Wat deze versie ondersteunt
 
@@ -48,7 +48,7 @@ Vanuit een categorie of producttype kun je de bijbehorende producten openen. De 
 De producttypekiezer en categoriekiezer hebben een eigen zoekfunctie en paginering; ze beperken de keuze niet tot de eerste pagina.
 Categorie- en producttypelijsten hebben volgens het huidige backendcontract geen totaaltelling. Na een precies volle laatste pagina kan nog een lege pagina volgen; terugbladeren blijft mogelijk.
 
-Nog niet opgenomen: inloggen, klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
+Nog niet opgenomen: klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
 
 Basisprijzen accepteren een komma of punt en maximaal twee decimalen. Nul is een geldige prijs; wissen maakt de prijs afwezig. Bedragen die JavaScript niet exact op centen kan versturen worden geweigerd. De valuta bestaat uit drie letters, bijvoorbeeld EUR. Artikelnummers bevatten maximaal 64 tekens zonder spaties en worden in hoofdletters opgeslagen. Een mislukte wijziging behoudt de ingevoerde gegevens; er zijn geen automatische herhaalpogingen voor schrijfacties.
 
@@ -93,3 +93,5 @@ Categorieën tonen gebruik in productkoppelingen en directe subcategorieën. Ver
 Kortingsregels gebruiken het bestaande prijsregelcontract. Er zijn percentagekortingen en vaste kortingen, met een naam, positieve waarde, prioriteit en optionele start- en einddatum. De einddatum mag niet vóór de startdatum liggen. De getoonde basisprijs wordt door deze beheerinterface niet vooraf berekend; de backend blijft verantwoordelijk voor de uiteindelijke actieve kortingsuitkomst.
 
 De drie catalogusoverzichten kunnen handmatig worden ververst met behoud van de toegepaste zoekterm, pagina en productfilters. Een nog niet ingediende zoekterm wordt daarbij niet toegepast. Vanaf vervolgpagina's is er een knop Eerste pagina; een lege vervolgpagina krijgt een eigen melding. Opnieuw zoeken naar dezelfde productnaam op pagina één haalt de resultaten opnieuw op.
+
+Productdetails bieden een beschrijving, een hoofdafbeelding via HTTPS met alternatieve tekst, een voorbeeld van de opgeslagen presentatie en expliciet opslaan als concept of gepubliceerd. De productlijst toont de status. Zie [Productpresentatie](../docs/product-presentation.md) voor voorwaarden en grenzen.

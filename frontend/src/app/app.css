@@ -75,7 +75,9 @@
   min-width: 0;
 }
 .topbar {
-  height: 78px;
+  min-height: 78px;
+  flex-wrap: wrap;
+  gap: 12px;
   border-bottom: 1px solid #e2e6de;
   display: flex;
   align-items: center;
@@ -150,8 +152,8 @@ footer {
     padding: 9px 11px;
   }
   .topbar {
-    height: 56px;
-    padding: 0 20px;
+    min-height: 56px;
+    padding: 12px 20px;
   }
   main {
     padding: 24px 20px;

@@ -106,6 +106,7 @@ public static class ApplicationServiceCollectionExtensions
 
         services.AddScoped<GetProductAttributeValidation>();
 
+        services.AddScoped<Catalog.UpdateProductPresentation.UpdateProductPresentation>();
         return services;
     }
 }

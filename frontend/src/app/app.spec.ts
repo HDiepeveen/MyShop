@@ -1,9 +1,13 @@
+import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 
 it('offers accessible navigation and a skip link', async () => {
-  TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([])] });
+  TestBed.configureTestingModule({
+    imports: [App],
+    providers: [provideRouter([]), provideHttpClient()],
+  });
   const fixture = TestBed.createComponent(App);
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
@@ -13,7 +17,10 @@ it('offers accessible navigation and a skip link', async () => {
 });
 
 it('keeps the skip link on the current page and focuses main content', async () => {
-  TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([])] });
+  TestBed.configureTestingModule({
+    imports: [App],
+    providers: [provideRouter([]), provideHttpClient()],
+  });
   const fixture = TestBed.createComponent(App);
   await fixture.whenStable();
   const event = new MouseEvent('click', { bubbles: true, cancelable: true });

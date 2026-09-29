@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence;
 
-public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) : DbContext(options)
+public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) : IdentityDbContext<IdentityUser>(options)
 {
     internal DbSet<ProductTypePersistence> ProductTypes => Set<ProductTypePersistence>();
     internal DbSet<AttributeDefinitionPersistence> AttributeDefinitions => Set<AttributeDefinitionPersistence>();
