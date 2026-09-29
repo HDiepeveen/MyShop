@@ -36,7 +36,7 @@ import { loadState } from '../load-state';
         @if (categories()?.loading) {
           <p role="status">Categorieën ophalen…</p>
         }
-        <form (ngSubmit)="move()">
+        <form class="toolbar" (ngSubmit)="searchCategories()">
           <label class="field"
             >Categorie zoeken<input
               name="categorySearch"
@@ -44,8 +44,18 @@ import { loadState } from '../load-state';
               [(ngModel)]="categorySearch"
               placeholder="Zoeken op naam"
               [disabled]="busy()"
-              (change)="searchCategories()"
           /></label>
+          <button class="secondary" [disabled]="busy()">Zoeken</button>
+        </form>
+        @if (categories()?.error) {
+          <p class="error" role="alert">
+            {{ categories()?.error }}
+            <button type="button" class="secondary" (click)="retryCategories()" [disabled]="busy()">
+              Opnieuw ophalen
+            </button>
+          </p>
+        }
+        <form (ngSubmit)="move()">
           <label class="field"
             >Bovenliggende categorie
             <select name="parent" [(ngModel)]="parentId" [disabled]="busy()">
@@ -156,6 +166,9 @@ export class CategoryManagement {
   changeCategoryPage(delta: number) {
     this.categoryOffset.update((value) => Math.max(0, value + delta));
     this.categoryQuery.next({ offset: this.categoryOffset(), search: this.categorySearch });
+  }
+  retryCategories() {
+    if (!this.busy()) this.categoryQuery.next(this.categoryQuery.value);
   }
   canDelete() {
     const information = this.usage()?.data;
