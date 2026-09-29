@@ -1,6 +1,6 @@
 # MyShop
 
-MyShop is an e-commerce application with an ASP.NET Core catalog API and a modular backend. The Angular frontend is planned.
+MyShop is an e-commerce application with an ASP.NET Core catalog API and a modular backend. An Angular interface provides the first local catalog management screens.
 
 ## Local Development Requirements
 
@@ -9,22 +9,22 @@ Use the following versions for local development:
 - Windows x64
 - .NET SDK 10.0.400
 - Node.js 24.19.0
-- npm 12.0.2
-- Angular CLI 22.1.4
+- npm 11.19.0 (used for the frontend lockfile)
+- Angular CLI 22.2.0 (local frontend dependency; no global CLI required)
 
 The .NET SDK version is pinned in `global.json`, and the Node.js version is
 recorded in `.nvmrc` for Node version managers that support it.
 
-## Planned Technology Stack
+## Technology Stack
 
-- Angular and TypeScript for the frontend
+- Angular and TypeScript for the management frontend
 - ASP.NET Core Web API and C# for the backend
 - Entity Framework Core with SQL Server for database access
 - Git and GitHub for source control
 
-## Planned Structure
+## Structure
 
-- `frontend/`: Angular application
+- `frontend/`: Angular catalog management interface
 - `backend/src/`: ASP.NET Core backend projects, separated into Api, Application, Domain, and Infrastructure
 - `backend/tests/`: Automated backend tests
 
@@ -35,3 +35,5 @@ See [Catalog management queries](docs/catalog-management-queries.md) for individ
 See [Database development](docs/database-development.md) for migrations, local database setup, and real SQL Server integration tests.
 
 See [Product attribute validation](docs/product-attribute-validation.md) for missing required values and mismatches against current product type definitions.
+
+See [Frontend setup and scope](frontend/README.md) to start the management interface and see which operations it supports.

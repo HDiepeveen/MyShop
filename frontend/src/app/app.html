@@ -1,0 +1,26 @@
+<a class="skip" href="#content" (click)="$event.preventDefault(); content.focus()">Naar inhoud</a>
+<div class="workspace">
+  <aside class="sidebar">
+    <a routerLink="/" class="brand" aria-label="MyShop startpagina"
+      ><span class="brand-icon">m.</span> MyShop</a
+    >
+    <p class="nav-label">WERKRUIMTE</p>
+    <nav aria-label="Hoofdnavigatie">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+        >Overzicht</a
+      >
+      <a routerLink="/producten" routerLinkActive="active">Producten</a>
+      <a routerLink="/categorieen" routerLinkActive="active">Categorieën</a>
+      <a routerLink="/producttypen" routerLinkActive="active">Producttypen</a>
+    </nav>
+    <div class="sidebar-footer"><span class="status-dot"></span> Catalogusbeheer</div>
+  </aside>
+  <div class="body">
+    <header class="topbar">
+      <span>Mijn winkel <span class="divider">/</span> Beheer</span
+      ><span class="avatar" aria-hidden="true">M</span>
+    </header>
+    <main #content id="content" tabindex="-1"><router-outlet /></main>
+    <footer>MyShop <span>Een goed assortiment begint bij de details.</span></footer>
+  </div>
+</div>

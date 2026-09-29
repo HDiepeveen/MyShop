@@ -1,0 +1,13 @@
+import { HttpErrorResponse } from '@angular/common/http';
+export function errorMessage(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    if (error.status === 0 || error.status === 502 || error.status === 504)
+      return 'De winkel is niet bereikbaar. Probeer het over een moment opnieuw.';
+    if (error.status === 404)
+      return 'Deze gegevens zijn niet meer beschikbaar. Vernieuw het overzicht.';
+    if (error.status === 400) return 'Controleer de ingevulde gegevens en probeer het opnieuw.';
+    if (error.status === 409)
+      return 'Deze wijziging kon niet worden opgeslagen. Vernieuw de gegevens en probeer het opnieuw.';
+  }
+  return 'Er ging iets mis. Probeer het opnieuw.';
+}

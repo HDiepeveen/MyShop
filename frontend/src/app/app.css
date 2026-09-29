@@ -1,0 +1,165 @@
+.workspace {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  background: #163c37;
+  color: #dfebe7;
+  padding: 32px 22px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 26px;
+  font-weight: 750;
+  color: white;
+  text-decoration: none;
+  letter-spacing: -1px;
+}
+.brand-icon {
+  background: #d9edaa;
+  color: #163c37;
+  border-radius: 11px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+}
+.nav-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin: 48px 12px 16px;
+  color: #9eb7af;
+}
+.sidebar nav {
+  display: grid;
+  gap: 6px;
+}
+.sidebar nav a {
+  padding: 12px 16px;
+  color: #cadbd5;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.sidebar nav a:hover,
+.sidebar nav a.active {
+  background: #2c5049;
+  color: white;
+}
+.sidebar nav a.active {
+  box-shadow: inset 3px 0 #d9edaa;
+}
+.sidebar-footer {
+  margin-top: auto;
+  font-size: 12px;
+  padding: 20px 12px;
+  color: #a8c0b7;
+}
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  background: #d9edaa;
+  border-radius: 50%;
+  margin-right: 7px;
+}
+.body {
+  min-width: 0;
+}
+.topbar {
+  height: 78px;
+  border-bottom: 1px solid #e2e6de;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 42px;
+  font-size: 13px;
+  color: #62716b;
+  background: #fffefa;
+}
+.divider {
+  margin: 0 12px;
+  color: #b4bfb6;
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  background: #ebefe5;
+  border: 1px solid #dce1d4;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-weight: 650;
+  color: #31574b;
+}
+main {
+  padding: 38px 42px;
+  max-width: 1400px;
+  margin: auto;
+  min-height: calc(100vh - 140px);
+}
+footer {
+  padding: 16px 42px;
+  color: #718077;
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -80px;
+  z-index: 10;
+  background: white;
+  padding: 12px;
+}
+.skip:focus {
+  top: 12px;
+}
+@media (max-width: 760px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    position: static;
+    height: auto;
+    padding: 18px;
+  }
+  .brand {
+    font-size: 22px;
+  }
+  .nav-label,
+  .sidebar-footer {
+    display: none;
+  }
+  .sidebar nav {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    gap: 3px;
+  }
+  .sidebar nav a {
+    padding: 9px 11px;
+  }
+  .topbar {
+    height: 56px;
+    padding: 0 20px;
+  }
+  main {
+    padding: 24px 20px;
+  }
+  footer {
+    padding: 16px 20px;
+  }
+  footer span {
+    display: none;
+  }
+}
