@@ -20,6 +20,16 @@ describe('ProductList', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation((_commands, extras) => {
+      if (extras?.queryParamsHandling === 'merge') {
+        const current: Record<string, string | null> = {};
+        for (const key of filters.value.keys) current[key] = filters.value.get(key);
+        const next = { ...current, ...extras.queryParams };
+        for (const key of Object.keys(next)) if (next[key] === null) delete next[key];
+        filters.next(convertToParamMap(next));
+      }
+      return Promise.resolve(true);
+    });
   });
   afterEach(() => http.verify());
   it('combines route filters with applied name search, paging and retry', () => {
@@ -74,7 +84,7 @@ describe('ProductList', () => {
     fixture.componentInstance.clearFilter('categoryId');
     expect(navigate).toHaveBeenCalledWith([], {
       relativeTo: TestBed.inject(ActivatedRoute),
-      queryParams: { categoryId: null },
+      queryParams: { categoryId: null, offset: null },
       queryParamsHandling: 'merge',
     });
     filters.next(convertToParamMap({ productTypeId: 't' }));
@@ -85,7 +95,7 @@ describe('ProductList', () => {
     fixture.componentInstance.clearFilter('productTypeId');
     expect(navigate).toHaveBeenLastCalledWith([], {
       relativeTo: TestBed.inject(ActivatedRoute),
-      queryParams: { productTypeId: null },
+      queryParams: { productTypeId: null, offset: null },
       queryParamsHandling: 'merge',
     });
   });
@@ -137,7 +147,9 @@ describe('ProductList', () => {
     fixture.componentInstance.skuText = ' shirt-1 ';
     fixture.componentInstance.lookupSku();
     http.expectOne('/api/products/by-sku/shirt-1').flush({ productId: 'p', productVariantId: 'v' });
-    expect(navigate).toHaveBeenCalledWith(['/producten', 'p']);
+    expect(navigate).toHaveBeenCalledWith(['/producten', 'p'], {
+      queryParams: fixture.componentInstance.listQuery(),
+    });
     expect(fixture.componentInstance.skuBusy()).toBe(false);
   });
   it('rejects invalid SKU input without a request and accepts a corrected value', () => {
@@ -157,7 +169,9 @@ describe('ProductList', () => {
     http
       .expectOne('/api/products/by-sku/' + 'A'.repeat(64))
       .flush({ productId: 'p', productVariantId: 'v' });
-    expect(navigate).toHaveBeenCalledWith(['/producten', 'p']);
+    expect(navigate).toHaveBeenCalledWith(['/producten', 'p'], {
+      queryParams: fixture.componentInstance.listQuery(),
+    });
   });
   it('shows an SKU lookup error and prevents duplicate submits', () => {
     const fixture = TestBed.createComponent(ProductList);
@@ -190,6 +204,8 @@ describe('ProductList', () => {
     fixture.componentInstance.lookupSku();
     expect(fixture.componentInstance.skuError()).toBe('');
     http.expectOne('/api/products/by-sku/SHIRT').flush({ productId: 'p', productVariantId: 'v' });
-    expect(navigate).toHaveBeenCalledWith(['/producten', 'p']);
+    expect(navigate).toHaveBeenCalledWith(['/producten', 'p'], {
+      queryParams: fixture.componentInstance.listQuery(),
+    });
   });
 });

@@ -10,7 +10,9 @@ import { loadState } from '../load-state';
 
 @Component({
   imports: [FormsModule, RouterLink],
-  template: ` <a class="back" routerLink="/producten">← Alle producten</a>
+  template: ` <a class="back" routerLink="/producten" queryParamsHandling="preserve"
+      >← Terug naar producten</a
+    >
     <div class="eyebrow">Assortiment uitbreiden</div>
     <h1>Nieuw product</h1>
     <p class="muted">Kies een producttype en geef je product een naam.</p>
@@ -154,7 +156,9 @@ export class ProductCreate {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (product) => {
-          void this.router.navigate(['/producten', product.id]);
+          void this.router.navigate(['/producten', product.id], {
+            queryParamsHandling: 'preserve',
+          });
         },
         error: (error) => {
           this.saving.set(false);

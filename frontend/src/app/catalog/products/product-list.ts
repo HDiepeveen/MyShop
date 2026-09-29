@@ -7,6 +7,7 @@ import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { errorMessage } from '../error-message';
 import { loadState } from '../load-state';
+import { readProductListQuery } from './product-list-query';
 
 @Component({
   imports: [FormsModule, RouterLink],
@@ -16,7 +17,9 @@ import { loadState } from '../load-state';
         <h1>Producten</h1>
         <p class="muted">Alles wat jouw winkel bijzonder maakt.</p>
       </div>
-      <a class="button" routerLink="/producten/nieuw">+ Nieuw product</a>
+      <a class="button" routerLink="/producten/nieuw" [queryParams]="listQuery()"
+        >+ Nieuw product</a
+      >
     </div>
     <section class="panel">
       @if (filters().categoryId; as categoryId) {
@@ -46,6 +49,9 @@ import { loadState } from '../load-state';
             placeholder="Bijvoorbeeld: linnen overhemd"
             type="search" /></label
         ><button type="submit" class="secondary">Zoeken</button>
+        @if (listQuery().search) {
+          <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
+        }
       </form>
       <form class="toolbar" (ngSubmit)="lookupSku()">
         <label
@@ -89,7 +95,9 @@ import { loadState } from '../load-state';
                 @for (product of page.items; track product.id) {
                   <tr>
                     <td>
-                      <a [routerLink]="['/producten', product.id]">{{ product.name }}</a>
+                      <a [routerLink]="['/producten', product.id]" [queryParams]="listQuery()">{{
+                        product.name
+                      }}</a>
                     </td>
                     <td>
                       <span class="badge">{{ product.variantCount }} varianten</span>
@@ -97,6 +105,7 @@ import { loadState } from '../load-state';
                     <td>
                       <a
                         [routerLink]="['/producten', product.id]"
+                        [queryParams]="listQuery()"
                         [attr.aria-label]="product.name + ' bekijken'"
                         >Details →</a
                       >
@@ -137,7 +146,14 @@ export class ProductList {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
-  private readonly query = new BehaviorSubject({ offset: 0, search: '' });
+  private readonly refresh = new BehaviorSubject(0);
+  searchText = '';
+  readonly listQuery = signal({
+    categoryId: null as string | null,
+    productTypeId: null as string | null,
+    search: '',
+    offset: 0,
+  });
   readonly filters = signal<{ categoryId: string | null; productTypeId: string | null }>({
     categoryId: null,
     productTypeId: null,
@@ -145,44 +161,56 @@ export class ProductList {
   readonly offset = signal(0);
   readonly state = toSignal(
     this.route.queryParamMap.pipe(
-      map((params) => ({
-        categoryId: params.get('categoryId') || null,
-        productTypeId: params.get('productTypeId') || null,
-      })),
+      map(readProductListQuery),
       distinctUntilChanged(
-        (a, b) => a.categoryId === b.categoryId && a.productTypeId === b.productTypeId,
+        (a, b) =>
+          a.categoryId === b.categoryId &&
+          a.productTypeId === b.productTypeId &&
+          a.search === b.search &&
+          a.offset === b.offset,
       ),
-      switchMap((filters) => {
-        this.filters.set(filters);
-        this.offset.set(0);
-        this.query.next({ ...this.query.value, offset: 0 });
-        return this.query.pipe(
-          switchMap((q) => loadState(this.api.products(q.offset, q.search, filters))),
+      switchMap((query) => {
+        if (query.search !== this.listQuery().search) this.searchText = query.search;
+        this.listQuery.set(query);
+        this.filters.set(query);
+        this.offset.set(query.offset);
+        return this.refresh.pipe(
+          switchMap(() => loadState(this.api.products(query.offset, query.search, query))),
         );
       }),
     ),
   );
   readonly skuBusy = signal(false);
   readonly skuError = signal('');
-  searchText = '';
   skuText = '';
   clearFilter(key: 'categoryId' | 'productTypeId') {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { [key]: null },
+      queryParams: { [key]: null, offset: null },
       queryParamsHandling: 'merge',
     });
   }
   search() {
-    this.offset.set(0);
-    this.query.next({ offset: 0, search: this.searchText });
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: this.searchText.trim() || null, offset: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  clearSearch() {
+    this.searchText = '';
+    this.search();
   }
   changePage(delta: number) {
-    this.offset.update((value) => Math.max(0, value + delta));
-    this.query.next({ ...this.query.value, offset: this.offset() });
+    const offset = Math.max(0, this.offset() + delta);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { offset: offset || null },
+      queryParamsHandling: 'merge',
+    });
   }
   retry() {
-    this.query.next(this.query.value);
+    this.refresh.next(this.refresh.value + 1);
   }
   lookupSku() {
     const sku = this.skuText.trim();
@@ -199,7 +227,9 @@ export class ProductList {
       .subscribe({
         next: (owner) => {
           this.skuBusy.set(false);
-          void this.router.navigate(['/producten', owner.productId]);
+          void this.router.navigate(['/producten', owner.productId], {
+            queryParams: this.listQuery(),
+          });
         },
         error: (error) => {
           this.skuBusy.set(false);

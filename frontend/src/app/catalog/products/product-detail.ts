@@ -15,6 +15,7 @@ import { BehaviorSubject, combineLatest, tap, distinctUntilChanged, map, switchM
 import { CatalogApi } from '../catalog.api';
 import { AttributeDefinition, AttributeValue } from '../catalog.models';
 import { loadState } from '../load-state';
+import { readProductListQuery } from './product-list-query';
 
 @Component({
   providers: [ProductEditState],
@@ -30,7 +31,9 @@ import { loadState } from '../load-state';
     PriceRuleEdit,
     ProductDelete,
   ],
-  template: ` <a class="back" routerLink="/producten">← Alle producten</a>
+  template: ` <a class="back" routerLink="/producten" [queryParams]="listQuery()"
+      >← Terug naar producten</a
+    >
     @if (state()?.loading) {
       <p class="loading" role="status">Product ophalen…</p>
     }
@@ -166,6 +169,7 @@ export class ProductDetail {
   readonly editState = inject(ProductEditState);
   private readonly api = inject(CatalogApi);
   private readonly route = inject(ActivatedRoute);
+  readonly listQuery = toSignal(this.route.queryParamMap.pipe(map(readProductListQuery)));
   private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
   readonly notice = signal('');
@@ -203,7 +207,9 @@ export class ProductDetail {
     this.reload();
   }
   onRemoved() {
-    void this.router.navigate(['/producten']);
+    void this.router.navigate(['/producten'], {
+      queryParams: { ...this.listQuery(), offset: null },
+    });
   }
   reload() {
     this.refresh.next(this.refresh.value + 1);

@@ -36,7 +36,9 @@ describe('ProductCreate', () => {
     fixture.componentInstance.create();
     fixture.componentInstance.create();
     http.expectOne('/api/products').flush({ id: 'new-id' });
-    expect(navigate).toHaveBeenCalledWith(['/producten', 'new-id']);
+    expect(navigate).toHaveBeenCalledWith(['/producten', 'new-id'], {
+      queryParamsHandling: 'preserve',
+    });
   });
   it('keeps the chosen type across picker pages and preserves input on a failed save', () => {
     const fixture = TestBed.createComponent(ProductCreate);

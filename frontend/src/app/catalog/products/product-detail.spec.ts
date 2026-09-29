@@ -3,7 +3,7 @@ import { PriceRuleEdit } from './price-rule-edit';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { VariantEdit } from './variant-edit';
@@ -23,12 +23,34 @@ describe('ProductDetail', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: params,
+            queryParamMap: new BehaviorSubject(
+              convertToParamMap({ search: 'coat', offset: '20', categoryId: 'c' }),
+            ),
+          },
+        },
       ],
     });
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('preserves list context in its back link and returns to page one after deletion', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    http.expectOne('/api/products/first').flush({}, { status: 404, statusText: 'Missing' });
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('a.back') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toContain('search=coat');
+    expect(link.getAttribute('href')).toContain('offset=20');
+    expect(link.getAttribute('href')).toContain('categoryId=c');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.componentInstance.onRemoved();
+    expect(navigate).toHaveBeenCalledWith(['/producten'], {
+      queryParams: { search: 'coat', offset: null, categoryId: 'c', productTypeId: null },
+    });
+  });
   it('loads current product type and renders safe text', () => {
     const fixture = TestBed.createComponent(ProductDetail);
     http.expectOne('/api/products/first').flush({
