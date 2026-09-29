@@ -1,3 +1,4 @@
+import { OrphanValues } from './orphan-values';
 import { AttributeEdit } from './attribute-edit';
 import { ProductEditState } from './product-edit-state';
 import { ProductValidation } from './product-validation';
@@ -23,6 +24,7 @@ import { loadState } from '../load-state';
     VariantEdit,
     ProductCategories,
     AttributeEdit,
+    OrphanValues,
   ],
   template: ` <a class="back" routerLink="/producten">← Alle producten</a>
     @if (state()?.loading) {
@@ -41,6 +43,9 @@ import { loadState } from '../load-state';
     }
     @if (state()?.data; as detail) {
       <div class="eyebrow">{{ detail.type.name }}</div>
+      <p>
+        <a [routerLink]="['/producttypen', detail.type.id]">Producttype en kenmerken beheren</a>
+      </p>
       <div class="page-head">
         <div>
           <h1>{{ detail.product.name }}</h1>
@@ -77,6 +82,12 @@ import { loadState } from '../load-state';
           }
         </dl>
       </section>
+      <app-orphan-values
+        [productId]="detail.product.id"
+        [values]="detail.product.attributeValues"
+        [definitions]="detail.type.attributeDefinitions"
+        (saved)="onSaved($event)"
+      />
       <app-product-categories [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-validation [product]="detail.product" [type]="detail.type" />
       <h2>Varianten</h2>
@@ -112,6 +123,13 @@ import { loadState } from '../load-state';
                 />
               }
             }
+            <app-orphan-values
+              [productId]="detail.product.id"
+              [variantId]="variant.id"
+              [values]="variant.attributeValues"
+              [definitions]="detail.type.attributeDefinitions"
+              (saved)="onSaved($event)"
+            />
             @if (variant.attributeValues.length) {
               <dl class="detail-list">
                 @for (value of variant.attributeValues; track value.attributeDefinitionId) {

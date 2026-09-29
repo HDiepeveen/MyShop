@@ -1,3 +1,4 @@
+import { TypeEditState } from './type-edit-state';
 import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -68,7 +69,7 @@ export class DefinitionCreate {
   readonly typeId = input.required<string>();
   readonly started = output<void>();
   readonly saved = output<void>();
-  readonly busy = signal(false);
+  readonly busy = inject(TypeEditState).busy;
   readonly error = signal('');
   readonly types = attributeTypes;
   private readonly api = inject(CatalogApi);

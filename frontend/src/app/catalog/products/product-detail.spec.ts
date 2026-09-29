@@ -1,3 +1,4 @@
+import { OrphanValues } from './orphan-values';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -147,16 +148,64 @@ describe('ProductDetail', () => {
     http.expectOne('/api/product-types/type').flush(type);
     fixture.detectChanges();
     TestBed.tick();
-    http
-      .expectOne('/api/products/first/attribute-validation')
-      .flush({
-        isValid: false,
-        issues: [{ attributeDefinitionId: 'a', variantId: null, code: 'MissingRequired' }],
-      });
+    http.expectOne('/api/products/first/attribute-validation').flush({
+      isValid: false,
+      issues: [{ attributeDefinitionId: 'a', variantId: null, code: 'MissingRequired' }],
+    });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain(
       'Een verplichte waarde is nog niet ingevuld.',
     );
+  });
+
+  it('links to type management and revalidates after removing a variant orphan', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    const product = {
+      id: 'first',
+      name: 'Product',
+      productTypeId: 'type',
+      categoryIds: [],
+      attributeValues: [],
+      variants: [
+        {
+          id: 'v',
+          name: 'Variant',
+          sku: null,
+          price: null,
+          attributeValues: [{ attributeDefinitionId: 'gone', dataType: 'Text', value: 'Old' }],
+        },
+      ],
+    };
+    const type = { id: 'type', name: 'Type', attributeDefinitions: [] };
+    http.expectOne('/api/products/first').flush(product);
+    http.expectOne('/api/product-types/type').flush(type);
+    fixture.detectChanges();
+    TestBed.tick();
+    http
+      .expectOne('/api/products/first/attribute-validation')
+      .flush({
+        isValid: false,
+        issues: [{ attributeDefinitionId: 'gone', variantId: 'v', code: 'UnknownDefinition' }],
+      });
+    expect(fixture.nativeElement.querySelector('a[href="/producttypen/type"]')).not.toBeNull();
+    const editors = fixture.debugElement
+      .queryAll(By.directive(OrphanValues))
+      .map((e) => e.componentInstance as OrphanValues);
+    expect(editors[0].orphans()).toHaveLength(0);
+    expect(editors[1].variantId()).toBe('v');
+    editors[1].confirming.set('gone');
+    editors[1].clear('gone');
+    http.expectOne('/api/products/first/variants/v/attributes/gone').flush(null);
+    http
+      .expectOne('/api/products/first')
+      .flush({ ...product, variants: [{ ...product.variants[0], attributeValues: [] }] });
+    http.expectOne('/api/product-types/type').flush(type);
+    fixture.detectChanges();
+    TestBed.tick();
+    http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Waarden van verwijderde kenmerken');
+    expect(fixture.nativeElement.textContent).toContain('Alle kenmerken passen');
   });
   it('cancels the old product read on route changes', () => {
     const fixture = TestBed.createComponent(ProductDetail);

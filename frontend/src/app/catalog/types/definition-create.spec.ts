@@ -1,3 +1,4 @@
+import { TypeEditState } from './type-edit-state';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -7,7 +8,7 @@ describe('DefinitionCreate', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [DefinitionCreate],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [TypeEditState, provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
   });

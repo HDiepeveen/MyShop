@@ -1,14 +1,19 @@
+import { DefinitionEdit } from './definition-edit';
+import { TypeEditState } from './type-edit-state';
+import { TypeUsage } from './type-usage';
+import { TypeEdit } from './type-edit';
 import { DefinitionCreate } from './definition-create';
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, combineLatest, switchMap, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { loadState } from '../load-state';
 import { attributeTypeLabel } from '../attribute-types';
 
 @Component({
-  imports: [RouterLink, DefinitionCreate],
+  providers: [TypeEditState],
+  imports: [RouterLink, DefinitionCreate, TypeEdit, TypeUsage, DefinitionEdit],
   template: `
     <a class="back" routerLink="/producttypen">← Alle producttypen</a>
     @if (state()?.loading) {
@@ -25,6 +30,8 @@ import { attributeTypeLabel } from '../attribute-types';
       @if (notice()) {
         <p class="success" role="status">{{ notice() }}</p>
       }
+      <app-type-usage [typeId]="type.id" [typeName]="type.name" />
+      <app-type-edit [type]="type" (saved)="onRenamed()" />
       <app-definition-create [typeId]="type.id" (started)="notice.set('')" (saved)="onSaved()" />
       <section class="panel">
         <h2>Kenmerken</h2>
@@ -44,6 +51,11 @@ import { attributeTypeLabel } from '../attribute-types';
                 {{ definition.isFilterable ? 'Filterbaar' : 'Niet filterbaar' }}
               </p>
               <small>Code: {{ definition.code }}</small>
+              <app-definition-edit
+                [typeId]="type.id"
+                [definition]="definition"
+                (saved)="onChanged($event)"
+              />
             </li>
           }
         </ul>
@@ -52,19 +64,40 @@ import { attributeTypeLabel } from '../attribute-types';
   `,
 })
 export class TypeDetail {
+  readonly editState = inject(TypeEditState);
+  constructor() {
+    effect(() => {
+      if (this.editState.busy()) this.notice.set('');
+    });
+  }
   private readonly api = inject(CatalogApi);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
   readonly notice = signal('');
+  onChanged(message: string) {
+    this.notice.set(message);
+    this.reload();
+  }
+  onRenamed() {
+    this.notice.set('De producttypenaam is gewijzigd.');
+    this.reload();
+  }
   onSaved() {
     this.notice.set('Het kenmerk is toegevoegd.');
     this.reload();
   }
   readonly typeLabel = attributeTypeLabel;
   readonly state = toSignal(
-    combineLatest([this.route.paramMap.pipe(tap(() => this.notice.set(''))), this.refresh]).pipe(
-      switchMap(([params]) => loadState(this.api.type(params.get('id')!))),
-    ),
+    combineLatest([
+      this.route.paramMap.pipe(
+        distinctUntilChanged((a, b) => a.get('id') === b.get('id')),
+        tap(() => {
+          this.notice.set('');
+          this.editState.busy.set(false);
+        }),
+      ),
+      this.refresh,
+    ]).pipe(switchMap(([params]) => loadState(this.api.type(params.get('id')!)))),
   );
   reload() {
     this.refresh.next(this.refresh.value + 1);

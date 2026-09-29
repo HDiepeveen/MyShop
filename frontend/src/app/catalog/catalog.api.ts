@@ -83,11 +83,49 @@ export class CatalogApi {
         : this.variantUrl(productId, variantId);
     return owner + '/attributes/' + encodeURIComponent(definitionId);
   }
+  removeDefinition(typeId: string, id: string) {
+    return this.http.delete<void>(
+      '/api/product-types/' + encodeURIComponent(typeId) + '/attributes/' + encodeURIComponent(id),
+    );
+  }
+  configureDefinition(typeId: string, id: string, isRequired: boolean, isFilterable: boolean) {
+    return this.http.put<void>(
+      '/api/product-types/' +
+        encodeURIComponent(typeId) +
+        '/attributes/' +
+        encodeURIComponent(id) +
+        '/configuration',
+      { isRequired, isFilterable },
+    );
+  }
+  renameDefinition(typeId: string, id: string, displayName: string) {
+    return this.http.patch<void>(
+      '/api/product-types/' +
+        encodeURIComponent(typeId) +
+        '/attributes/' +
+        encodeURIComponent(id) +
+        '/name',
+      { displayName: displayName.trim() },
+    );
+  }
   addDefinition(typeId: string, definition: NewAttributeDefinition) {
     return this.http.post<unknown>(
       '/api/product-types/' + encodeURIComponent(typeId) + '/attributes',
       definition,
     );
+  }
+  deleteType(id: string) {
+    return this.http.delete<void>('/api/product-types/' + encodeURIComponent(id));
+  }
+  typeUsage(id: string) {
+    return this.http.get<{ productTypeId: string; productCount: number; isInUse: boolean }>(
+      '/api/product-types/' + encodeURIComponent(id) + '/usage',
+    );
+  }
+  renameType(id: string, name: string) {
+    return this.http.patch<void>('/api/product-types/' + encodeURIComponent(id) + '/name', {
+      name: name.trim(),
+    });
   }
   createType(name: string) {
     return this.http.post<{ id: string; name: string }>('/api/product-types', {

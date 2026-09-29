@@ -417,3 +417,27 @@ textarea:disabled {
 .attribute-editor form > button {
   margin: 0 8px 10px 0;
 }
+
+.remove-section {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #e0d5c5;
+  border-radius: 8px;
+  background: #fffcf5;
+  overflow-wrap: anywhere;
+}
+.remove-section button {
+  margin: 12px 8px 0 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.editor {
+  max-width: 660px;
+}
+.editor summary {
+  overflow-wrap: anywhere;
+}
