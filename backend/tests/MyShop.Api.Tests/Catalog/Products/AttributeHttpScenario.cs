@@ -27,6 +27,7 @@ internal sealed class AttributeHttpScenario : IAsyncDisposable
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddSingleton<IProductRepository>(Repository);
         builder.Services.AddSingleton<IProductTypeRepository>(Repository);
+        builder.Services.AddScoped<MyShop.Application.Catalog.GetProductAttributeValidation.GetProductAttributeValidation>();
         builder.Services.AddScoped<SetProduct>();
         builder.Services.AddScoped<SetVariant>();
         builder.Services.AddScoped<GetProduct>();
@@ -34,6 +35,7 @@ internal sealed class AttributeHttpScenario : IAsyncDisposable
         builder.Services.AddScoped<RemoveProduct>();
         builder.Services.AddScoped<RemoveVariant>();
         _app = builder.Build();
+        _app.MapGetProductAttributeValidation();
         _app.MapSetProductAttributeValue();
         _app.MapSetVariantAttributeValue();
         _app.MapGetProductAttributeValue();

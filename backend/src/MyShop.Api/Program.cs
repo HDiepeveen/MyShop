@@ -20,6 +20,7 @@ app.MapConfigureProductTypeAttribute();
 app.MapGetCategory();
 app.MapListCategories();
 app.MapGetProduct();
+app.MapGetProductAttributeValidation();
 app.MapGetProductBySku();
 app.MapListProducts();
 app.MapListProductTypes();

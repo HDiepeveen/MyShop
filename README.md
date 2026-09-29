@@ -33,3 +33,5 @@ The backend contains catalog management, product variants, attributes, pricing, 
 See [Catalog management queries](docs/catalog-management-queries.md) for individual attribute definitions and category/product type usage counts.
 
 See [Database development](docs/database-development.md) for migrations, local database setup, and real SQL Server integration tests.
+
+See [Product attribute validation](docs/product-attribute-validation.md) for missing required values and mismatches against current product type definitions.

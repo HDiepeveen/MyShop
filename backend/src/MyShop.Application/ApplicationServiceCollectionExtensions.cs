@@ -1,3 +1,4 @@
+using MyShop.Application.Catalog.GetProductAttributeValidation;
 using Microsoft.Extensions.DependencyInjection;
 using MyShop.Application.Catalog.AddProductVariant;
 using MyShop.Application.Catalog.AddProductVariantPriceRule;
@@ -102,6 +103,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<GetProductTypeAttribute>();
         services.AddScoped<GetCategoryUsage>();
         services.AddScoped<GetProductTypeUsage>();
+
+        services.AddScoped<GetProductAttributeValidation>();
 
         return services;
     }
