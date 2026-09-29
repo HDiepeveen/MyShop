@@ -7,6 +7,7 @@ import { By } from '@angular/platform-browser';
 import { VariantEdit } from './variant-edit';
 import { ProductEdit } from './product-edit';
 import { ProductCategories } from './product-categories';
+import { AttributeEdit } from './attribute-edit';
 import { ProductDetail } from './product-detail';
 
 describe('ProductDetail', () => {
@@ -100,6 +101,62 @@ describe('ProductDetail', () => {
     http.expectOne('/api/products/second').flush({}, { status: 404, statusText: 'Missing' });
     expect(fixture.componentInstance.notice()).toBe('');
     expect(fixture.componentInstance.editState.busy()).toBe(false);
+  });
+
+  it('renders each definition at its scope and revalidates after clearing a required value', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    const product = {
+      id: 'first',
+      name: 'Product',
+      productTypeId: 'type',
+      categoryIds: [],
+      attributeValues: [{ attributeDefinitionId: 'a', dataType: 'Boolean', value: false }],
+      variants: [{ id: 'v', name: 'Variant', sku: null, price: null, attributeValues: [] }],
+    };
+    const type = {
+      id: 'type',
+      name: 'Type',
+      attributeDefinitions: [
+        {
+          id: 'a',
+          displayName: 'Biologisch',
+          dataType: 'Boolean',
+          scope: 'Product',
+          isRequired: true,
+        },
+        { id: 'b', displayName: 'Kleur', dataType: 'Text', scope: 'Variant', isRequired: false },
+      ],
+    };
+    http.expectOne('/api/products/first').flush(product);
+    http.expectOne('/api/product-types/type').flush(type);
+    fixture.detectChanges();
+    TestBed.tick();
+    http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
+    const editors = fixture.debugElement
+      .queryAll(By.directive(AttributeEdit))
+      .map((item) => item.componentInstance as AttributeEdit);
+    expect(editors.length).toBe(2);
+    expect(editors[0].variantId()).toBeNull();
+    expect(editors[1].variantId()).toBe('v');
+    editors[0].clear();
+    editors[1].text = 'Blue';
+    editors[1].save();
+    http.expectNone('/api/products/first/variants/v/attributes/b');
+    http.expectOne('/api/products/first/attributes/a').flush(null);
+    http.expectOne('/api/products/first').flush({ ...product, attributeValues: [] });
+    http.expectOne('/api/product-types/type').flush(type);
+    fixture.detectChanges();
+    TestBed.tick();
+    http
+      .expectOne('/api/products/first/attribute-validation')
+      .flush({
+        isValid: false,
+        issues: [{ attributeDefinitionId: 'a', variantId: null, code: 'MissingRequired' }],
+      });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Een verplichte waarde is nog niet ingevuld.',
+    );
   });
   it('cancels the old product read on route changes', () => {
     const fixture = TestBed.createComponent(ProductDetail);

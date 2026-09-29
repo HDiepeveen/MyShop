@@ -1,3 +1,5 @@
+import { map } from 'rxjs';
+import { parseProduct } from './product-json';
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import {
@@ -5,9 +7,9 @@ import {
   CategorySummary,
   Category,
   CreatedProduct,
-  Product,
   ProductPage,
   ProductType,
+  NewAttributeDefinition,
   TypeSummary,
 } from './catalog.models';
 
@@ -18,7 +20,9 @@ export class CatalogApi {
     return this.http.get<ProductPage>('/api/products', { params: this.paging(offset, search) });
   }
   product(id: string) {
-    return this.http.get<Product>('/api/products/' + encodeURIComponent(id));
+    return this.http
+      .get('/api/products/' + encodeURIComponent(id), { responseType: 'text' })
+      .pipe(map(parseProduct));
   }
   types(offset = 0, search = '') {
     return this.http.get<TypeSummary[]>('/api/product-types', {
@@ -57,6 +61,33 @@ export class CatalogApi {
   }
   category(id: string) {
     return this.http.get<Category>('/api/categories/' + encodeURIComponent(id));
+  }
+  setAttribute(
+    productId: string,
+    definitionId: string,
+    body: string,
+    variantId: string | null = null,
+  ) {
+    // Numeric tokens are prepared without conversion to JavaScript numbers.
+    return this.http.put<void>(this.attributeUrl(productId, definitionId, variantId), body, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  clearAttribute(productId: string, definitionId: string, variantId: string | null = null) {
+    return this.http.delete<void>(this.attributeUrl(productId, definitionId, variantId));
+  }
+  private attributeUrl(productId: string, definitionId: string, variantId: string | null) {
+    const owner =
+      variantId === null
+        ? '/api/products/' + encodeURIComponent(productId)
+        : this.variantUrl(productId, variantId);
+    return owner + '/attributes/' + encodeURIComponent(definitionId);
+  }
+  addDefinition(typeId: string, definition: NewAttributeDefinition) {
+    return this.http.post<unknown>(
+      '/api/product-types/' + encodeURIComponent(typeId) + '/attributes',
+      definition,
+    );
   }
   createType(name: string) {
     return this.http.post<{ id: string; name: string }>('/api/product-types', {

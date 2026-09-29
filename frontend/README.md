@@ -28,7 +28,9 @@ De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal o
 
 - Overzicht met navigatie op desktop en smalle schermen.
 - Producten zoeken en pagineren, details en bestaande varianten bekijken.
-- Producttypen zoeken, pagineren en aanmaken.
+- Producttypen zoeken, pagineren, bekijken en aanmaken.
+- Kenmerken definiëren met naam, code, soort, product-/variantniveau en verplicht/filterbaar.
+- Kenmerkwaarden voor producten en varianten invoeren en wissen: tekst, gehele getallen, decimalen, ja/nee, datum en enkele/meerdere keuzes.
 - Categorieën zoeken, pagineren, bekijken, hernoemen en hoofdcategorieën aanmaken.
 - Product aanmaken met een gekozen producttype en eerste variant.
 - Productnaam wijzigen, varianten toevoegen en variantnamen wijzigen.
@@ -40,9 +42,13 @@ De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal o
 De producttypekiezer en categoriekiezer hebben een eigen zoekfunctie en paginering; ze beperken de keuze niet tot de eerste pagina.
 Categorie- en producttypelijsten hebben volgens het huidige backendcontract geen totaaltelling. Na een precies volle laatste pagina kan nog een lege pagina volgen; terugbladeren blijft mogelijk.
 
-Nog niet opgenomen: attribuutdefinities/-waarden bewerken, kortingsregels wijzigen, categoriehiërarchie wijzigen, producten/varianten/categorieën verwijderen, inloggen, klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
+Nog niet opgenomen: bestaande kenmerkdefinities wijzigen/verwijderen, verweesde kenmerkwaarden opruimen, kortingsregels wijzigen, categoriehiërarchie wijzigen, producten/varianten/categorieën verwijderen, inloggen, klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
 
 Basisprijzen accepteren een komma of punt en maximaal twee decimalen. Nul is een geldige prijs; wissen maakt de prijs afwezig. Bedragen die JavaScript niet exact op centen kan versturen worden geweigerd. De valuta bestaat uit drie letters, bijvoorbeeld EUR. Artikelnummers bevatten maximaal 64 tekens zonder spaties en worden in hoofdletters opgeslagen. Een mislukte wijziging behoudt de ingevoerde gegevens; er zijn geen automatische herhaalpogingen voor schrijfacties.
+
+Kenmerkgetallen worden exact als JSON-getallen verstuurd. Gehele getallen ondersteunen het volledige Int64-bereik; decimalen worden gecontroleerd tegen het .NET-decimalbereik en maximaal 28 decimalen, zonder afronding. De uitlezing gebruikt de broncontext van JSON.parse om numerieke kenmerkwaarden zonder precisieverlies weer te geven; een browser zonder die ondersteuning meldt een leesfout in plaats van afgeronde waarden te tonen. Basisprijzen gebruiken de afzonderlijke bestaande prijsinvoer.
+
+Keuzes zijn vrije waarden volgens het bestaande backendcontract, zonder vooraf beheerde keuzelijst. Meerdere keuzes behouden volgorde en inhoud en mogen niet leeg of dubbel zijn. Ja/nee onderscheidt een ontbrekende waarde van nee; datums worden als kalenderdatum verstuurd zonder tijdzone. Het wissen van een verplicht kenmerk is toegestaan en levert daarna een aandachtspunt bij de kenmerkcontrole op.
 
 ## Controle
 
@@ -50,6 +56,8 @@ Basisprijzen accepteren een komma of punt en maximaal twee decimalen. Nul is een
 npm run build
 npm run test:ci
 ```
+
+De Vitest-configuratie gebruikt maximaal twee testprocessen tegelijk om opstart-time-outs op een drukke ontwikkelcomputer te voorkomen.
 
 De componenttests gebruiken de echte Angular HTTP-client met een gecontroleerde testbackend. Ze controleren aanvraagcontracten, paginering, annuleren van verouderde reads, foutafhandeling en dubbel-submitbescherming. Browsercontrole met de echte .NET-backend en SQL Server vult dit aan.
 

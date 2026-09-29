@@ -1,3 +1,4 @@
+import { AttributeEdit } from './attribute-edit';
 import { ProductEditState } from './product-edit-state';
 import { ProductValidation } from './product-validation';
 import { VariantEdit } from './variant-edit';
@@ -21,6 +22,7 @@ import { loadState } from '../load-state';
     ProductValidation,
     VariantEdit,
     ProductCategories,
+    AttributeEdit,
   ],
   template: ` <a class="back" routerLink="/producten">← Alle producten</a>
     @if (state()?.loading) {
@@ -56,6 +58,16 @@ import { loadState } from '../load-state';
         @if (!detail.product.attributeValues.length) {
           <p class="muted">Dit product heeft nog geen ingevulde kenmerken.</p>
         }
+        @for (definition of detail.type.attributeDefinitions; track definition.id) {
+          @if (definition.scope === 'Product') {
+            <app-attribute-edit
+              [productId]="detail.product.id"
+              [definition]="definition"
+              [current]="attributeValue(definition.id, detail.product.attributeValues)"
+              (saved)="onSaved($event)"
+            />
+          }
+        }
         <dl class="detail-list">
           @for (value of detail.product.attributeValues; track value.attributeDefinitionId) {
             <dt>
@@ -89,6 +101,17 @@ import { loadState } from '../load-state';
                 }}
               </dd>
             </dl>
+            @for (definition of detail.type.attributeDefinitions; track definition.id) {
+              @if (definition.scope === 'Variant') {
+                <app-attribute-edit
+                  [productId]="detail.product.id"
+                  [variantId]="variant.id"
+                  [definition]="definition"
+                  [current]="attributeValue(definition.id, variant.attributeValues)"
+                  (saved)="onSaved($event)"
+                />
+              }
+            }
             @if (variant.attributeValues.length) {
               <dl class="detail-list">
                 @for (value of variant.attributeValues; track value.attributeDefinitionId) {
@@ -147,6 +170,9 @@ export class ProductDetail {
   }
   reload() {
     this.refresh.next(this.refresh.value + 1);
+  }
+  attributeValue(id: string, values: AttributeValue[]) {
+    return values.find((value) => value.attributeDefinitionId === id);
   }
   attributeName(id: string, definitions: AttributeDefinition[]) {
     return definitions.find((value) => value.id === id)?.displayName ?? 'Verwijderd kenmerk';

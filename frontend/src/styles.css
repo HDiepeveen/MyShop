@@ -379,3 +379,41 @@ details form {
   overflow-wrap: anywhere;
   min-width: 0;
 }
+
+.check-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 14px 0;
+}
+.check-field input {
+  width: auto;
+  margin: 0;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  font: inherit;
+  margin-top: 6px;
+  padding: 11px 12px;
+  border: 1px solid #cdd6c6;
+  border-radius: 7px;
+  resize: vertical;
+  color: #233b30;
+  background: white;
+}
+textarea:focus-visible {
+  outline: 3px solid #86ad60;
+  outline-offset: 3px;
+}
+textarea:disabled {
+  background: #f1f2ed;
+}
+.attribute-editor {
+  border-top: 1px solid #e0e5d9;
+  padding-top: 10px;
+}
+.attribute-editor form > button {
+  margin: 0 8px 10px 0;
+}

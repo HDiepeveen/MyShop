@@ -29,6 +29,11 @@ export const routes: Routes = [
     title: 'Categorieën · MyShop',
   },
   {
+    path: 'producttypen/:id',
+    loadComponent: () => import('./catalog/types/type-detail').then((m) => m.TypeDetail),
+    title: 'Producttype · MyShop',
+  },
+  {
     path: 'producttypen',
     loadComponent: () => import('./catalog/types/type-list').then((m) => m.TypeList),
     title: 'Producttypen · MyShop',

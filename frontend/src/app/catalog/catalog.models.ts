@@ -37,6 +37,14 @@ export interface AttributeDefinition {
   isRequired: boolean;
   isFilterable: boolean;
 }
+export interface NewAttributeDefinition {
+  code: string;
+  displayName: string;
+  dataType: number;
+  scope: number;
+  isRequired: boolean;
+  isFilterable: boolean;
+}
 export interface ProductType {
   id: string;
   name: string;

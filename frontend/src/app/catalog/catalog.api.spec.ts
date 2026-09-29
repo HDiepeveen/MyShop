@@ -76,6 +76,24 @@ describe('CatalogApi', () => {
     price.flush({}, { status: 409, statusText: 'Conflict' });
     http.expectNone('/api/products/p/variants/v/price');
   });
+
+  it('sends attribute bodies unchanged with JSON content type at the correct scope', () => {
+    const body = '{"dataType":1,"value":9223372036854775807}';
+    api.setAttribute('p/a', 'd/b', body).subscribe();
+    const product = http.expectOne('/api/products/p%2Fa/attributes/d%2Fb');
+    expect(product.request.body).toBe(body);
+    expect(product.request.headers.get('Content-Type')).toBe('application/json');
+    expect(product.request.method).toBe('PUT');
+    product.flush(null);
+    api.setAttribute('p', 'd', body, 'v/a').subscribe();
+    const variant = http.expectOne('/api/products/p/variants/v%2Fa/attributes/d');
+    expect(variant.request.body).toBe(body);
+    variant.flush(null);
+    api.clearAttribute('p', 'd', 'v').subscribe();
+    const clear = http.expectOne('/api/products/p/variants/v/attributes/d');
+    expect(clear.request.method).toBe('DELETE');
+    clear.flush(null);
+  });
   it('translates failures without leaking server internals', () => {
     const message = errorMessage(
       new HttpErrorResponse({ status: 500, error: { detail: 'SQL password' } }),
