@@ -30,6 +30,11 @@ import { loadState } from '../load-state';
     @if (state()?.data; as category) {
       <div class="eyebrow">{{ category.isRoot ? 'Hoofdcategorie' : 'Subcategorie' }}</div>
       <h1>{{ category.name }}</h1>
+      <p>
+        <a routerLink="/producten" [queryParams]="{ categoryId: category.id }"
+          >Producten in deze categorie bekijken</a
+        >
+      </p>
       <app-category-edit [category]="category" (saved)="onSaved()" />
       <app-category-management
         [category]="category"

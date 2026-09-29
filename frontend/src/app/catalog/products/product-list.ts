@@ -1,9 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, switchMap } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { errorMessage } from '../error-message';
 import { loadState } from '../load-state';
@@ -19,6 +19,25 @@ import { loadState } from '../load-state';
       <a class="button" routerLink="/producten/nieuw">+ Nieuw product</a>
     </div>
     <section class="panel">
+      @if (filters().categoryId; as categoryId) {
+        <p>
+          Filter: <a [routerLink]="['/categorieen', categoryId]">Geselecteerde categorie</a>
+          <button type="button" class="secondary" (click)="clearFilter('categoryId')">
+            Categoriefilter verwijderen
+          </button>
+        </p>
+        <p class="muted">
+          Alleen rechtstreeks gekoppelde producten; subcategorieën worden niet meegenomen.
+        </p>
+      }
+      @if (filters().productTypeId; as typeId) {
+        <p>
+          Filter: <a [routerLink]="['/producttypen', typeId]">Geselecteerd producttype</a>
+          <button type="button" class="secondary" (click)="clearFilter('productTypeId')">
+            Producttypefilter verwijderen
+          </button>
+        </p>
+      }
       <form class="toolbar" (ngSubmit)="search()">
         <label
           >Zoek op productnaam<input
@@ -41,6 +60,9 @@ import { loadState } from '../load-state';
           {{ skuBusy() ? 'Zoeken…' : 'Artikelnummer zoeken' }}
         </button>
       </form>
+      @if (filters().categoryId || filters().productTypeId) {
+        <p class="muted">Zoeken op artikelnummer doorzoekt het hele assortiment.</p>
+      }
       @if (skuError()) {
         <p class="error" role="alert">{{ skuError() }}</p>
       }
@@ -87,7 +109,7 @@ import { loadState } from '../load-state';
         } @else {
           <div class="empty">
             <h2>Geen producten gevonden</h2>
-            <p class="muted">Pas je zoekopdracht aan of voeg je eerste product toe.</p>
+            <p class="muted">Pas je zoekopdracht of filters aan, of voeg een product toe.</p>
           </div>
         }
         <div class="pager">
@@ -114,15 +136,43 @@ export class ProductList {
   private readonly api = inject(CatalogApi);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly query = new BehaviorSubject({ offset: 0, search: '' });
-  readonly state = toSignal(
-    this.query.pipe(switchMap((q) => loadState(this.api.products(q.offset, q.search)))),
-  );
+  readonly filters = signal<{ categoryId: string | null; productTypeId: string | null }>({
+    categoryId: null,
+    productTypeId: null,
+  });
   readonly offset = signal(0);
+  readonly state = toSignal(
+    this.route.queryParamMap.pipe(
+      map((params) => ({
+        categoryId: params.get('categoryId') || null,
+        productTypeId: params.get('productTypeId') || null,
+      })),
+      distinctUntilChanged(
+        (a, b) => a.categoryId === b.categoryId && a.productTypeId === b.productTypeId,
+      ),
+      switchMap((filters) => {
+        this.filters.set(filters);
+        this.offset.set(0);
+        this.query.next({ ...this.query.value, offset: 0 });
+        return this.query.pipe(
+          switchMap((q) => loadState(this.api.products(q.offset, q.search, filters))),
+        );
+      }),
+    ),
+  );
   readonly skuBusy = signal(false);
   readonly skuError = signal('');
   searchText = '';
   skuText = '';
+  clearFilter(key: 'categoryId' | 'productTypeId') {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [key]: null },
+      queryParamsHandling: 'merge',
+    });
+  }
   search() {
     this.offset.set(0);
     this.query.next({ offset: 0, search: this.searchText });

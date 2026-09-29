@@ -26,6 +26,8 @@ De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal o
 
 ## Wat deze versie ondersteunt
 
+Vanuit een categorie of producttype kun je de bijbehorende producten openen. De filters staan in de URL als `categoryId` en `productTypeId` en kunnen samen worden gebruikt. Naamzoeken, pagineren en opnieuw proberen behouden deze filters. Ieder filter kan afzonderlijk worden verwijderd. Categoriefilters tellen alleen directe productkoppelingen, geen subcategorieën. Zoeken op artikelnummer blijft het hele assortiment doorzoeken.
+
 - Overzicht met navigatie op desktop en smalle schermen.
 - Producten zoeken en pagineren, details en bestaande varianten bekijken. Een product is ook rechtstreeks op artikelnummer (SKU) te vinden.
 - Producttypen zoeken, pagineren, bekijken, aanmaken en hernoemen; gebruik ophalen en ongebruikte typen na bevestiging verwijderen.

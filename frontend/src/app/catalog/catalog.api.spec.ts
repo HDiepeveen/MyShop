@@ -15,6 +15,15 @@ describe('CatalogApi', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('sends category and type filters as separate parameters', () => {
+    api.products(20, 'coat', { categoryId: 'c&x', productTypeId: 't' }).subscribe();
+    const request = http.expectOne((r) => r.url === '/api/products');
+    expect(request.request.params.get('categoryId')).toBe('c&x');
+    expect(request.request.params.get('productTypeId')).toBe('t');
+    expect(request.request.params.get('search')).toBe('coat');
+    expect(request.request.params.get('offset')).toBe('20');
+    request.flush({ items: [], totalCount: 0 });
+  });
   it('encodes search separately and preserves page offset', () => {
     api.products(20, '  A&B  ').subscribe();
     const request = http.expectOne((r) => r.url === '/api/products');

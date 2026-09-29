@@ -16,8 +16,15 @@ import {
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
-  products(offset = 0, search = '') {
-    return this.http.get<ProductPage>('/api/products', { params: this.paging(offset, search) });
+  products(
+    offset = 0,
+    search = '',
+    filters: { categoryId?: string | null; productTypeId?: string | null } = {},
+  ) {
+    let params = this.paging(offset, search);
+    if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
+    if (filters.productTypeId) params = params.set('productTypeId', filters.productTypeId);
+    return this.http.get<ProductPage>('/api/products', { params });
   }
   product(id: string) {
     return this.http

@@ -72,6 +72,7 @@ describe('CategoryDetail', () => {
     http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Shirts');
+    expect(fixture.nativeElement.querySelector('a[href="/producten?categoryId=c"]')).not.toBeNull();
     expect(
       fixture.nativeElement.querySelector('a[href="/categorieen/parent"]').textContent,
     ).toContain('Bovenliggende');

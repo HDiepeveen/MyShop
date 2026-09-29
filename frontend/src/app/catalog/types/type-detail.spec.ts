@@ -43,6 +43,9 @@ describe('TypeDetail', () => {
       ],
     });
     fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('a[href="/producten?productTypeId=t"]'),
+    ).not.toBeNull();
     TestBed.tick();
     http
       .expectOne('/api/product-types/t/usage')

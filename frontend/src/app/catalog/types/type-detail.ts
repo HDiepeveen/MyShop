@@ -27,6 +27,11 @@ import { attributeTypeLabel } from '../attribute-types';
     @if (state()?.data; as type) {
       <div class="eyebrow">Producttype</div>
       <h1>{{ type.name }}</h1>
+      <p>
+        <a routerLink="/producten" [queryParams]="{ productTypeId: type.id }"
+          >Producten van dit type bekijken</a
+        >
+      </p>
       @if (notice()) {
         <p class="success" role="status">{{ notice() }}</p>
       }
