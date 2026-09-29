@@ -73,14 +73,31 @@ describe('CategoryManagement', () => {
     fixture.componentInstance.remove();
     http.expectNone((r) => r.method === 'DELETE');
   });
-  it('searches and pages parent categories', () => {
+  it('keeps the applied search while paging and resets the page for a new search', () => {
     const editor = setup();
     editor.categorySearch = 'kleding';
     editor.searchCategories();
     http.expectOne('/api/categories?offset=0&limit=20&search=kleding').flush([]);
+    editor.categorySearch = 'schoenen';
     editor.changeCategoryPage(20);
     http.expectOne('/api/categories?offset=20&limit=20&search=kleding').flush([]);
     expect(editor.categoryOffset()).toBe(20);
+    editor.searchCategories();
+    http.expectOne('/api/categories?offset=0&limit=20&search=schoenen').flush([]);
+    expect(editor.categoryOffset()).toBe(0);
+  });
+  it('does not change the picker query during a category write', () => {
+    const editor = setup();
+    editor.parentId = 'p/b';
+    editor.move();
+    const write = http.expectOne('/api/categories/c%2Fa/parent');
+    editor.categorySearch = 'schoenen';
+    editor.searchCategories();
+    editor.changeCategoryPage(20);
+    editor.retryCategories();
+    http.expectNone((request) => request.url === '/api/categories');
+    expect(editor.categoryOffset()).toBe(0);
+    write.flush(null);
   });
   it('can retry a failed parent category read', () => {
     const fixture = TestBed.createComponent(CategoryManagement);

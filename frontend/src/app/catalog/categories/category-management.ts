@@ -160,12 +160,14 @@ export class CategoryManagement {
     );
   }
   searchCategories() {
+    if (this.busy()) return;
     this.categoryOffset.set(0);
     this.categoryQuery.next({ offset: 0, search: this.categorySearch });
   }
   changeCategoryPage(delta: number) {
+    if (this.busy()) return;
     this.categoryOffset.update((value) => Math.max(0, value + delta));
-    this.categoryQuery.next({ offset: this.categoryOffset(), search: this.categorySearch });
+    this.categoryQuery.next({ ...this.categoryQuery.value, offset: this.categoryOffset() });
   }
   retryCategories() {
     if (!this.busy()) this.categoryQuery.next(this.categoryQuery.value);
