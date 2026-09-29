@@ -24,6 +24,11 @@ export class CatalogApi {
       .get('/api/products/' + encodeURIComponent(id), { responseType: 'text' })
       .pipe(map(parseProduct));
   }
+  productBySku(sku: string) {
+    return this.http.get<{ productId: string; productVariantId: string }>(
+      '/api/products/by-sku/' + encodeURIComponent(sku.trim()),
+    );
+  }
   types(offset = 0, search = '') {
     return this.http.get<TypeSummary[]>('/api/product-types', {
       params: this.paging(offset, search),

@@ -23,6 +23,12 @@ describe('CatalogApi', () => {
     expect(request.request.params.get('limit')).toBe('20');
     request.flush({ items: [], offset: 20, limit: 20, totalCount: 0 });
   });
+  it('looks up a product by SKU', () => {
+    api.productBySku(' shirt-1 ').subscribe();
+    const request = http.expectOne('/api/products/by-sku/shirt-1');
+    expect(request.request.method).toBe('GET');
+    request.flush({ productId: 'p', productVariantId: 'v' });
+  });
   it('omits empty searches for paged arrays', () => {
     api.types(40, '  ').subscribe();
     const request = http.expectOne((r) => r.url === '/api/product-types');

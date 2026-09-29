@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { ProductList } from './product-list';
 
 describe('ProductList', () => {
@@ -54,5 +54,26 @@ describe('ProductList', () => {
     http.expectOne((r) => r.url === '/api/products').flush({ items: [], totalCount: 0 });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Geen producten gevonden');
+  });
+  it('opens the product when an SKU is found', () => {
+    const fixture = TestBed.createComponent(ProductList);
+    http.expectOne((r) => r.url === '/api/products');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.componentInstance.skuText = ' shirt-1 ';
+    fixture.componentInstance.lookupSku();
+    http.expectOne('/api/products/by-sku/shirt-1').flush({ productId: 'p', productVariantId: 'v' });
+    expect(navigate).toHaveBeenCalledWith(['/producten', 'p']);
+    expect(fixture.componentInstance.skuBusy()).toBe(false);
+  });
+  it('shows an SKU lookup error and prevents duplicate submits', () => {
+    const fixture = TestBed.createComponent(ProductList);
+    http.expectOne((r) => r.url === '/api/products');
+    fixture.componentInstance.skuText = 'DUPLICATE';
+    fixture.componentInstance.lookupSku();
+    fixture.componentInstance.lookupSku();
+    const request = http.expectOne('/api/products/by-sku/DUPLICATE');
+    request.flush({ title: 'SKU not found' }, { status: 404, statusText: 'Not Found' });
+    expect(fixture.componentInstance.skuBusy()).toBe(false);
+    expect(fixture.componentInstance.skuError()).toContain('niet meer beschikbaar');
   });
 });

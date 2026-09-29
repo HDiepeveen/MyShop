@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Router, RouterLink } from '@angular/router';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
+import { errorMessage } from '../error-message';
 import { loadState } from '../load-state';
 
 @Component({
@@ -26,6 +27,22 @@ import { loadState } from '../load-state';
             type="search" /></label
         ><button type="submit" class="secondary">Zoeken</button>
       </form>
+      <form class="toolbar" (ngSubmit)="lookupSku()">
+        <label
+          >Zoek op artikelnummer<input
+            name="sku"
+            [(ngModel)]="skuText"
+            placeholder="Bijvoorbeeld: SHIRT-001"
+            maxlength="64"
+            type="search"
+            [disabled]="skuBusy()" /></label
+        ><button class="secondary" [disabled]="skuBusy() || !skuText.trim()">
+          {{ skuBusy() ? 'Zoeken…' : 'Artikelnummer zoeken' }}
+        </button>
+      </form>
+      @if (skuError()) {
+        <p class="error" role="alert">{{ skuError() }}</p>
+      }
       @if (state()?.loading) {
         <p class="loading" role="status">Producten ophalen…</p>
       }
@@ -94,12 +111,17 @@ import { loadState } from '../load-state';
 })
 export class ProductList {
   private readonly api = inject(CatalogApi);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly query = new BehaviorSubject({ offset: 0, search: '' });
   readonly state = toSignal(
     this.query.pipe(switchMap((q) => loadState(this.api.products(q.offset, q.search)))),
   );
   readonly offset = signal(0);
+  readonly skuBusy = signal(false);
+  readonly skuError = signal('');
   searchText = '';
+  skuText = '';
   search() {
     this.offset.set(0);
     this.query.next({ offset: 0, search: this.searchText });
@@ -110,5 +132,24 @@ export class ProductList {
   }
   retry() {
     this.query.next(this.query.value);
+  }
+  lookupSku() {
+    const sku = this.skuText.trim();
+    if (this.skuBusy() || !sku) return;
+    this.skuBusy.set(true);
+    this.skuError.set('');
+    this.api
+      .productBySku(sku)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (owner) => {
+          this.skuBusy.set(false);
+          void this.router.navigate(['/producten', owner.productId]);
+        },
+        error: (error) => {
+          this.skuBusy.set(false);
+          this.skuError.set(errorMessage(error));
+        },
+      });
   }
 }

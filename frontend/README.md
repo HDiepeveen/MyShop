@@ -27,7 +27,7 @@ De interface en API hebben nog geen login of rollen. Deze opzet is voor lokaal o
 ## Wat deze versie ondersteunt
 
 - Overzicht met navigatie op desktop en smalle schermen.
-- Producten zoeken en pagineren, details en bestaande varianten bekijken.
+- Producten zoeken en pagineren, details en bestaande varianten bekijken. Een product is ook rechtstreeks op artikelnummer (SKU) te vinden.
 - Producttypen zoeken, pagineren, bekijken, aanmaken en hernoemen; gebruik ophalen en ongebruikte typen na bevestiging verwijderen.
 - Kenmerken definiëren met naam, code, soort, product-/variantniveau en verplicht/filterbaar. Bestaande namen en instellingen wijzigen en definities na bevestiging verwijderen.
 - Achtergebleven waarden van verwijderde kenmerken per product of variant bekijken en na bevestiging wissen.
