@@ -137,6 +137,10 @@ export class ProductList {
   lookupSku() {
     const sku = this.skuText.trim();
     if (this.skuBusy() || !sku) return;
+    if (sku.length > 64 || /[\s\u0085]/.test(sku)) {
+      this.skuError.set('Gebruik een artikelnummer van maximaal 64 tekens zonder spaties.');
+      return;
+    }
     this.skuBusy.set(true);
     this.skuError.set('');
     this.api

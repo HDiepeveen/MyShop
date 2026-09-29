@@ -65,6 +65,24 @@ describe('ProductList', () => {
     expect(navigate).toHaveBeenCalledWith(['/producten', 'p']);
     expect(fixture.componentInstance.skuBusy()).toBe(false);
   });
+  it('rejects invalid SKU input without a request and accepts a corrected value', () => {
+    const fixture = TestBed.createComponent(ProductList);
+    http.expectOne((r) => r.url === '/api/products').flush({ items: [], totalCount: 0 });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    for (const sku of ['A B', 'A\tB', 'A\u0085B', 'A'.repeat(65)]) {
+      fixture.componentInstance.skuText = sku;
+      fixture.componentInstance.lookupSku();
+      expect(fixture.componentInstance.skuError()).toContain('maximaal 64 tekens zonder spaties');
+      expect(fixture.componentInstance.skuBusy()).toBe(false);
+    }
+    http.expectNone((r) => r.url.startsWith('/api/products/by-sku/'));
+    fixture.componentInstance.skuText = 'A'.repeat(64);
+    fixture.componentInstance.lookupSku();
+    expect(fixture.componentInstance.skuError()).toBe('');
+    http.expectOne('/api/products/by-sku/' + 'A'.repeat(64))
+      .flush({ productId: 'p', productVariantId: 'v' });
+    expect(navigate).toHaveBeenCalledWith(['/producten', 'p']);
+  });
   it('shows an SKU lookup error and prevents duplicate submits', () => {
     const fixture = TestBed.createComponent(ProductList);
     http.expectOne((r) => r.url === '/api/products');
