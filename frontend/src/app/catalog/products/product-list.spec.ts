@@ -74,6 +74,22 @@ describe('ProductList', () => {
     const request = http.expectOne('/api/products/by-sku/DUPLICATE');
     request.flush({ title: 'SKU not found' }, { status: 404, statusText: 'Not Found' });
     expect(fixture.componentInstance.skuBusy()).toBe(false);
-    expect(fixture.componentInstance.skuError()).toContain('niet meer beschikbaar');
+    expect(fixture.componentInstance.skuError()).toContain('Geen product gevonden met dit artikelnummer');
+    expect(fixture.componentInstance.skuText).toBe('DUPLICATE');
+  });
+  it('distinguishes an unavailable service from a missing SKU and clears the error on retry', () => {
+    const fixture = TestBed.createComponent(ProductList);
+    http.expectOne((r) => r.url === '/api/products').flush({ items: [], totalCount: 0 });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.componentInstance.skuText = 'SHIRT';
+    fixture.componentInstance.lookupSku();
+    http.expectOne('/api/products/by-sku/SHIRT').flush({}, { status: 502, statusText: 'Bad Gateway' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('niet bereikbaar');
+    expect(navigate).not.toHaveBeenCalled();
+    fixture.componentInstance.lookupSku();
+    expect(fixture.componentInstance.skuError()).toBe('');
+    http.expectOne('/api/products/by-sku/SHIRT').flush({ productId: 'p', productVariantId: 'v' });
+    expect(navigate).toHaveBeenCalledWith(['/producten', 'p']);
   });
 });

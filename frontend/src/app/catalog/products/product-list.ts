@@ -1,4 +1,5 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -148,7 +149,11 @@ export class ProductList {
         },
         error: (error) => {
           this.skuBusy.set(false);
-          this.skuError.set(errorMessage(error));
+          this.skuError.set(
+            error instanceof HttpErrorResponse && error.status === 404
+              ? 'Geen product gevonden met dit artikelnummer. Controleer het artikelnummer en probeer opnieuw.'
+              : errorMessage(error),
+          );
         },
       });
   }
