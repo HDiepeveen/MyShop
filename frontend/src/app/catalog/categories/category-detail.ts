@@ -2,8 +2,8 @@ import { CategoryEdit } from './category-edit';
 import { CategoryManagement } from './category-management';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, combineLatest, tap, distinctUntilChanged, switchMap } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, combineLatest, of, tap, distinctUntilChanged, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { loadState } from '../load-state';
 
@@ -34,9 +34,15 @@ import { loadState } from '../load-state';
       <section class="panel">
         <h2>Plek in het assortiment</h2>
         @if (category.parentCategoryId) {
-          <a [routerLink]="['/categorieen', category.parentCategoryId]"
-            >Bekijk bovenliggende categorie</a
-          >
+          @if (parentState()?.data; as parent) {
+            <a [routerLink]="['/categorieen', category.parentCategoryId]"
+              >Bovenliggende categorie: {{ parent.name }}</a
+            >
+          } @else {
+            <a [routerLink]="['/categorieen', category.parentCategoryId]"
+              >Bekijk bovenliggende categorie</a
+            >
+          }
         } @else {
           <p class="muted">Deze categorie staat op het hoogste niveau.</p>
         }
@@ -58,6 +64,14 @@ export class CategoryDetail {
       ),
       this.refresh,
     ]).pipe(switchMap(([params]) => loadState(this.api.category(params.get('id')!)))),
+  );
+  readonly parentState = toSignal(
+    toObservable(this.state).pipe(
+      switchMap((state) => {
+        const parentId = state?.data?.parentCategoryId;
+        return parentId ? loadState(this.api.category(parentId)) : of(null);
+      }),
+    ),
   );
   onSaved() {
     this.notice.set('De categorienaam is bijgewerkt.');

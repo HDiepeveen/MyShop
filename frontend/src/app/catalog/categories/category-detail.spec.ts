@@ -31,11 +31,48 @@ describe('CategoryDetail', () => {
     http
       .expectOne('/api/categories/c/usage')
       .flush({ categoryId: 'c', directChildCount: 0, productAssignmentCount: 0, isInUse: false });
+    http.expectOne('/api/categories/parent').flush({
+      id: 'parent',
+      name: 'Clothing',
+      isRoot: true,
+      parentCategoryId: null,
+    });
     http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
+    fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Shirts');
     expect(
       fixture.nativeElement.querySelector('a[href="/categorieen/parent"]').textContent,
-    ).toContain('bovenliggende');
+    ).toContain('Bovenliggende');
+    expect(fixture.nativeElement.querySelector('a[href="/categorieen/parent"]').textContent).toContain(
+      'Clothing',
+    );
+  });
+
+  it('keeps the parent link on failure and clears parent state on navigation', () => {
+    const fixture = TestBed.createComponent(CategoryDetail);
+    http.expectOne('/api/categories/c').flush({
+      id: 'c', name: 'Shirts', isRoot: false, parentCategoryId: 'parent',
+    });
+    fixture.detectChanges();
+    http.expectOne('/api/categories/c/usage').flush({
+      categoryId: 'c', directChildCount: 0, productAssignmentCount: 0, isInUse: false,
+    });
+    http.expectOne('/api/categories?offset=0&limit=20').flush([]);
+    http.expectOne('/api/categories/parent').flush({}, { status: 503, statusText: 'Unavailable' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/categorieen/parent"]').textContent)
+      .toContain('Bekijk bovenliggende categorie');
+    params.next(convertToParamMap({ id: 'root' }));
+    http.expectOne('/api/categories/root').flush({
+      id: 'root', name: 'Root', isRoot: true, parentCategoryId: null,
+    });
+    fixture.detectChanges();
+    http.expectOne('/api/categories/root/usage').flush({
+      categoryId: 'root', directChildCount: 0, productAssignmentCount: 0, isInUse: false,
+    });
+    http.match('/api/categories?offset=0&limit=20').forEach((request) => request.flush([]));
+    expect(fixture.componentInstance.parentState()).toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href="/categorieen/parent"]')).toBeNull();
   });
 
   it('clears the previous category success message on route changes', () => {
