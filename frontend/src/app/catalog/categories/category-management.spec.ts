@@ -73,4 +73,13 @@ describe('CategoryManagement', () => {
     fixture.componentInstance.remove();
     http.expectNone((r) => r.method === 'DELETE');
   });
+  it('searches and pages parent categories', () => {
+    const editor = setup();
+    editor.categorySearch = 'kleding';
+    editor.searchCategories();
+    http.expectOne('/api/categories?offset=0&limit=20&search=kleding').flush([]);
+    editor.changeCategoryPage(20);
+    http.expectOne('/api/categories?offset=20&limit=20&search=kleding').flush([]);
+    expect(editor.categoryOffset()).toBe(20);
+  });
 });

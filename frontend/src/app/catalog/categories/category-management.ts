@@ -1,7 +1,7 @@
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { switchMap } from 'rxjs';
+import { BehaviorSubject, switchMap } from 'rxjs';
 import { CatalogApi } from '../catalog.api';
 import { Category, CategorySummary } from '../catalog.models';
 import { errorMessage } from '../error-message';
@@ -38,6 +38,15 @@ import { loadState } from '../load-state';
         }
         <form (ngSubmit)="move()">
           <label class="field"
+            >Categorie zoeken<input
+              name="categorySearch"
+              type="search"
+              [(ngModel)]="categorySearch"
+              placeholder="Zoeken op naam"
+              [disabled]="busy()"
+              (change)="searchCategories()"
+          /></label>
+          <label class="field"
             >Bovenliggende categorie
             <select name="parent" [(ngModel)]="parentId" [disabled]="busy()">
               <option [ngValue]="null">Hoofdniveau</option>
@@ -48,6 +57,29 @@ import { loadState } from '../load-state';
           </label>
           <button [disabled]="busy() || parentId === category().parentCategoryId">Opslaan</button>
         </form>
+        @if (categories()?.data; as page) {
+          <div class="pager">
+            <span>Pagina {{ categoryOffset() / 20 + 1 }}</span>
+            <div class="actions">
+              <button
+                type="button"
+                class="secondary"
+                [disabled]="busy() || categoryOffset() === 0"
+                (click)="changeCategoryPage(-20)"
+              >
+                Vorige
+              </button>
+              <button
+                type="button"
+                class="secondary"
+                [disabled]="busy() || page.length < 20"
+                (click)="changeCategoryPage(20)"
+              >
+                Volgende
+              </button>
+            </div>
+          </div>
+        }
       </details>
       @if (canDelete()) {
         <div class="remove-section">
@@ -91,13 +123,20 @@ export class CategoryManagement {
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly categoryQuery = new BehaviorSubject({ offset: 0, search: '' });
   readonly usage = toSignal(
     toObservable(this.category).pipe(
       switchMap((category) => loadState(this.api.categoryUsage(category.id))),
     ),
   );
-  readonly categories = toSignal(loadState(this.api.categories(0, '')));
+  readonly categories = toSignal(
+    this.categoryQuery.pipe(
+      switchMap((query) => loadState(this.api.categories(query.offset, query.search))),
+    ),
+  );
+  readonly categoryOffset = signal(0);
   parentId: string | null = null;
+  categorySearch = '';
   constructor() {
     effect(() => {
       this.parentId = this.category().parentCategoryId;
@@ -109,6 +148,14 @@ export class CategoryManagement {
     return (this.categories()?.data ?? []).filter(
       (option: CategorySummary) => option.id !== this.category().id,
     );
+  }
+  searchCategories() {
+    this.categoryOffset.set(0);
+    this.categoryQuery.next({ offset: 0, search: this.categorySearch });
+  }
+  changeCategoryPage(delta: number) {
+    this.categoryOffset.update((value) => Math.max(0, value + delta));
+    this.categoryQuery.next({ offset: this.categoryOffset(), search: this.categorySearch });
   }
   canDelete() {
     const information = this.usage()?.data;
