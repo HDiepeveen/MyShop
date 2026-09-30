@@ -1,8 +1,10 @@
 using MyShop.Application.Catalog.Abstractions;
+using MyShop.Domain.Catalog;
 
 namespace MyShop.Application.Catalog.BrowseStorefront;
 
-public sealed record BrowseStorefrontQuery(int Offset = 0, int Limit = 20, string? Search = null);
+public sealed record BrowseStorefrontQuery(int Offset = 0, int Limit = 20, string? Search = null,
+    CategoryId? CategoryId = null);
 
 public sealed class BrowseStorefront(IStorefrontCatalog catalog)
 {
@@ -12,8 +14,11 @@ public sealed class BrowseStorefront(IStorefrontCatalog catalog)
         ArgumentNullException.ThrowIfNull(query);
         cancellationToken.ThrowIfCancellationRequested();
         if (query.Offset < 0 || query.Limit is < 1 or > 100) throw new ArgumentOutOfRangeException(nameof(query));
+        if (query.CategoryId is { } categoryId && categoryId == default)
+            throw new ArgumentException("Category ID is required.", nameof(query));
         var search = query.Search?.Trim();
         if (search?.Length > 200) throw new ArgumentException("Search must not exceed 200 characters.", nameof(query));
-        return catalog.ListAsync(query.Offset, query.Limit, string.IsNullOrEmpty(search) ? null : search, cancellationToken);
+        return catalog.ListAsync(query.Offset, query.Limit, string.IsNullOrEmpty(search) ? null : search,
+            query.CategoryId, cancellationToken);
     }
 }

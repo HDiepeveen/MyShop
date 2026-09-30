@@ -36,15 +36,19 @@ describe('Public storefront', () => {
   });
   afterEach(() => http.verify());
   it('opens without authentication and preserves search/page when following product links', async () => {
-    const harness = await RouterTestingHarness.create('/winkel?search=shirt&offset=20');
+    const harness = await RouterTestingHarness.create(
+      '/winkel?search=shirt&offset=20&categoryId=c1',
+    );
     http.expectNone((r) => r.url.startsWith('/api/auth'));
+    http.expectOne('/api/shop/categories').flush([{ id: 'c1', name: 'Kleding' }]);
     http
-      .expectOne('/api/shop/products?offset=20&limit=20&search=shirt')
+      .expectOne('/api/shop/products?offset=20&limit=20&search=shirt&categoryId=c1')
       .flush({ items: [product], totalCount: 45, offset: 20, limit: 20 });
     harness.detectChanges();
     const link = harness.routeNativeElement!.querySelector('a[href*="/winkel/p?"]')!;
     expect(link.getAttribute('href')).toContain('search=shirt');
     expect(link.getAttribute('href')).toContain('offset=20');
+    expect(link.getAttribute('href')).toContain('categoryId=c1');
     const list = harness.routeDebugElement!.componentInstance as ShopList;
     const input = harness.routeNativeElement!.querySelector('input')!;
     input.value = 'coat';
@@ -53,10 +57,16 @@ describe('Public storefront', () => {
     harness.routeNativeElement!.querySelector<HTMLButtonElement>('button[type=submit]')!.click();
     await harness.fixture.whenStable();
     http
-      .expectOne('/api/shop/products?offset=0&limit=20&search=coat')
+      .expectOne('/api/shop/products?offset=0&limit=20&search=coat&categoryId=c1')
       .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
-    expect(TestBed.inject(Router).url).toBe('/winkel?search=coat');
+    expect(TestBed.inject(Router).url).toContain('search=coat');
+    expect(TestBed.inject(Router).url).toContain('categoryId=c1');
     list.clearSearch();
+    await harness.fixture.whenStable();
+    http
+      .expectOne('/api/shop/products?offset=0&limit=20&categoryId=c1')
+      .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
+    list.filterCategory('');
     await harness.fixture.whenStable();
     http
       .expectOne('/api/shop/products?offset=0&limit=20')
@@ -64,6 +74,7 @@ describe('Public storefront', () => {
   });
   it('uses the applied search while paging and cancels obsolete reads', async () => {
     const harness = await RouterTestingHarness.create('/winkel?search=shirt');
+    http.expectOne('/api/shop/categories').flush([]);
     const obsolete = http.expectOne('/api/shop/products?offset=0&limit=20&search=shirt');
     const list = harness.routeDebugElement!.componentInstance as ShopList;
     list.searchText = 'unsent';
@@ -198,6 +209,7 @@ describe('Public storefront', () => {
     const fixture = TestBed.createComponent(App);
     await TestBed.inject(Router).navigateByUrl('/winkel');
     await fixture.whenStable();
+    http.expectOne('/api/shop/categories').flush([]);
     http
       .expectOne('/api/shop/products?offset=0&limit=20')
       .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });

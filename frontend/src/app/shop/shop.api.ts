@@ -13,6 +13,10 @@ export interface ShopPage {
   offset: number;
   limit: number;
 }
+export interface ShopCategory {
+  id: string;
+  name: string;
+}
 export interface ShopProduct extends ShopItem {
   description: string;
   variants: { id: string; name: string }[];
@@ -45,9 +49,13 @@ export class ShopApi {
       params = params.append('lines', `${line.productId}:${line.variantId}:${line.quantity}`);
     return this.http.get<CartQuote>('/api/shop/cart/quote', { params });
   }
-  products(offset = 0, search = '') {
+  categories() {
+    return this.http.get<ShopCategory[]>('/api/shop/categories');
+  }
+  products(offset = 0, search = '', categoryId = '') {
     let params = new HttpParams().set('offset', offset).set('limit', 20);
     if (search.trim()) params = params.set('search', search.trim());
+    if (categoryId) params = params.set('categoryId', categoryId);
     return this.http.get<ShopPage>('/api/shop/products', { params });
   }
   prices(id: string) {

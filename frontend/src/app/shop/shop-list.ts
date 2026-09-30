@@ -31,7 +31,25 @@ import { readListQuery } from '../catalog/list-query';
     <div class="eyebrow">Welkom bij MyShop</div>
     <h1>Ontdek ons assortiment</h1>
     <p class="muted">Bekijk onze producten en kies de variant die bij je past.</p>
+    @if (categories()?.loading) {
+      <p role="status">Categorieën ophalen…</p>
+    }
+    @if (categories()?.error) {
+      <p role="alert" class="error">Categorieën konden niet worden opgehaald.</p>
+    }
     <form class="toolbar" (ngSubmit)="search()">
+      <label
+        >Categorie<select
+          name="category"
+          [ngModel]="query().categoryId"
+          (ngModelChange)="filterCategory($event)"
+        >
+          <option value="">Alle categorieën</option>
+          @for (category of categories()?.data ?? []; track category.id) {
+            <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select></label
+      >
       <label
         >Zoek producten<input
           type="search"
@@ -57,7 +75,11 @@ import { readListQuery } from '../catalog/list-query';
       @if (page.items.length) {
         <div class="products">
           @for (product of page.items; track product.id) {
-            <a class="panel product" [routerLink]="['/winkel', product.id]" [queryParams]="query()">
+            <a
+              class="panel product"
+              [routerLink]="['/winkel', product.id]"
+              [queryParams]="contextQuery()"
+            >
               <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" />
               <h2>{{ product.name }}</h2>
               <span>Bekijk product →</span>
@@ -111,17 +133,25 @@ export class ShopList {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
-  readonly query = signal({ search: '', offset: 0 });
+  readonly query = signal({ search: '', offset: 0, categoryId: '' });
   searchText = '';
+  readonly categories = toSignal(loadState(this.api.categories()));
   readonly state = toSignal(
     this.route.queryParamMap.pipe(
-      map(readListQuery),
-      distinctUntilChanged((a, b) => a.offset === b.offset && a.search === b.search),
+      map((parameters) => ({
+        ...readListQuery(parameters),
+        categoryId: parameters.get('categoryId') ?? '',
+      })),
+      distinctUntilChanged(
+        (a, b) => a.offset === b.offset && a.search === b.search && a.categoryId === b.categoryId,
+      ),
       switchMap((query) => {
         if (query.search !== this.query().search) this.searchText = query.search;
         this.query.set(query);
         return this.refresh.pipe(
-          switchMap(() => loadState(this.api.products(query.offset, query.search))),
+          switchMap(() =>
+            loadState(this.api.products(query.offset, query.search, query.categoryId)),
+          ),
         );
       }),
     ),
@@ -133,7 +163,11 @@ export class ShopList {
     }
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { search: this.searchText.trim() || null, offset: null },
+      queryParams: {
+        search: this.searchText.trim() || null,
+        categoryId: this.query().categoryId || null,
+        offset: null,
+      },
     });
   }
   clearSearch() {
@@ -143,8 +177,29 @@ export class ShopList {
   goToPage(offset: number) {
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { search: this.query().search || null, offset: Math.max(0, offset) || null },
+      queryParams: {
+        search: this.query().search || null,
+        categoryId: this.query().categoryId || null,
+        offset: Math.max(0, offset) || null,
+      },
     });
+  }
+  filterCategory(categoryId: string) {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        search: this.query().search || null,
+        categoryId: categoryId || null,
+        offset: null,
+      },
+    });
+  }
+  contextQuery() {
+    return {
+      search: this.query().search || null,
+      categoryId: this.query().categoryId || null,
+      offset: this.query().offset || null,
+    };
   }
   retry() {
     this.refresh.next(this.refresh.value + 1);
