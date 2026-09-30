@@ -11,7 +11,8 @@ public sealed class MarkOrderShippedTests
     {
         var revision = Guid.NewGuid();
         var repository = new Fake(new(
-            OrderStatus.Paid, DateTimeOffset.UtcNow, "bank-reference", null, null, null, null, null, revision));
+            OrderStatus.Paid, DateTimeOffset.UtcNow, "bank-reference", null, null, null, null, null,
+            null, null, null, revision));
         var before = DateTimeOffset.UtcNow;
         var result = await new MarkOrderShipped(repository)
             .ExecuteAsync(new(Guid.NewGuid(), revision, "  PostNL  ", "  3SMYSHOP123  "),
@@ -61,7 +62,7 @@ public sealed class MarkOrderShippedTests
     public async Task RejectsStaleRevisionBeforeWriting()
     {
         var repository = new Fake(new(OrderStatus.Paid, DateTimeOffset.UtcNow,
-            "bank-reference", null, null, null, null, null, Guid.NewGuid()));
+            "bank-reference", null, null, null, null, null, null, null, null, Guid.NewGuid()));
         var result = await new MarkOrderShipped(repository)
             .ExecuteAsync(new(Guid.NewGuid(), Guid.NewGuid(), "PostNL", "code"), CancellationToken.None);
         Assert.Equal(MarkOrderShippedFailure.ConcurrencyConflict, result.Failure);
@@ -72,11 +73,13 @@ public sealed class MarkOrderShippedTests
     [InlineData(null, MarkOrderShippedFailure.NotFound)]
     [InlineData(OrderStatus.AwaitingPayment, MarkOrderShippedFailure.InvalidTransition)]
     [InlineData(OrderStatus.Shipped, MarkOrderShippedFailure.InvalidTransition)]
+    [InlineData(OrderStatus.Refunded, MarkOrderShippedFailure.InvalidTransition)]
     public async Task RejectsMissingAndNonPaidOrders(OrderStatus? status, MarkOrderShippedFailure failure)
     {
         var revision = Guid.NewGuid();
         var repository = new Fake(status is null ? null : new(
-            status.Value, null, null, null, null, null, null, null, revision));
+            status.Value, null, null, null, null, null, null, null,
+            null, null, null, revision));
         var result = await new MarkOrderShipped(repository)
             .ExecuteAsync(new(Guid.NewGuid(), revision, "PostNL", "code"), CancellationToken.None);
         Assert.Equal(failure, result.Failure);
@@ -106,5 +109,8 @@ public sealed class MarkOrderShippedTests
         }
         public Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
             string reason, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Guid?> RefundAsync(Guid id, Guid expectedRevision, DateTimeOffset refundedAt,
+            string refundReference, string reason,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

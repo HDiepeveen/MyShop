@@ -9,6 +9,7 @@ using MyShop.Application.Checkout.ListOrders;
 using MyShop.Application.Checkout.MarkOrderPaid;
 using MyShop.Application.Checkout.MarkOrderShipped;
 using MyShop.Application.Checkout.CancelOrder;
+using MyShop.Application.Checkout.RefundOrder;
 
 namespace MyShop.Api.Checkout;
 
@@ -43,6 +44,7 @@ public static class OrderManagementEndpoints
                 "paid" => OrderStatus.Paid,
                 "shipped" => OrderStatus.Shipped,
                 "cancelled" => OrderStatus.Cancelled,
+                "refunded" => OrderStatus.Refunded,
                 _ => throw new ArgumentOutOfRangeException(nameof(status), "Status is not supported.")
             };
             var page = await useCase.ExecuteAsync(
@@ -79,12 +81,14 @@ public static class OrderManagementEndpoints
         [FromServices] MarkOrderPaid markPaid,
         [FromServices] MarkOrderShipped markShipped,
         [FromServices] CancelOrder cancelOrder,
+        [FromServices] RefundOrder refundOrder,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(markPaid);
         ArgumentNullException.ThrowIfNull(markShipped);
         ArgumentNullException.ThrowIfNull(cancelOrder);
-        if (request?.Status is not ("paid" or "shipped" or "cancelled"))
+        ArgumentNullException.ThrowIfNull(refundOrder);
+        if (request?.Status is not ("paid" or "shipped" or "cancelled" or "refunded"))
             return Results.BadRequest(new { code = "invalidStatus", message = "Kies een geldige bestelstatus." });
         try
         {
@@ -122,6 +126,23 @@ public static class OrderManagementEndpoints
                     _ => throw new InvalidOperationException()
                 };
             }
+            if (request.Status == "refunded")
+            {
+                var refunded = await refundOrder.ExecuteAsync(new(id, request.Revision,
+                    request.RefundReference ?? "", request.Reason ?? ""), cancellationToken);
+                return refunded.Failure switch
+                {
+                    RefundOrderFailure.NotFound => Results.NotFound(),
+                    RefundOrderFailure.InvalidTransition => Results.Conflict(new
+                    {
+                        code = "invalidTransition",
+                        message = "Alleen een betaalde, nog niet verzonden bestelling kan als terugbetaald worden gemarkeerd."
+                    }),
+                    RefundOrderFailure.ConcurrencyConflict => ConcurrencyConflict(),
+                    null => Results.Ok(MapStatus(refunded.Order!)),
+                    _ => throw new InvalidOperationException()
+                };
+            }
             var cancelled = await cancelOrder.ExecuteAsync(
                 new(id, request.Revision, request.Reason ?? ""), cancellationToken);
             return cancelled.Failure switch
@@ -152,7 +173,8 @@ public static class OrderManagementEndpoints
     private static OrderStatusResponse MapStatus(OrderStatusSnapshot order) =>
         new(Status(order.Status), order.PaidAt, order.PaymentReference, order.ShippedAt,
             order.ShippingCarrier, order.TrackingCode, order.CancelledAt,
-            order.CancellationReason, order.Revision);
+            order.CancellationReason, order.RefundedAt, order.RefundReference,
+            order.RefundReason, order.Revision);
 
     private static OrderSummaryResponse MapSummary(OrderListItem order) => new(
         order.Id,
@@ -165,6 +187,8 @@ public static class OrderManagementEndpoints
         order.ShippedAt,
         order.CancelledAt,
         order.CancellationReason,
+        order.RefundedAt,
+        order.RefundReason,
         order.Totals.Select(MapTotal).ToArray());
 
     private static OrderDetailResponse MapDetail(OrderDetail order) => new(
@@ -182,6 +206,9 @@ public static class OrderManagementEndpoints
         order.TrackingCode,
         order.CancelledAt,
         order.CancellationReason,
+        order.RefundedAt,
+        order.RefundReference,
+        order.RefundReason,
         order.Revision,
         order.Lines.Select(line => new OrderLineResponse(
             line.ProductId,
@@ -209,6 +236,7 @@ public static class OrderManagementEndpoints
         OrderStatus.Paid => "paid",
         OrderStatus.Shipped => "shipped",
         OrderStatus.Cancelled => "cancelled",
+        OrderStatus.Refunded => "refunded",
         _ => throw new InvalidOperationException($"Unsupported order status: {value}.")
     };
 }
@@ -229,6 +257,8 @@ public sealed record OrderSummaryResponse(
     DateTimeOffset? ShippedAt,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
+    DateTimeOffset? RefundedAt,
+    string? RefundReason,
     IReadOnlyList<OrderTotalResponse> Totals);
 public sealed record OrderDetailResponse(
     Guid Id,
@@ -245,6 +275,9 @@ public sealed record OrderDetailResponse(
     string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
+    DateTimeOffset? RefundedAt,
+    string? RefundReference,
+    string? RefundReason,
     Guid Revision,
     IReadOnlyList<OrderLineResponse> Lines,
     IReadOnlyList<OrderTotalResponse> Totals);
@@ -266,7 +299,8 @@ public sealed record UpdateOrderStatusRequest(
     string? Reason = null,
     string? Carrier = null,
     string? TrackingCode = null,
-    string? PaymentReference = null);
+    string? PaymentReference = null,
+    string? RefundReference = null);
 public sealed record OrderStatusResponse(
     string Status,
     DateTimeOffset? PaidAt,
@@ -276,4 +310,7 @@ public sealed record OrderStatusResponse(
     string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
+    DateTimeOffset? RefundedAt,
+    string? RefundReference,
+    string? RefundReason,
     Guid Revision);

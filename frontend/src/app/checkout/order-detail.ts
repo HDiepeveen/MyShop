@@ -115,6 +115,14 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dt>Reden</dt>
             <dd class="preserve-lines">{{ order.cancellationReason }}</dd>
           }
+          @if (order.refundedAt) {
+            <dt>Terugbetaald op</dt>
+            <dd>{{ order.refundedAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
+            <dt>Terugbetalingskenmerk</dt>
+            <dd>{{ order.refundReference }}</dd>
+            <dt>Reden</dt>
+            <dd class="preserve-lines">{{ order.refundReason }}</dd>
+          }
           @for (total of order.totals; track total.currency) {
             <dt>Totaal ({{ total.currency }})</dt>
             <dd>{{ total.amount | currency: total.currency }}</dd>
@@ -192,6 +200,34 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             </button>
           </details>
         </section>
+        <section class="panel">
+          <h2>Terugbetaling registreren</h2>
+          <p class="muted">
+            Gebruik dit nadat het volledige bedrag buiten MyShop aan de klant is terugbetaald.
+          </p>
+          <details>
+            <summary>Bestelling als terugbetaald markeren</summary>
+            <label
+              >Terugbetalingskenmerk
+              <input
+                #refundReference
+                maxlength="100"
+                required
+                placeholder="Bijvoorbeeld: bankafschrift 67890"
+            /></label>
+            <label>
+              Reden voor terugbetaling
+              <textarea #refundReason rows="3" maxlength="500" required></textarea>
+            </label>
+            <button
+              type="button"
+              [disabled]="saving() || !refundReference.value.trim() || !refundReason.value.trim()"
+              (click)="refundOrder(order, refundReference.value, refundReason.value)"
+            >
+              {{ saving() ? 'Opslaan…' : 'Terugbetaling bevestigen' }}
+            </button>
+          </details>
+        </section>
       }
     }`,
 })
@@ -215,11 +251,13 @@ export class OrderDetailComponent {
   statusLabel(status: OrderDetail['status']) {
     return status === 'cancelled'
       ? 'Geannuleerd'
-      : status === 'shipped'
-        ? 'Verzonden'
-        : status === 'paid'
-          ? 'Betaald'
-          : 'Wacht op betaling';
+      : status === 'refunded'
+        ? 'Terugbetaald'
+        : status === 'shipped'
+          ? 'Verzonden'
+          : status === 'paid'
+            ? 'Betaald'
+            : 'Wacht op betaling';
   }
   markPaid(order: OrderDetail, paymentReference: string) {
     paymentReference = paymentReference.trim();
@@ -277,6 +315,28 @@ export class OrderDetailComponent {
         next: () => {
           this.saving.set(false);
           this.notice.set('De bestelling is geannuleerd.');
+          this.retry();
+        },
+        error: (error) => {
+          this.saving.set(false);
+          this.actionError.set(errorMessage(error));
+        },
+      });
+  }
+  refundOrder(order: OrderDetail, refundReference: string, reason: string) {
+    refundReference = refundReference.trim();
+    reason = reason.trim();
+    if (this.saving() || !refundReference || !reason) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.notice.set('');
+    this.api
+      .refund(order.id, order.revision, refundReference, reason)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.notice.set('De terugbetaling is geregistreerd.');
           this.retry();
         },
         error: (error) => {

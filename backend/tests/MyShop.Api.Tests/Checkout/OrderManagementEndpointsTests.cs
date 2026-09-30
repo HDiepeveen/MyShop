@@ -11,6 +11,7 @@ using ListUseCase = MyShop.Application.Checkout.ListOrders.ListOrders;
 using MyShop.Application.Checkout.MarkOrderPaid;
 using MyShop.Application.Checkout.MarkOrderShipped;
 using MyShop.Application.Checkout.CancelOrder;
+using MyShop.Application.Checkout.RefundOrder;
 
 namespace MyShop.Api.Tests.Checkout;
 
@@ -33,7 +34,7 @@ public sealed class OrderManagementEndpointsTests
     {
         var item = new OrderListItem(Guid.NewGuid(), "MS-1", DateTimeOffset.UtcNow, "Ada",
             OrderPaymentMethod.PayLater, OrderStatus.AwaitingPayment, null, null,
-            null, null, [new("EUR", 12.5m)]);
+            null, null, null, null, [new("EUR", 12.5m)]);
         var repository = new Fake(new([item], 21), null);
         var result = await OrderManagementEndpoints.ListAsync(5, 10, "paid", "  Ada  ",
             new ListUseCase(repository), CancellationToken.None);
@@ -51,7 +52,7 @@ public sealed class OrderManagementEndpointsTests
     public async Task ListAsync_RejectsUnsupportedStatusWithoutReading()
     {
         var repository = new Fake(new([], 0), null);
-        var result = await OrderManagementEndpoints.ListAsync(0, 20, "refunded", null,
+        var result = await OrderManagementEndpoints.ListAsync(0, 20, "returned", null,
             new ListUseCase(repository), CancellationToken.None);
         Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
         Assert.Equal(0, repository.ListCalls);
@@ -73,7 +74,8 @@ public sealed class OrderManagementEndpointsTests
         var id = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null, Guid.NewGuid(),
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null,
+            null, null, null, Guid.NewGuid(),
             [new(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Blauw", 2, 3.5m, "EUR", 7m)], [new("EUR", 7m)]);
         var ok = await OrderManagementEndpoints.GetAsync(id, new GetUseCase(new Fake(new([], 0), detail)), CancellationToken.None);
         var response = Assert.IsType<Ok<OrderDetailResponse>>(ok.Result).Value!;
@@ -90,11 +92,13 @@ public sealed class OrderManagementEndpointsTests
         var revision = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null, revision, [], []);
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null,
+            null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
         var result = await OrderManagementEndpoints.UpdateStatusAsync(id,
             new("paid", revision, PaymentReference: "  bankafschrift 12345  "), new MarkOrderPaid(repository),
-            new MarkOrderShipped(repository), new CancelOrder(repository), CancellationToken.None);
+            new MarkOrderShipped(repository), new CancelOrder(repository),
+            new RefundOrder(repository), CancellationToken.None);
         var response = Assert.IsType<Ok<OrderStatusResponse>>(result).Value!;
         Assert.Equal("paid", response.Status);
         Assert.NotNull(response.PaidAt);
@@ -112,12 +116,14 @@ public sealed class OrderManagementEndpointsTests
         var paidAt = DateTimeOffset.UtcNow.AddMinutes(-5);
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.Paid, paidAt, "bankafschrift 12345", null, null, null, null, null, revision, [], []);
+            OrderStatus.Paid, paidAt, "bankafschrift 12345", null, null, null, null, null,
+            null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
         var result = await OrderManagementEndpoints.UpdateStatusAsync(id,
             new("shipped", revision, Carrier: "  PostNL  ", TrackingCode: "  3SMYSHOP123  "),
             new MarkOrderPaid(repository),
-            new MarkOrderShipped(repository), new CancelOrder(repository), CancellationToken.None);
+            new MarkOrderShipped(repository), new CancelOrder(repository),
+            new RefundOrder(repository), CancellationToken.None);
         var response = Assert.IsType<Ok<OrderStatusResponse>>(result).Value!;
         Assert.Equal("shipped", response.Status);
         Assert.Equal(paidAt, response.PaidAt);
@@ -134,12 +140,13 @@ public sealed class OrderManagementEndpointsTests
         var revision = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null, revision, [], []);
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null,
+            null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
         var result = await OrderManagementEndpoints.UpdateStatusAsync(id,
             new("cancelled", revision, "Klant ziet af van bestelling."),
             new MarkOrderPaid(repository), new MarkOrderShipped(repository),
-            new CancelOrder(repository), CancellationToken.None);
+            new CancelOrder(repository), new RefundOrder(repository), CancellationToken.None);
         var response = Assert.IsType<Ok<OrderStatusResponse>>(result).Value!;
         Assert.Equal("cancelled", response.Status);
         Assert.Equal("Klant ziet af van bestelling.", response.CancellationReason);
@@ -148,12 +155,39 @@ public sealed class OrderManagementEndpointsTests
     }
 
     [Fact]
+    public async Task UpdateStatusAsync_RefundsPaidOrderWithDetails()
+    {
+        var id = Guid.NewGuid();
+        var revision = Guid.NewGuid();
+        var paidAt = DateTimeOffset.UtcNow.AddMinutes(-5);
+        var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
+            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
+            OrderStatus.Paid, paidAt, "bankafschrift 12345", null, null, null, null, null,
+            null, null, null, revision, [], []);
+        var repository = new Fake(new([], 0), detail);
+        var result = await OrderManagementEndpoints.UpdateStatusAsync(id,
+            new("refunded", revision, Reason: "  Dubbele betaling.  ",
+                RefundReference: "  bankafschrift 67890  "),
+            new MarkOrderPaid(repository), new MarkOrderShipped(repository),
+            new CancelOrder(repository), new RefundOrder(repository), CancellationToken.None);
+        var response = Assert.IsType<Ok<OrderStatusResponse>>(result).Value!;
+        Assert.Equal("refunded", response.Status);
+        Assert.Equal(paidAt, response.PaidAt);
+        Assert.NotNull(response.RefundedAt);
+        Assert.Equal("bankafschrift 67890", response.RefundReference);
+        Assert.Equal("Dubbele betaling.", response.RefundReason);
+        Assert.Equal(response.RefundReference, repository.RefundReference);
+        Assert.Equal(response.RefundReason, repository.Reason);
+    }
+
+    [Fact]
     public async Task UpdateStatusAsync_RejectsUnsupportedStatusWithoutWriting()
     {
         var repository = new Fake(new([], 0), null);
         var result = await OrderManagementEndpoints.UpdateStatusAsync(Guid.NewGuid(),
-            new("refunded", Guid.NewGuid()), new MarkOrderPaid(repository),
-            new MarkOrderShipped(repository), new CancelOrder(repository), CancellationToken.None);
+            new("returned", Guid.NewGuid()), new MarkOrderPaid(repository),
+            new MarkOrderShipped(repository), new CancelOrder(repository),
+            new RefundOrder(repository), CancellationToken.None);
         Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
         Assert.Equal(StatusCodes.Status400BadRequest, ((IStatusCodeHttpResult)result).StatusCode);
         Assert.Equal(0, repository.WriteCalls);
@@ -169,6 +203,7 @@ public sealed class OrderManagementEndpointsTests
         public string? Carrier { get; private set; }
         public string? TrackingCode { get; private set; }
         public string? PaymentReference { get; private set; }
+        public string? RefundReference { get; private set; }
         public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,
             CancellationToken cancellationToken)
         {
@@ -179,7 +214,8 @@ public sealed class OrderManagementEndpointsTests
             Task.FromResult(detail is null ? null : new OrderStatusSnapshot(
                 detail.Status, detail.PaidAt, detail.PaymentReference, detail.ShippedAt,
                 detail.ShippingCarrier, detail.TrackingCode, detail.CancelledAt,
-                detail.CancellationReason, detail.Revision));
+                detail.CancellationReason, detail.RefundedAt, detail.RefundReference,
+                detail.RefundReason, detail.Revision));
         public Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
             DateTimeOffset paidAt, string paymentReference, CancellationToken cancellationToken)
         {
@@ -197,6 +233,12 @@ public sealed class OrderManagementEndpointsTests
             string reason, CancellationToken cancellationToken)
         {
             WriteCalls++; Reason = reason;
+            return Task.FromResult<Guid?>(Guid.NewGuid());
+        }
+        public Task<Guid?> RefundAsync(Guid id, Guid expectedRevision, DateTimeOffset refundedAt,
+            string refundReference, string reason, CancellationToken cancellationToken)
+        {
+            WriteCalls++; RefundReference = refundReference; Reason = reason;
             return Task.FromResult<Guid?>(Guid.NewGuid());
         }
     }

@@ -38,6 +38,7 @@ public sealed class MarkOrderPaid(IOrderStatusRepository orders)
         return revision is null
             ? MarkOrderPaidResult.Failed(MarkOrderPaidFailure.ConcurrencyConflict)
             : new(new(OrderStatus.Paid, paidAt, paymentReference, null, null, null, null, null,
+                null, null, null,
                 revision.Value), null);
     }
 }

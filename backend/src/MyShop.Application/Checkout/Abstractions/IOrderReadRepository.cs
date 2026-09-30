@@ -20,6 +20,8 @@ public sealed record OrderListItem(
     DateTimeOffset? ShippedAt,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
+    DateTimeOffset? RefundedAt,
+    string? RefundReason,
     IReadOnlyList<OrderTotalSnapshot> Totals);
 
 public sealed record OrderListPage(IReadOnlyList<OrderListItem> Items, int TotalCount);
@@ -43,6 +45,9 @@ public sealed record OrderDetail(
     string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
+    DateTimeOffset? RefundedAt,
+    string? RefundReference,
+    string? RefundReason,
     Guid Revision,
     IReadOnlyList<OrderLineSnapshot> Lines,
     IReadOnlyList<OrderTotalSnapshot> Totals);
@@ -69,6 +74,8 @@ public interface IOrderStatusRepository
         CancellationToken cancellationToken);
     Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
         string reason, CancellationToken cancellationToken);
+    Task<Guid?> RefundAsync(Guid id, Guid expectedRevision, DateTimeOffset refundedAt,
+        string refundReference, string reason, CancellationToken cancellationToken);
 }
 
 public sealed record OrderStatusSnapshot(
@@ -80,4 +87,7 @@ public sealed record OrderStatusSnapshot(
     string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
+    DateTimeOffset? RefundedAt,
+    string? RefundReference,
+    string? RefundReason,
     Guid Revision);

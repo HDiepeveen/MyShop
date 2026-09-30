@@ -17,6 +17,8 @@ const summary = {
   shippedAt: null,
   cancelledAt: null,
   cancellationReason: null,
+  refundedAt: null,
+  refundReason: null,
   totals: [{ currency: 'EUR', amount: '12.50' }],
 };
 const revision = '33333333-3333-3333-3333-333333333333';
@@ -322,5 +324,86 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Geannuleerd');
     expect(fixture.nativeElement.textContent).toContain('Klant ziet af.');
     expect(fixture.nativeElement.textContent).toContain('De bestelling is geannuleerd.');
+  });
+
+  it('registers a refund with a trimmed reference and reason', () => {
+    const params = new BehaviorSubject(convertToParamMap({ id: summary.id }));
+    TestBed.configureTestingModule({
+      imports: [OrderDetailComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: params } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(OrderDetailComponent);
+    http.expectOne('/api/orders/' + summary.id).flush({
+      ...summary,
+      status: 'paid',
+      paidAt: '2026-09-30T09:00:00Z',
+      paymentReference: 'bankafschrift 12345',
+      refundReference: null,
+      revision,
+      customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
+      deliveryAddress: {
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'NL',
+      },
+      lines: [],
+    });
+
+    fixture.componentInstance.refundOrder(
+      fixture.componentInstance.state()!.data!,
+      '  bankafschrift 67890  ',
+      '  Dubbele betaling.  ',
+    );
+    fixture.componentInstance.refundOrder(
+      fixture.componentInstance.state()!.data!,
+      'Tweede poging',
+      'Tweede reden',
+    );
+    const update = http.expectOne('/api/orders/' + summary.id + '/status');
+    expect(update.request.body).toEqual({
+      status: 'refunded',
+      revision,
+      refundReference: 'bankafschrift 67890',
+      reason: 'Dubbele betaling.',
+    });
+    update.flush({
+      status: 'refunded',
+      paidAt: '2026-09-30T09:00:00Z',
+      paymentReference: 'bankafschrift 12345',
+      refundedAt: '2026-09-30T10:00:00Z',
+      refundReference: 'bankafschrift 67890',
+      refundReason: 'Dubbele betaling.',
+      revision: 'refunded-revision',
+    });
+    http.expectOne('/api/orders/' + summary.id).flush({
+      ...summary,
+      status: 'refunded',
+      paidAt: '2026-09-30T09:00:00Z',
+      paymentReference: 'bankafschrift 12345',
+      refundedAt: '2026-09-30T10:00:00Z',
+      refundReference: 'bankafschrift 67890',
+      refundReason: 'Dubbele betaling.',
+      revision: 'refunded-revision',
+      customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
+      deliveryAddress: {
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'NL',
+      },
+      lines: [],
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Terugbetaald');
+    expect(fixture.nativeElement.textContent).toContain('bankafschrift 67890');
+    expect(fixture.nativeElement.textContent).toContain('Dubbele betaling.');
+    expect(fixture.nativeElement.textContent).toContain('De terugbetaling is geregistreerd.');
   });
 });

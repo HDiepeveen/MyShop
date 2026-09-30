@@ -21,6 +21,9 @@ internal sealed class OrderPersistence
     public string? TrackingCode { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public string? CancellationReason { get; set; }
+    public DateTimeOffset? RefundedAt { get; set; }
+    public string? RefundReference { get; set; }
+    public string? RefundReason { get; set; }
     public Guid Version { get; set; }
     public ICollection<OrderLinePersistence> Lines { get; set; } = [];
     public ICollection<OrderTotalPersistence> Totals { get; set; } = [];

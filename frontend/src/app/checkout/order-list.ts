@@ -39,6 +39,7 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
             <option value="paid">Betaald</option>
             <option value="shipped">Verzonden</option>
             <option value="cancelled">Geannuleerd</option>
+            <option value="refunded">Terugbetaald</option>
           </select>
         </label>
         <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
@@ -220,7 +221,9 @@ export class OrderList {
           ? 'Verzonden'
           : status === 'cancelled'
             ? 'Geannuleerd'
-            : status;
+            : status === 'refunded'
+              ? 'Terugbetaald'
+              : status;
   }
   private readOffset(value: string | null) {
     const offset = Number(value);
@@ -230,7 +233,8 @@ export class OrderList {
     return value === 'awaitingPayment' ||
       value === 'paid' ||
       value === 'shipped' ||
-      value === 'cancelled'
+      value === 'cancelled' ||
+      value === 'refunded'
       ? value
       : null;
   }

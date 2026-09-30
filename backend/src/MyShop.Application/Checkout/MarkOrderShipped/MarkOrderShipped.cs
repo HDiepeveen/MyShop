@@ -42,6 +42,6 @@ public sealed class MarkOrderShipped(IOrderStatusRepository orders)
         return revision is null
             ? MarkOrderShippedResult.Failed(MarkOrderShippedFailure.ConcurrencyConflict)
             : new(new(OrderStatus.Shipped, order.PaidAt, order.PaymentReference, shippedAt, carrier, trackingCode,
-                null, null, revision.Value), null);
+                null, null, null, null, null, revision.Value), null);
     }
 }

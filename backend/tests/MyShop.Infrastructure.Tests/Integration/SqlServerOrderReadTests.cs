@@ -12,11 +12,13 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
     {
         var older = CreateOrder(DateTimeOffset.UtcNow.AddMinutes(-1), "First customer");
         var newer = CreateOrder(DateTimeOffset.UtcNow, "Second customer");
+        var refundable = CreateOrder(DateTimeOffset.UtcNow.AddMinutes(-2), "Refund customer");
         await using (var writeContext = database.CreateContext())
         {
             var writer = new OrderRepository(writeContext);
             await writer.AddAsync(older, Guid.NewGuid(), CancellationToken.None);
             await writer.AddAsync(newer, Guid.NewGuid(), CancellationToken.None);
+            await writer.AddAsync(refundable, Guid.NewGuid(), CancellationToken.None);
         }
 
         await using var readContext = database.CreateContext();
@@ -77,6 +79,26 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.Equal("Klant ziet af van bestelling.", cancelled.CancellationReason);
         Assert.Equal(cancelledRevision.Value, cancelled.Revision);
 
+        var awaitingRefund = await repository.GetAsync(refundable.Id, CancellationToken.None);
+        var refundPaidAt = DateTimeOffset.UtcNow;
+        var refundPaidRevision = await repository.MarkPaidAsync(refundable.Id, awaitingRefund!.Revision,
+            refundPaidAt, "bankafschrift 54321", CancellationToken.None);
+        Assert.NotNull(refundPaidRevision);
+        var refundedAt = DateTimeOffset.UtcNow;
+        var refundedRevision = await repository.RefundAsync(refundable.Id, refundPaidRevision!.Value,
+            refundedAt, "bankafschrift 67890", "Dubbele betaling.", CancellationToken.None);
+        Assert.NotNull(refundedRevision);
+        Assert.Null(await repository.RefundAsync(refundable.Id, refundPaidRevision.Value,
+            refundedAt, "duplicate", "Tweede poging", CancellationToken.None));
+        var refunded = await repository.GetAsync(refundable.Id, CancellationToken.None);
+        Assert.Equal(OrderStatus.Refunded, refunded!.Status);
+        Assert.Equal(refundPaidAt.ToUniversalTime(), refunded.PaidAt);
+        Assert.Equal("bankafschrift 54321", refunded.PaymentReference);
+        Assert.Equal(refundedAt.ToUniversalTime(), refunded.RefundedAt);
+        Assert.Equal("bankafschrift 67890", refunded.RefundReference);
+        Assert.Equal("Dubbele betaling.", refunded.RefundReason);
+        Assert.Equal(refundedRevision.Value, refunded.Revision);
+
         var shippedPage = await repository.ListAsync(0, 100, OrderStatus.Shipped, "Second",
             CancellationToken.None);
         Assert.Equal(1, shippedPage.TotalCount);
@@ -85,6 +107,9 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
             CancellationToken.None);
         Assert.Equal(1, cancelledPage.TotalCount);
         Assert.Equal(older.Id, Assert.Single(cancelledPage.Items).Id);
+        var refundedPage = await repository.ListAsync(0, 100, OrderStatus.Refunded, null,
+            CancellationToken.None);
+        Assert.Equal(refundable.Id, Assert.Single(refundedPage.Items).Id);
         Assert.Equal(1, (await repository.ListAsync(0, 100, null, newer.Number,
             CancellationToken.None)).TotalCount);
         var emailPage = await repository.ListAsync(0, 100, null, "customer@example.test",

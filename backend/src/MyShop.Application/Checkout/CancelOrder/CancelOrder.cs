@@ -37,6 +37,6 @@ public sealed class CancelOrder(IOrderStatusRepository orders)
         return revision is null
             ? CancelOrderResult.Failed(CancelOrderFailure.ConcurrencyConflict)
             : new(new(OrderStatus.Cancelled, null, null, null, null, null,
-                cancelledAt, reason, revision.Value), null);
+                cancelledAt, reason, null, null, null, revision.Value), null);
     }
 }

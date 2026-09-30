@@ -29,6 +29,9 @@ internal sealed class OrderPersistenceConfiguration : IEntityTypeConfiguration<O
         builder.Property(order => order.TrackingCode).HasMaxLength(100);
         builder.Property(order => order.CancelledAt);
         builder.Property(order => order.CancellationReason).HasMaxLength(500);
+        builder.Property(order => order.RefundedAt);
+        builder.Property(order => order.RefundReference).HasMaxLength(100);
+        builder.Property(order => order.RefundReason).HasMaxLength(500);
         builder.Property(order => order.Version).IsRequired().IsConcurrencyToken();
         builder.HasIndex(order => order.CheckoutToken).IsUnique();
         builder.HasIndex(order => order.Number).IsUnique();

@@ -75,7 +75,7 @@ public sealed class MarkOrderPaidTests
         "Utrecht", "NL", OrderPaymentMethod.PayLater, status,
         status == OrderStatus.Paid ? DateTimeOffset.UtcNow : null,
         status == OrderStatus.Paid ? "existing-reference" : null,
-        null, null, null, null, null, revision, [], []);
+        null, null, null, null, null, null, null, null, revision, [], []);
 
     private sealed class Fake(OrderDetail? detail) : IOrderStatusRepository
     {
@@ -90,7 +90,8 @@ public sealed class MarkOrderPaidTests
             return Task.FromResult(Detail is null ? null : new OrderStatusSnapshot(
                 Detail.Status, Detail.PaidAt, Detail.PaymentReference, Detail.ShippedAt,
                 Detail.ShippingCarrier, Detail.TrackingCode, Detail.CancelledAt,
-                Detail.CancellationReason, Detail.Revision));
+                Detail.CancellationReason, Detail.RefundedAt, Detail.RefundReference,
+                Detail.RefundReason, Detail.Revision));
         }
         public Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
             DateTimeOffset paidAt, string paymentReference, CancellationToken cancellationToken)
@@ -103,5 +104,8 @@ public sealed class MarkOrderPaidTests
             CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
             string reason, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<Guid?> RefundAsync(Guid id, Guid expectedRevision, DateTimeOffset refundedAt,
+            string refundReference, string reason,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

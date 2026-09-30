@@ -11,11 +11,13 @@ export interface OrderSummary {
   placedAt: string;
   customerName: string;
   paymentMethod: 'payLater';
-  status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled';
+  status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled' | 'refunded';
   paidAt: string | null;
   shippedAt: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+  refundedAt: string | null;
+  refundReason: string | null;
   totals: readonly OrderTotal[];
 }
 export type OrderStatus = OrderSummary['status'];
@@ -32,7 +34,7 @@ export interface OrderDetail {
   customer: { name: string; email: string };
   deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
   paymentMethod: 'payLater';
-  status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled';
+  status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled' | 'refunded';
   paidAt: string | null;
   paymentReference: string | null;
   shippedAt: string | null;
@@ -40,6 +42,9 @@ export interface OrderDetail {
   trackingCode: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
+  refundedAt: string | null;
+  refundReference: string | null;
+  refundReason: string | null;
   revision: string;
   lines: readonly {
     productId: string;
@@ -75,10 +80,11 @@ export class OrderManagementApi {
       paymentReference: string;
       shippedAt: null;
       revision: string;
-    }>(
-      '/api/orders/' + encodeURIComponent(id) + '/status',
-      { status: 'paid', revision, paymentReference: paymentReference.trim() },
-    );
+    }>('/api/orders/' + encodeURIComponent(id) + '/status', {
+      status: 'paid',
+      revision,
+      paymentReference: paymentReference.trim(),
+    });
   }
   markShipped(id: string, revision: string, carrier: string, trackingCode: string) {
     return this.http.put<{
@@ -106,6 +112,22 @@ export class OrderManagementApi {
     }>('/api/orders/' + encodeURIComponent(id) + '/status', {
       status: 'cancelled',
       revision,
+      reason: reason.trim(),
+    });
+  }
+  refund(id: string, revision: string, refundReference: string, reason: string) {
+    return this.http.put<{
+      status: 'refunded';
+      paidAt: string;
+      paymentReference: string;
+      refundedAt: string;
+      refundReference: string;
+      refundReason: string;
+      revision: string;
+    }>('/api/orders/' + encodeURIComponent(id) + '/status', {
+      status: 'refunded',
+      revision,
+      refundReference: refundReference.trim(),
       reason: reason.trim(),
     });
   }

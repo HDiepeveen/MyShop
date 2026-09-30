@@ -98,7 +98,9 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 order.PaidAt,
                 order.ShippedAt,
                 order.CancelledAt,
-                order.CancellationReason
+                order.CancellationReason,
+                order.RefundedAt,
+                order.RefundReason
             })
             .ToArrayAsync(cancellationToken);
         var ids = rows.Select(row => row.Id).ToArray();
@@ -119,6 +121,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             row.ShippedAt,
             row.CancelledAt,
             row.CancellationReason,
+            row.RefundedAt,
+            row.RefundReason,
             totalsByOrder[row.Id].Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray()))
             .ToArray();
         return new OrderListPage(items, totalCount);
@@ -150,6 +154,9 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             order.TrackingCode,
             order.CancelledAt,
             order.CancellationReason,
+            order.RefundedAt,
+            order.RefundReference,
+            order.RefundReason,
             order.Version,
             order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
                 line.ProductId,
@@ -186,7 +193,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             .Select(order => new OrderStatusSnapshot(
                 (OrderStatus)order.Status, order.PaidAt, order.PaymentReference, order.ShippedAt,
                 order.ShippingCarrier, order.TrackingCode,
-                order.CancelledAt, order.CancellationReason, order.Version))
+                order.CancelledAt, order.CancellationReason, order.RefundedAt,
+                order.RefundReference, order.RefundReason, order.Version))
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
@@ -219,6 +227,23 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 .SetProperty(order => order.Status, (int)OrderStatus.Cancelled)
                 .SetProperty(order => order.CancelledAt, cancelledAt.ToUniversalTime())
                 .SetProperty(order => order.CancellationReason, reason)
+                .SetProperty(order => order.Version, replacement), cancellationToken);
+        return changed == 0 ? null : replacement;
+    }
+
+    public async Task<Guid?> RefundAsync(Guid id, Guid expectedRevision, DateTimeOffset refundedAt,
+        string refundReference, string reason, CancellationToken cancellationToken)
+    {
+        var replacement = Guid.NewGuid();
+        var changed = await context.Orders
+            .Where(order => order.Id == id
+                && order.Version == expectedRevision
+                && order.Status == (int)OrderStatus.Paid)
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(order => order.Status, (int)OrderStatus.Refunded)
+                .SetProperty(order => order.RefundedAt, refundedAt.ToUniversalTime())
+                .SetProperty(order => order.RefundReference, refundReference)
+                .SetProperty(order => order.RefundReason, reason)
                 .SetProperty(order => order.Version, replacement), cancellationToken);
         return changed == 0 ? null : replacement;
     }
