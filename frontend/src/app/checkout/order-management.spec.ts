@@ -13,8 +13,10 @@ const summary = {
   customerName: 'Ada Lovelace',
   paymentMethod: 'payLater',
   status: 'awaitingPayment',
+  paidAt: null,
   totals: [{ currency: 'EUR', amount: '12.50' }],
 };
+const revision = '33333333-3333-3333-3333-333333333333';
 
 describe('Order management', () => {
   let http: HttpTestingController;
@@ -60,7 +62,7 @@ describe('Order management', () => {
     expect(fixture.componentInstance.offset()).toBe(20);
   });
 
-  it('shows the complete order snapshot and retries loading', () => {
+  it('shows the snapshot, marks an order paid and retries loading', () => {
     const params = new BehaviorSubject(convertToParamMap({ id: summary.id }));
     TestBed.configureTestingModule({
       imports: [OrderDetailComponent],
@@ -76,6 +78,7 @@ describe('Order management', () => {
     const request = http.expectOne('/api/orders/' + summary.id);
     request.flush({
       ...summary,
+      revision,
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
         addressLine: 'Straat 1',
@@ -101,6 +104,30 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Straat 1');
     expect(fixture.nativeElement.textContent).toContain('Shirt');
     expect(fixture.nativeElement.textContent).toContain('Later betalen');
+
+    fixture.componentInstance.markPaid(fixture.componentInstance.state()!.data!);
+    fixture.componentInstance.markPaid(fixture.componentInstance.state()!.data!);
+    const update = http.expectOne('/api/orders/' + summary.id + '/status');
+    expect(update.request.method).toBe('PUT');
+    expect(update.request.body).toEqual({ status: 'paid', revision });
+    update.flush({ status: 'paid', paidAt: '2026-09-30T09:00:00Z', revision: 'new-revision' });
+    http.expectOne('/api/orders/' + summary.id).flush({
+      ...summary,
+      status: 'paid',
+      paidAt: '2026-09-30T09:00:00Z',
+      revision: 'new-revision',
+      customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
+      deliveryAddress: {
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'NL',
+      },
+      lines: [],
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Betaald');
+    expect(fixture.nativeElement.textContent).toContain('De bestelling is als betaald gemarkeerd.');
 
     params.next(convertToParamMap({ id: '22222222-2222-2222-2222-222222222222' }));
     http

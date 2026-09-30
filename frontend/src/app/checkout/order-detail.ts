@@ -1,10 +1,11 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, combineLatest, distinctUntilChanged, switchMap } from 'rxjs';
 import { loadState } from '../catalog/load-state';
-import { OrderManagementApi } from './order-management.api';
+import { errorMessage } from '../catalog/error-message';
+import { OrderDetail, OrderManagementApi } from './order-management.api';
 
 @Component({
   imports: [RouterLink, DatePipe, CurrencyPipe],
@@ -17,6 +18,12 @@ import { OrderManagementApi } from './order-management.api';
         {{ state()?.error }} <button class="secondary" (click)="retry()">Opnieuw proberen</button>
       </div>
     }
+    @if (notice()) {
+      <p class="success" role="status">{{ notice() }}</p>
+    }
+    @if (actionError()) {
+      <p class="error" role="alert">{{ actionError() }}</p>
+    }
     @if (state()?.data; as order) {
       <div class="eyebrow">Bestelling</div>
       <div class="page-head">
@@ -24,7 +31,7 @@ import { OrderManagementApi } from './order-management.api';
           <h1>{{ order.number }}</h1>
           <p class="muted">Geplaatst op {{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }}</p>
         </div>
-        <span class="badge">Wacht op betaling</span>
+        <span class="badge">{{ statusLabel(order.status) }}</span>
       </div>
       <div class="grid">
         <section class="panel">
@@ -79,19 +86,40 @@ import { OrderManagementApi } from './order-management.api';
           <dt>Betaalmethode</dt>
           <dd>Later betalen</dd>
           <dt>Status</dt>
-          <dd>Wacht op betaling</dd>
+          <dd>{{ statusLabel(order.status) }}</dd>
+          @if (order.paidAt) {
+            <dt>Betaald op</dt>
+            <dd>{{ order.paidAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
+          }
           @for (total of order.totals; track total.currency) {
             <dt>Totaal ({{ total.currency }})</dt>
             <dd>{{ total.amount | currency: total.currency }}</dd>
           }
         </dl>
       </section>
+      @if (order.status === 'awaitingPayment') {
+        <section class="panel">
+          <h2>Betaling verwerken</h2>
+          <p class="muted">Gebruik dit nadat je hebt gecontroleerd dat de betaling is ontvangen.</p>
+          <details>
+            <summary>Bestelling als betaald markeren</summary>
+            <p>De betaalstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
+            <button type="button" [disabled]="saving()" (click)="markPaid(order)">
+              {{ saving() ? 'Opslaan…' : 'Bevestigen als betaald' }}
+            </button>
+          </details>
+        </section>
+      }
     }`,
 })
 export class OrderDetailComponent {
   private readonly api = inject(OrderManagementApi);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly refresh = new BehaviorSubject(0);
+  readonly saving = signal(false);
+  readonly actionError = signal('');
+  readonly notice = signal('');
   readonly state = toSignal(
     combineLatest([
       this.route.paramMap.pipe(distinctUntilChanged((a, b) => a.get('id') === b.get('id'))),
@@ -100,5 +128,28 @@ export class OrderDetailComponent {
   );
   retry() {
     this.refresh.next(this.refresh.value + 1);
+  }
+  statusLabel(status: OrderDetail['status']) {
+    return status === 'paid' ? 'Betaald' : 'Wacht op betaling';
+  }
+  markPaid(order: OrderDetail) {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.notice.set('');
+    this.api
+      .markPaid(order.id, order.revision)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.notice.set('De bestelling is als betaald gemarkeerd.');
+          this.retry();
+        },
+        error: (error) => {
+          this.saving.set(false);
+          this.actionError.set(errorMessage(error));
+        },
+      });
   }
 }

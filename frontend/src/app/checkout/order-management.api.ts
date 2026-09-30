@@ -11,7 +11,8 @@ export interface OrderSummary {
   placedAt: string;
   customerName: string;
   paymentMethod: 'payLater';
-  status: 'awaitingPayment';
+  status: 'awaitingPayment' | 'paid';
+  paidAt: string | null;
   totals: readonly OrderTotal[];
 }
 export interface OrderListPage {
@@ -27,7 +28,9 @@ export interface OrderDetail {
   customer: { name: string; email: string };
   deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
   paymentMethod: 'payLater';
-  status: 'awaitingPayment';
+  status: 'awaitingPayment' | 'paid';
+  paidAt: string | null;
+  revision: string;
   lines: readonly {
     productId: string;
     variantId: string;
@@ -51,5 +54,11 @@ export class OrderManagementApi {
   }
   get(id: string) {
     return this.http.get<OrderDetail>('/api/orders/' + encodeURIComponent(id));
+  }
+  markPaid(id: string, revision: string) {
+    return this.http.put<{ status: 'paid'; paidAt: string; revision: string }>(
+      '/api/orders/' + encodeURIComponent(id) + '/status',
+      { status: 'paid', revision },
+    );
   }
 }

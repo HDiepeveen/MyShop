@@ -136,7 +136,11 @@ export class OrderList {
     this.refresh.next(this.refresh.value + 1);
   }
   statusLabel(status: string) {
-    return status === 'awaitingPayment' ? 'Wacht op betaling' : status;
+    return status === 'awaitingPayment'
+      ? 'Wacht op betaling'
+      : status === 'paid'
+        ? 'Betaald'
+        : status;
   }
   private readOffset(value: string | null) {
     const offset = Number(value);

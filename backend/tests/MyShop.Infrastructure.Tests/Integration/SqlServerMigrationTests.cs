@@ -8,7 +8,7 @@ namespace MyShop.Infrastructure.Tests.Integration;
 public sealed class SqlServerMigrationTests(SqlServerDatabase database)
 {
     [SqlServerFact]
-    public async Task LaterMigrationsPreserveExistingCatalogDataAndSeedPaymentOptions()
+    public async Task LaterMigrationsPreserveExistingDataAndSeedPaymentOptions()
     {
         var isolated = new SqlServerDatabase();
         await isolated.InitializeAsync();
@@ -21,6 +21,15 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             var productId = Guid.NewGuid();
             var version = Guid.NewGuid();
             await context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO [Products] ([Id], [ProductTypeId], [Name], [Version]) VALUES ({productId}, {id}, {"Existing product"}, {version})");
+            await context.GetService<IMigrator>().MigrateAsync("20260930085252_PlaceOrders");
+            var orderId = Guid.NewGuid();
+            var checkoutToken = Guid.NewGuid();
+            await context.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO [Orders] ([Id], [CheckoutToken], [Number], [PlacedAt], [CustomerName], [Email],
+                    [AddressLine], [PostalCode], [City], [CountryCode], [PaymentMethod], [Status])
+                VALUES ({orderId}, {checkoutToken}, {"MS-EXISTING"}, {DateTimeOffset.UtcNow}, {"Existing customer"},
+                    {"customer@example.test"}, {"Street 1"}, {"1234 AB"}, {"Utrecht"}, {"NL"}, {1}, {1})
+                """);
             await context.Database.MigrateAsync();
             var product = await context.Products.SingleAsync(p => p.Id == productId);
             Assert.False(product.IsPublished);
@@ -33,6 +42,9 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             Assert.True(paymentOptions.PayLaterEnabled);
             Assert.False(paymentOptions.OnlinePaymentEnabled);
             Assert.NotEqual(Guid.Empty, paymentOptions.Version);
+            var order = await context.Orders.SingleAsync(item => item.Id == orderId);
+            Assert.NotEqual(Guid.Empty, order.Version);
+            Assert.Null(order.PaidAt);
         }
         finally { await isolated.DisposeAsync(); }
     }
@@ -42,7 +54,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(5, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(6, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -59,7 +71,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(5, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(6, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

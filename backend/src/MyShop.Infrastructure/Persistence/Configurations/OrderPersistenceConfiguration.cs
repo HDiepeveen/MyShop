@@ -22,6 +22,8 @@ internal sealed class OrderPersistenceConfiguration : IEntityTypeConfiguration<O
         builder.Property(order => order.CountryCode).IsRequired().HasMaxLength(2).IsFixedLength();
         builder.Property(order => order.PaymentMethod).IsRequired().HasColumnType("int");
         builder.Property(order => order.Status).IsRequired().HasColumnType("int");
+        builder.Property(order => order.PaidAt);
+        builder.Property(order => order.Version).IsRequired().IsConcurrencyToken();
         builder.HasIndex(order => order.CheckoutToken).IsUnique();
         builder.HasIndex(order => order.Number).IsUnique();
     }

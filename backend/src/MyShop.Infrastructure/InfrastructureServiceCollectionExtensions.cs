@@ -56,6 +56,8 @@ public static class InfrastructureServiceCollectionExtensions
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IOrderReadRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IOrderStatusRepository>(provider =>
+            new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         return services;
     }
 }

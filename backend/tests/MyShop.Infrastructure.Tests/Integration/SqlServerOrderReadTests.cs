@@ -35,6 +35,17 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.Equal("Shirt", Assert.Single(detail.Lines).ProductName);
         Assert.Equal(2, detail.Lines[0].Quantity);
         Assert.Equal(10m, detail.Lines[0].UnitAmount);
+        Assert.NotEqual(Guid.Empty, detail.Revision);
+
+        var paidAt = DateTimeOffset.UtcNow;
+        var updated = await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt, CancellationToken.None);
+        Assert.NotNull(updated);
+        Assert.Equal(OrderStatus.Paid, updated.Status);
+        Assert.Equal(paidAt.ToUniversalTime(), updated.PaidAt);
+        Assert.Null(await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt, CancellationToken.None));
+        var paid = await repository.GetAsync(newer.Id, CancellationToken.None);
+        Assert.Equal(OrderStatus.Paid, paid!.Status);
+        Assert.Equal(updated.Revision, paid.Revision);
         Assert.Null(await repository.GetAsync(Guid.NewGuid(), CancellationToken.None));
     }
 

@@ -6,7 +6,7 @@ using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository
+internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, IOrderStatusRepository
 {
     private readonly MyShopDbContext context;
 
@@ -38,6 +38,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository
             CountryCode = order.DeliveryAddress.CountryCode,
             PaymentMethod = (int)order.PaymentMethod,
             Status = (int)order.Status,
+            Version = Guid.NewGuid(),
             Lines = order.Lines.Select((line, index) => new OrderLinePersistence
             {
                 OrderId = order.Id,
@@ -85,7 +86,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository
                 order.PlacedAt,
                 order.CustomerName,
                 order.PaymentMethod,
-                order.Status
+                order.Status,
+                order.PaidAt
             })
             .ToArrayAsync(cancellationToken);
         var ids = rows.Select(row => row.Id).ToArray();
@@ -102,6 +104,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository
             row.CustomerName,
             (OrderPaymentMethod)row.PaymentMethod,
             (OrderStatus)row.Status,
+            row.PaidAt,
             totalsByOrder[row.Id].Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray()))
             .ToArray();
         return new OrderListPage(items, totalCount);
@@ -126,6 +129,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository
             order.CountryCode,
             (OrderPaymentMethod)order.PaymentMethod,
             (OrderStatus)order.Status,
+            order.PaidAt,
+            order.Version,
             order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
                 line.ProductId,
                 line.VariantId,
@@ -138,4 +143,26 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository
             order.Totals.OrderBy(total => total.Currency).Select(total =>
                 new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray());
     }
+
+    public async Task<OrderStatusSnapshot?> MarkPaidAsync(Guid id, Guid expectedRevision,
+        DateTimeOffset paidAt, CancellationToken cancellationToken)
+    {
+        var replacement = Guid.NewGuid();
+        var changed = await context.Orders
+            .Where(order => order.Id == id
+                && order.Version == expectedRevision
+                && order.Status == (int)OrderStatus.AwaitingPayment)
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(order => order.Status, (int)OrderStatus.Paid)
+                .SetProperty(order => order.PaidAt, paidAt.ToUniversalTime())
+                .SetProperty(order => order.Version, replacement), cancellationToken);
+        return changed == 0 ? null : new(OrderStatus.Paid, paidAt.ToUniversalTime(), replacement);
+    }
+
+    public async Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken) =>
+        await context.Orders.AsNoTracking()
+            .Where(order => order.Id == id)
+            .Select(order => new OrderStatusSnapshot(
+                (OrderStatus)order.Status, order.PaidAt, order.Version))
+            .SingleOrDefaultAsync(cancellationToken);
 }

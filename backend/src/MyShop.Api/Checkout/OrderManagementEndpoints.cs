@@ -6,6 +6,7 @@ using MyShop.Domain.Checkout;
 using GetUseCase = MyShop.Application.Checkout.GetOrder.GetOrder;
 using ListUseCase = MyShop.Application.Checkout.ListOrders.ListOrders;
 using MyShop.Application.Checkout.ListOrders;
+using MyShop.Application.Checkout.MarkOrderPaid;
 
 namespace MyShop.Api.Checkout;
 
@@ -16,6 +17,7 @@ public static class OrderManagementEndpoints
         ArgumentNullException.ThrowIfNull(endpoints);
         endpoints.MapGet("/api/orders", ListAsync).WithName("ListOrders");
         endpoints.MapGet("/api/orders/{id:guid}", GetAsync).WithName("GetOrder");
+        endpoints.MapPut("/api/orders/{id:guid}/status", UpdateStatusAsync).WithName("UpdateOrderStatus");
         return endpoints;
     }
 
@@ -58,6 +60,42 @@ public static class OrderManagementEndpoints
         return order is null ? TypedResults.NotFound() : TypedResults.Ok(MapDetail(order));
     }
 
+    public static async Task<IResult> UpdateStatusAsync(
+        Guid id,
+        UpdateOrderStatusRequest? request,
+        [FromServices] MarkOrderPaid useCase,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(useCase);
+        if (request?.Status != "paid")
+            return Results.BadRequest(new { code = "invalidStatus", message = "Kies een geldige bestelstatus." });
+        try
+        {
+            var result = await useCase.ExecuteAsync(new(id, request.Revision), cancellationToken);
+            return result.Failure switch
+            {
+                MarkOrderPaidFailure.NotFound => Results.NotFound(),
+                MarkOrderPaidFailure.InvalidTransition => Results.Conflict(new
+                {
+                    code = "invalidTransition",
+                    message = "Deze bestelling kan niet meer als betaald worden gemarkeerd."
+                }),
+                MarkOrderPaidFailure.ConcurrencyConflict => Results.Conflict(new
+                {
+                    code = "concurrency",
+                    message = "De bestelling is intussen gewijzigd."
+                }),
+                null => Results.Ok(new OrderStatusResponse(Status(result.Order!.Status),
+                    result.Order.PaidAt, result.Order.Revision)),
+                _ => throw new InvalidOperationException()
+            };
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.BadRequest(new { code = "invalidOrderStatus", message = exception.Message });
+        }
+    }
+
     private static OrderSummaryResponse MapSummary(OrderListItem order) => new(
         order.Id,
         order.Number,
@@ -65,6 +103,7 @@ public static class OrderManagementEndpoints
         order.CustomerName,
         PaymentMethod(order.PaymentMethod),
         Status(order.Status),
+        order.PaidAt,
         order.Totals.Select(MapTotal).ToArray());
 
     private static OrderDetailResponse MapDetail(OrderDetail order) => new(
@@ -75,6 +114,8 @@ public static class OrderManagementEndpoints
         new(order.AddressLine, order.PostalCode, order.City, order.CountryCode),
         PaymentMethod(order.PaymentMethod),
         Status(order.Status),
+        order.PaidAt,
+        order.Revision,
         order.Lines.Select(line => new OrderLineResponse(
             line.ProductId,
             line.VariantId,
@@ -98,6 +139,7 @@ public static class OrderManagementEndpoints
     private static string Status(OrderStatus value) => value switch
     {
         OrderStatus.AwaitingPayment => "awaitingPayment",
+        OrderStatus.Paid => "paid",
         _ => throw new InvalidOperationException($"Unsupported order status: {value}.")
     };
 }
@@ -114,6 +156,7 @@ public sealed record OrderSummaryResponse(
     string CustomerName,
     string PaymentMethod,
     string Status,
+    DateTimeOffset? PaidAt,
     IReadOnlyList<OrderTotalResponse> Totals);
 public sealed record OrderDetailResponse(
     Guid Id,
@@ -123,6 +166,8 @@ public sealed record OrderDetailResponse(
     OrderAddressResponse DeliveryAddress,
     string PaymentMethod,
     string Status,
+    DateTimeOffset? PaidAt,
+    Guid Revision,
     IReadOnlyList<OrderLineResponse> Lines,
     IReadOnlyList<OrderTotalResponse> Totals);
 public sealed record OrderCustomerResponse(string Name, string Email);
@@ -137,3 +182,5 @@ public sealed record OrderLineResponse(
     string Currency,
     string TotalAmount);
 public sealed record OrderTotalResponse(string Currency, string Amount);
+public sealed record UpdateOrderStatusRequest(string Status, Guid Revision);
+public sealed record OrderStatusResponse(string Status, DateTimeOffset? PaidAt, Guid Revision);
