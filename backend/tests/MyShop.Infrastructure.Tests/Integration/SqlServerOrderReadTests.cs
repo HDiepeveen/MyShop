@@ -11,7 +11,8 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
     public async Task ListsNewestFirstAndReturnsTheRecordedOrderSnapshot()
     {
         var older = CreateOrder(DateTimeOffset.UtcNow.AddMinutes(-1), "First customer");
-        var newer = CreateOrder(DateTimeOffset.UtcNow, "Second customer");
+        var newer = CreateOrder(DateTimeOffset.UtcNow, "Second customer",
+            "Betaal binnen 14 dagen onder vermelding van het bestelnummer.");
         var refundable = CreateOrder(DateTimeOffset.UtcNow.AddMinutes(-2), "Refund customer");
         await using (var writeContext = database.CreateContext())
         {
@@ -33,6 +34,8 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         var detail = await repository.GetAsync(newer.Id, CancellationToken.None);
         Assert.NotNull(detail);
         Assert.Equal("customer@example.test", detail.Email);
+        Assert.Equal("Betaal binnen 14 dagen onder vermelding van het bestelnummer.",
+            detail.PaymentInstructions);
         Assert.Equal("Teststraat 1", detail.AddressLine);
         Assert.Equal("Shirt", Assert.Single(detail.Lines).ProductName);
         Assert.Equal(2, detail.Lines[0].Quantity);
@@ -119,10 +122,12 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.Null(await repository.GetAsync(Guid.NewGuid(), CancellationToken.None));
     }
 
-    private static Order CreateOrder(DateTimeOffset placedAt, string customerName) => Order.Place(
+    private static Order CreateOrder(DateTimeOffset placedAt, string customerName,
+        string? paymentInstructions = null) => Order.Place(
         Guid.NewGuid(),
         placedAt,
         OrderCustomer.Create(customerName, "customer@example.test"),
         DeliveryAddress.Create("Teststraat 1", "1234 AB", "Utrecht", "NL"),
-        [(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Blauw", 2, Money.Create(10m, "EUR"))]);
+        [(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Blauw", 2, Money.Create(10m, "EUR"))],
+        paymentInstructions);
 }

@@ -38,6 +38,14 @@ public sealed class PlaceOrderHttpTests
                 description = "A shirt", imageUrl = "https://example.com/shirt.jpg", imageAlt = "Shirt",
                 isPublished = true, revision = current.GetProperty("revision").GetGuid()
             })).StatusCode);
+        var paymentSettings = await host.Client.GetFromJsonAsync<JsonElement>("/api/payment-options");
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync("/api/payment-options", new
+        {
+            payLaterEnabled = true,
+            onlinePaymentEnabled = false,
+            payLaterInstructions = "Betaal binnen 14 dagen.",
+            revision = paymentSettings.GetProperty("revision").GetGuid()
+        })).StatusCode);
 
         var cookies = new CookieContainer();
         using var visitor = new HttpClient(new HttpClientHandler
@@ -62,9 +70,11 @@ public sealed class PlaceOrderHttpTests
         Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
         var first = await firstResponse.Content.ReadFromJsonAsync<JsonElement>();
         Assert.StartsWith("MS-", first.GetProperty("number").GetString(), StringComparison.Ordinal);
+        Assert.Equal("Betaal binnen 14 dagen.", first.GetProperty("paymentInstructions").GetString());
         var repeated = await (await visitor.PostAsJsonAsync("/api/shop/orders", request))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(first.GetProperty("id").GetGuid(), repeated.GetProperty("id").GetGuid());
+        Assert.Equal("Betaal binnen 14 dagen.", repeated.GetProperty("paymentInstructions").GetString());
 
         await using var scope = host.App.Services.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();
@@ -76,5 +86,7 @@ public sealed class PlaceOrderHttpTests
             "SELECT [UnitAmount] AS [Value] FROM [OrderLines]").SingleAsync());
         Assert.Equal(25m, await database.Database.SqlQueryRaw<decimal>(
             "SELECT [Amount] AS [Value] FROM [OrderTotals]").SingleAsync());
+        Assert.Equal("Betaal binnen 14 dagen.", await database.Database.SqlQueryRaw<string>(
+            "SELECT [PaymentInstructions] AS [Value] FROM [Orders]").SingleAsync());
     }
 }

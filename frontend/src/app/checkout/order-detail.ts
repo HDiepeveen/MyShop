@@ -87,6 +87,10 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
         <dl class="detail-list">
           <dt>Betaalmethode</dt>
           <dd>Later betalen</dd>
+          @if (order.paymentInstructions) {
+            <dt>Betaalinstructies</dt>
+            <dd class="preserve-lines">{{ order.paymentInstructions }}</dd>
+          }
           <dt>Status</dt>
           <dd>{{ statusLabel(order.status) }}</dd>
           @if (order.paidAt) {

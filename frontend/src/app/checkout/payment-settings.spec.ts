@@ -22,6 +22,7 @@ describe('Payment settings', () => {
     http.expectOne('/api/payment-options').flush({
       payLaterEnabled: true,
       onlinePaymentEnabled: false,
+      payLaterInstructions: 'Betaal binnen 14 dagen.',
       onlinePaymentConfigured: false,
       revision,
     });
@@ -37,6 +38,7 @@ describe('Payment settings', () => {
     const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
     expect(inputs[0].checked).toBe(true);
     expect(inputs[1].disabled).toBe(true);
+    expect(fixture.componentInstance.payLaterInstructions).toBe('Betaal binnen 14 dagen.');
     expect(fixture.nativeElement.textContent).toContain('nadat een betaalprovider is gekoppeld');
   });
 
@@ -51,23 +53,27 @@ describe('Payment settings', () => {
     http.expectNone((request) => request.method === 'PUT');
 
     page.payLater = true;
+    page.payLaterInstructions = '  Nieuwe instructies.  ';
     page.save(page.state()!.data!);
     const update = http.expectOne('/api/payment-options');
     expect(update.request.method).toBe('PUT');
     expect(update.request.body).toEqual({
       payLaterEnabled: true,
       onlinePaymentEnabled: false,
+      payLaterInstructions: 'Nieuwe instructies.',
       revision,
     });
     update.flush({
       payLaterEnabled: true,
       onlinePaymentEnabled: false,
+      payLaterInstructions: 'Nieuwe instructies.',
       onlinePaymentConfigured: false,
       revision: '98e2f651-835c-4821-8905-ec8c054256ea',
     });
     http.expectOne('/api/payment-options').flush({
       payLaterEnabled: true,
       onlinePaymentEnabled: false,
+      payLaterInstructions: 'Nieuwe instructies.',
       onlinePaymentConfigured: false,
       revision: '98e2f651-835c-4821-8905-ec8c054256ea',
     });

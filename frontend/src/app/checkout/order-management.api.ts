@@ -34,6 +34,7 @@ export interface OrderDetail {
   customer: { name: string; email: string };
   deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
   paymentMethod: 'payLater';
+  paymentInstructions: string | null;
   status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled' | 'refunded';
   paidAt: string | null;
   paymentReference: string | null;

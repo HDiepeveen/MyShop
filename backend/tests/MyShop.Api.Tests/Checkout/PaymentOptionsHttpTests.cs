@@ -20,7 +20,9 @@ public sealed class PaymentOptionsHttpTests
         var publicOptions = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/payment-options");
         var option = Assert.Single(publicOptions.GetProperty("items").EnumerateArray());
         Assert.Equal("payLater", option.GetProperty("code").GetString());
-        Assert.Equal(new[] { "code", "name" }, option.EnumerateObject().Select(property => property.Name).Order().ToArray());
+        Assert.Equal(new[] { "code", "instructions", "name" },
+            option.EnumerateObject().Select(property => property.Name).Order().ToArray());
+        Assert.Equal(JsonValueKind.Null, option.GetProperty("instructions").ValueKind);
         Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/payment-options")).StatusCode);
 
         await host.Csrf();
@@ -29,6 +31,7 @@ public sealed class PaymentOptionsHttpTests
         var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/payment-options");
         Assert.True(settings.GetProperty("payLaterEnabled").GetBoolean());
         Assert.False(settings.GetProperty("onlinePaymentEnabled").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, settings.GetProperty("payLaterInstructions").ValueKind);
         Assert.False(settings.GetProperty("onlinePaymentConfigured").GetBoolean());
         var revision = settings.GetProperty("revision").GetGuid();
 
@@ -54,11 +57,16 @@ public sealed class PaymentOptionsHttpTests
         {
             payLaterEnabled = true,
             onlinePaymentEnabled = false,
+            payLaterInstructions = "  Betaal binnen 14 dagen.  ",
             revision
         });
         Assert.Equal(HttpStatusCode.OK, savedResponse.StatusCode);
         var saved = await savedResponse.Content.ReadFromJsonAsync<JsonElement>();
         Assert.NotEqual(revision, saved.GetProperty("revision").GetGuid());
+        Assert.Equal("Betaal binnen 14 dagen.", saved.GetProperty("payLaterInstructions").GetString());
+        var updatedPublic = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/payment-options");
+        Assert.Equal("Betaal binnen 14 dagen.", updatedPublic.GetProperty("items")[0]
+            .GetProperty("instructions").GetString());
 
         var stale = await host.Client.PutAsJsonAsync("/api/payment-options", new
         {

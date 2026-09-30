@@ -15,7 +15,7 @@ public sealed class OrderTests
             [
                 (Guid.NewGuid(), Guid.NewGuid(), " Shirt ", " Small ", 2, Money.Create(12.50m, "eur")),
                 (Guid.NewGuid(), Guid.NewGuid(), " Socks ", " Pair ", 1, Money.Create(5m, "EUR"))
-            ]);
+            ], "  Betaal binnen 14 dagen.  ");
 
         Assert.Equal(id, order.Id);
         Assert.Equal($"MS-{id:N}".ToUpperInvariant(), order.Number);
@@ -23,6 +23,7 @@ public sealed class OrderTests
         Assert.Equal("Ada Lovelace", order.Customer.Name);
         Assert.Equal("NL", order.DeliveryAddress.CountryCode);
         Assert.Equal(OrderPaymentMethod.PayLater, order.PaymentMethod);
+        Assert.Equal("Betaal binnen 14 dagen.", order.PaymentInstructions);
         Assert.Equal(OrderStatus.AwaitingPayment, order.Status);
         Assert.Equal(30m, Assert.Single(order.Totals).Amount);
     }
@@ -54,5 +55,17 @@ public sealed class OrderTests
                 (product, variant, "Shirt", "Small", 1, Money.Create(10, "EUR")),
                 (product, variant, "Shirt", "Small", 1, Money.Create(10, "EUR"))
             ]));
+    }
+
+    [Fact]
+    public void PlaceRejectsPaymentInstructionsLongerThanTwoThousandCharacters()
+    {
+        var customer = OrderCustomer.Create("Ada", "ada@example.com");
+        var address = DeliveryAddress.Create("Street 1", "1234 AB", "Amsterdam", "NL");
+
+        Assert.Throws<ArgumentException>(() => Order.Place(Guid.NewGuid(), DateTimeOffset.UtcNow,
+            customer, address,
+            [(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Small", 1, Money.Create(10, "EUR"))],
+            new string('x', 2001)));
     }
 }

@@ -13,6 +13,7 @@ internal sealed class OrderPersistence
     public string City { get; set; } = null!;
     public string CountryCode { get; set; } = null!;
     public int PaymentMethod { get; set; }
+    public string? PaymentInstructions { get; set; }
     public int Status { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
     public string? PaymentReference { get; set; }

@@ -47,7 +47,7 @@ public static class PlaceOrderEndpoint
                     message = "Start eerst de online betaling."
                 }),
                 null => Results.Ok(new PlaceOrderResponse(result.Receipt!.Id, result.Receipt.Number,
-                    result.Receipt.PlacedAt)),
+                    result.Receipt.PlacedAt, result.Receipt.PaymentInstructions)),
                 _ => throw new InvalidOperationException()
             };
         }
@@ -67,4 +67,5 @@ public sealed record PlaceOrderRequest(Guid CheckoutToken, string PaymentMethod,
     IReadOnlyList<PlaceOrderLineRequest?> Lines);
 public sealed record PlaceOrderLineRequest(Guid ProductId, Guid VariantId, int Quantity,
     string ExpectedAmount, string ExpectedCurrency);
-public sealed record PlaceOrderResponse(Guid Id, string Number, DateTimeOffset PlacedAt);
+public sealed record PlaceOrderResponse(Guid Id, string Number, DateTimeOffset PlacedAt,
+    string? PaymentInstructions);

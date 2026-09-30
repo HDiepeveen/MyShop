@@ -10,11 +10,11 @@ internal sealed class PaymentOptionsRepository(MyShopDbContext context) : IPayme
     {
         var row = await context.PaymentOptions.AsNoTracking().SingleAsync(
             options => options.Id == PaymentOptionsPersistenceConfiguration.SingletonId, cancellationToken);
-        return new(row.PayLaterEnabled, row.OnlinePaymentEnabled, row.Version);
+        return new(row.PayLaterEnabled, row.OnlinePaymentEnabled, row.PayLaterInstructions, row.Version);
     }
 
     public async Task<PaymentOptionsSnapshot?> SaveAsync(bool payLaterEnabled, bool onlinePaymentEnabled,
-        Guid expectedRevision, CancellationToken cancellationToken)
+        string? payLaterInstructions, Guid expectedRevision, CancellationToken cancellationToken)
     {
         var replacement = Guid.NewGuid();
         var changed = await context.PaymentOptions
@@ -23,7 +23,9 @@ internal sealed class PaymentOptionsRepository(MyShopDbContext context) : IPayme
             .ExecuteUpdateAsync(update => update
                 .SetProperty(options => options.PayLaterEnabled, payLaterEnabled)
                 .SetProperty(options => options.OnlinePaymentEnabled, onlinePaymentEnabled)
+                .SetProperty(options => options.PayLaterInstructions, payLaterInstructions)
                 .SetProperty(options => options.Version, replacement), cancellationToken);
-        return changed == 0 ? null : new(payLaterEnabled, onlinePaymentEnabled, replacement);
+        return changed == 0 ? null : new(payLaterEnabled, onlinePaymentEnabled,
+            payLaterInstructions, replacement);
     }
 }

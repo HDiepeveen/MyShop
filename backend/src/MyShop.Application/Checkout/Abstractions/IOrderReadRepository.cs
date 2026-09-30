@@ -37,6 +37,7 @@ public sealed record OrderDetail(
     string City,
     string CountryCode,
     OrderPaymentMethod PaymentMethod,
+    string? PaymentInstructions,
     OrderStatus Status,
     DateTimeOffset? PaidAt,
     string? PaymentReference,

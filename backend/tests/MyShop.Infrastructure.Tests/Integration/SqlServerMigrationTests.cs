@@ -41,10 +41,12 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             var paymentOptions = await context.PaymentOptions.SingleAsync();
             Assert.True(paymentOptions.PayLaterEnabled);
             Assert.False(paymentOptions.OnlinePaymentEnabled);
+            Assert.Null(paymentOptions.PayLaterInstructions);
             Assert.NotEqual(Guid.Empty, paymentOptions.Version);
             var order = await context.Orders.SingleAsync(item => item.Id == orderId);
             Assert.NotEqual(Guid.Empty, order.Version);
             Assert.Null(order.PaidAt);
+            Assert.Null(order.PaymentInstructions);
             Assert.Null(order.PaymentReference);
             Assert.Null(order.ShippedAt);
             Assert.Null(order.ShippingCarrier);
@@ -63,7 +65,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(11, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(12, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -80,7 +82,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(11, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(12, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

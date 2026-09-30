@@ -2,7 +2,7 @@
 
 Administrators can open **Bestellingen** to see orders placed through the public checkout. The overview shows the newest orders first and supports paging. The detail page shows the immutable customer, delivery address, product, price and total snapshots recorded when the order was placed.
 
-The management endpoints are protected by the same administrator policy as catalog management:
+The management endpoints are protected by the same administrator policy as catalog management. A detail also shows the pay-later instructions that were recorded when the order was placed:
 
 - `GET /api/orders?offset=0&limit=20&status=awaitingPayment&search=MS-2026`
 - `GET /api/orders/{id}`

@@ -2,7 +2,8 @@ using MyShop.Domain.Checkout;
 
 namespace MyShop.Application.Checkout.Abstractions;
 
-public sealed record OrderReceipt(Guid Id, string Number, DateTimeOffset PlacedAt);
+public sealed record OrderReceipt(Guid Id, string Number, DateTimeOffset PlacedAt,
+    string? PaymentInstructions);
 
 public interface IOrderRepository
 {

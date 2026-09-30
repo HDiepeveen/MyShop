@@ -16,6 +16,7 @@ internal sealed class PaymentOptionsPersistenceConfiguration : IEntityTypeConfig
         builder.Property(options => options.Id).ValueGeneratedNever();
         builder.Property(options => options.PayLaterEnabled).IsRequired();
         builder.Property(options => options.OnlinePaymentEnabled).IsRequired();
+        builder.Property(options => options.PayLaterInstructions).HasMaxLength(2000);
         builder.Property(options => options.Version).IsRequired().ValueGeneratedNever().IsConcurrencyToken();
         builder.HasData(new PaymentOptionsPersistence
         {

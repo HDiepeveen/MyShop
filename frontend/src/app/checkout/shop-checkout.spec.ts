@@ -57,6 +57,7 @@ describe('Shop checkout', () => {
       id: '30000000-0000-0000-0000-000000000001',
       number: 'MS-3000',
       placedAt: '2026-09-30T12:00:00Z',
+      paymentInstructions: 'Betaal binnen 14 dagen.',
     });
     expect(placed).toHaveBeenCalledWith(expect.objectContaining({ number: 'MS-3000' }));
     expect(page.busy()).toBe(false);
@@ -86,6 +87,7 @@ describe('Shop checkout', () => {
       id: '30000000-0000-0000-0000-000000000001',
       number: 'MS-3000',
       placedAt: '2026-09-30T12:00:00Z',
+      paymentInstructions: 'Betaal binnen 14 dagen.',
     });
   });
 });

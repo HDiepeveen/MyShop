@@ -70,10 +70,11 @@ public sealed record OrderTotal(string Currency, decimal Amount);
 public sealed class Order
 {
     private Order(Guid id, DateTimeOffset placedAt, OrderCustomer customer, DeliveryAddress address,
-        IReadOnlyList<OrderLine> lines, IReadOnlyList<OrderTotal> totals)
+        IReadOnlyList<OrderLine> lines, IReadOnlyList<OrderTotal> totals, string? paymentInstructions)
     {
         Id = id; PlacedAt = placedAt; Customer = customer; DeliveryAddress = address;
         Lines = lines; Totals = totals;
+        PaymentInstructions = paymentInstructions;
     }
 
     public Guid Id { get; }
@@ -85,10 +86,11 @@ public sealed class Order
     public OrderStatus Status => OrderStatus.AwaitingPayment;
     public IReadOnlyList<OrderLine> Lines { get; }
     public IReadOnlyList<OrderTotal> Totals { get; }
+    public string? PaymentInstructions { get; }
 
     public static Order Place(Guid id, DateTimeOffset placedAt, OrderCustomer customer,
         DeliveryAddress address, IEnumerable<(Guid ProductId, Guid VariantId, string ProductName,
-            string VariantName, int Quantity, Money UnitPrice)> lines)
+            string VariantName, int Quantity, Money UnitPrice)> lines, string? paymentInstructions = null)
     {
         if (id == Guid.Empty) throw new ArgumentException("Order ID is required.", nameof(id));
         ArgumentNullException.ThrowIfNull(customer);
@@ -108,7 +110,14 @@ public sealed class Order
         var totals = snapshots.GroupBy(line => line.Total.Currency)
             .Select(group => new OrderTotal(group.Key, group.Sum(line => line.Total.Amount)))
             .OrderBy(total => total.Currency, StringComparer.Ordinal).ToArray();
-        return new(id, placedAt.ToUniversalTime(), customer, address, snapshots, totals);
+        paymentInstructions = string.IsNullOrWhiteSpace(paymentInstructions)
+            ? null
+            : paymentInstructions.Trim();
+        if (paymentInstructions?.Length > 2000)
+            throw new ArgumentException("Payment instructions must contain at most 2000 characters.",
+                nameof(paymentInstructions));
+        return new(id, placedAt.ToUniversalTime(), customer, address, snapshots, totals,
+            paymentInstructions);
     }
 
     private static string Required(string value, int maximum, string parameter)

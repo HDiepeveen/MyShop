@@ -30,7 +30,12 @@ import { OrderReceipt } from '../checkout/order.api';
           Je bestelnummer is <strong>{{ receipt.number }}</strong
           >.
         </p>
-        <p>Bewaar dit nummer voor de verdere afhandeling van je betaling.</p>
+        @if (receipt.paymentInstructions) {
+          <h3>Betaalinstructies</h3>
+          <p class="preserve-lines">{{ receipt.paymentInstructions }}</p>
+        } @else {
+          <p>Bewaar dit nummer voor de verdere afhandeling van je betaling.</p>
+        }
         <a routerLink="/winkel">Verder winkelen</a>
       </section>
     } @else if (!cart.lines().length) {
@@ -105,6 +110,9 @@ import { OrderReceipt } from '../checkout/order.api';
               />
               {{ option.name }}</label
             >
+            @if (option.code === selectedPayment() && option.instructions) {
+              <p class="muted preserve-lines">{{ option.instructions }}</p>
+            }
           }
           @if (paymentOptions()?.data && !paymentOptions()?.data?.items?.length) {
             <p role="alert">Er is momenteel geen betaaloptie beschikbaar.</p>

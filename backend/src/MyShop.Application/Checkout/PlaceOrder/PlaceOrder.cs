@@ -61,7 +61,8 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
             return PlaceOrderResult.Failed(PlaceOrderFailure.CartUnavailable);
         var order = Order.Place(Guid.NewGuid(), at, customer, address,
             quote.Lines.Select(line => (line.ProductId, line.VariantId, line.Name!, line.Variant!,
-                line.Quantity, Money.Create(line.Amount!.Value, line.Currency!))));
+                line.Quantity, Money.Create(line.Amount!.Value, line.Currency!))),
+            settings.PayLaterInstructions);
         return new(await orders.AddAsync(order, command.CheckoutToken, cancellationToken), null);
     }
 }

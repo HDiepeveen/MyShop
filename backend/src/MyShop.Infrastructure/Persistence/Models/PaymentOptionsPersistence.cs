@@ -5,5 +5,6 @@ internal sealed class PaymentOptionsPersistence
     public Guid Id { get; set; }
     public bool PayLaterEnabled { get; set; }
     public bool OnlinePaymentEnabled { get; set; }
+    public string? PayLaterInstructions { get; set; }
     public Guid Version { get; set; }
 }

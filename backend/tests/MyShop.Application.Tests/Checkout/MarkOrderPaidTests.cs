@@ -72,7 +72,7 @@ public sealed class MarkOrderPaidTests
 
     private static OrderDetail Detail(Guid id, Guid revision, OrderStatus status) => new(
         id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test", "Street 1", "1234 AB",
-        "Utrecht", "NL", OrderPaymentMethod.PayLater, status,
+        "Utrecht", "NL", OrderPaymentMethod.PayLater, null, status,
         status == OrderStatus.Paid ? DateTimeOffset.UtcNow : null,
         status == OrderStatus.Paid ? "existing-reference" : null,
         null, null, null, null, null, null, null, null, revision, [], []);

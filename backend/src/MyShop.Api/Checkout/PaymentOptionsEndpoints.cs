@@ -23,7 +23,7 @@ public static class PaymentOptionsEndpoints
         try
         {
             var result = await useCase.ExecuteAsync(new(request.PayLaterEnabled,
-                request.OnlinePaymentEnabled, request.Revision), cancellationToken);
+                request.OnlinePaymentEnabled, request.PayLaterInstructions, request.Revision), cancellationToken);
             return result.Failure switch
             {
                 UpdatePaymentOptionsFailure.OnlinePaymentNotConfigured => Results.Conflict(new
@@ -47,4 +47,5 @@ public static class PaymentOptionsEndpoints
     }
 }
 
-public sealed record UpdatePaymentOptionsRequest(bool PayLaterEnabled, bool OnlinePaymentEnabled, Guid Revision);
+public sealed record UpdatePaymentOptionsRequest(bool PayLaterEnabled, bool OnlinePaymentEnabled,
+    string? PayLaterInstructions, Guid Revision);

@@ -21,6 +21,8 @@ public sealed class PlaceOrderTests
         Assert.Equal(25m, Assert.Single(scenario.Orders.Saved.Lines).UnitPrice.Amount);
         Assert.Equal(50m, Assert.Single(scenario.Orders.Saved.Totals).Amount);
         Assert.Equal("Ada", scenario.Orders.Saved.Customer.Name);
+        Assert.Equal("Betaal binnen 14 dagen.", scenario.Orders.Saved.PaymentInstructions);
+        Assert.Equal(scenario.Orders.Saved.PaymentInstructions, result.Receipt.PaymentInstructions);
         Assert.Equal(scenario.Token, scenario.Orders.Token);
     }
 
@@ -28,11 +30,13 @@ public sealed class PlaceOrderTests
     public async Task RepeatedCheckoutTokenReturnsExistingReceiptWithoutRepricing()
     {
         var scenario = new Scenario();
-        scenario.Orders.Existing = new(Guid.NewGuid(), "MS-EXISTING", DateTimeOffset.UtcNow);
+        scenario.Orders.Existing = new(Guid.NewGuid(), "MS-EXISTING", DateTimeOffset.UtcNow,
+            "Bestaande instructies");
 
         var result = await scenario.Execute();
 
         Assert.Equal("MS-EXISTING", result.Receipt!.Number);
+        Assert.Equal("Bestaande instructies", result.Receipt.PaymentInstructions);
         Assert.Equal(0, scenario.Products.Calls);
         Assert.Null(scenario.Orders.Saved);
     }
@@ -120,9 +124,11 @@ public sealed class PlaceOrderTests
     {
         public bool PayLater { get; set; } = true;
         public Task<PaymentOptionsSnapshot> GetAsync(CancellationToken cancellationToken) =>
-            Task.FromResult(new PaymentOptionsSnapshot(PayLater, false, Guid.NewGuid()));
+            Task.FromResult(new PaymentOptionsSnapshot(PayLater, false,
+                "Betaal binnen 14 dagen.", Guid.NewGuid()));
         public Task<PaymentOptionsSnapshot?> SaveAsync(bool payLaterEnabled, bool onlinePaymentEnabled,
-            Guid expectedRevision, CancellationToken cancellationToken) => throw new NotSupportedException();
+            string? payLaterInstructions, Guid expectedRevision,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private sealed class Availability : IOnlinePaymentAvailability { public bool IsConfigured => false; }
@@ -137,7 +143,8 @@ public sealed class PlaceOrderTests
         public Task<OrderReceipt> AddAsync(Order order, Guid checkoutToken, CancellationToken cancellationToken)
         {
             Saved = order; Token = checkoutToken;
-            return Task.FromResult(new OrderReceipt(order.Id, order.Number, order.PlacedAt));
+            return Task.FromResult(new OrderReceipt(order.Id, order.Number, order.PlacedAt,
+                order.PaymentInstructions));
         }
     }
 }

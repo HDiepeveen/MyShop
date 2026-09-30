@@ -16,7 +16,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
     public async Task<OrderReceipt?> GetByCheckoutTokenAsync(Guid checkoutToken,
         CancellationToken cancellationToken) => await context.Orders.AsNoTracking()
             .Where(order => order.CheckoutToken == checkoutToken)
-            .Select(order => new OrderReceipt(order.Id, order.Number, order.PlacedAt))
+            .Select(order => new OrderReceipt(order.Id, order.Number, order.PlacedAt,
+                order.PaymentInstructions))
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<OrderReceipt> AddAsync(Order order, Guid checkoutToken,
@@ -37,6 +38,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             City = order.DeliveryAddress.City,
             CountryCode = order.DeliveryAddress.CountryCode,
             PaymentMethod = (int)order.PaymentMethod,
+            PaymentInstructions = order.PaymentInstructions,
             Status = (int)order.Status,
             Version = Guid.NewGuid(),
             Lines = order.Lines.Select((line, index) => new OrderLinePersistence
@@ -68,7 +70,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             return await GetByCheckoutTokenAsync(checkoutToken, cancellationToken)
                 ?? throw new InvalidOperationException("The order conflict could not be resolved.", exception);
         }
-        return new(order.Id, order.Number, order.PlacedAt);
+        return new(order.Id, order.Number, order.PlacedAt, order.PaymentInstructions);
     }
 
     public async Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,
@@ -146,6 +148,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             order.City,
             order.CountryCode,
             (OrderPaymentMethod)order.PaymentMethod,
+            order.PaymentInstructions,
             (OrderStatus)order.Status,
             order.PaidAt,
             order.PaymentReference,

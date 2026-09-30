@@ -74,6 +74,7 @@ public sealed class OrderManagementEndpointsTests
         var id = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
+            "Betaal binnen 14 dagen.",
             OrderStatus.AwaitingPayment, null, null, null, null, null, null, null,
             null, null, null, Guid.NewGuid(),
             [new(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Blauw", 2, 3.5m, "EUR", 7m)], [new("EUR", 7m)]);
@@ -81,6 +82,7 @@ public sealed class OrderManagementEndpointsTests
         var response = Assert.IsType<Ok<OrderDetailResponse>>(ok.Result).Value!;
         Assert.Equal("3.50", Assert.Single(response.Lines).UnitAmount);
         Assert.Equal("7.00", Assert.Single(response.Totals).Amount);
+        Assert.Equal("Betaal binnen 14 dagen.", response.PaymentInstructions);
         var missing = await OrderManagementEndpoints.GetAsync(Guid.NewGuid(), new GetUseCase(new Fake(new([], 0), null)), CancellationToken.None);
         Assert.IsType<NotFound>(missing.Result);
     }
@@ -91,7 +93,7 @@ public sealed class OrderManagementEndpointsTests
         var id = Guid.NewGuid();
         var revision = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
-            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
+            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater, null,
             OrderStatus.AwaitingPayment, null, null, null, null, null, null, null,
             null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
@@ -115,7 +117,7 @@ public sealed class OrderManagementEndpointsTests
         var revision = Guid.NewGuid();
         var paidAt = DateTimeOffset.UtcNow.AddMinutes(-5);
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
-            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
+            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater, null,
             OrderStatus.Paid, paidAt, "bankafschrift 12345", null, null, null, null, null,
             null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
@@ -139,7 +141,7 @@ public sealed class OrderManagementEndpointsTests
         var id = Guid.NewGuid();
         var revision = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
-            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
+            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater, null,
             OrderStatus.AwaitingPayment, null, null, null, null, null, null, null,
             null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
@@ -161,7 +163,7 @@ public sealed class OrderManagementEndpointsTests
         var revision = Guid.NewGuid();
         var paidAt = DateTimeOffset.UtcNow.AddMinutes(-5);
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
-            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
+            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater, null,
             OrderStatus.Paid, paidAt, "bankafschrift 12345", null, null, null, null, null,
             null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);

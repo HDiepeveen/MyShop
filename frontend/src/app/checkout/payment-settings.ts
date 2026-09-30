@@ -25,6 +25,18 @@ import { errorMessage } from '../catalog/error-message';
           ><input type="checkbox" name="payLater" [(ngModel)]="payLater" [disabled]="busy()" />
           Later betalen</label
         >
+        <label>
+          Instructies voor later betalen
+          <textarea
+            name="payLaterInstructions"
+            [(ngModel)]="payLaterInstructions"
+            rows="5"
+            maxlength="2000"
+            [disabled]="busy() || !payLater"
+            placeholder="Bijvoorbeeld: maak het bedrag binnen 14 dagen over onder vermelding van het bestelnummer."
+          ></textarea>
+        </label>
+        <p class="muted">Deze tekst wordt bij de bestelling vastgelegd en aan de klant getoond.</p>
         <label
           ><input
             type="checkbox"
@@ -59,6 +71,7 @@ export class PaymentSettings {
   readonly message = signal('');
   payLater = false;
   online = false;
+  payLaterInstructions = '';
   readonly state = toSignal(this.refresh.pipe(switchMap(() => loadState(this.api.adminOptions()))));
   constructor() {
     effect(() => {
@@ -66,6 +79,7 @@ export class PaymentSettings {
       if (options) {
         this.payLater = options.payLaterEnabled;
         this.online = options.onlinePaymentEnabled;
+        this.payLaterInstructions = options.payLaterInstructions ?? '';
       }
     });
   }
@@ -89,6 +103,7 @@ export class PaymentSettings {
       .update({
         payLaterEnabled: this.payLater,
         onlinePaymentEnabled: this.online,
+        payLaterInstructions: this.payLaterInstructions.trim() || null,
         revision: options.revision,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))

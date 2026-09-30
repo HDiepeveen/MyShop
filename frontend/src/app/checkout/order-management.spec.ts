@@ -126,6 +126,7 @@ describe('Order management', () => {
     request.flush({
       ...summary,
       paymentReference: null,
+      paymentInstructions: 'Betaal binnen 14 dagen.',
       revision,
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
@@ -152,6 +153,7 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Straat 1');
     expect(fixture.nativeElement.textContent).toContain('Shirt');
     expect(fixture.nativeElement.textContent).toContain('Later betalen');
+    expect(fixture.nativeElement.textContent).toContain('Betaal binnen 14 dagen.');
 
     fixture.componentInstance.markPaid(
       fixture.componentInstance.state()!.data!,
@@ -177,6 +179,7 @@ describe('Order management', () => {
       status: 'paid',
       paidAt: '2026-09-30T09:00:00Z',
       paymentReference: 'bankafschrift 12345',
+      paymentInstructions: 'Betaal binnen 14 dagen.',
       shippedAt: null,
       revision: 'new-revision',
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
@@ -225,6 +228,7 @@ describe('Order management', () => {
       status: 'shipped',
       paidAt: '2026-09-30T09:00:00Z',
       paymentReference: 'bankafschrift 12345',
+      paymentInstructions: 'Betaal binnen 14 dagen.',
       shippedAt: '2026-09-30T10:00:00Z',
       shippingCarrier: 'PostNL',
       trackingCode: '3SMYSHOP123',
@@ -270,6 +274,7 @@ describe('Order management', () => {
     http.expectOne('/api/orders/' + summary.id).flush({
       ...summary,
       paymentReference: null,
+      paymentInstructions: null,
       revision,
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
@@ -308,6 +313,7 @@ describe('Order management', () => {
       ...summary,
       status: 'cancelled',
       paymentReference: null,
+      paymentInstructions: null,
       cancelledAt: '2026-09-30T10:00:00Z',
       cancellationReason: 'Klant ziet af.',
       revision: 'cancelled-revision',
@@ -344,6 +350,7 @@ describe('Order management', () => {
       status: 'paid',
       paidAt: '2026-09-30T09:00:00Z',
       paymentReference: 'bankafschrift 12345',
+      paymentInstructions: null,
       refundReference: null,
       revision,
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
@@ -387,6 +394,7 @@ describe('Order management', () => {
       status: 'refunded',
       paidAt: '2026-09-30T09:00:00Z',
       paymentReference: 'bankafschrift 12345',
+      paymentInstructions: null,
       refundedAt: '2026-09-30T10:00:00Z',
       refundReference: 'bankafschrift 67890',
       refundReason: 'Dubbele betaling.',

@@ -15,6 +15,7 @@ export interface OrderReceipt {
   id: string;
   number: string;
   placedAt: string;
+  paymentInstructions: string | null;
 }
 
 export interface PlaceOrderRequest {

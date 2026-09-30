@@ -105,7 +105,11 @@ describe('Cart page', () => {
   function request() {
     return http.expectOne((r) => r.url === '/api/shop/cart/quote');
   }
-  function paymentReply(items = [{ code: 'payLater', name: 'Later betalen' }]) {
+  function paymentReply(
+    items: { code: string; name: string; instructions: string | null }[] = [
+      { code: 'payLater', name: 'Later betalen', instructions: 'Betaal binnen 14 dagen.' },
+    ],
+  ) {
     http.expectOne('/api/shop/payment-options').flush({ items });
   }
   function quote(amount = '12.50', quantity = 1, total = '12.50') {
@@ -135,9 +139,11 @@ describe('Cart page', () => {
       id: '30000000-0000-0000-0000-000000000001',
       number: 'MS-3000',
       placedAt: '2026-09-30T12:00:00Z',
+      paymentInstructions: 'Betaal binnen 14 dagen.',
     });
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.textContent).toContain('Je bestelnummer is MS-3000');
+    expect(harness.routeNativeElement!.textContent).toContain('Betaal binnen 14 dagen.');
   });
   it('adds the selected variant from the product page', async () => {
     const harness = await RouterTestingHarness.create(`/winkel/${productId}`);
@@ -168,8 +174,8 @@ describe('Cart page', () => {
     cart.add(productId, secondId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
     paymentReply([
-      { code: 'payLater', name: 'Later betalen' },
-      { code: 'online', name: 'Direct online betalen' },
+      { code: 'payLater', name: 'Later betalen', instructions: 'Betaal binnen 14 dagen.' },
+      { code: 'online', name: 'Direct online betalen', instructions: null },
     ]);
     const pending = request();
     expect(pending.request.method).toBe('GET');
@@ -193,6 +199,7 @@ describe('Cart page', () => {
     expect(page.totals()).toEqual(response.totals);
     expect(page.complete()).toBe(true);
     expect(page.selectedPayment()).toBe('payLater');
+    expect(harness.routeNativeElement!.textContent).toContain('Betaal binnen 14 dagen.');
     expect(harness.routeNativeElement!.textContent).toContain('9999999999999999,99');
     expect(harness.routeNativeElement!.textContent).toContain('USD 0,00');
     expect(harness.routeNativeElement!.querySelectorAll('input[type=radio]')).toHaveLength(2);
