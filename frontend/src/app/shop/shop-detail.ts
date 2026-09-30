@@ -1,3 +1,4 @@
+import { Cart } from './cart';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -86,6 +87,23 @@ import { readListQuery } from '../catalog/list-query';
               Prijs vernieuwen
             </button>
           </section>
+          <button
+            type="button"
+            [disabled]="
+              !selected() || prices()?.loading || prices()?.error || selectedPrice()?.amount == null
+            "
+            (click)="addToCart()"
+          >
+            In winkelmand
+          </button>
+          @if (cartMessage()) {
+            <p role="status">
+              {{ cartMessage() }} <a routerLink="/winkel/winkelmand">Naar winkelmand</a>
+            </p>
+          }
+          @if (cart.warning()) {
+            <p role="status">{{ cart.warning() }}</p>
+          }
           <p class="muted">Bestellen is nog niet beschikbaar.</p>
         </section>
       </div>
@@ -93,6 +111,21 @@ import { readListQuery } from '../catalog/list-query';
   `,
 })
 export class ShopDetail {
+  readonly cart = inject(Cart);
+  readonly cartMessage = signal('');
+  addToCart() {
+    const product = this.state()?.data;
+    const variant = this.selected();
+    if (
+      !product ||
+      !variant ||
+      this.prices()?.loading ||
+      this.prices()?.error ||
+      this.selectedPrice()?.amount == null
+    )
+      return;
+    this.cartMessage.set(this.cart.add(product.id, variant.id) || 'Toegevoegd aan je winkelmand.');
+  }
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
@@ -125,6 +158,7 @@ export class ShopDetail {
   constructor() {
     effect(() => {
       const product = this.state()?.data;
+      this.cartMessage.set('');
       this.selectedId.set(product?.variants[0]?.id ?? '');
     });
   }

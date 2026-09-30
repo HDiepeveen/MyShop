@@ -1,3 +1,4 @@
+import { Cart } from './shop/cart';
 import { Component, inject, signal } from '@angular/core';
 import { Auth } from './auth/auth';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -12,6 +13,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 })
 export class App {
   readonly auth = inject(Auth);
+  readonly cart = inject(Cart);
   private readonly router = inject(Router);
   readonly storefront = toSignal(
     this.router.events.pipe(

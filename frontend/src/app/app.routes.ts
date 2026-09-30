@@ -62,6 +62,11 @@ export const routes: Routes = [
         title: 'Assortiment · MyShop',
       },
       {
+        path: 'winkelmand',
+        loadComponent: () => import('./shop/shop-cart').then((m) => m.ShopCart),
+        title: 'Winkelmand · MyShop',
+      },
+      {
         path: ':id',
         loadComponent: () => import('./shop/shop-detail').then((m) => m.ShopDetail),
         title: 'Product · MyShop',

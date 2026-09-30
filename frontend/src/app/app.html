@@ -21,7 +21,10 @@
     <header class="topbar">
       @if (storefront()) {
         <a routerLink="/winkel" class="shop-brand">MyShop</a>
-        <nav aria-label="Winkelnavigatie"><a routerLink="/winkel">Assortiment</a></nav>
+        <nav aria-label="Winkelnavigatie" class="actions">
+          <a routerLink="/winkel">Assortiment</a
+          ><a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
+        </nav>
         <a routerLink="/inloggen">Beheer</a>
       } @else {
         <a routerLink="/winkel">Bekijk winkel</a>
