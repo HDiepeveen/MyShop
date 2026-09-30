@@ -1,10 +1,10 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { loadState } from '../catalog/load-state';
-import { OrderManagementApi } from './order-management.api';
+import { OrderManagementApi, OrderStatus } from './order-management.api';
 
 @Component({
   imports: [RouterLink, DatePipe, CurrencyPipe],
@@ -16,9 +16,21 @@ import { OrderManagementApi } from './order-management.api';
       </div>
     </div>
     <section class="panel">
-      <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
-        Overzicht verversen
-      </button>
+      <div class="actions">
+        <label
+          >Status
+          <select [value]="status() ?? ''" (change)="filterStatus($any($event.target).value)">
+            <option value="">Alle statussen</option>
+            <option value="awaitingPayment">Wacht op betaling</option>
+            <option value="paid">Betaald</option>
+            <option value="shipped">Verzonden</option>
+            <option value="cancelled">Geannuleerd</option>
+          </select>
+        </label>
+        <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
+          Overzicht verversen
+        </button>
+      </div>
       @if (state()?.loading) {
         <p class="loading" role="status">Bestellingen ophalen…</p>
       }
@@ -72,13 +84,21 @@ import { OrderManagementApi } from './order-management.api';
         } @else {
           <div class="empty">
             <h2>
-              {{ offset() > 0 ? 'Geen bestellingen op deze pagina' : 'Nog geen bestellingen' }}
+              {{
+                offset() > 0
+                  ? 'Geen bestellingen op deze pagina'
+                  : status()
+                    ? 'Geen bestellingen met deze status'
+                    : 'Nog geen bestellingen'
+              }}
             </h2>
             <p class="muted">
               {{
                 offset() > 0
                   ? 'Ga terug naar de eerste pagina.'
-                  : 'Nieuwe bestellingen verschijnen hier automatisch.'
+                  : status()
+                    ? 'Kies een andere status om meer bestellingen te bekijken.'
+                    : 'Nieuwe bestellingen verschijnen hier automatisch.'
               }}
             </p>
           </div>
@@ -111,18 +131,35 @@ export class OrderList {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
-  readonly offset = toSignal(
+  private readonly query = toSignal(
     this.route.queryParamMap.pipe(
-      map((params) => this.readOffset(params.get('offset'))),
-      distinctUntilChanged(),
+      map((params) => ({
+        offset: this.readOffset(params.get('offset')),
+        status: this.readStatus(params.get('status')),
+      })),
+      distinctUntilChanged(
+        (previous, current) =>
+          previous.offset === current.offset && previous.status === current.status,
+      ),
     ),
-    { initialValue: 0 },
+    { initialValue: { offset: 0, status: null as OrderStatus | null } },
   );
+  readonly offset = computed(() => this.query().offset);
+  readonly status = computed(() => this.query().status);
   readonly state = toSignal(
-    this.route.queryParamMap.pipe(
-      map((params) => this.readOffset(params.get('offset'))),
-      distinctUntilChanged(),
-      switchMap((offset) => this.refresh.pipe(switchMap(() => loadState(this.api.list(offset))))),
+    combineLatest([this.route.queryParamMap, this.refresh]).pipe(
+      map(([params, refresh]) => ({
+        offset: this.readOffset(params.get('offset')),
+        status: this.readStatus(params.get('status')),
+        refresh,
+      })),
+      distinctUntilChanged(
+        (previous, current) =>
+          previous.offset === current.offset &&
+          previous.status === current.status &&
+          previous.refresh === current.refresh,
+      ),
+      switchMap((query) => loadState(this.api.list(query.offset, query.status))),
     ),
   );
   changePage(delta: number) {
@@ -130,6 +167,15 @@ export class OrderList {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { offset: offset || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  filterStatus(value: string) {
+    const status = this.readStatus(value);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { status, offset: null },
+      queryParamsHandling: 'merge',
     });
   }
   retry() {
@@ -149,5 +195,13 @@ export class OrderList {
   private readOffset(value: string | null) {
     const offset = Number(value);
     return Number.isSafeInteger(offset) && offset >= 0 && offset % 20 === 0 ? offset : 0;
+  }
+  private readStatus(value: string | null): OrderStatus | null {
+    return value === 'awaitingPayment' ||
+      value === 'paid' ||
+      value === 'shipped' ||
+      value === 'cancelled'
+      ? value
+      : null;
   }
 }

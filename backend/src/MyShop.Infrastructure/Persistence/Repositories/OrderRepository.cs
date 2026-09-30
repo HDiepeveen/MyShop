@@ -71,10 +71,14 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
         return new(order.Id, order.Number, order.PlacedAt);
     }
 
-    public async Task<OrderListPage> ListAsync(int offset, int limit, CancellationToken cancellationToken)
+    public async Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status,
+        CancellationToken cancellationToken)
     {
-        var totalCount = await context.Orders.AsNoTracking().CountAsync(cancellationToken);
-        var rows = await context.Orders.AsNoTracking()
+        var query = context.Orders.AsNoTracking();
+        if (status is not null)
+            query = query.Where(order => order.Status == (int)status.Value);
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query
             .OrderByDescending(order => order.PlacedAt)
             .ThenByDescending(order => order.Id)
             .Skip(offset)

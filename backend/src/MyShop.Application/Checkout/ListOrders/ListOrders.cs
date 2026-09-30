@@ -1,8 +1,12 @@
 using MyShop.Application.Checkout.Abstractions;
+using MyShop.Domain.Checkout;
 
 namespace MyShop.Application.Checkout.ListOrders;
 
-public sealed record ListOrdersQuery(int Offset = 0, int Limit = ListOrders.DefaultLimit);
+public sealed record ListOrdersQuery(
+    int Offset = 0,
+    int Limit = ListOrders.DefaultLimit,
+    OrderStatus? Status = null);
 
 public sealed class ListOrders
 {
@@ -23,6 +27,8 @@ public sealed class ListOrders
             throw new ArgumentOutOfRangeException(nameof(query.Offset), "Offset must not be negative.");
         if (query.Limit is < 1 or > MaximumLimit)
             throw new ArgumentOutOfRangeException(nameof(query.Limit), $"Limit must be between 1 and {MaximumLimit}.");
-        return await _orders.ListAsync(query.Offset, query.Limit, cancellationToken);
+        if (query.Status is not null && !Enum.IsDefined(query.Status.Value))
+            throw new ArgumentOutOfRangeException(nameof(query.Status), "Status is not supported.");
+        return await _orders.ListAsync(query.Offset, query.Limit, query.Status, cancellationToken);
     }
 }

@@ -50,17 +50,45 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Ada Lovelace');
     expect(fixture.nativeElement.textContent).toContain('Wacht op betaling');
 
-    vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(async () => {
-      query.next(convertToParamMap({ offset: '20' }));
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(async (_commands, options) => {
+      const next: Record<string, string> = {};
+      for (const key of query.value.keys) {
+        const value = query.value.get(key);
+        if (value !== null) next[key] = value;
+      }
+      for (const [key, value] of Object.entries(options?.queryParams ?? {})) {
+        if (value === null || value === undefined) delete next[key];
+        else next[key] = String(value);
+      }
+      query.next(convertToParamMap(next));
       return true;
     });
+
+    fixture.componentInstance.filterStatus('awaitingPayment');
+    http
+      .expectOne(
+        (request) =>
+          request.params.get('offset') === '0' &&
+          request.params.get('status') === 'awaitingPayment',
+      )
+      .flush({ items: [summary], offset: 0, limit: 20, totalCount: 21 });
+    expect(fixture.componentInstance.status()).toBe('awaitingPayment');
+
     fixture.componentInstance.changePage(20);
     http
-      .expectOne((request) => request.params.get('offset') === '20')
+      .expectOne(
+        (request) =>
+          request.params.get('offset') === '20' &&
+          request.params.get('status') === 'awaitingPayment',
+      )
       .flush({}, { status: 503, statusText: 'Unavailable' });
     fixture.componentInstance.retry();
     http
-      .expectOne((request) => request.params.get('offset') === '20')
+      .expectOne(
+        (request) =>
+          request.params.get('offset') === '20' &&
+          request.params.get('status') === 'awaitingPayment',
+      )
       .flush({ items: [], offset: 20, limit: 20, totalCount: 21 });
     expect(fixture.componentInstance.offset()).toBe(20);
   });

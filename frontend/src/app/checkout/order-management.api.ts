@@ -18,6 +18,7 @@ export interface OrderSummary {
   cancellationReason: string | null;
   totals: readonly OrderTotal[];
 }
+export type OrderStatus = OrderSummary['status'];
 export interface OrderListPage {
   items: readonly OrderSummary[];
   offset: number;
@@ -53,9 +54,11 @@ export interface OrderDetail {
 @Injectable({ providedIn: 'root' })
 export class OrderManagementApi {
   private readonly http = inject(HttpClient);
-  list(offset: number) {
+  list(offset: number, status: OrderStatus | null = null) {
+    let params = new HttpParams().set('offset', offset).set('limit', 20);
+    if (status) params = params.set('status', status);
     return this.http.get<OrderListPage>('/api/orders', {
-      params: new HttpParams().set('offset', offset).set('limit', 20),
+      params,
     });
   }
   get(id: string) {

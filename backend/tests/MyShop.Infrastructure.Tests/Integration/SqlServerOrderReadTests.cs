@@ -21,7 +21,7 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
 
         await using var readContext = database.CreateContext();
         var repository = new OrderRepository(readContext);
-        var page = await repository.ListAsync(0, 100, CancellationToken.None);
+        var page = await repository.ListAsync(0, 100, null, CancellationToken.None);
         var olderIndex = page.Items.ToList().FindIndex(item => item.Id == older.Id);
         var newerIndex = page.Items.ToList().FindIndex(item => item.Id == newer.Id);
         Assert.True(newerIndex >= 0 && olderIndex > newerIndex);
@@ -70,6 +70,15 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.Equal(cancelledAt.ToUniversalTime(), cancelled.CancelledAt);
         Assert.Equal("Klant ziet af van bestelling.", cancelled.CancellationReason);
         Assert.Equal(cancelledRevision.Value, cancelled.Revision);
+
+        var shippedPage = await repository.ListAsync(0, 100, OrderStatus.Shipped,
+            CancellationToken.None);
+        Assert.Equal(1, shippedPage.TotalCount);
+        Assert.Equal(newer.Id, Assert.Single(shippedPage.Items).Id);
+        var cancelledPage = await repository.ListAsync(0, 100, OrderStatus.Cancelled,
+            CancellationToken.None);
+        Assert.Equal(1, cancelledPage.TotalCount);
+        Assert.Equal(older.Id, Assert.Single(cancelledPage.Items).Id);
         Assert.Null(await repository.GetAsync(Guid.NewGuid(), CancellationToken.None));
     }
 

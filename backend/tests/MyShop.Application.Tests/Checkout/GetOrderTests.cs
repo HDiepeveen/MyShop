@@ -1,5 +1,6 @@
 using MyShop.Application.Checkout.Abstractions;
 using MyShop.Application.Checkout.GetOrder;
+using MyShop.Domain.Checkout;
 
 namespace MyShop.Application.Tests.Checkout;
 
@@ -34,6 +35,7 @@ public sealed class GetOrderTests
         {
             Calls++; Id = id; Token = cancellationToken; return Task.FromResult<OrderDetail?>(null);
         }
-        public Task<OrderListPage> ListAsync(int offset, int limit, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

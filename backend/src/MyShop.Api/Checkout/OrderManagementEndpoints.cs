@@ -26,6 +26,7 @@ public static class OrderManagementEndpoints
     public static async Task<Results<Ok<OrderListResponse>, BadRequest<ProblemDetails>>> ListAsync(
         [FromQuery] int? offset,
         [FromQuery] int? limit,
+        [FromQuery] string? status,
         [FromServices] ListUseCase useCase,
         CancellationToken cancellationToken)
     {
@@ -34,8 +35,17 @@ public static class OrderManagementEndpoints
         var effectiveLimit = limit ?? ListUseCase.DefaultLimit;
         try
         {
+            OrderStatus? statusFilter = status switch
+            {
+                null or "" => null,
+                "awaitingPayment" => OrderStatus.AwaitingPayment,
+                "paid" => OrderStatus.Paid,
+                "shipped" => OrderStatus.Shipped,
+                "cancelled" => OrderStatus.Cancelled,
+                _ => throw new ArgumentOutOfRangeException(nameof(status), "Status is not supported.")
+            };
             var page = await useCase.ExecuteAsync(
-                new ListOrdersQuery(effectiveOffset, effectiveLimit), cancellationToken);
+                new ListOrdersQuery(effectiveOffset, effectiveLimit, statusFilter), cancellationToken);
             return TypedResults.Ok(new OrderListResponse(
                 page.Items.Select(MapSummary).ToArray(),
                 effectiveOffset,
@@ -46,7 +56,7 @@ public static class OrderManagementEndpoints
         {
             return TypedResults.BadRequest(new ProblemDetails
             {
-                Title = "Invalid order paging",
+                Title = "Invalid order query",
                 Detail = exception.Message
             });
         }
