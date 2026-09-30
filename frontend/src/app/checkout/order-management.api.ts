@@ -54,9 +54,10 @@ export interface OrderDetail {
 @Injectable({ providedIn: 'root' })
 export class OrderManagementApi {
   private readonly http = inject(HttpClient);
-  list(offset: number, status: OrderStatus | null = null) {
+  list(offset: number, status: OrderStatus | null = null, search = '') {
     let params = new HttpParams().set('offset', offset).set('limit', 20);
     if (status) params = params.set('status', status);
+    if (search) params = params.set('search', search.trim());
     return this.http.get<OrderListPage>('/api/orders', {
       params,
     });

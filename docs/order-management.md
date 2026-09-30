@@ -4,12 +4,14 @@ Administrators can open **Bestellingen** to see orders placed through the public
 
 The management endpoints are protected by the same administrator policy as catalog management:
 
-- `GET /api/orders?offset=0&limit=20&status=awaitingPayment`
+- `GET /api/orders?offset=0&limit=20&status=awaitingPayment&search=MS-2026`
 - `GET /api/orders/{id}`
 
 Amounts are returned as two-decimal strings, together with their currency. Payment methods and statuses use stable API names (`payLater`, `awaitingPayment`, `paid`, `shipped` and `cancelled`).
 
 The overview can be filtered by one status. Omitting `status` returns all orders. The filtered total controls paging, and an unsupported status returns 400.
+
+The optional trimmed `search` value matches part of the order number, customer name or e-mail address and can be combined with the status filter. It has a maximum length of 200 characters. The management screen keeps both values while paging and when opening an order.
 
 An administrator can mark an order awaiting payment as paid and then mark a paid order as shipped from its detail page. An order that still awaits payment can instead be cancelled with a required reason of at most 500 characters. Paid and shipped orders cannot be cancelled because refund handling is not yet available.
 

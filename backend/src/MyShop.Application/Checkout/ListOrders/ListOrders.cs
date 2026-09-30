@@ -6,7 +6,8 @@ namespace MyShop.Application.Checkout.ListOrders;
 public sealed record ListOrdersQuery(
     int Offset = 0,
     int Limit = ListOrders.DefaultLimit,
-    OrderStatus? Status = null);
+    OrderStatus? Status = null,
+    string? Search = null);
 
 public sealed class ListOrders
 {
@@ -29,6 +30,10 @@ public sealed class ListOrders
             throw new ArgumentOutOfRangeException(nameof(query.Limit), $"Limit must be between 1 and {MaximumLimit}.");
         if (query.Status is not null && !Enum.IsDefined(query.Status.Value))
             throw new ArgumentOutOfRangeException(nameof(query.Status), "Status is not supported.");
-        return await _orders.ListAsync(query.Offset, query.Limit, query.Status, cancellationToken);
+        var search = query.Search?.Trim();
+        if (search?.Length > 200)
+            throw new ArgumentException("Search must not exceed 200 characters.", nameof(query.Search));
+        return await _orders.ListAsync(query.Offset, query.Limit, query.Status,
+            string.IsNullOrEmpty(search) ? null : search, cancellationToken);
     }
 }

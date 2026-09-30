@@ -21,7 +21,7 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
 
         await using var readContext = database.CreateContext();
         var repository = new OrderRepository(readContext);
-        var page = await repository.ListAsync(0, 100, null, CancellationToken.None);
+        var page = await repository.ListAsync(0, 100, null, null, CancellationToken.None);
         var olderIndex = page.Items.ToList().FindIndex(item => item.Id == older.Id);
         var newerIndex = page.Items.ToList().FindIndex(item => item.Id == newer.Id);
         Assert.True(newerIndex >= 0 && olderIndex > newerIndex);
@@ -71,14 +71,20 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.Equal("Klant ziet af van bestelling.", cancelled.CancellationReason);
         Assert.Equal(cancelledRevision.Value, cancelled.Revision);
 
-        var shippedPage = await repository.ListAsync(0, 100, OrderStatus.Shipped,
+        var shippedPage = await repository.ListAsync(0, 100, OrderStatus.Shipped, "Second",
             CancellationToken.None);
         Assert.Equal(1, shippedPage.TotalCount);
         Assert.Equal(newer.Id, Assert.Single(shippedPage.Items).Id);
-        var cancelledPage = await repository.ListAsync(0, 100, OrderStatus.Cancelled,
+        var cancelledPage = await repository.ListAsync(0, 100, OrderStatus.Cancelled, null,
             CancellationToken.None);
         Assert.Equal(1, cancelledPage.TotalCount);
         Assert.Equal(older.Id, Assert.Single(cancelledPage.Items).Id);
+        Assert.Equal(1, (await repository.ListAsync(0, 100, null, newer.Number,
+            CancellationToken.None)).TotalCount);
+        var emailPage = await repository.ListAsync(0, 100, null, "customer@example.test",
+            CancellationToken.None);
+        Assert.Contains(emailPage.Items, item => item.Id == older.Id);
+        Assert.Contains(emailPage.Items, item => item.Id == newer.Id);
         Assert.Null(await repository.GetAsync(Guid.NewGuid(), CancellationToken.None));
     }
 

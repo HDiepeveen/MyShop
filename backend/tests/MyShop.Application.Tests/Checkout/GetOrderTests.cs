@@ -35,7 +35,7 @@ public sealed class GetOrderTests
         {
             Calls++; Id = id; Token = cancellationToken; return Task.FromResult<OrderDetail?>(null);
         }
-        public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status,
+        public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,
             CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

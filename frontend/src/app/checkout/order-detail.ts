@@ -9,7 +9,9 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
 
 @Component({
   imports: [RouterLink, DatePipe, CurrencyPipe],
-  template: ` <a class="back" routerLink="/bestellingen">← Terug naar bestellingen</a>
+  template: ` <a class="back" routerLink="/bestellingen" queryParamsHandling="preserve"
+      >← Terug naar bestellingen</a
+    >
     @if (state()?.loading) {
       <p class="loading" role="status">Bestelling ophalen…</p>
     }

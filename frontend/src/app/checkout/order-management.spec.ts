@@ -74,12 +74,25 @@ describe('Order management', () => {
       .flush({ items: [summary], offset: 0, limit: 20, totalCount: 21 });
     expect(fixture.componentInstance.status()).toBe('awaitingPayment');
 
+    fixture.componentInstance.searchText = '  Ada  ';
+    fixture.componentInstance.applySearch();
+    http
+      .expectOne(
+        (request) =>
+          request.params.get('offset') === '0' &&
+          request.params.get('status') === 'awaitingPayment' &&
+          request.params.get('search') === 'Ada',
+      )
+      .flush({ items: [summary], offset: 0, limit: 20, totalCount: 21 });
+    expect(fixture.componentInstance.listQuery().search).toBe('Ada');
+
     fixture.componentInstance.changePage(20);
     http
       .expectOne(
         (request) =>
           request.params.get('offset') === '20' &&
-          request.params.get('status') === 'awaitingPayment',
+          request.params.get('status') === 'awaitingPayment' &&
+          request.params.get('search') === 'Ada',
       )
       .flush({}, { status: 503, statusText: 'Unavailable' });
     fixture.componentInstance.retry();
@@ -87,7 +100,8 @@ describe('Order management', () => {
       .expectOne(
         (request) =>
           request.params.get('offset') === '20' &&
-          request.params.get('status') === 'awaitingPayment',
+          request.params.get('status') === 'awaitingPayment' &&
+          request.params.get('search') === 'Ada',
       )
       .flush({ items: [], offset: 20, limit: 20, totalCount: 21 });
     expect(fixture.componentInstance.offset()).toBe(20);

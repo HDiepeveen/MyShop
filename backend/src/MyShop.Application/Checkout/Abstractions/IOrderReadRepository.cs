@@ -4,7 +4,7 @@ namespace MyShop.Application.Checkout.Abstractions;
 
 public interface IOrderReadRepository
 {
-    Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status,
+    Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,
         CancellationToken cancellationToken);
     Task<OrderDetail?> GetAsync(Guid id, CancellationToken cancellationToken);
 }

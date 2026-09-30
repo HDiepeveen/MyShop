@@ -15,10 +15,11 @@ public sealed class ListOrdersTests
         var useCase = new UseCase(repository);
         using var source = new CancellationTokenSource();
         var result = await useCase.ExecuteAsync(
-            new ListOrdersQuery(5, 10, OrderStatus.Paid), source.Token);
+            new ListOrdersQuery(5, 10, OrderStatus.Paid, "  Ada  "), source.Token);
         Assert.Same(expected, result);
         Assert.Equal((5, 10, OrderStatus.Paid, source.Token),
             (repository.Offset, repository.Limit, repository.Status, repository.Token));
+        Assert.Equal("Ada", repository.Search);
     }
 
     [Theory]
@@ -53,17 +54,29 @@ public sealed class ListOrdersTests
         Assert.Equal(0, repository.Calls);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_RejectsSearchLongerThanMaximumBeforeRepositoryAccess()
+    {
+        var repository = new Fake(new([], 0));
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new UseCase(repository).ExecuteAsync(
+                new(Search: new string('x', 201)), CancellationToken.None));
+        Assert.Equal(0, repository.Calls);
+    }
+
     private sealed class Fake(OrderListPage page) : IOrderReadRepository
     {
         public int Calls { get; private set; }
         public int Offset { get; private set; }
         public int Limit { get; private set; }
         public OrderStatus? Status { get; private set; }
+        public string? Search { get; private set; }
         public CancellationToken Token { get; private set; }
-        public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status,
+        public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,
             CancellationToken cancellationToken)
         {
-            Calls++; Offset = offset; Limit = limit; Status = status; Token = cancellationToken;
+            Calls++; Offset = offset; Limit = limit; Status = status; Search = search;
+            Token = cancellationToken;
             return Task.FromResult(page);
         }
         public Task<OrderDetail?> GetAsync(Guid id, CancellationToken cancellationToken) => throw new NotSupportedException();

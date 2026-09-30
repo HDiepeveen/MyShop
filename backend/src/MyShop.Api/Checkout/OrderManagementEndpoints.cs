@@ -27,6 +27,7 @@ public static class OrderManagementEndpoints
         [FromQuery] int? offset,
         [FromQuery] int? limit,
         [FromQuery] string? status,
+        [FromQuery] string? search,
         [FromServices] ListUseCase useCase,
         CancellationToken cancellationToken)
     {
@@ -45,14 +46,14 @@ public static class OrderManagementEndpoints
                 _ => throw new ArgumentOutOfRangeException(nameof(status), "Status is not supported.")
             };
             var page = await useCase.ExecuteAsync(
-                new ListOrdersQuery(effectiveOffset, effectiveLimit, statusFilter), cancellationToken);
+                new ListOrdersQuery(effectiveOffset, effectiveLimit, statusFilter, search), cancellationToken);
             return TypedResults.Ok(new OrderListResponse(
                 page.Items.Select(MapSummary).ToArray(),
                 effectiveOffset,
                 effectiveLimit,
                 page.TotalCount));
         }
-        catch (ArgumentOutOfRangeException exception)
+        catch (ArgumentException exception)
         {
             return TypedResults.BadRequest(new ProblemDetails
             {

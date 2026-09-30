@@ -35,7 +35,7 @@ public sealed class OrderManagementEndpointsTests
             OrderPaymentMethod.PayLater, OrderStatus.AwaitingPayment, null, null,
             null, null, [new("EUR", 12.5m)]);
         var repository = new Fake(new([item], 21), null);
-        var result = await OrderManagementEndpoints.ListAsync(5, 10, "paid",
+        var result = await OrderManagementEndpoints.ListAsync(5, 10, "paid", "  Ada  ",
             new ListUseCase(repository), CancellationToken.None);
         var response = Assert.IsType<Ok<OrderListResponse>>(result.Result).Value!;
         Assert.Equal((5, 10, 21), (response.Offset, response.Limit, response.TotalCount));
@@ -44,14 +44,25 @@ public sealed class OrderManagementEndpointsTests
         Assert.Equal("awaitingPayment", mapped.Status);
         Assert.Equal("12.50", Assert.Single(mapped.Totals).Amount);
         Assert.Equal(OrderStatus.Paid, repository.ListStatus);
+        Assert.Equal("Ada", repository.ListSearch);
     }
 
     [Fact]
     public async Task ListAsync_RejectsUnsupportedStatusWithoutReading()
     {
         var repository = new Fake(new([], 0), null);
-        var result = await OrderManagementEndpoints.ListAsync(0, 20, "refunded",
+        var result = await OrderManagementEndpoints.ListAsync(0, 20, "refunded", null,
             new ListUseCase(repository), CancellationToken.None);
+        Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
+        Assert.Equal(0, repository.ListCalls);
+    }
+
+    [Fact]
+    public async Task ListAsync_RejectsOverlongSearchWithoutReading()
+    {
+        var repository = new Fake(new([], 0), null);
+        var result = await OrderManagementEndpoints.ListAsync(0, 20, null,
+            new string('x', 201), new ListUseCase(repository), CancellationToken.None);
         Assert.IsType<BadRequest<ProblemDetails>>(result.Result);
         Assert.Equal(0, repository.ListCalls);
     }
@@ -147,11 +158,12 @@ public sealed class OrderManagementEndpointsTests
         public int WriteCalls { get; private set; }
         public int ListCalls { get; private set; }
         public OrderStatus? ListStatus { get; private set; }
+        public string? ListSearch { get; private set; }
         public string? Reason { get; private set; }
-        public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status,
+        public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,
             CancellationToken cancellationToken)
         {
-            ListCalls++; ListStatus = status; return Task.FromResult(page);
+            ListCalls++; ListStatus = status; ListSearch = search; return Task.FromResult(page);
         }
         public Task<OrderDetail?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(detail);
         public Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken) =>

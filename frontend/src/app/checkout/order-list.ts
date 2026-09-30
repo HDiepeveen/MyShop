@@ -1,13 +1,14 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, combineLatest, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { loadState } from '../catalog/load-state';
 import { OrderManagementApi, OrderStatus } from './order-management.api';
 
 @Component({
-  imports: [RouterLink, DatePipe, CurrencyPipe],
+  imports: [RouterLink, DatePipe, CurrencyPipe, FormsModule],
   template: ` <div class="eyebrow">Verkoop</div>
     <div class="page-head">
       <div>
@@ -16,6 +17,19 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
       </div>
     </div>
     <section class="panel">
+      <form class="toolbar" (ngSubmit)="applySearch()">
+        <label
+          >Zoek bestelling<input
+            name="search"
+            [(ngModel)]="searchText"
+            maxlength="200"
+            placeholder="Bestelnummer, klantnaam of e-mailadres"
+            type="search" /></label
+        ><button type="submit" class="secondary">Zoeken</button>
+        @if (listQuery().search) {
+          <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
+        }
+      </form>
       <div class="actions">
         <label
           >Status
@@ -57,7 +71,11 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
                 @for (order of page.items; track order.id) {
                   <tr>
                     <td>
-                      <a [routerLink]="['/bestellingen', order.id]">{{ order.number }}</a>
+                      <a
+                        [routerLink]="['/bestellingen', order.id]"
+                        queryParamsHandling="preserve"
+                        >{{ order.number }}</a
+                      >
                     </td>
                     <td class="nowrap">{{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }}</td>
                     <td>{{ order.customerName }}</td>
@@ -72,6 +90,7 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
                     <td>
                       <a
                         [routerLink]="['/bestellingen', order.id]"
+                        queryParamsHandling="preserve"
                         [attr.aria-label]="order.number + ' bekijken'"
                         >Details →</a
                       >
@@ -87,8 +106,8 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
               {{
                 offset() > 0
                   ? 'Geen bestellingen op deze pagina'
-                  : status()
-                    ? 'Geen bestellingen met deze status'
+                  : status() || listQuery().search
+                    ? 'Geen bestellingen gevonden'
                     : 'Nog geen bestellingen'
               }}
             </h2>
@@ -96,8 +115,8 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
               {{
                 offset() > 0
                   ? 'Ga terug naar de eerste pagina.'
-                  : status()
-                    ? 'Kies een andere status om meer bestellingen te bekijken.'
+                  : status() || listQuery().search
+                    ? 'Pas de zoekterm of status aan om meer bestellingen te bekijken.'
                     : 'Nieuwe bestellingen verschijnen hier automatisch.'
               }}
             </p>
@@ -131,37 +150,48 @@ export class OrderList {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
-  private readonly query = toSignal(
+  readonly listQuery = signal({ offset: 0, status: null as OrderStatus | null, search: '' });
+  readonly offset = computed(() => this.listQuery().offset);
+  readonly status = computed(() => this.listQuery().status);
+  searchText = '';
+  readonly state = toSignal(
     this.route.queryParamMap.pipe(
       map((params) => ({
         offset: this.readOffset(params.get('offset')),
         status: this.readStatus(params.get('status')),
-      })),
-      distinctUntilChanged(
-        (previous, current) =>
-          previous.offset === current.offset && previous.status === current.status,
-      ),
-    ),
-    { initialValue: { offset: 0, status: null as OrderStatus | null } },
-  );
-  readonly offset = computed(() => this.query().offset);
-  readonly status = computed(() => this.query().status);
-  readonly state = toSignal(
-    combineLatest([this.route.queryParamMap, this.refresh]).pipe(
-      map(([params, refresh]) => ({
-        offset: this.readOffset(params.get('offset')),
-        status: this.readStatus(params.get('status')),
-        refresh,
+        search: (params.get('search') ?? '').trim(),
       })),
       distinctUntilChanged(
         (previous, current) =>
           previous.offset === current.offset &&
           previous.status === current.status &&
-          previous.refresh === current.refresh,
+          previous.search === current.search,
       ),
-      switchMap((query) => loadState(this.api.list(query.offset, query.status))),
+      switchMap((query) => {
+        if (query.search !== this.listQuery().search) this.searchText = query.search;
+        this.listQuery.set(query);
+        return this.refresh.pipe(
+          switchMap(() => loadState(this.api.list(query.offset, query.status, query.search))),
+        );
+      }),
     ),
   );
+  applySearch() {
+    const search = this.searchText.trim();
+    if (search === this.listQuery().search && this.offset() === 0) {
+      this.retry();
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: search || null, offset: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  clearSearch() {
+    this.searchText = '';
+    this.applySearch();
+  }
   changePage(delta: number) {
     const offset = Math.max(0, this.offset() + delta);
     void this.router.navigate([], {
