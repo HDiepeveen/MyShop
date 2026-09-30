@@ -45,6 +45,8 @@ describe('Cart storage', () => {
     expect(JSON.parse(localStorage.getItem(key)!)).toEqual(cart.lines());
     cart.remove(cart.lines()[0]);
     expect(new Cart().lines()).toEqual([{ ...line, variantId: secondId }]);
+    cart.clear();
+    expect(new Cart().lines()).toEqual([]);
   });
   it('validates quantities and capacity without changing the cart on failure', () => {
     const cart = new Cart();
@@ -129,6 +131,13 @@ describe('Cart page', () => {
     paymentReply();
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.textContent).toContain('Je winkelmand is leeg');
+    (harness.routeDebugElement!.componentInstance as ShopCart).orderPlaced({
+      id: '30000000-0000-0000-0000-000000000001',
+      number: 'MS-3000',
+      placedAt: '2026-09-30T12:00:00Z',
+    });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.textContent).toContain('Je bestelnummer is MS-3000');
   });
   it('adds the selected variant from the product page', async () => {
     const harness = await RouterTestingHarness.create(`/winkel/${productId}`);

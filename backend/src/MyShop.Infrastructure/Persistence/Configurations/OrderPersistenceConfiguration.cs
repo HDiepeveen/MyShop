@@ -1,0 +1,28 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using MyShop.Infrastructure.Persistence.Models;
+
+namespace MyShop.Infrastructure.Persistence.Configurations;
+
+internal sealed class OrderPersistenceConfiguration : IEntityTypeConfiguration<OrderPersistence>
+{
+    public void Configure(EntityTypeBuilder<OrderPersistence> builder)
+    {
+        builder.ToTable("Orders");
+        builder.HasKey(order => order.Id);
+        builder.Property(order => order.Id).ValueGeneratedNever();
+        builder.Property(order => order.CheckoutToken).IsRequired().ValueGeneratedNever();
+        builder.Property(order => order.Number).IsRequired().HasMaxLength(40);
+        builder.Property(order => order.PlacedAt).IsRequired();
+        builder.Property(order => order.CustomerName).IsRequired().HasMaxLength(200);
+        builder.Property(order => order.Email).IsRequired().HasMaxLength(320);
+        builder.Property(order => order.AddressLine).IsRequired().HasMaxLength(200);
+        builder.Property(order => order.PostalCode).IsRequired().HasMaxLength(32);
+        builder.Property(order => order.City).IsRequired().HasMaxLength(100);
+        builder.Property(order => order.CountryCode).IsRequired().HasMaxLength(2).IsFixedLength();
+        builder.Property(order => order.PaymentMethod).IsRequired().HasColumnType("int");
+        builder.Property(order => order.Status).IsRequired().HasColumnType("int");
+        builder.HasIndex(order => order.CheckoutToken).IsUnique();
+        builder.HasIndex(order => order.Number).IsUnique();
+    }
+}

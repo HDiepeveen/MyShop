@@ -4,9 +4,9 @@ De openbare winkel staat op `/winkel`. Bezoekers kunnen zonder account zoeken op
 
 Alleen gepubliceerde producten zijn zichtbaar. Ook een rechtstreekse detailaanvraag voor een concept retourneert 404. Intrekken van publicatie wordt bij de volgende aanvraag verwerkt. Een al geopende pagina wordt niet automatisch bijgewerkt.
 
-De openbare GET-routes zijn `/api/shop/products`, `/api/shop/products/{productId}`, `/api/shop/products/{productId}/prices` en `/api/shop/cart/quote`. De lijst accepteert offset (vanaf nul), limit (1–100, standaard 20) en search (maximaal 200 tekens na trimmen). Sortering is op naam en daarna ID. De detailrespons bevat uitsluitend ID, naam, beschrijving, afbeelding met alternatieve tekst en varianten met ID en naam. Beheerinformatie, basisprijzen en interne kenmerken worden niet gedeeld. Bestaande beheerroutes blijven beveiligd.
+De openbare leesroutes zijn `/api/shop/products`, `/api/shop/products/{productId}`, `/api/shop/products/{productId}/prices`, `/api/shop/cart/quote` en `/api/shop/payment-options`. De lijst accepteert offset (vanaf nul), limit (1–100, standaard 20) en search (maximaal 200 tekens na trimmen). Sortering is op naam en daarna ID. De detailrespons bevat uitsluitend ID, naam, beschrijving, afbeelding met alternatieve tekst en varianten met ID en naam. Beheerinformatie, basisprijzen en interne kenmerken worden niet gedeeld. Bestaande beheerroutes blijven beveiligd.
 
-Er is geen nieuwe databasemigratie nodig. Publiceer producten via het bestaande beheer. Voorraad, bestellen en betalen vallen buiten dit onderdeel; de pagina vermeldt dat bestellen nog niet beschikbaar is.
+Publiceer producten en beheer de betaalopties via het beveiligde beheer. Voorraad en online betalen volgen in afzonderlijke onderdelen.
 
 ## Actuele variantprijzen
 
@@ -23,9 +23,17 @@ De winkelmand bewaart alleen product-ID, variant-ID en aantal in browseropslag (
 
 Bij openen, wijzigen en **Winkelmand vernieuwen** wordt de hele winkelmand in één aanvraag op de server gecontroleerd. Elk product wordt daar één keer geladen; alle regels gebruiken hetzelfde servermoment voor de bestaande kortingsberekening. Alleen gepubliceerde, bestaande varianten met een prijs tellen mee. Bij een ontbrekend artikel of prijs verschijnt geen subtotaal; de gebruiker kan de regel verwijderen. Bij een netwerkfout verdwijnen alle oude bedragen totdat een nieuwe controle slaagt. Achterhaalde aanvragen worden afgebroken.
 
-Regelbedragen en subtotalen worden op de server met decimalen berekend. De API levert bedragen als decimale tekst met twee cijfers achter de punt; de browser toont die met een decimale komma zonder opnieuw te rekenen. Zo blijven ook bedragen boven de veilige JavaScript-getalgrens exact. Elke valuta krijgt een eigen subtotaal; valuta worden nooit opgeteld of omgerekend. Nulprijzen blijven geldig. Deze subtotalen zijn een momentopname: bij toekomstige checkout moeten prijzen en totalen opnieuw op de server worden vastgesteld. Er worden nog geen verzendkosten berekend, bestellingen geplaatst, betalingen uitgevoerd of voorraden gereserveerd.
+Regelbedragen en subtotalen worden op de server met decimalen berekend. De API levert bedragen als decimale tekst met twee cijfers achter de punt; de browser toont die met een decimale komma zonder opnieuw te rekenen. Zo blijven ook bedragen boven de veilige JavaScript-getalgrens exact. Elke valuta krijgt een eigen subtotaal; valuta worden nooit opgeteld of omgerekend. Nulprijzen blijven geldig. Er worden nog geen verzendkosten berekend of voorraden gereserveerd.
 ### Servercontrole van de winkelmand
 
 `GET /api/shop/cart/quote` accepteert herhaalde `lines`-parameters in de vorm `productId:variantId:quantity`, bijvoorbeeld `?lines=PRODUCT-GUID:VARIANT-GUID:3`. Er worden alleen identifiers en aantallen geaccepteerd als berekeningsinvoer; het rekentijdstip en bedragen komen van de server. De route is anoniem, alleen-lezen en geeft `Cache-Control: no-store` terug. Er is geen nieuwe opslag of migratie.
 
 Maximaal twintig unieke product/variant-combinaties zijn toegestaan, met aantallen 1–99 en niet-lege GUIDs. Ongeldige invoer geeft 400 voordat er producten worden gelezen. Een lege aanvraag geeft een lege winkelmand terug. De respons bevat `at`, `lines` en `totals`. Per regel komen de identifiers, het aantal, openbare namen, `amount`, `currency`, `total` en `failure` terug. `failure` is null, `unavailable` of `priceMissing`. Bij een niet-gepubliceerd product of ontbrekende variant worden ook de namen weggelaten. Zodra een regel niet berekend kan worden, zijn de subtotalen leeg. Geldige regels blijven zichtbaar zodat de bezoeker de winkelmand kan herstellen.
+
+## Bestellen met later betalen
+
+Wanneer **later betalen** in het beheer beschikbaar is, kan een gast naam, e-mailadres en afleveradres invullen en de bestelling plaatsen. De browser stuurt alleen de gekozen betaalcode, klantinvoer, artikelidentiteiten, aantallen en de zojuist getoonde prijzen naar `POST /api/shop/orders`. Deze openbare schrijfactie vereist een antiforgerytoken.
+
+De server controleert de betaaloptie en berekent alle regels opnieuw op één actueel tijdstip. Een verdwenen product, ontbrekende prijs of prijswijziging geeft een conflict; de klant moet dan eerst de winkelmand vernieuwen. Een clientprijs bepaalt nooit het bestelbedrag. Na een geslaagde controle worden klantgegevens, afleveradres, product- en variantnamen, eenheidsprijzen, regelbedragen en totalen als onveranderlijke bestelsnapshot opgeslagen. De winkelmand wordt geleegd en de klant ziet het bestelnummer.
+
+Iedere poging gebruikt een willekeurig checkouttoken. Opnieuw verzenden met hetzelfde token retourneert dezelfde bestelling en maakt geen duplicaat. De initiële status is `AwaitingPayment` en de betaalmethode is `PayLater`. Verzending, voorraadreservering, betaalinstructies per e-mail, beheer van bestellingen en online providerbetalingen vallen buiten deze slice.

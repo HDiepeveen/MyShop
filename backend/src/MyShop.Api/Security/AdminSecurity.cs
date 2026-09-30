@@ -52,6 +52,9 @@ public static class AdminSecurity
             options.AddPolicy("admin-login", context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
                 { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            options.AddPolicy("storefront-order", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+                { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
         });
         return services;
     }

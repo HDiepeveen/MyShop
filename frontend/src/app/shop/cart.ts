@@ -69,6 +69,9 @@ export class Cart {
   remove(line: CartLine) {
     this.save(this.lines().filter((item) => !this.same(item, line)));
   }
+  clear() {
+    this.save([]);
+  }
   private same(a: CartLine, b: CartLine) {
     return a.productId === b.productId && a.variantId === b.variantId;
   }

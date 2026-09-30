@@ -19,6 +19,9 @@ public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) :
     internal DbSet<ProductAttributeMultiChoiceValuePersistence> ProductAttributeMultiChoiceValues => Set<ProductAttributeMultiChoiceValuePersistence>();
     internal DbSet<ProductVariantAttributeMultiChoiceValuePersistence> ProductVariantAttributeMultiChoiceValues => Set<ProductVariantAttributeMultiChoiceValuePersistence>();
     internal DbSet<PaymentOptionsPersistence> PaymentOptions => Set<PaymentOptionsPersistence>();
+    internal DbSet<OrderPersistence> Orders => Set<OrderPersistence>();
+    internal DbSet<OrderLinePersistence> OrderLines => Set<OrderLinePersistence>();
+    internal DbSet<OrderTotalPersistence> OrderTotals => Set<OrderTotalPersistence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

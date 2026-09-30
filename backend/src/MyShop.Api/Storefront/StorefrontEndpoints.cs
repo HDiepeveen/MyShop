@@ -3,6 +3,7 @@ using MyShop.Application.Catalog.GetStorefrontPrices;
 using MyShop.Application.Catalog.BrowseStorefront;
 using MyShop.Application.Catalog.GetStorefrontProduct;
 using MyShop.Domain.Catalog;
+using MyShop.Api.Checkout;
 
 namespace MyShop.Api.Storefront;
 
@@ -11,6 +12,7 @@ public static class StorefrontEndpoints
     public static void MapStorefront(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapCartQuote();
+        endpoints.MapPlaceOrder();
         endpoints.MapGet("/api/shop/products/{productId}/prices", async (string productId,
             [FromServices] GetStorefrontPrices useCase, CancellationToken cancellationToken) =>
         {

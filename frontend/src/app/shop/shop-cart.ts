@@ -9,9 +9,11 @@ import { Cart, CartLine } from './cart';
 import { ShopApi } from './shop.api';
 import { loadState } from '../catalog/load-state';
 import { PaymentOptionsApi } from '../checkout/payment-options.api';
+import { ShopCheckout } from '../checkout/shop-checkout';
+import { OrderReceipt } from '../checkout/order.api';
 
 @Component({
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink, ShopCheckout],
   template: `
     <a routerLink="/winkel">← Verder winkelen</a>
     <h1>Winkelmand</h1>
@@ -21,7 +23,17 @@ import { PaymentOptionsApi } from '../checkout/payment-options.api';
     @if (error()) {
       <p role="alert">{{ error() }}</p>
     }
-    @if (!cart.lines().length) {
+    @if (orderReceipt(); as receipt) {
+      <section class="panel" role="status">
+        <h2>Bedankt voor je bestelling</h2>
+        <p>
+          Je bestelnummer is <strong>{{ receipt.number }}</strong
+          >.
+        </p>
+        <p>Bewaar dit nummer voor de verdere afhandeling van je betaling.</p>
+        <a routerLink="/winkel">Verder winkelen</a>
+      </section>
+    } @else if (!cart.lines().length) {
       <p>Je winkelmand is leeg.</p>
     } @else {
       @if (state()?.loading) {
@@ -98,6 +110,13 @@ import { PaymentOptionsApi } from '../checkout/payment-options.api';
             <p role="alert">Er is momenteel geen betaaloptie beschikbaar.</p>
           }
         </section>
+        @if (selectedPayment()) {
+          <app-shop-checkout
+            [lines]="checkoutLines()"
+            [paymentMethod]="selectedPayment()"
+            (placed)="orderPlaced($event)"
+          />
+        }
       } @else if (state()?.data) {
         <p>Geen subtotaal beschikbaar: controleer de artikelen hierboven.</p>
       }
@@ -107,7 +126,7 @@ import { PaymentOptionsApi } from '../checkout/payment-options.api';
       <button type="button" class="secondary" [disabled]="state()?.loading" (click)="refresh()">
         Winkelmand vernieuwen
       </button>
-      <p>Bestellen is nog niet beschikbaar. Er is geen voorraad gereserveerd.</p>
+      <p class="muted">Er wordt nog geen voorraad gereserveerd.</p>
     }
   `,
 })
@@ -118,6 +137,7 @@ export class ShopCart {
   private readonly reload = new BehaviorSubject(0);
   readonly error = signal('');
   readonly selectedPayment = signal('');
+  readonly orderReceipt = signal<OrderReceipt | null>(null);
   readonly paymentOptions = toSignal(loadState(this.paymentApi.publicOptions()));
   readonly state = toSignal(
     combineLatest([toObservable(this.cart.lines), this.reload]).pipe(
@@ -147,6 +167,16 @@ export class ShopCart {
       })) ?? [],
   );
   readonly totals = computed(() => this.quote()?.totals ?? []);
+  readonly checkoutLines = computed(
+    () =>
+      this.quote()?.lines.map((line) => ({
+        productId: line.productId,
+        variantId: line.variantId,
+        quantity: line.quantity,
+        expectedAmount: line.amount!,
+        expectedCurrency: line.currency!,
+      })) ?? [],
+  );
   readonly complete = computed(
     () =>
       !this.state()?.loading &&
@@ -173,5 +203,9 @@ export class ShopCart {
   }
   refresh() {
     this.reload.next(this.reload.value + 1);
+  }
+  orderPlaced(receipt: OrderReceipt) {
+    this.orderReceipt.set(receipt);
+    this.cart.clear();
   }
 }

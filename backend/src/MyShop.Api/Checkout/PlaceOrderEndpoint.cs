@@ -1,0 +1,70 @@
+using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
+using MyShop.Application.Checkout.PlaceOrder;
+
+namespace MyShop.Api.Checkout;
+
+public static class PlaceOrderEndpoint
+{
+    public static void MapPlaceOrder(this IEndpointRouteBuilder endpoints) =>
+        endpoints.MapPost("/api/shop/orders", ExecuteAsync).AllowAnonymous()
+            .RequireRateLimiting("storefront-order");
+
+    private static async Task<IResult> ExecuteAsync(PlaceOrderRequest? request,
+        [FromServices] PlaceOrder useCase, CancellationToken cancellationToken)
+    {
+        if (request?.Lines is null || request.Lines.Count is < 1 or > 20)
+            return Results.BadRequest(new { code = "invalidOrder" });
+        try
+        {
+            var lines = new List<PlaceOrderLine>();
+            foreach (var line in request.Lines)
+            {
+                if (line is null || !decimal.TryParse(line.ExpectedAmount, NumberStyles.AllowDecimalPoint,
+                    CultureInfo.InvariantCulture, out var expectedAmount))
+                    return Results.BadRequest(new { code = "invalidOrder" });
+                lines.Add(new(line.ProductId, line.VariantId, line.Quantity,
+                    expectedAmount, line.ExpectedCurrency));
+            }
+            var result = await useCase.ExecuteAsync(new(request.CheckoutToken, request.PaymentMethod,
+                request.CustomerName, request.Email, request.AddressLine, request.PostalCode,
+                request.City, request.CountryCode, lines), cancellationToken);
+            return result.Failure switch
+            {
+                PlaceOrderFailure.CartUnavailable => Results.Conflict(new
+                {
+                    code = "cartChanged",
+                    message = "De winkelmand is gewijzigd. Controleer de artikelen en prijzen opnieuw."
+                }),
+                PlaceOrderFailure.PaymentUnavailable => Results.Conflict(new
+                {
+                    code = "paymentUnavailable",
+                    message = "De gekozen betaaloptie is niet meer beschikbaar."
+                }),
+                PlaceOrderFailure.OnlinePaymentRequired => Results.Conflict(new
+                {
+                    code = "onlinePaymentRequired",
+                    message = "Start eerst de online betaling."
+                }),
+                null => Results.Ok(new PlaceOrderResponse(result.Receipt!.Id, result.Receipt.Number,
+                    result.Receipt.PlacedAt)),
+                _ => throw new InvalidOperationException()
+            };
+        }
+        catch (ArgumentException)
+        {
+            return Results.BadRequest(new
+            {
+                code = "invalidOrder",
+                message = "Controleer de klantgegevens, het adres en de winkelmand."
+            });
+        }
+    }
+}
+
+public sealed record PlaceOrderRequest(Guid CheckoutToken, string PaymentMethod, string CustomerName,
+    string Email, string AddressLine, string PostalCode, string City, string CountryCode,
+    IReadOnlyList<PlaceOrderLineRequest?> Lines);
+public sealed record PlaceOrderLineRequest(Guid ProductId, Guid VariantId, int Quantity,
+    string ExpectedAmount, string ExpectedCurrency);
+public sealed record PlaceOrderResponse(Guid Id, string Number, DateTimeOffset PlacedAt);

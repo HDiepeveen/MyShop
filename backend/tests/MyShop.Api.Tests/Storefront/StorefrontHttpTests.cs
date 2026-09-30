@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.RateLimiting;
 using MyShop.Api.Tests.Security;
 
 namespace MyShop.Api.Tests.Storefront;
@@ -16,11 +17,15 @@ public sealed class StorefrontHttpTests
         using var visitor = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         var publicEndpoints = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText!.StartsWith("/api/shop/")).ToArray();
-        Assert.Equal(5, publicEndpoints.Length);
+        Assert.Equal(6, publicEndpoints.Length);
         Assert.All(publicEndpoints, e =>
         {
-            Assert.Equal("GET", Assert.Single(e.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods));
+            Assert.Equal(e.RoutePattern.RawText == "/api/shop/orders" ? "POST" : "GET",
+                Assert.Single(e.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods));
             Assert.NotNull(e.Metadata.GetMetadata<IAllowAnonymous>());
+            if (e.RoutePattern.RawText == "/api/shop/orders")
+                Assert.Equal("storefront-order",
+                    e.Metadata.GetMetadata<EnableRateLimitingAttribute>()!.PolicyName);
         });
         await host.Csrf();
         Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode);

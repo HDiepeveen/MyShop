@@ -80,18 +80,18 @@ public sealed class PersistenceContextContractTests
     }
 
     [Fact]
-    public void PersistenceContext_HasExpectedModelCount() => Assert.Equal(12, Models.Length);
+    public void PersistenceContext_HasExpectedModelCount() => Assert.Equal(15, Models.Length);
 
     [Fact]
-    public void PersistenceContext_HasExpectedDbSetCount() => Assert.Equal(12, GetDbSets().Length);
+    public void PersistenceContext_HasExpectedDbSetCount() => Assert.Equal(15, GetDbSets().Length);
 
     [Fact]
     public void PersistenceContext_HasUniqueDbSetNames() =>
-        Assert.Equal(12, GetDbSets().Select(property => property.Name).Distinct().Count());
+        Assert.Equal(15, GetDbSets().Select(property => property.Name).Distinct().Count());
 
     [Fact]
     public void PersistenceContext_HasUniqueDbSetTargets() =>
-        Assert.Equal(12, GetDbSets().Select(property => property.PropertyType.GetGenericArguments()[0]).Distinct().Count());
+        Assert.Equal(15, GetDbSets().Select(property => property.PropertyType.GetGenericArguments()[0]).Distinct().Count());
 
     [Fact]
     public void PersistenceContext_AllDbSetsAreInternal() =>
