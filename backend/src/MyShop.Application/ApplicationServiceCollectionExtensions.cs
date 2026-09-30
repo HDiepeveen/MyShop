@@ -110,6 +110,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Catalog.BrowseStorefront.BrowseStorefront>();
         services.AddScoped<Catalog.GetStorefrontProduct.GetStorefrontProduct>();
         services.AddScoped<Catalog.GetStorefrontPrices.GetStorefrontPrices>();
+        services.AddScoped<Catalog.QuoteStorefrontCart.QuoteStorefrontCart>();
         return services;
     }
 }

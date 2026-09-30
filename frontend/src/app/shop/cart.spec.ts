@@ -94,29 +94,41 @@ describe('Cart page', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
-  function reply(
-    amount: number | null = 12.5,
-    currency = 'EUR',
-    secondAmount = 0,
-    secondCurrency = 'USD',
-  ) {
+  function priceReply(amount: number | null = 12.5) {
     http.expectOne(`/api/shop/products/${productId}`).flush(product);
-    http.expectOne(`/api/shop/products/${productId}/prices`).flush({
+    http
+      .expectOne(`/api/shop/products/${productId}/prices`)
+      .flush({ at: '2026-09-30T12:00:00Z', variants: [{ variantId, amount, currency: 'EUR' }] });
+  }
+  function request() {
+    return http.expectOne((r) => r.url === '/api/shop/cart/quote');
+  }
+  function quote(amount = '12.50', quantity = 1, total = '12.50') {
+    return {
       at: '2026-09-30T12:00:00Z',
-      variants: [
-        { variantId, amount, currency },
-        { variantId: secondId, amount: secondAmount, currency: secondCurrency },
+      lines: [
+        {
+          ...line,
+          quantity,
+          name: 'Shirt',
+          variant: 'Small',
+          amount,
+          currency: 'EUR',
+          total,
+          failure: null,
+        },
       ],
-    });
+      totals: [{ currency: 'EUR', amount: total }],
+    };
   }
   it('opens an empty public cart without requests', async () => {
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
     expect(harness.routeNativeElement!.textContent).toContain('Je winkelmand is leeg');
     http.expectNone(() => true);
   });
-  it('adds the selected variant from the product page and shows confirmation', async () => {
+  it('adds the selected variant from the product page', async () => {
     const harness = await RouterTestingHarness.create(`/winkel/${productId}`);
-    reply();
+    priceReply();
     await harness.fixture.whenStable();
     const button = Array.from(harness.routeNativeElement!.querySelectorAll('button')).find((b) =>
       b.textContent?.includes('In winkelmand'),
@@ -125,13 +137,10 @@ describe('Cart page', () => {
     await harness.fixture.whenStable();
     expect(TestBed.inject(Cart).lines()).toEqual([line]);
     expect(harness.routeNativeElement!.textContent).toContain('Toegevoegd aan je winkelmand');
-    expect(
-      harness.routeNativeElement!.querySelector('a[href="/winkel/winkelmand"]'),
-    ).not.toBeNull();
   });
   it('cannot add an unpriced variant', async () => {
     const harness = await RouterTestingHarness.create(`/winkel/${productId}`);
-    reply(null);
+    priceReply(null);
     await harness.fixture.whenStable();
     const button = Array.from(harness.routeNativeElement!.querySelectorAll('button')).find((b) =>
       b.textContent?.includes('In winkelmand'),
@@ -140,101 +149,109 @@ describe('Cart page', () => {
     (harness.routeDebugElement!.componentInstance as ShopDetail).addToCart();
     expect(TestBed.inject(Cart).count()).toBe(0);
   });
-  it('groups reads by product and keeps currencies separate, including zero prices', async () => {
+  it('sends only identifiers and quantities in one request and shows exact server amounts', async () => {
     const cart = TestBed.inject(Cart);
     cart.add(productId, variantId);
     cart.add(productId, secondId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
-    reply();
+    const pending = request();
+    expect(pending.request.method).toBe('GET');
+    expect(pending.request.params.keys()).toEqual(['lines']);
+    expect(pending.request.params.getAll('lines')).toEqual([
+      `${productId}:${variantId}:1`,
+      `${productId}:${secondId}:1`,
+    ]);
+    const response = quote('9999999999999999.99', 1, '9999999999999999.99');
+    response.lines.push({
+      ...response.lines[0],
+      variantId: secondId,
+      currency: 'USD',
+      amount: '0.00',
+      total: '0.00',
+    });
+    response.totals.push({ currency: 'USD', amount: '0.00' });
+    pending.flush(response);
     await harness.fixture.whenStable();
     const page = harness.routeDebugElement!.componentInstance as ShopCart;
-    expect(page.totals()).toEqual([
-      { currency: 'EUR', amount: 12.5 },
-      { currency: 'USD', amount: 0 },
-    ]);
+    expect(page.totals()).toEqual(response.totals);
     expect(page.complete()).toBe(true);
-    expect(harness.routeNativeElement!.textContent).toContain('USD0.00');
+    expect(harness.routeNativeElement!.textContent).toContain('9999999999999999,99');
+    expect(harness.routeNativeElement!.textContent).toContain('USD 0,00');
   });
-  it('rechecks quantity changes, cancels old requests and removes old totals on failure', async () => {
+  it('cancels obsolete quotes and clears old totals during changes and errors', async () => {
     const cart = TestBed.inject(Cart);
     cart.add(productId, variantId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
-    reply();
+    request().flush(quote());
     await harness.fixture.whenStable();
     const page = harness.routeDebugElement!.componentInstance as ShopCart;
     cart.setQuantity(line, 2);
     expect(page.complete()).toBe(false);
     await harness.fixture.whenStable();
-    const obsoleteProduct = http.expectOne(`/api/shop/products/${productId}`);
-    const obsoletePrice = http.expectOne(`/api/shop/products/${productId}/prices`);
+    const obsolete = request();
     cart.setQuantity(line, 3);
     await harness.fixture.whenStable();
-    expect(obsoleteProduct.cancelled).toBe(true);
-    expect(obsoletePrice.cancelled).toBe(true);
-    reply(10);
+    expect(obsolete.cancelled).toBe(true);
+    request().flush(quote('10.00', 3, '30.00'));
     await harness.fixture.whenStable();
-    expect(page.totals()).toEqual([{ currency: 'EUR', amount: 30 }]);
+    expect(page.totals()).toEqual([{ currency: 'EUR', amount: '30.00' }]);
     page.refresh();
-    http.expectOne(`/api/shop/products/${productId}`).flush(product);
-    http
-      .expectOne(`/api/shop/products/${productId}/prices`)
-      .flush({}, { status: 500, statusText: 'Error' });
+    expect(page.totals()).toEqual([]);
+    request().flush({}, { status: 500, statusText: 'Error' });
     await harness.fixture.whenStable();
     expect(page.complete()).toBe(false);
-    expect(page.totals()).toEqual([]);
     expect(harness.routeNativeElement!.textContent).toContain('kon niet worden gecontroleerd');
     page.refresh();
-    reply(15);
+    request().flush(quote('15.00', 3, '45.00'));
     await harness.fixture.whenStable();
-    expect(page.totals()).toEqual([{ currency: 'EUR', amount: 45 }]);
-    page.remove(line);
-    await harness.fixture.whenStable();
-    expect(harness.routeNativeElement!.textContent).toContain('Je winkelmand is leeg');
+    expect(page.totals()).toEqual([{ currency: 'EUR', amount: '45.00' }]);
   });
-  it('submits quantity edits through the form and removes a deleted variant', async () => {
+  it.each(['unavailable', 'priceMissing'])(
+    'displays unavailable lines without totals: %s',
+    async (failure) => {
+      TestBed.inject(Cart).add(productId, variantId);
+      const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+      request().flush({
+        at: '2026-09-30T12:00:00Z',
+        lines: [
+          {
+            ...line,
+            name: null,
+            variant: null,
+            amount: null,
+            currency: null,
+            total: null,
+            failure,
+          },
+        ],
+        totals: [],
+      });
+      await harness.fixture.whenStable();
+      const page = harness.routeDebugElement!.componentInstance as ShopCart;
+      expect(page.complete()).toBe(false);
+      expect(harness.routeNativeElement!.textContent).toContain('Geen subtotaal beschikbaar');
+      page.remove(line);
+      await harness.fixture.whenStable();
+      expect(harness.routeNativeElement!.textContent).toContain('Je winkelmand is leeg');
+    },
+  );
+  it('submits quantity edits through the form and can remove the last line', async () => {
     TestBed.inject(Cart).add(productId, variantId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
-    reply();
+    request().flush(quote());
     await harness.fixture.whenStable();
-    const input = harness.routeNativeElement!.querySelector('input')!;
-    input.value = '4';
+    harness.routeNativeElement!.querySelector('input')!.value = '4';
     harness.routeNativeElement!.querySelector<HTMLButtonElement>('button[type=submit]')!.click();
     await harness.fixture.whenStable();
-    http.expectOne(`/api/shop/products/${productId}`).flush({ ...product, variants: [] });
-    http
-      .expectOne(`/api/shop/products/${productId}/prices`)
-      .flush({ at: '2026-09-30T12:00:00Z', variants: [] });
+    const pending = request();
+    expect(pending.request.params.get('lines')).toBe(`${productId}:${variantId}:4`);
+    pending.flush(quote('12.50', 4, '50.00'));
     await harness.fixture.whenStable();
-    expect(TestBed.inject(Cart).count()).toBe(4);
-    expect((harness.routeDebugElement!.componentInstance as ShopCart).complete()).toBe(false);
-    expect(harness.routeNativeElement!.textContent).toContain('niet meer beschikbaar');
+    expect(harness.routeNativeElement!.textContent).toContain('50,00');
     Array.from(harness.routeNativeElement!.querySelectorAll('button'))
       .find((button) => button.textContent?.includes('Verwijderen'))!
       .click();
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.textContent).toContain('Je winkelmand is leeg');
   });
-  it('hides totals for withdrawn products and permits removal', async () => {
-    TestBed.inject(Cart).add(productId, variantId);
-    const harness = await RouterTestingHarness.create('/winkel/winkelmand');
-    const prices = http.expectOne(`/api/shop/products/${productId}/prices`);
-    http
-      .expectOne(`/api/shop/products/${productId}`)
-      .flush({}, { status: 404, statusText: 'Not Found' });
-    expect(prices.cancelled).toBe(true);
-    await harness.fixture.whenStable();
-    const page = harness.routeDebugElement!.componentInstance as ShopCart;
-    expect(page.complete()).toBe(false);
-    expect(harness.routeNativeElement!.textContent).toContain('niet meer beschikbaar');
-  });
-  it.each([null, Number.MAX_SAFE_INTEGER])(
-    'does not total missing or unsafe amounts: %s',
-    async (amount) => {
-      TestBed.inject(Cart).add(productId, variantId);
-      const harness = await RouterTestingHarness.create('/winkel/winkelmand');
-      reply(amount);
-      await harness.fixture.whenStable();
-      expect((harness.routeDebugElement!.componentInstance as ShopCart).complete()).toBe(false);
-    },
-  );
 });

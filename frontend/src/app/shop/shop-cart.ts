@@ -1,25 +1,16 @@
-import { CurrencyPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
-import {
-  BehaviorSubject,
-  catchError,
-  combineLatest,
-  forkJoin,
-  map,
-  of,
-  switchMap,
-  throwError,
-} from 'rxjs';
+
+import { BehaviorSubject, combineLatest, map, of, switchMap } from 'rxjs';
 import { Cart, CartLine } from './cart';
 import { ShopApi } from './shop.api';
 import { loadState } from '../catalog/load-state';
 
 @Component({
-  imports: [CurrencyPipe, FormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink],
   template: `
     <a routerLink="/winkel">← Verder winkelen</a>
     <h1>Winkelmand</h1>
@@ -49,8 +40,8 @@ import { loadState } from '../catalog/load-state';
             </h2>
             <p>{{ row.variant }}</p>
             @if (row.amount !== null) {
-              <p>Per stuk: {{ row.amount | currency: row.currency : 'code' : '1.2-2' }}</p>
-              <p>Regelbedrag: {{ row.total | currency: row.currency : 'code' : '1.2-2' }}</p>
+              <p>Per stuk: {{ row.currency }} {{ amount(row.amount) }}</p>
+              <p>Regelbedrag: {{ row.currency }} {{ amount(row.total) }}</p>
             } @else {
               <p role="status">{{ row.message }}</p>
             }
@@ -76,10 +67,7 @@ import { loadState } from '../catalog/load-state';
       @if (complete()) {
         @for (total of totals(); track total.currency) {
           <p>
-            <strong
-              >Subtotaal {{ total.currency }}:
-              {{ total.amount | currency: total.currency : 'code' : '1.2-2' }}</strong
-            >
+            <strong>Subtotaal {{ total.currency }}: {{ amount(total.amount) }}</strong>
           </p>
         }
         <p class="muted">
@@ -87,6 +75,9 @@ import { loadState } from '../catalog/load-state';
         </p>
       } @else if (state()?.data) {
         <p>Geen subtotaal beschikbaar: controleer de artikelen hierboven.</p>
+      }
+      @if (quote()?.at; as at) {
+        <p class="muted">Gecontroleerd op {{ at | date: 'dd-MM-yyyy HH:mm:ss' }}.</p>
       }
       <button type="button" class="secondary" [disabled]="state()?.loading" (click)="refresh()">
         Winkelmand vernieuwen
@@ -103,62 +94,31 @@ export class ShopCart {
   readonly state = toSignal(
     combineLatest([toObservable(this.cart.lines), this.reload]).pipe(
       switchMap(([lines]) => {
-        const ids = [...new Set(lines.map((line) => line.productId))];
-        if (!ids.length) return of({ data: { lines, products: [] }, loading: false, error: '' });
-        return loadState(
-          forkJoin(
-            ids.map((id) =>
-              forkJoin({ product: this.api.product(id), prices: this.api.prices(id) }).pipe(
-                map((data) => ({ id, ...data })),
-                catchError((error) =>
-                  error instanceof HttpErrorResponse && error.status === 404
-                    ? of({ id, product: null, prices: null })
-                    : throwError(() => error),
-                ),
-              ),
-            ),
-          ).pipe(map((products) => ({ lines, products }))),
-        );
+        if (!lines.length)
+          return of({
+            data: { lines, quote: { at: '', lines: [], totals: [] } },
+            loading: false,
+            error: '',
+          });
+        return loadState(this.api.quote(lines).pipe(map((quote) => ({ lines, quote }))));
       }),
     ),
   );
-  readonly rows = computed(() => {
-    if (!this.state()?.data || this.state()!.data!.lines !== this.cart.lines()) return [];
-    return this.cart.lines().map((line) => {
-      const data = this.state()!.data!.products.find((data) => data.id === line.productId);
-      const variant = data?.product?.variants.find((variant) => variant.id === line.variantId);
-      const price = data?.prices?.variants.find((price) => price.variantId === line.variantId);
-      const cents = price?.amount == null ? NaN : Math.round(price.amount * 100);
-      const total = cents * line.quantity;
-      const available =
-        !!variant &&
-        !!price?.currency &&
-        Number.isSafeInteger(cents) &&
-        cents >= 0 &&
-        Number.isSafeInteger(total);
-      return {
-        name: data?.product?.name ?? 'Artikel niet beschikbaar',
-        variant: variant?.name ?? '',
-        amount: available ? price!.amount : null,
-        currency: price?.currency ?? '',
-        total: available ? total / 100 : 0,
-        totalCents: available ? total : 0,
-        message: !variant
-          ? 'Dit artikel is niet meer beschikbaar. Verwijder het uit je winkelmand.'
-          : 'Voor deze variant is geen bruikbare prijs beschikbaar.',
-      };
-    });
-  });
-  readonly totals = computed(() => {
-    const sums = new Map<string, number>();
-    for (const row of this.rows()) {
-      if (row.amount === null) return [];
-      const cents = (sums.get(row.currency) ?? 0) + row.totalCents;
-      if (!Number.isSafeInteger(cents)) return [];
-      sums.set(row.currency, cents);
-    }
-    return [...sums].map(([currency, cents]) => ({ currency, amount: cents / 100 }));
-  });
+  readonly quote = computed(() =>
+    this.state()?.data?.lines === this.cart.lines() ? this.state()?.data?.quote : null,
+  );
+  readonly rows = computed(
+    () =>
+      this.quote()?.lines.map((line) => ({
+        ...line,
+        name: line.name ?? 'Artikel niet beschikbaar',
+        message:
+          line.failure === 'unavailable'
+            ? 'Dit artikel is niet meer beschikbaar. Verwijder het uit je winkelmand.'
+            : 'Voor deze variant is geen prijs beschikbaar.',
+      })) ?? [],
+  );
+  readonly totals = computed(() => this.quote()?.totals ?? []);
   readonly complete = computed(
     () =>
       !this.state()?.loading &&
@@ -166,6 +126,9 @@ export class ShopCart {
       this.rows().length === this.cart.lines().length &&
       this.totals().length > 0,
   );
+  amount(value: string | null) {
+    return value?.replace('.', ',') ?? '';
+  }
   update(line: CartLine, value: string) {
     this.error.set(this.cart.setQuantity(line, value.trim() ? Number(value) : NaN));
   }

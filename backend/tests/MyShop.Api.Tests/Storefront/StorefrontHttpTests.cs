@@ -16,7 +16,7 @@ public sealed class StorefrontHttpTests
         using var visitor = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         var publicEndpoints = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText!.StartsWith("/api/shop/")).ToArray();
-        Assert.Equal(3, publicEndpoints.Length);
+        Assert.Equal(4, publicEndpoints.Length);
         Assert.All(publicEndpoints, e =>
         {
             Assert.Equal("GET", Assert.Single(e.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods));
@@ -68,6 +68,32 @@ public sealed class StorefrontHttpTests
         Assert.Equal(JsonValueKind.Null, prices.GetProperty("variants")[1].GetProperty("amount").ValueKind);
         foreach (var id in new[] { draft.ToString(), Guid.NewGuid().ToString(), Guid.Empty.ToString(), "invalid" })
             Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{id}/prices")).StatusCode);
+        var quoteUrl = $"/api/shop/cart/quote?lines={alpha}:{variantId}:3";
+        var quoteResponse = await visitor.GetAsync(quoteUrl + "&at=2000-01-01T00:00:00Z&amount=0");
+        Assert.Equal(HttpStatusCode.OK, quoteResponse.StatusCode);
+        Assert.True(quoteResponse.Headers.CacheControl?.NoStore);
+        var quote = await quoteResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.InRange(quote.GetProperty("at").GetDateTimeOffset(), before, DateTimeOffset.UtcNow);
+        Assert.Equal(new[] { "at", "lines", "totals" }, quote.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        var quotedLine = Assert.Single(quote.GetProperty("lines").EnumerateArray());
+        Assert.Equal(new[] { "amount", "currency", "failure", "name", "productId", "quantity", "total", "variant", "variantId" }, quotedLine.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal("75.00", quotedLine.GetProperty("amount").GetString());
+        Assert.Equal("225.00", quotedLine.GetProperty("total").GetString());
+        Assert.Equal("225.00", Assert.Single(quote.GetProperty("totals").EnumerateArray()).GetProperty("amount").GetString());
+        var unpricedId = product.GetProperty("variants")[1].GetProperty("id").GetGuid();
+        foreach (var invalidLine in new[] { $"{draft}:{variantId}:1", $"{alpha}:{Guid.NewGuid()}:1", $"{alpha}:{unpricedId}:1" })
+        {
+            var incomplete = await visitor.GetFromJsonAsync<JsonElement>(quoteUrl + "&lines=" + invalidLine);
+            Assert.Empty(incomplete.GetProperty("totals").EnumerateArray());
+            Assert.Equal(JsonValueKind.Null, incomplete.GetProperty("lines")[1].GetProperty("amount").ValueKind);
+        }
+        foreach (var bad in new[] { "invalid", $"{alpha}:{variantId}:0", $"{alpha}:{variantId}:100", $"{Guid.Empty}:{variantId}:1", $"{alpha}:{variantId}:1.5", $"{alpha}:{variantId}:1&lines={alpha}:{variantId}:1", string.Join("&lines=", Enumerable.Repeat($"{alpha}:{variantId}:1", 21)) })
+            Assert.Equal(HttpStatusCode.BadRequest, (await visitor.GetAsync("/api/shop/cart/quote?lines=" + bad)).StatusCode);
+        var emptyQuote = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/cart/quote");
+        Assert.Empty(emptyQuote.GetProperty("lines").EnumerateArray());
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{alpha}/variants/{unpricedId}/price", new { amount = 9999999999999999.99m, currency = "EUR" })).StatusCode);
+        var largeQuote = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/cart/quote?lines={alpha}:{unpricedId}:99");
+        Assert.Equal("989999999999999999.01", largeQuote.GetProperty("totals")[0].GetProperty("amount").GetString());
         var hidden = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?search=Onlydraft");
         Assert.Equal(0, hidden.GetProperty("totalCount").GetInt32());
         foreach (var query in new[] { "offset=-1", "limit=0", "limit=101", "offset=invalid", "search=" + new string('a', 201) })
@@ -78,6 +104,9 @@ public sealed class StorefrontHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{alpha}/presentation", new { description = "Withdrawn", imageUrl = "https://example.com/shirt.jpg", imageAlt = "Linen shirt", isPublished = false, revision = stored.GetProperty("revision").GetGuid() })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{alpha}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{alpha}/prices")).StatusCode);
+        var withdrawnQuote = await visitor.GetFromJsonAsync<JsonElement>(quoteUrl);
+        Assert.Empty(withdrawnQuote.GetProperty("totals").EnumerateArray());
+        Assert.Equal(JsonValueKind.Null, withdrawnQuote.GetProperty("lines")[0].GetProperty("name").ValueKind);
         page = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products");
         Assert.Equal(1, page.GetProperty("totalCount").GetInt32());
     }

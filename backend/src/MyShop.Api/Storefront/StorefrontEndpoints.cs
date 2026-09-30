@@ -10,6 +10,7 @@ public static class StorefrontEndpoints
 {
     public static void MapStorefront(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapCartQuote();
         endpoints.MapGet("/api/shop/products/{productId}/prices", async (string productId,
             [FromServices] GetStorefrontPrices useCase, CancellationToken cancellationToken) =>
         {
