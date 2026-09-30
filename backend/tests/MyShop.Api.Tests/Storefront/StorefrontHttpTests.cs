@@ -104,7 +104,7 @@ public sealed class StorefrontHttpTests
         Assert.Equal(new[] { "at", "variants" }, prices.EnumerateObject().Select(p => p.Name).Order().ToArray());
         var priced = prices.GetProperty("variants")[0];
         Assert.Equal(new[] { "amount", "currency", "variantId" }, priced.EnumerateObject().Select(p => p.Name).Order().ToArray());
-        Assert.Equal(75m, priced.GetProperty("amount").GetDecimal());
+        Assert.Equal("75.00", priced.GetProperty("amount").GetString());
         Assert.Equal("EUR", priced.GetProperty("currency").GetString());
         Assert.Equal(JsonValueKind.Null, prices.GetProperty("variants")[1].GetProperty("amount").ValueKind);
         foreach (var id in new[] { draft.ToString(), Guid.NewGuid().ToString(), Guid.Empty.ToString(), "invalid" })
@@ -133,6 +133,9 @@ public sealed class StorefrontHttpTests
         var emptyQuote = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/cart/quote");
         Assert.Empty(emptyQuote.GetProperty("lines").EnumerateArray());
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{alpha}/variants/{unpricedId}/price", new { amount = 9999999999999999.99m, currency = "EUR" })).StatusCode);
+        var exactPrices = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}/prices");
+        Assert.Equal("9999999999999999.99", exactPrices.GetProperty("variants")[1]
+            .GetProperty("amount").GetString());
         var largeQuote = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/cart/quote?lines={alpha}:{unpricedId}:99");
         Assert.Equal("989999999999999999.01", largeQuote.GetProperty("totals")[0].GetProperty("amount").GetString());
         var pricedPage = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?search=Alpha");

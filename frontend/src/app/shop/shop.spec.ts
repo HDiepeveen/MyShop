@@ -169,18 +169,18 @@ describe('Public storefront', () => {
     http.expectOne('/api/shop/products/p/prices').flush({
       at: '2026-09-30T12:00:00Z',
       variants: [
-        { variantId: 'v1', amount: 75, currency: 'EUR' },
-        { variantId: 'v2', amount: 0, currency: 'USD' },
+        { variantId: 'v1', amount: '75.00', currency: 'EUR' },
+        { variantId: 'v2', amount: '0.00', currency: 'USD' },
       ],
     });
     await harness.fixture.whenStable();
     harness.detectChanges();
-    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('75.00');
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('EUR 75,00');
     const select = harness.routeNativeElement!.querySelector('select')!;
     select.value = 'v2';
     select.dispatchEvent(new Event('change'));
     await harness.fixture.whenStable();
-    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('USD0.00');
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('USD 0,00');
     const detail = harness.routeDebugElement!.componentInstance as ShopDetail;
     detail.refreshPrices();
     harness.detectChanges();
@@ -198,15 +198,17 @@ describe('Public storefront', () => {
     expect(harness.routeNativeElement!.textContent).toContain('nog geen prijs beschikbaar');
     expect(harness.routeNativeElement!.querySelector('.price')).toBeNull();
   });
-  it('preserves the domain money precision for every currency', async () => {
+  it('displays exact amounts beyond JavaScript safe integer precision', async () => {
     const harness = await RouterTestingHarness.create('/winkel/p');
     http.expectOne('/api/shop/products/p').flush(product);
     http.expectOne('/api/shop/products/p/prices').flush({
       at: '2026-09-30T12:00:00Z',
-      variants: [{ variantId: 'v1', amount: 10.25, currency: 'JPY' }],
+      variants: [{ variantId: 'v1', amount: '9999999999999999.99', currency: 'JPY' }],
     });
     await harness.fixture.whenStable();
-    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('JPY10.25');
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain(
+      'JPY 9999999999999999,99',
+    );
   });
   it('cancels obsolete price requests when the product changes', async () => {
     const harness = await RouterTestingHarness.create('/winkel/p');

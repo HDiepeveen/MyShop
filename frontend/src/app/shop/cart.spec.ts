@@ -97,7 +97,7 @@ describe('Cart page', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
-  function priceReply(amount: number | null = 12.5) {
+  function priceReply(amount: string | null = '12.50') {
     http.expectOne(`/api/shop/products/${productId}`).flush(product);
     http
       .expectOne(`/api/shop/products/${productId}/prices`)

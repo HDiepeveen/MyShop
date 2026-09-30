@@ -12,7 +12,7 @@ Publiceer producten en beheer de betaalopties via het beveiligde beheer. Voorraa
 
 De productpagina haalt prijzen afzonderlijk op en toont het bedrag en de valuta van de gekozen variant. De server berekent alle varianten op hetzelfde UTC-tijdstip met de bestaande domeinregels: alleen de actieve regel met de hoogste prioriteit, bij gelijke prioriteit het laagste regel-ID. Begintijd en eindtijd zijn inclusief. Er worden geen kortingen gestapeld. Bedragen worden volgens de bestaande Money-regels afgerond en nooit negatief.
 
-De openbare prijsrespons bevat `at` en `variants` met uitsluitend `variantId`, `amount` en `currency`. Een ontbrekende basisprijs geeft null voor bedrag en valuta; nul is een geldige prijs. De client kan het rekentijdstip niet kiezen. Concepten, ingetrokken publicaties en onbekende producten geven 404, ook voor prijzen. De respons wordt niet gecachet.
+De openbare prijsrespons bevat `at` en `variants` met uitsluitend `variantId`, `amount` en `currency`. Bedragen worden als exacte tekst met twee decimalen geleverd, zodat de browser geen centen afrondt; een ontbrekende basisprijs geeft null voor bedrag en valuta en nul is een geldige prijs. De client kan het rekentijdstip niet kiezen. Concepten, ingetrokken publicaties en onbekende producten geven 404, ook voor prijzen. De respons wordt niet gecachet.
 
 De getoonde prijs is een momentopname. **Prijs vernieuwen** haalt opnieuw de actuele bedragen op met behoud van de variantkeuze. Tijdens ophalen en na een fout verdwijnt de oude prijs; er wordt nooit op een basisprijs teruggevallen. De pagina toont het ophaalmoment in lokale tijd. Een latere bestelling zal opnieuw moeten rekenen.
 

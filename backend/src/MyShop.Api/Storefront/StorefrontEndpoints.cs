@@ -23,7 +23,9 @@ public static class StorefrontEndpoints
         {
             if (!Guid.TryParse(productId, out var id) || id == Guid.Empty) return Results.NotFound();
             var prices = await useCase.ExecuteAsync(new(ProductId.From(id), DateTimeOffset.UtcNow), cancellationToken);
-            return prices is null ? (IResult)Results.NotFound() : Results.Ok(prices);
+            return prices is null ? (IResult)Results.NotFound() : Results.Ok(new StorefrontPricesResponse(
+                prices.At, prices.Variants.Select(price => new StorefrontVariantPriceResponse(price.VariantId,
+                    price.Amount?.ToString("F2", CultureInfo.InvariantCulture), price.Currency)).ToList()));
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/products", async (int? offset, int? limit, string? search, Guid? categoryId,
             [FromServices] BrowseStorefront useCase, CancellationToken cancellationToken) =>
@@ -59,3 +61,6 @@ public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<Sto
 public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,
     IReadOnlyList<StorefrontPriceRangeResponse> Prices);
 public sealed record StorefrontPriceRangeResponse(string Currency, string MinimumAmount, string MaximumAmount);
+public sealed record StorefrontPricesResponse(DateTimeOffset At,
+    IReadOnlyList<StorefrontVariantPriceResponse> Variants);
+public sealed record StorefrontVariantPriceResponse(Guid VariantId, string? Amount, string? Currency);

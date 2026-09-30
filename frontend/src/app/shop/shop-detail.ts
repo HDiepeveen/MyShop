@@ -1,5 +1,5 @@
 import { Cart } from './cart';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,7 +10,7 @@ import { ShopImage } from './shop-image';
 import { loadState } from '../catalog/load-state';
 import { readListQuery } from '../catalog/list-query';
 @Component({
-  imports: [FormsModule, RouterLink, ShopImage, CurrencyPipe, DatePipe],
+  imports: [FormsModule, RouterLink, ShopImage, DatePipe],
   styles: [
     `
       .description {
@@ -77,7 +77,7 @@ import { readListQuery } from '../catalog/list-query';
             } @else if (selectedPrice(); as price) {
               @if (price.amount !== null && price.currency) {
                 <p class="price">
-                  {{ price.amount | currency: price.currency : 'code' : '1.2-2' }}
+                  {{ price.currency }} {{ amount(price.amount) }}
                 </p>
               } @else {
                 <p>Voor deze variant is nog geen prijs beschikbaar.</p>
@@ -160,6 +160,9 @@ export class ShopDetail {
   );
   refreshPrices() {
     this.priceRefresh.next(this.priceRefresh.value + 1);
+  }
+  amount(value: string) {
+    return value.replace('.', ',');
   }
   readonly selectedId = signal('');
   readonly state = toSignal(

@@ -28,7 +28,7 @@ export interface ShopProduct extends ShopItem {
 }
 export interface ShopPrices {
   at: string;
-  variants: { variantId: string; amount: number | null; currency: string | null }[];
+  variants: { variantId: string; amount: string | null; currency: string | null }[];
 }
 export interface CartQuote {
   at: string;
