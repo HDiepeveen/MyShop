@@ -77,7 +77,12 @@ public sealed class StorefrontHttpTests
         Assert.Equal(beta, item.GetProperty("id").GetGuid());
         Assert.Equal(new[] { "id", "imageAlt", "imageUrl", "name" }, item.EnumerateObject().Select(p => p.Name).Order().ToArray());
         var product = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}");
-        Assert.Equal(new[] { "description", "id", "imageAlt", "imageUrl", "name", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(new[] { "categories", "description", "id", "imageAlt", "imageUrl", "name", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        var productCategory = Assert.Single(product.GetProperty("categories").EnumerateArray());
+        Assert.Equal(new[] { "id", "name" }, productCategory.EnumerateObject()
+            .Select(property => property.Name).Order().ToArray());
+        Assert.Equal(clothingId, productCategory.GetProperty("id").GetGuid());
+        Assert.Equal("Clothing", productCategory.GetProperty("name").GetString());
         Assert.Equal(new[] { "Small", "Large" }, product.GetProperty("variants").EnumerateArray().Select(v => v.GetProperty("name").GetString()).ToArray());
         Assert.All(product.GetProperty("variants").EnumerateArray(), v => Assert.Equal(new[] { "id", "name" }, v.EnumerateObject().Select(p => p.Name).Order().ToArray()));
         foreach (var id in new[] { draft.ToString(), Guid.NewGuid().ToString(), Guid.Empty.ToString(), "invalid" })

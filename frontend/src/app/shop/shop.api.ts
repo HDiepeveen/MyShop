@@ -19,6 +19,7 @@ export interface ShopCategory {
 }
 export interface ShopProduct extends ShopItem {
   description: string;
+  categories: ShopCategory[];
   variants: { id: string; name: string }[];
 }
 export interface ShopPrices {

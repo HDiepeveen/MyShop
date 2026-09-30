@@ -16,6 +16,7 @@ const product = {
   description: '<b>Linen</b>\nComfortable.',
   imageUrl: 'https://example.com/a.jpg',
   imageAlt: 'Linen shirt',
+  categories: [{ id: 'c1', name: 'Kleding' }],
   variants: [
     { id: 'v1', name: 'Small' },
     { id: 'v2', name: 'Large' },
@@ -94,7 +95,9 @@ describe('Public storefront', () => {
       .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
   });
   it('selects variants, escapes product text and retains the return context', async () => {
-    const harness = await RouterTestingHarness.create('/winkel/p?search=shirt&offset=20');
+    const harness = await RouterTestingHarness.create(
+      '/winkel/p?search=shirt&offset=20&categoryId=c1',
+    );
     http.expectOne('/api/shop/products/p').flush(product);
     http
       .expectOne('/api/shop/products/p/prices')
@@ -115,6 +118,14 @@ describe('Public storefront', () => {
     expect(harness.routeNativeElement!.querySelector('.back')?.getAttribute('href')).toContain(
       'offset=20',
     );
+    expect(harness.routeNativeElement!.querySelector('.back')?.getAttribute('href')).toContain(
+      'categoryId=c1',
+    );
+    const categoryLink = harness.routeNativeElement!.querySelector(
+      'nav[aria-label="Productcategorieën"] a',
+    );
+    expect(categoryLink?.textContent).toContain('Kleding');
+    expect(categoryLink?.getAttribute('href')).toContain('categoryId=c1');
     http.expectNone((r) => r.url.startsWith('/api/auth'));
   });
   it('removes stale details when navigating to a missing or withdrawn product', async () => {

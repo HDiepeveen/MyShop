@@ -18,6 +18,7 @@ const product = {
   description: 'Linen',
   imageUrl: null,
   imageAlt: '',
+  categories: [],
   variants: [
     { id: variantId, name: 'Small' },
     { id: secondId, name: 'Large' },

@@ -20,7 +20,9 @@ import { readListQuery } from '../catalog/list-query';
     `,
   ],
   template: `
-    <a class="back" routerLink="/winkel" [queryParams]="query()">← Terug naar het assortiment</a>
+    <a class="back" routerLink="/winkel" [queryParams]="contextQuery()"
+      >← Terug naar het assortiment</a
+    >
     @if (state()?.loading) {
       <p role="status">Product ophalen…</p>
     }
@@ -40,6 +42,15 @@ import { readListQuery } from '../catalog/list-query';
         <section class="panel">
           <h2>Over dit product</h2>
           <p class="description">{{ product.description }}</p>
+          @if (product.categories.length) {
+            <nav aria-label="Productcategorieën" class="actions">
+              @for (category of product.categories; track category.id) {
+                <a routerLink="/winkel" [queryParams]="{ categoryId: category.id }">{{
+                  category.name
+                }}</a>
+              }
+            </nav>
+          }
           @if (product.variants.length) {
             <label class="field"
               >Kies je variant<select
@@ -104,7 +115,6 @@ import { readListQuery } from '../catalog/list-query';
           @if (cart.warning()) {
             <p role="status">{{ cart.warning() }}</p>
           }
-          <p class="muted">Bestellen is nog niet beschikbaar.</p>
         </section>
       </div>
     }
@@ -129,7 +139,14 @@ export class ShopDetail {
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
-  readonly query = toSignal(this.route.queryParamMap.pipe(map(readListQuery)));
+  readonly query = toSignal(
+    this.route.queryParamMap.pipe(
+      map((parameters) => ({
+        ...readListQuery(parameters),
+        categoryId: parameters.get('categoryId') ?? '',
+      })),
+    ),
+  );
   private readonly priceRefresh = new BehaviorSubject(0);
   readonly prices = toSignal(
     this.route.paramMap.pipe(
@@ -161,6 +178,14 @@ export class ShopDetail {
       this.cartMessage.set('');
       this.selectedId.set(product?.variants[0]?.id ?? '');
     });
+  }
+  contextQuery() {
+    const query = this.query();
+    return {
+      search: query?.search || null,
+      categoryId: query?.categoryId || null,
+      offset: query?.offset || null,
+    };
   }
   retry() {
     this.refresh.next(this.refresh.value + 1);

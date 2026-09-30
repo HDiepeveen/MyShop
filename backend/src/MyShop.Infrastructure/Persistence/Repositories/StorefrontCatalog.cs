@@ -33,7 +33,14 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
     public Task<StorefrontProduct?> GetAsync(ProductId id, CancellationToken cancellationToken) =>
         context.Products.AsNoTracking()
             .Where(product => product.Id == id.Value && product.IsPublished)
-            .Select(product => new StorefrontProduct(product.Id, product.Name, product.Description, product.ImageUrl, product.ImageAlt,
+            .Select(product => new StorefrontProduct(product.Id, product.Name, product.Description,
+                product.ImageUrl, product.ImageAlt,
+                product.Categories.Join(context.Categories,
+                        link => link.CategoryId, category => category.Id,
+                        (link, category) => new { link.Ordinal, Category = category })
+                    .OrderBy(item => item.Ordinal).ThenBy(item => item.Category.Name)
+                    .ThenBy(item => item.Category.Id)
+                    .Select(item => new StorefrontCategory(item.Category.Id, item.Category.Name)).ToList(),
                 product.Variants.OrderBy(variant => variant.Ordinal)
                     .Select(variant => new StorefrontVariant(variant.Id, variant.Name)).ToList()))
             .SingleOrDefaultAsync(cancellationToken);

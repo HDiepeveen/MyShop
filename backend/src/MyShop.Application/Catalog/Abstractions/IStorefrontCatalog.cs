@@ -14,4 +14,6 @@ public sealed record StorefrontItem(Guid Id, string Name, string? ImageUrl, stri
 public sealed record StorefrontPage(IReadOnlyList<StorefrontItem> Items, int TotalCount, int Offset, int Limit);
 public sealed record StorefrontCategory(Guid Id, string Name);
 public sealed record StorefrontVariant(Guid Id, string Name);
-public sealed record StorefrontProduct(Guid Id, string Name, string Description, string? ImageUrl, string ImageAlt, IReadOnlyList<StorefrontVariant> Variants);
+public sealed record StorefrontProduct(Guid Id, string Name, string Description, string? ImageUrl,
+    string ImageAlt, IReadOnlyList<StorefrontCategory> Categories,
+    IReadOnlyList<StorefrontVariant> Variants);
