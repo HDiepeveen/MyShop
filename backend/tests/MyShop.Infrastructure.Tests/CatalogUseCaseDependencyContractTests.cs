@@ -58,7 +58,7 @@ public sealed class CatalogUseCaseDependencyContractTests
 
     [Fact]
     public void CatalogUseCaseDependencyInventory_ContainsExpectedNumberOfUseCases() =>
-        Assert.Equal(48, UseCases.Length);
+        Assert.Equal(50, UseCases.Length);
 
     [Fact]
     public void CatalogUseCaseDependencyInventory_ConsumesEveryPersistenceAbstraction()

@@ -96,7 +96,7 @@ public sealed class CatalogPersistenceRegistrationContractTests
 
     [Fact]
     public void CatalogPersistenceRegistrationInventory_ContainsExpectedNumberOfAbstractions() =>
-        Assert.Equal(14, PersistenceAbstractions.Length);
+        Assert.Equal(15, PersistenceAbstractions.Length);
 
     [Fact]
     public void CatalogPersistenceRegistrationInventory_DoesNotExposeConcreteRepositories()

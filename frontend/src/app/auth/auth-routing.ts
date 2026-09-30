@@ -32,6 +32,7 @@ export const authErrors: HttpInterceptorFn = (request, next) => {
       if (
         request.url.startsWith('/api/') &&
         !request.url.startsWith('/api/auth/') &&
+        !request.url.startsWith('/api/shop/') &&
         error instanceof HttpErrorResponse
       ) {
         if (error.status === 401) {

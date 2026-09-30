@@ -1,3 +1,4 @@
+using MyShop.Api.Storefront;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -37,7 +38,7 @@ public sealed class AdminSecurityHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode);
         host.Client.DefaultRequestHeaders.Remove("X-XSRF-TOKEN");
         var routes = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
-            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth"));
+            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth") && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
         foreach (var endpoint in routes)
         foreach (var method in endpoint.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods.Where(m => m != "GET"))
         {
@@ -53,7 +54,7 @@ public sealed class AdminSecurityHttpTests
     {
         await using var host = await SecurityHost.Create();
         var routes = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
-            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth"));
+            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth") && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
         Assert.NotEmpty(routes);
         foreach (var endpoint in routes)
         foreach (var method in endpoint.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods)
@@ -204,6 +205,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.UseAdminSecurity();
         App.MapAdminEndpoints();
         App.MapCatalog();
+        App.MapStorefront();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.MigrateAsync();

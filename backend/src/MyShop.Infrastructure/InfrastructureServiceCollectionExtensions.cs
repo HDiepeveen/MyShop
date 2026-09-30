@@ -46,6 +46,7 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IProductSkuLookup>(provider =>
             new ProductSkuLookup(provider.GetRequiredService<MyShopDbContext>()));
 
+        services.AddScoped<IStorefrontCatalog>(provider => new StorefrontCatalog(provider.GetRequiredService<MyShopDbContext>()));
         return services;
     }
 }

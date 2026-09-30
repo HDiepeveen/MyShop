@@ -1,37 +1,51 @@
 <a class="skip" href="#content" (click)="$event.preventDefault(); content.focus()">Naar inhoud</a>
-<div class="workspace">
-  <aside class="sidebar">
-    <a routerLink="/" class="brand" aria-label="MyShop startpagina"
-      ><span class="brand-icon">m.</span> MyShop</a
-    >
-    <p class="nav-label">WERKRUIMTE</p>
-    <nav aria-label="Hoofdnavigatie">
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
-        >Overzicht</a
+<div class="workspace" [class.shop]="storefront()">
+  @if (!storefront()) {
+    <aside class="sidebar">
+      <a routerLink="/" class="brand" aria-label="MyShop startpagina"
+        ><span class="brand-icon">m.</span> MyShop</a
       >
-      <a routerLink="/producten" routerLinkActive="active">Producten</a>
-      <a routerLink="/categorieen" routerLinkActive="active">Categorieën</a>
-      <a routerLink="/producttypen" routerLinkActive="active">Producttypen</a>
-    </nav>
-    <div class="sidebar-footer"><span class="status-dot"></span> Catalogusbeheer</div>
-  </aside>
+      <p class="nav-label">WERKRUIMTE</p>
+      <nav aria-label="Hoofdnavigatie">
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+          >Overzicht</a
+        >
+        <a routerLink="/producten" routerLinkActive="active">Producten</a>
+        <a routerLink="/categorieen" routerLinkActive="active">Categorieën</a>
+        <a routerLink="/producttypen" routerLinkActive="active">Producttypen</a>
+      </nav>
+      <div class="sidebar-footer"><span class="status-dot"></span> Catalogusbeheer</div>
+    </aside>
+  }
   <div class="body">
     <header class="topbar">
-      <span>Mijn winkel <span class="divider">/</span> Beheer</span>
-      @if (auth.session()?.authenticated) {
-        <span>{{ auth.session()?.name }}</span>
-        @if (auth.session()?.administrator) {
-          <a routerLink="/account">Wachtwoord wijzigen</a>
+      @if (storefront()) {
+        <a routerLink="/winkel" class="shop-brand">MyShop</a>
+        <nav aria-label="Winkelnavigatie"><a routerLink="/winkel">Assortiment</a></nav>
+        <a routerLink="/inloggen">Beheer</a>
+      } @else {
+        <a routerLink="/winkel">Bekijk winkel</a>
+        <span>Mijn winkel <span class="divider">/</span> Beheer</span>
+        @if (auth.session()?.authenticated) {
+          <span>{{ auth.session()?.name }}</span>
+          @if (auth.session()?.administrator) {
+            <a routerLink="/account">Wachtwoord wijzigen</a>
+          }
+          <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">
+            Uitloggen
+          </button>
         }
-        <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">
-          Uitloggen
-        </button>
       }
     </header>
     @if (logoutError()) {
       <p class="error" role="alert">{{ logoutError() }}</p>
     }
     <main #content id="content" tabindex="-1"><router-outlet /></main>
-    <footer>MyShop <span>Een goed assortiment begint bij de details.</span></footer>
+    <footer>
+      MyShop
+      <span>{{
+        storefront() ? 'Ontdek wat bij je past.' : 'Een goed assortiment begint bij de details.'
+      }}</span>
+    </footer>
   </div>
 </div>

@@ -48,7 +48,7 @@ Vanuit een categorie of producttype kun je de bijbehorende producten openen. De 
 De producttypekiezer en categoriekiezer hebben een eigen zoekfunctie en paginering; ze beperken de keuze niet tot de eerste pagina.
 Categorie- en producttypelijsten hebben volgens het huidige backendcontract geen totaaltelling. Na een precies volle laatste pagina kan nog een lege pagina volgen; terugbladeren blijft mogelijk.
 
-Nog niet opgenomen: klantwinkel en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
+De openbare klantwinkel op `/winkel` biedt zoeken, bladeren, productdetails en variantkeuze. Nog niet opgenomen: winkelmand en checkout. De getoonde prijs is de basisprijs, niet de uitkomst van kortingsregels.
 
 Basisprijzen accepteren een komma of punt en maximaal twee decimalen. Nul is een geldige prijs; wissen maakt de prijs afwezig. Bedragen die JavaScript niet exact op centen kan versturen worden geweigerd. De valuta bestaat uit drie letters, bijvoorbeeld EUR. Artikelnummers bevatten maximaal 64 tekens zonder spaties en worden in hoofdletters opgeslagen. Een mislukte wijziging behoudt de ingevoerde gegevens; er zijn geen automatische herhaalpogingen voor schrijfacties.
 

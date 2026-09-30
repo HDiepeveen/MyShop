@@ -165,3 +165,12 @@ footer {
     display: none;
   }
 }
+
+.workspace.shop {
+  grid-template-columns: 1fr;
+}
+.shop-brand {
+  font-size: 26px;
+  font-weight: 750;
+  text-decoration: none;
+}

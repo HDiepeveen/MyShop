@@ -53,6 +53,27 @@ const protectedRoutes: Routes = [
 
 export const routes: Routes = [
   {
+    path: 'winkel',
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./shop/shop-list').then((m) => m.ShopList),
+        title: 'Assortiment · MyShop',
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./shop/shop-detail').then((m) => m.ShopDetail),
+        title: 'Product · MyShop',
+      },
+      {
+        path: '**',
+        loadComponent: () => import('./shop/shop-not-found').then((m) => m.ShopNotFound),
+        title: 'Pagina niet gevonden · MyShop',
+      },
+    ],
+  },
+  {
     path: 'inloggen',
     loadComponent: () => import('./auth/login').then((m) => m.Login),
     title: 'Inloggen · MyShop',

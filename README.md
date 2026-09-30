@@ -41,3 +41,5 @@ See [Frontend setup and scope](frontend/README.md) to start the management inter
 See [Beveiligd beheer](docs/admin-security.md) for the account migration, initial administrator setup, login and password recovery.
 
 See [Productpresentatie](docs/product-presentation.md) for descriptions, image links, draft/publication status and revision checks.
+
+See [Klantwinkel](docs/storefront.md) for public browsing, publication rules and current scope.

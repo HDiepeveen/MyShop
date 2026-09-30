@@ -1,3 +1,4 @@
+using MyShop.Api.Storefront;
 using MyShop.Api.Security;
 using MyShop.Api;
 using MyShop.Api.Catalog;
@@ -21,5 +22,6 @@ app.UseAdminSecurity();
 app.MapAdminEndpoints();
 
 app.MapCatalog();
+app.MapStorefront();
 
 app.Run();

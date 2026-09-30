@@ -1,0 +1,152 @@
+import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { ShopApi } from './shop.api';
+import { ShopImage } from './shop-image';
+import { loadState } from '../catalog/load-state';
+import { readListQuery } from '../catalog/list-query';
+
+@Component({
+  imports: [FormsModule, RouterLink, ShopImage],
+  styles: [
+    `
+      .products {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+        gap: 24px;
+      }
+      .product {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+      }
+      .product h2 {
+        margin: 18px 0 0;
+      }
+    `,
+  ],
+  template: `
+    <div class="eyebrow">Welkom bij MyShop</div>
+    <h1>Ontdek ons assortiment</h1>
+    <p class="muted">Bekijk onze producten en kies de variant die bij je past.</p>
+    <form class="toolbar" (ngSubmit)="search()">
+      <label
+        >Zoek producten<input
+          type="search"
+          name="search"
+          maxlength="200"
+          [(ngModel)]="searchText"
+          placeholder="Zoeken op productnaam"
+      /></label>
+      <button type="submit">Zoeken</button>
+      @if (query().search) {
+        <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
+      }
+    </form>
+    @if (state()?.loading) {
+      <p role="status">Producten ophalen…</p>
+    }
+    @if (state()?.error) {
+      <div role="alert" class="error">
+        {{ state()?.error }} <button class="secondary" (click)="retry()">Opnieuw proberen</button>
+      </div>
+    }
+    @if (state()?.data; as page) {
+      @if (page.items.length) {
+        <div class="products">
+          @for (product of page.items; track product.id) {
+            <a class="panel product" [routerLink]="['/winkel', product.id]" [queryParams]="query()">
+              <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" />
+              <h2>{{ product.name }}</h2>
+              <span>Bekijk product →</span>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="panel">
+          <h2>
+            {{ query().offset ? 'Geen producten op deze pagina' : 'Geen producten gevonden' }}
+          </h2>
+          <p>
+            {{
+              query().search
+                ? 'Probeer een andere zoekterm.'
+                : 'Er zijn hier nog geen producten te bekijken.'
+            }}
+          </p>
+        </div>
+      }
+      <div class="pager">
+        <span
+          >{{ page.totalCount }} {{ page.totalCount === 1 ? 'product' : 'producten' }} · Pagina
+          {{ query().offset / 20 + 1 }}</span
+        >
+        <div class="actions">
+          @if (query().offset) {
+            <button class="secondary" (click)="goToPage(0)">Eerste pagina</button>
+          }
+          <button
+            class="secondary"
+            [disabled]="query().offset === 0"
+            (click)="goToPage(query().offset - 20)"
+          >
+            Vorige
+          </button>
+          <button
+            class="secondary"
+            [disabled]="query().offset + 20 >= page.totalCount"
+            (click)="goToPage(query().offset + 20)"
+          >
+            Volgende
+          </button>
+        </div>
+      </div>
+    }
+  `,
+})
+export class ShopList {
+  private readonly api = inject(ShopApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly refresh = new BehaviorSubject(0);
+  readonly query = signal({ search: '', offset: 0 });
+  searchText = '';
+  readonly state = toSignal(
+    this.route.queryParamMap.pipe(
+      map(readListQuery),
+      distinctUntilChanged((a, b) => a.offset === b.offset && a.search === b.search),
+      switchMap((query) => {
+        if (query.search !== this.query().search) this.searchText = query.search;
+        this.query.set(query);
+        return this.refresh.pipe(
+          switchMap(() => loadState(this.api.products(query.offset, query.search))),
+        );
+      }),
+    ),
+  );
+  search() {
+    if (this.query().offset === 0 && this.query().search === this.searchText.trim()) {
+      this.retry();
+      return;
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: this.searchText.trim() || null, offset: null },
+    });
+  }
+  clearSearch() {
+    this.searchText = '';
+    this.search();
+  }
+  goToPage(offset: number) {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: this.query().search || null, offset: Math.max(0, offset) || null },
+    });
+  }
+  retry() {
+    this.refresh.next(this.refresh.value + 1);
+  }
+}
