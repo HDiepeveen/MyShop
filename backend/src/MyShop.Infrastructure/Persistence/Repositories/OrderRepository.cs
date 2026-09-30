@@ -87,7 +87,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 order.CustomerName,
                 order.PaymentMethod,
                 order.Status,
-                order.PaidAt
+                order.PaidAt,
+                order.ShippedAt
             })
             .ToArrayAsync(cancellationToken);
         var ids = rows.Select(row => row.Id).ToArray();
@@ -105,6 +106,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             (OrderPaymentMethod)row.PaymentMethod,
             (OrderStatus)row.Status,
             row.PaidAt,
+            row.ShippedAt,
             totalsByOrder[row.Id].Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray()))
             .ToArray();
         return new OrderListPage(items, totalCount);
@@ -130,6 +132,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             (OrderPaymentMethod)order.PaymentMethod,
             (OrderStatus)order.Status,
             order.PaidAt,
+            order.ShippedAt,
             order.Version,
             order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
                 line.ProductId,
@@ -144,7 +147,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray());
     }
 
-    public async Task<OrderStatusSnapshot?> MarkPaidAsync(Guid id, Guid expectedRevision,
+    public async Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
         DateTimeOffset paidAt, CancellationToken cancellationToken)
     {
         var replacement = Guid.NewGuid();
@@ -156,13 +159,28 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 .SetProperty(order => order.Status, (int)OrderStatus.Paid)
                 .SetProperty(order => order.PaidAt, paidAt.ToUniversalTime())
                 .SetProperty(order => order.Version, replacement), cancellationToken);
-        return changed == 0 ? null : new(OrderStatus.Paid, paidAt.ToUniversalTime(), replacement);
+        return changed == 0 ? null : replacement;
     }
 
     public async Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken) =>
         await context.Orders.AsNoTracking()
             .Where(order => order.Id == id)
             .Select(order => new OrderStatusSnapshot(
-                (OrderStatus)order.Status, order.PaidAt, order.Version))
+                (OrderStatus)order.Status, order.PaidAt, order.ShippedAt, order.Version))
             .SingleOrDefaultAsync(cancellationToken);
+
+    public async Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
+        DateTimeOffset shippedAt, CancellationToken cancellationToken)
+    {
+        var replacement = Guid.NewGuid();
+        var changed = await context.Orders
+            .Where(order => order.Id == id
+                && order.Version == expectedRevision
+                && order.Status == (int)OrderStatus.Paid)
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(order => order.Status, (int)OrderStatus.Shipped)
+                .SetProperty(order => order.ShippedAt, shippedAt.ToUniversalTime())
+                .SetProperty(order => order.Version, replacement), cancellationToken);
+        return changed == 0 ? null : replacement;
+    }
 }

@@ -40,12 +40,23 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         var paidAt = DateTimeOffset.UtcNow;
         var updated = await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt, CancellationToken.None);
         Assert.NotNull(updated);
-        Assert.Equal(OrderStatus.Paid, updated.Status);
-        Assert.Equal(paidAt.ToUniversalTime(), updated.PaidAt);
         Assert.Null(await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt, CancellationToken.None));
         var paid = await repository.GetAsync(newer.Id, CancellationToken.None);
         Assert.Equal(OrderStatus.Paid, paid!.Status);
-        Assert.Equal(updated.Revision, paid.Revision);
+        Assert.Equal(paidAt.ToUniversalTime(), paid.PaidAt);
+        Assert.Equal(updated.Value, paid.Revision);
+
+        var shippedAt = DateTimeOffset.UtcNow;
+        var shipped = await repository.MarkShippedAsync(newer.Id, paid.Revision,
+            shippedAt, CancellationToken.None);
+        Assert.NotNull(shipped);
+        Assert.Null(await repository.MarkShippedAsync(newer.Id, paid.Revision,
+            shippedAt, CancellationToken.None));
+        var persistedShipment = await repository.GetAsync(newer.Id, CancellationToken.None);
+        Assert.Equal(OrderStatus.Shipped, persistedShipment!.Status);
+        Assert.Equal(paidAt.ToUniversalTime(), persistedShipment.PaidAt);
+        Assert.Equal(shippedAt.ToUniversalTime(), persistedShipment.ShippedAt);
+        Assert.Equal(shipped.Value, persistedShipment.Revision);
         Assert.Null(await repository.GetAsync(Guid.NewGuid(), CancellationToken.None));
     }
 

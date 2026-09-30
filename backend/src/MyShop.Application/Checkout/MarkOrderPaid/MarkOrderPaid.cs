@@ -28,10 +28,11 @@ public sealed class MarkOrderPaid(IOrderStatusRepository orders)
             return MarkOrderPaidResult.Failed(MarkOrderPaidFailure.ConcurrencyConflict);
         if (order.Status != OrderStatus.AwaitingPayment)
             return MarkOrderPaidResult.Failed(MarkOrderPaidFailure.InvalidTransition);
-        var saved = await orders.MarkPaidAsync(command.Id, command.Revision,
-            DateTimeOffset.UtcNow, cancellationToken);
-        return saved is null
+        var paidAt = DateTimeOffset.UtcNow;
+        var revision = await orders.MarkPaidAsync(command.Id, command.Revision,
+            paidAt, cancellationToken);
+        return revision is null
             ? MarkOrderPaidResult.Failed(MarkOrderPaidFailure.ConcurrencyConflict)
-            : new(saved, null);
+            : new(new(OrderStatus.Paid, paidAt, null, revision.Value), null);
     }
 }

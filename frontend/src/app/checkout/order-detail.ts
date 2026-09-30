@@ -91,6 +91,10 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dt>Betaald op</dt>
             <dd>{{ order.paidAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
           }
+          @if (order.shippedAt) {
+            <dt>Verzonden op</dt>
+            <dd>{{ order.shippedAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
+          }
           @for (total of order.totals; track total.currency) {
             <dt>Totaal ({{ total.currency }})</dt>
             <dd>{{ total.amount | currency: total.currency }}</dd>
@@ -106,6 +110,21 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <p>De betaalstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
             <button type="button" [disabled]="saving()" (click)="markPaid(order)">
               {{ saving() ? 'Opslaan…' : 'Bevestigen als betaald' }}
+            </button>
+          </details>
+        </section>
+      }
+      @if (order.status === 'paid') {
+        <section class="panel">
+          <h2>Verzending verwerken</h2>
+          <p class="muted">
+            Gebruik dit nadat de volledige bestelling aan de vervoerder is overgedragen.
+          </p>
+          <details>
+            <summary>Bestelling als verzonden markeren</summary>
+            <p>De verzendstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
+            <button type="button" [disabled]="saving()" (click)="markShipped(order)">
+              {{ saving() ? 'Opslaan…' : 'Bevestigen als verzonden' }}
             </button>
           </details>
         </section>
@@ -130,7 +149,7 @@ export class OrderDetailComponent {
     this.refresh.next(this.refresh.value + 1);
   }
   statusLabel(status: OrderDetail['status']) {
-    return status === 'paid' ? 'Betaald' : 'Wacht op betaling';
+    return status === 'shipped' ? 'Verzonden' : status === 'paid' ? 'Betaald' : 'Wacht op betaling';
   }
   markPaid(order: OrderDetail) {
     if (this.saving()) return;
@@ -144,6 +163,26 @@ export class OrderDetailComponent {
         next: () => {
           this.saving.set(false);
           this.notice.set('De bestelling is als betaald gemarkeerd.');
+          this.retry();
+        },
+        error: (error) => {
+          this.saving.set(false);
+          this.actionError.set(errorMessage(error));
+        },
+      });
+  }
+  markShipped(order: OrderDetail) {
+    if (this.saving()) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.notice.set('');
+    this.api
+      .markShipped(order.id, order.revision)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.notice.set('De bestelling is als verzonden gemarkeerd.');
           this.retry();
         },
         error: (error) => {

@@ -140,7 +140,9 @@ export class OrderList {
       ? 'Wacht op betaling'
       : status === 'paid'
         ? 'Betaald'
-        : status;
+        : status === 'shipped'
+          ? 'Verzonden'
+          : status;
   }
   private readOffset(value: string | null) {
     const offset = Number(value);

@@ -7,6 +7,7 @@ using GetUseCase = MyShop.Application.Checkout.GetOrder.GetOrder;
 using ListUseCase = MyShop.Application.Checkout.ListOrders.ListOrders;
 using MyShop.Application.Checkout.ListOrders;
 using MyShop.Application.Checkout.MarkOrderPaid;
+using MyShop.Application.Checkout.MarkOrderShipped;
 
 namespace MyShop.Api.Checkout;
 
@@ -63,30 +64,43 @@ public static class OrderManagementEndpoints
     public static async Task<IResult> UpdateStatusAsync(
         Guid id,
         UpdateOrderStatusRequest? request,
-        [FromServices] MarkOrderPaid useCase,
+        [FromServices] MarkOrderPaid markPaid,
+        [FromServices] MarkOrderShipped markShipped,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(useCase);
-        if (request?.Status != "paid")
+        ArgumentNullException.ThrowIfNull(markPaid);
+        ArgumentNullException.ThrowIfNull(markShipped);
+        if (request?.Status is not ("paid" or "shipped"))
             return Results.BadRequest(new { code = "invalidStatus", message = "Kies een geldige bestelstatus." });
         try
         {
-            var result = await useCase.ExecuteAsync(new(id, request.Revision), cancellationToken);
-            return result.Failure switch
+            if (request.Status == "paid")
             {
-                MarkOrderPaidFailure.NotFound => Results.NotFound(),
-                MarkOrderPaidFailure.InvalidTransition => Results.Conflict(new
+                var result = await markPaid.ExecuteAsync(new(id, request.Revision), cancellationToken);
+                return result.Failure switch
+                {
+                    MarkOrderPaidFailure.NotFound => Results.NotFound(),
+                    MarkOrderPaidFailure.InvalidTransition => Results.Conflict(new
+                    {
+                        code = "invalidTransition",
+                        message = "Deze bestelling kan niet meer als betaald worden gemarkeerd."
+                    }),
+                    MarkOrderPaidFailure.ConcurrencyConflict => ConcurrencyConflict(),
+                    null => Results.Ok(MapStatus(result.Order!)),
+                    _ => throw new InvalidOperationException()
+                };
+            }
+            var shipped = await markShipped.ExecuteAsync(new(id, request.Revision), cancellationToken);
+            return shipped.Failure switch
+            {
+                MarkOrderShippedFailure.NotFound => Results.NotFound(),
+                MarkOrderShippedFailure.InvalidTransition => Results.Conflict(new
                 {
                     code = "invalidTransition",
-                    message = "Deze bestelling kan niet meer als betaald worden gemarkeerd."
+                    message = "Alleen een betaalde bestelling kan als verzonden worden gemarkeerd."
                 }),
-                MarkOrderPaidFailure.ConcurrencyConflict => Results.Conflict(new
-                {
-                    code = "concurrency",
-                    message = "De bestelling is intussen gewijzigd."
-                }),
-                null => Results.Ok(new OrderStatusResponse(Status(result.Order!.Status),
-                    result.Order.PaidAt, result.Order.Revision)),
+                MarkOrderShippedFailure.ConcurrencyConflict => ConcurrencyConflict(),
+                null => Results.Ok(MapStatus(shipped.Order!)),
                 _ => throw new InvalidOperationException()
             };
         }
@@ -96,6 +110,15 @@ public static class OrderManagementEndpoints
         }
     }
 
+    private static IResult ConcurrencyConflict() => Results.Conflict(new
+    {
+        code = "concurrency",
+        message = "De bestelling is intussen gewijzigd."
+    });
+
+    private static OrderStatusResponse MapStatus(OrderStatusSnapshot order) =>
+        new(Status(order.Status), order.PaidAt, order.ShippedAt, order.Revision);
+
     private static OrderSummaryResponse MapSummary(OrderListItem order) => new(
         order.Id,
         order.Number,
@@ -104,6 +127,7 @@ public static class OrderManagementEndpoints
         PaymentMethod(order.PaymentMethod),
         Status(order.Status),
         order.PaidAt,
+        order.ShippedAt,
         order.Totals.Select(MapTotal).ToArray());
 
     private static OrderDetailResponse MapDetail(OrderDetail order) => new(
@@ -115,6 +139,7 @@ public static class OrderManagementEndpoints
         PaymentMethod(order.PaymentMethod),
         Status(order.Status),
         order.PaidAt,
+        order.ShippedAt,
         order.Revision,
         order.Lines.Select(line => new OrderLineResponse(
             line.ProductId,
@@ -140,6 +165,7 @@ public static class OrderManagementEndpoints
     {
         OrderStatus.AwaitingPayment => "awaitingPayment",
         OrderStatus.Paid => "paid",
+        OrderStatus.Shipped => "shipped",
         _ => throw new InvalidOperationException($"Unsupported order status: {value}.")
     };
 }
@@ -157,6 +183,7 @@ public sealed record OrderSummaryResponse(
     string PaymentMethod,
     string Status,
     DateTimeOffset? PaidAt,
+    DateTimeOffset? ShippedAt,
     IReadOnlyList<OrderTotalResponse> Totals);
 public sealed record OrderDetailResponse(
     Guid Id,
@@ -167,6 +194,7 @@ public sealed record OrderDetailResponse(
     string PaymentMethod,
     string Status,
     DateTimeOffset? PaidAt,
+    DateTimeOffset? ShippedAt,
     Guid Revision,
     IReadOnlyList<OrderLineResponse> Lines,
     IReadOnlyList<OrderTotalResponse> Totals);
@@ -183,4 +211,8 @@ public sealed record OrderLineResponse(
     string TotalAmount);
 public sealed record OrderTotalResponse(string Currency, string Amount);
 public sealed record UpdateOrderStatusRequest(string Status, Guid Revision);
-public sealed record OrderStatusResponse(string Status, DateTimeOffset? PaidAt, Guid Revision);
+public sealed record OrderStatusResponse(
+    string Status,
+    DateTimeOffset? PaidAt,
+    DateTimeOffset? ShippedAt,
+    Guid Revision);

@@ -15,6 +15,7 @@ internal sealed class OrderPersistence
     public int PaymentMethod { get; set; }
     public int Status { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
+    public DateTimeOffset? ShippedAt { get; set; }
     public Guid Version { get; set; }
     public ICollection<OrderLinePersistence> Lines { get; set; } = [];
     public ICollection<OrderTotalPersistence> Totals { get; set; } = [];

@@ -16,6 +16,7 @@ public sealed record OrderListItem(
     OrderPaymentMethod PaymentMethod,
     OrderStatus Status,
     DateTimeOffset? PaidAt,
+    DateTimeOffset? ShippedAt,
     IReadOnlyList<OrderTotalSnapshot> Totals);
 
 public sealed record OrderListPage(IReadOnlyList<OrderListItem> Items, int TotalCount);
@@ -33,6 +34,7 @@ public sealed record OrderDetail(
     OrderPaymentMethod PaymentMethod,
     OrderStatus Status,
     DateTimeOffset? PaidAt,
+    DateTimeOffset? ShippedAt,
     Guid Revision,
     IReadOnlyList<OrderLineSnapshot> Lines,
     IReadOnlyList<OrderTotalSnapshot> Totals);
@@ -52,8 +54,14 @@ public sealed record OrderTotalSnapshot(string Currency, decimal Amount);
 public interface IOrderStatusRepository
 {
     Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken);
-    Task<OrderStatusSnapshot?> MarkPaidAsync(Guid id, Guid expectedRevision,
+    Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
         DateTimeOffset paidAt, CancellationToken cancellationToken);
+    Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
+        DateTimeOffset shippedAt, CancellationToken cancellationToken);
 }
 
-public sealed record OrderStatusSnapshot(OrderStatus Status, DateTimeOffset? PaidAt, Guid Revision);
+public sealed record OrderStatusSnapshot(
+    OrderStatus Status,
+    DateTimeOffset? PaidAt,
+    DateTimeOffset? ShippedAt,
+    Guid Revision);

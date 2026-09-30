@@ -7,6 +7,6 @@ The management endpoints are protected by the same administrator policy as catal
 - `GET /api/orders?offset=0&limit=20`
 - `GET /api/orders/{id}`
 
-Amounts are returned as two-decimal strings, together with their currency. Payment methods and statuses use stable API names (`payLater`, `awaitingPayment` and `paid`).
+Amounts are returned as two-decimal strings, together with their currency. Payment methods and statuses use stable API names (`payLater`, `awaitingPayment`, `paid` and `shipped`).
 
-An administrator can mark an order awaiting payment as paid from its detail page. `PUT /api/orders/{id}/status` accepts `paid` with the revision returned by the detail endpoint. The update records its UTC payment time and replaces the revision atomically. A stale revision returns a conflict so concurrent changes are never overwritten silently. Shipping and cancellation remain outside this slice.
+An administrator can mark an order awaiting payment as paid and then mark a paid order as shipped from its detail page. `PUT /api/orders/{id}/status` accepts `paid` or `shipped` with the revision returned by the detail endpoint. Each update records its UTC event time and replaces the revision atomically. A stale revision returns a conflict so concurrent changes are never overwritten silently. Cancellation remains outside this slice.

@@ -14,6 +14,7 @@ const summary = {
   paymentMethod: 'payLater',
   status: 'awaitingPayment',
   paidAt: null,
+  shippedAt: null,
   totals: [{ currency: 'EUR', amount: '12.50' }],
 };
 const revision = '33333333-3333-3333-3333-333333333333';
@@ -110,11 +111,17 @@ describe('Order management', () => {
     const update = http.expectOne('/api/orders/' + summary.id + '/status');
     expect(update.request.method).toBe('PUT');
     expect(update.request.body).toEqual({ status: 'paid', revision });
-    update.flush({ status: 'paid', paidAt: '2026-09-30T09:00:00Z', revision: 'new-revision' });
+    update.flush({
+      status: 'paid',
+      paidAt: '2026-09-30T09:00:00Z',
+      shippedAt: null,
+      revision: 'new-revision',
+    });
     http.expectOne('/api/orders/' + summary.id).flush({
       ...summary,
       status: 'paid',
       paidAt: '2026-09-30T09:00:00Z',
+      shippedAt: null,
       revision: 'new-revision',
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
@@ -128,6 +135,38 @@ describe('Order management', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Betaald');
     expect(fixture.nativeElement.textContent).toContain('De bestelling is als betaald gemarkeerd.');
+
+    fixture.componentInstance.markShipped(fixture.componentInstance.state()!.data!);
+    fixture.componentInstance.markShipped(fixture.componentInstance.state()!.data!);
+    const shipment = http.expectOne('/api/orders/' + summary.id + '/status');
+    expect(shipment.request.method).toBe('PUT');
+    expect(shipment.request.body).toEqual({ status: 'shipped', revision: 'new-revision' });
+    shipment.flush({
+      status: 'shipped',
+      paidAt: '2026-09-30T09:00:00Z',
+      shippedAt: '2026-09-30T10:00:00Z',
+      revision: 'shipped-revision',
+    });
+    http.expectOne('/api/orders/' + summary.id).flush({
+      ...summary,
+      status: 'shipped',
+      paidAt: '2026-09-30T09:00:00Z',
+      shippedAt: '2026-09-30T10:00:00Z',
+      revision: 'shipped-revision',
+      customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
+      deliveryAddress: {
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'NL',
+      },
+      lines: [],
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Verzonden');
+    expect(fixture.nativeElement.textContent).toContain(
+      'De bestelling is als verzonden gemarkeerd.',
+    );
 
     params.next(convertToParamMap({ id: '22222222-2222-2222-2222-222222222222' }));
     http
