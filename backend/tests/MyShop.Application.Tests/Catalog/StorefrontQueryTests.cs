@@ -8,6 +8,8 @@ namespace MyShop.Application.Tests.Catalog;
 
 public sealed class StorefrontQueryTests
 {
+    private static readonly DateTimeOffset At = DateTimeOffset.Parse("2026-09-30T12:00:00+02:00");
+
     [Fact]
     public async Task NormalizesSearchAndForwardsPaginationAndCancellation()
     {
@@ -15,10 +17,10 @@ public sealed class StorefrontQueryTests
         var useCase = new BrowseStorefront(catalog);
         using var source = new CancellationTokenSource();
         var categoryId = CategoryId.New();
-        await useCase.ExecuteAsync(new(20, 10, " shirt ", categoryId), source.Token);
-        Assert.Equal((20, 10, "shirt", categoryId), catalog.Request);
+        await useCase.ExecuteAsync(new(20, 10, " shirt ", categoryId, At), source.Token);
+        Assert.Equal((20, 10, "shirt", categoryId, At.ToUniversalTime()), catalog.Request);
         Assert.Equal(source.Token, catalog.Cancellation);
-        await useCase.ExecuteAsync(new(0, 20, " "), CancellationToken.None);
+        await useCase.ExecuteAsync(new(0, 20, " ", null, At), CancellationToken.None);
         Assert.Null(catalog.Request.Search);
     }
     [Theory]
@@ -47,10 +49,13 @@ public sealed class StorefrontQueryTests
     {
         var catalog = new Catalog();
         var useCase = new BrowseStorefront(catalog);
-        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(new(0, 20, new string('a', 201)), CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new(0, 20, new string('a', 201), null, At), CancellationToken.None));
         CategoryId? emptyCategoryId = default(CategoryId);
         await Assert.ThrowsAsync<ArgumentException>(() =>
-            useCase.ExecuteAsync(new(0, 20, null, emptyCategoryId), CancellationToken.None));
+            useCase.ExecuteAsync(new(0, 20, null, emptyCategoryId, At), CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            useCase.ExecuteAsync(new(0, 20, null, null, null), CancellationToken.None));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => useCase.ExecuteAsync(new(), new CancellationToken(true)));
         Assert.Equal(0, catalog.Calls);
     }
@@ -67,14 +72,14 @@ public sealed class StorefrontQueryTests
     private sealed class Catalog : IStorefrontCatalog
     {
         internal int Calls;
-        internal (int Offset, int Limit, string? Search, CategoryId? CategoryId) Request;
+        internal (int Offset, int Limit, string? Search, CategoryId? CategoryId, DateTimeOffset At) Request;
         internal CancellationToken Cancellation;
         internal ProductId Id;
         internal IReadOnlyList<StorefrontCategory> Categories { get; } =
             [new(Guid.NewGuid(), "Clothing")];
         public Task<StorefrontPage> ListAsync(int offset, int limit, string? search,
-            CategoryId? categoryId, CancellationToken cancellationToken)
-        { Calls++; Request = (offset, limit, search, categoryId); Cancellation = cancellationToken; return Task.FromResult(new StorefrontPage([], 0, offset, limit)); }
+            CategoryId? categoryId, DateTimeOffset at, CancellationToken cancellationToken)
+        { Calls++; Request = (offset, limit, search, categoryId, at); Cancellation = cancellationToken; return Task.FromResult(new StorefrontPage(at, [], 0, offset, limit)); }
         public Task<IReadOnlyList<StorefrontCategory>> ListCategoriesAsync(CancellationToken cancellationToken)
         { Calls++; Cancellation = cancellationToken; return Task.FromResult(Categories); }
         public Task<StorefrontProduct?> GetAsync(ProductId id, CancellationToken cancellationToken)

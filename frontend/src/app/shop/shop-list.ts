@@ -82,6 +82,20 @@ import { readListQuery } from '../catalog/list-query';
             >
               <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" />
               <h2>{{ product.name }}</h2>
+              @if (product.prices.length) {
+                @for (price of product.prices; track price.currency) {
+                  <p>
+                    <strong>
+                      {{ price.currency }} {{ amount(price.minimumAmount) }}
+                      @if (price.minimumAmount !== price.maximumAmount) {
+                        – {{ amount(price.maximumAmount) }}
+                      }
+                    </strong>
+                  </p>
+                }
+              } @else {
+                <p class="muted">Prijs niet beschikbaar</p>
+              }
               <span>Bekijk product →</span>
             </a>
           }
@@ -203,5 +217,8 @@ export class ShopList {
   }
   retry() {
     this.refresh.next(this.refresh.value + 1);
+  }
+  amount(value: string) {
+    return value.replace('.', ',');
   }
 }

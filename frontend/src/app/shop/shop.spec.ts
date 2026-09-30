@@ -42,10 +42,21 @@ describe('Public storefront', () => {
     );
     http.expectNone((r) => r.url.startsWith('/api/auth'));
     http.expectOne('/api/shop/categories').flush([{ id: 'c1', name: 'Kleding' }]);
-    http
-      .expectOne('/api/shop/products?offset=20&limit=20&search=shirt&categoryId=c1')
-      .flush({ items: [product], totalCount: 45, offset: 20, limit: 20 });
+    http.expectOne('/api/shop/products?offset=20&limit=20&search=shirt&categoryId=c1').flush({
+      at: '2026-09-30T12:00:00Z',
+      items: [
+        {
+          ...product,
+          prices: [{ currency: 'EUR', minimumAmount: '12.50', maximumAmount: '25.00' }],
+        },
+      ],
+      totalCount: 45,
+      offset: 20,
+      limit: 20,
+    });
     harness.detectChanges();
+    expect(harness.routeNativeElement!.textContent).toContain('EUR 12,50');
+    expect(harness.routeNativeElement!.textContent).toContain('25,00');
     const link = harness.routeNativeElement!.querySelector('a[href*="/winkel/p?"]')!;
     expect(link.getAttribute('href')).toContain('search=shirt');
     expect(link.getAttribute('href')).toContain('offset=20');
@@ -59,19 +70,19 @@ describe('Public storefront', () => {
     await harness.fixture.whenStable();
     http
       .expectOne('/api/shop/products?offset=0&limit=20&search=coat&categoryId=c1')
-      .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
+      .flush({ items: [], totalCount: 0, offset: 0, limit: 20, at: '2026-09-30T12:00:00Z' });
     expect(TestBed.inject(Router).url).toContain('search=coat');
     expect(TestBed.inject(Router).url).toContain('categoryId=c1');
     list.clearSearch();
     await harness.fixture.whenStable();
     http
       .expectOne('/api/shop/products?offset=0&limit=20&categoryId=c1')
-      .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
+      .flush({ items: [], totalCount: 0, offset: 0, limit: 20, at: '2026-09-30T12:00:00Z' });
     list.filterCategory('');
     await harness.fixture.whenStable();
     http
       .expectOne('/api/shop/products?offset=0&limit=20')
-      .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
+      .flush({ items: [], totalCount: 0, offset: 0, limit: 20, at: '2026-09-30T12:00:00Z' });
   });
   it('uses the applied search while paging and cancels obsolete reads', async () => {
     const harness = await RouterTestingHarness.create('/winkel?search=shirt');
@@ -84,7 +95,7 @@ describe('Public storefront', () => {
     expect(obsolete.cancelled).toBe(true);
     http
       .expectOne('/api/shop/products?offset=20&limit=20&search=shirt')
-      .flush({ items: [], totalCount: 0, offset: 20, limit: 20 });
+      .flush({ items: [], totalCount: 0, offset: 20, limit: 20, at: '2026-09-30T12:00:00Z' });
     harness.detectChanges();
     expect(harness.routeNativeElement!.textContent).toContain('Geen producten op deze pagina');
     expect(list.searchText).toBe('unsent');
@@ -92,7 +103,7 @@ describe('Public storefront', () => {
     await harness.fixture.whenStable();
     http
       .expectOne('/api/shop/products?offset=0&limit=20&search=shirt')
-      .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
+      .flush({ items: [], totalCount: 0, offset: 0, limit: 20, at: '2026-09-30T12:00:00Z' });
   });
   it('selects variants, escapes product text and retains the return context', async () => {
     const harness = await RouterTestingHarness.create(
@@ -223,7 +234,7 @@ describe('Public storefront', () => {
     http.expectOne('/api/shop/categories').flush([]);
     http
       .expectOne('/api/shop/products?offset=0&limit=20')
-      .flush({ items: [], totalCount: 0, offset: 0, limit: 20 });
+      .flush({ items: [], totalCount: 0, offset: 0, limit: 20, at: '2026-09-30T12:00:00Z' });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.sidebar')).toBeNull();
     expect(fixture.nativeElement.querySelector('nav')?.getAttribute('aria-label')).toBe(

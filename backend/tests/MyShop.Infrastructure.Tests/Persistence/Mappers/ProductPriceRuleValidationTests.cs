@@ -6,6 +6,28 @@ namespace MyShop.Infrastructure.Tests.Persistence.Mappers;
 
 public sealed class ProductPriceRuleValidationTests
 {
+    [Fact]
+    public void ToPricingVariants_RestoresOnlyTheRequestedPricingGraphs()
+    {
+        var first = Product.Create("First", ProductTypeId.New(), "Small");
+        var firstVariant = first.Variants.Single();
+        first.SetVariantPrice(firstVariant.Id, Money.Create(100m, "EUR"));
+        first.AddVariantPriceRule(firstVariant.Id,
+            PriceRule.Create("Sale", PriceAdjustmentType.PercentageDiscount, 25m, 1));
+        var second = Product.Create("Second", ProductTypeId.New(), "Only");
+        var firstPersistence = new ProductPersistence { Id = first.Id.Value, Version = Guid.NewGuid() };
+        var secondPersistence = new ProductPersistence { Id = second.Id.Value, Version = Guid.NewGuid() };
+        ProductPersistenceSynchronizer.Synchronize(first, firstPersistence);
+        ProductPersistenceSynchronizer.Synchronize(second, secondPersistence);
+
+        var restored = ProductPersistenceMapper.ToPricingVariants(
+            firstPersistence.Variants.Concat(secondPersistence.Variants));
+
+        Assert.Equal(Money.Create(75m, "EUR"), Assert.Single(restored[first.Id.Value])
+            .CalculatePrice(DateTimeOffset.UtcNow));
+        Assert.Null(Assert.Single(restored[second.Id.Value]).Price);
+    }
+
     [Theory]
     [InlineData("null collection")]
     [InlineData("null entry")]

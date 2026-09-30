@@ -68,14 +68,19 @@ public sealed class StorefrontHttpTests
         Assert.Equal(0, (await visitor.GetFromJsonAsync<JsonElement>(
             $"/api/shop/products?categoryId={Guid.NewGuid()}")).GetProperty("totalCount").GetInt32());
         Assert.Equal(HttpStatusCode.Created, (await host.Client.PostAsJsonAsync($"/api/products/{alpha}/variants", new { name = "Large" })).StatusCode);
+        var pageRequestedAt = DateTimeOffset.UtcNow;
         var pageResponse = await visitor.GetAsync("/api/shop/products?limit=1&offset=1");
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
         Assert.True(pageResponse.Headers.CacheControl?.NoStore);
         var page = await pageResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(new[] { "at", "items", "limit", "offset", "totalCount" }, page.EnumerateObject()
+            .Select(property => property.Name).Order().ToArray());
+        Assert.InRange(page.GetProperty("at").GetDateTimeOffset(), pageRequestedAt, DateTimeOffset.UtcNow);
         Assert.Equal(2, page.GetProperty("totalCount").GetInt32());
         var item = Assert.Single(page.GetProperty("items").EnumerateArray());
         Assert.Equal(beta, item.GetProperty("id").GetGuid());
-        Assert.Equal(new[] { "id", "imageAlt", "imageUrl", "name" }, item.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(new[] { "id", "imageAlt", "imageUrl", "name", "prices" }, item.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Empty(item.GetProperty("prices").EnumerateArray());
         var product = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}");
         Assert.Equal(new[] { "categories", "description", "id", "imageAlt", "imageUrl", "name", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
         var productCategory = Assert.Single(product.GetProperty("categories").EnumerateArray());
@@ -130,6 +135,14 @@ public sealed class StorefrontHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{alpha}/variants/{unpricedId}/price", new { amount = 9999999999999999.99m, currency = "EUR" })).StatusCode);
         var largeQuote = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/cart/quote?lines={alpha}:{unpricedId}:99");
         Assert.Equal("989999999999999999.01", largeQuote.GetProperty("totals")[0].GetProperty("amount").GetString());
+        var pricedPage = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?search=Alpha");
+        var range = Assert.Single(Assert.Single(pricedPage.GetProperty("items").EnumerateArray())
+            .GetProperty("prices").EnumerateArray());
+        Assert.Equal(new[] { "currency", "maximumAmount", "minimumAmount" }, range.EnumerateObject()
+            .Select(property => property.Name).Order().ToArray());
+        Assert.Equal("EUR", range.GetProperty("currency").GetString());
+        Assert.Equal("75.00", range.GetProperty("minimumAmount").GetString());
+        Assert.Equal("9999999999999999.99", range.GetProperty("maximumAmount").GetString());
         var hidden = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?search=Onlydraft");
         Assert.Equal(0, hidden.GetProperty("totalCount").GetInt32());
         foreach (var query in new[] { "offset=-1", "limit=0", "limit=101", "offset=invalid",

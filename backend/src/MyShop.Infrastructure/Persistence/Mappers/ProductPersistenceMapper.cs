@@ -6,6 +6,22 @@ namespace MyShop.Infrastructure.Persistence.Mappers;
 
 internal static class ProductPersistenceMapper
 {
+    internal static IReadOnlyDictionary<Guid, IReadOnlyList<ProductVariant>> ToPricingVariants(
+        IEnumerable<ProductVariantPersistence> persistence)
+    {
+        ArgumentNullException.ThrowIfNull(persistence);
+        return persistence.GroupBy(variant => variant.ProductId).ToDictionary(
+            group => group.Key,
+            group =>
+            {
+                var priceRuleIds = new HashSet<Guid>();
+                return (IReadOnlyList<ProductVariant>)OrderByOrdinal(group.ToList(),
+                        variant => variant.Ordinal, group.Key, "variants")
+                    .Select(variant => ToDomain(variant, group.Key, priceRuleIds))
+                    .ToList();
+            });
+    }
+
     internal static ProductSnapshot ToSnapshot(ProductPersistence persistence)
     {
         ArgumentNullException.ThrowIfNull(persistence);

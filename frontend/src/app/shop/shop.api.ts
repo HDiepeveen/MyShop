@@ -8,10 +8,14 @@ export interface ShopItem {
   imageAlt: string;
 }
 export interface ShopPage {
-  items: ShopItem[];
+  at: string;
+  items: ShopListItem[];
   totalCount: number;
   offset: number;
   limit: number;
+}
+export interface ShopListItem extends ShopItem {
+  prices: { currency: string; minimumAmount: string; maximumAmount: string }[];
 }
 export interface ShopCategory {
   id: string;

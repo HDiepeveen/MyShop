@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using MyShop.Application.Catalog.GetStorefrontPrices;
 using MyShop.Application.Catalog.BrowseStorefront;
 using MyShop.Application.Catalog.GetStorefrontProduct;
@@ -30,8 +31,16 @@ public static class StorefrontEndpoints
             try
             {
                 CategoryId? category = categoryId is null ? null : CategoryId.From(categoryId.Value);
-                return Results.Ok(await useCase.ExecuteAsync(
-                    new(offset ?? 0, limit ?? 20, search, category), cancellationToken));
+                var page = await useCase.ExecuteAsync(
+                    new(offset ?? 0, limit ?? 20, search, category, DateTimeOffset.UtcNow),
+                    cancellationToken);
+                return Results.Ok(new StorefrontPageResponse(page.At,
+                    page.Items.Select(item => new StorefrontItemResponse(item.Id, item.Name,
+                        item.ImageUrl, item.ImageAlt, item.Prices.Select(price =>
+                            new StorefrontPriceRangeResponse(price.Currency,
+                                price.MinimumAmount.ToString("F2", CultureInfo.InvariantCulture),
+                                price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()))
+                        .ToList(), page.TotalCount, page.Offset, page.Limit));
             }
             catch (ArgumentException) { return (IResult)Results.BadRequest(); }
         }).AllowAnonymous();
@@ -44,3 +53,9 @@ public static class StorefrontEndpoints
         }).AllowAnonymous();
     }
 }
+
+public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<StorefrontItemResponse> Items,
+    int TotalCount, int Offset, int Limit);
+public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,
+    IReadOnlyList<StorefrontPriceRangeResponse> Prices);
+public sealed record StorefrontPriceRangeResponse(string Currency, string MinimumAmount, string MaximumAmount);

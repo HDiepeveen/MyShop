@@ -1,13 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
+using MyShop.Infrastructure.Persistence.Mappers;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
 internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCatalog
 {
     public async Task<StorefrontPage> ListAsync(int offset, int limit, string? search, CategoryId? categoryId,
-        CancellationToken cancellationToken)
+        DateTimeOffset at, CancellationToken cancellationToken)
     {
         var query = context.Products.AsNoTracking().Where(product => product.IsPublished);
         if (search is not null) query = query.Where(product => product.Name.Contains(search));
@@ -15,12 +16,32 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
             query = query.Where(product => product.Categories.Any(category =>
                 category.CategoryId == categoryId.Value.Value));
         var count = await query.CountAsync(cancellationToken);
-        var items = await query.OrderBy(product => product.Name).ThenBy(product => product.Id)
+        var rows = await query.OrderBy(product => product.Name).ThenBy(product => product.Id)
             .Skip(offset).Take(limit)
-            .Select(product => new StorefrontItem(product.Id, product.Name, product.ImageUrl, product.ImageAlt))
+            .Select(product => new { product.Id, product.Name, product.ImageUrl, product.ImageAlt })
             .ToListAsync(cancellationToken);
-        return new(items, count, offset, limit);
+        var productIds = rows.Select(row => row.Id).ToArray();
+        var persistedVariants = productIds.Length == 0
+            ? []
+            : await context.ProductVariants.AsNoTracking()
+                .Where(variant => productIds.Contains(variant.ProductId))
+                .Include(variant => variant.PriceRules)
+                .ToListAsync(cancellationToken);
+        var variantsByProduct = ProductPersistenceMapper.ToPricingVariants(persistedVariants);
+        var items = rows.Select(row => new StorefrontItem(row.Id, row.Name, row.ImageUrl, row.ImageAlt,
+            PriceRanges(variantsByProduct.GetValueOrDefault(row.Id, []), at))).ToList();
+        return new(at, items, count, offset, limit);
     }
+
+    private static IReadOnlyList<StorefrontPriceRange> PriceRanges(
+        IReadOnlyList<ProductVariant> variants, DateTimeOffset at) => variants
+        .Where(variant => variant.Price is not null)
+        .Select(variant => variant.CalculatePrice(at))
+        .GroupBy(price => price.Currency)
+        .OrderBy(group => group.Key, StringComparer.Ordinal)
+        .Select(group => new StorefrontPriceRange(group.Key,
+            group.Min(price => price.Amount), group.Max(price => price.Amount)))
+        .ToList();
 
     public async Task<IReadOnlyList<StorefrontCategory>> ListCategoriesAsync(
         CancellationToken cancellationToken) => await context.Categories.AsNoTracking()
