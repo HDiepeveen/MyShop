@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -8,6 +8,7 @@ import { BehaviorSubject, combineLatest, map, of, switchMap } from 'rxjs';
 import { Cart, CartLine } from './cart';
 import { ShopApi } from './shop.api';
 import { loadState } from '../catalog/load-state';
+import { PaymentOptionsApi } from '../checkout/payment-options.api';
 
 @Component({
   imports: [DatePipe, FormsModule, RouterLink],
@@ -73,6 +74,30 @@ import { loadState } from '../catalog/load-state';
         <p class="muted">
           Zonder eventuele verzendkosten. Prijzen worden opnieuw gecontroleerd bij wijzigingen.
         </p>
+        <section class="panel">
+          <h2>Hoe wil je betalen?</h2>
+          @if (paymentOptions()?.loading) {
+            <p role="status">Betaalopties ophalen…</p>
+          }
+          @if (paymentOptions()?.error) {
+            <p role="alert">Betaalopties konden niet worden opgehaald.</p>
+          }
+          @for (option of paymentOptions()?.data?.items ?? []; track option.code) {
+            <label
+              ><input
+                type="radio"
+                name="payment"
+                [value]="option.code"
+                [ngModel]="selectedPayment()"
+                (ngModelChange)="selectedPayment.set($event)"
+              />
+              {{ option.name }}</label
+            >
+          }
+          @if (paymentOptions()?.data && !paymentOptions()?.data?.items?.length) {
+            <p role="alert">Er is momenteel geen betaaloptie beschikbaar.</p>
+          }
+        </section>
       } @else if (state()?.data) {
         <p>Geen subtotaal beschikbaar: controleer de artikelen hierboven.</p>
       }
@@ -89,8 +114,11 @@ import { loadState } from '../catalog/load-state';
 export class ShopCart {
   readonly cart = inject(Cart);
   private readonly api = inject(ShopApi);
+  private readonly paymentApi = inject(PaymentOptionsApi);
   private readonly reload = new BehaviorSubject(0);
   readonly error = signal('');
+  readonly selectedPayment = signal('');
+  readonly paymentOptions = toSignal(loadState(this.paymentApi.publicOptions()));
   readonly state = toSignal(
     combineLatest([toObservable(this.cart.lines), this.reload]).pipe(
       switchMap(([lines]) => {
@@ -126,6 +154,13 @@ export class ShopCart {
       this.rows().length === this.cart.lines().length &&
       this.totals().length > 0,
   );
+  constructor() {
+    effect(() => {
+      const items = this.paymentOptions()?.data?.items ?? [];
+      if (!items.some((option) => option.code === this.selectedPayment()))
+        this.selectedPayment.set(items[0]?.code ?? '');
+    });
+  }
   amount(value: string | null) {
     return value?.replace('.', ',') ?? '';
   }

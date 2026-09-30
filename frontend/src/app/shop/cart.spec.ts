@@ -103,6 +103,9 @@ describe('Cart page', () => {
   function request() {
     return http.expectOne((r) => r.url === '/api/shop/cart/quote');
   }
+  function paymentReply(items = [{ code: 'payLater', name: 'Later betalen' }]) {
+    http.expectOne('/api/shop/payment-options').flush({ items });
+  }
   function quote(amount = '12.50', quantity = 1, total = '12.50') {
     return {
       at: '2026-09-30T12:00:00Z',
@@ -121,10 +124,11 @@ describe('Cart page', () => {
       totals: [{ currency: 'EUR', amount: total }],
     };
   }
-  it('opens an empty public cart without requests', async () => {
+  it('opens an empty public cart and loads the available payment methods', async () => {
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+    paymentReply();
+    await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.textContent).toContain('Je winkelmand is leeg');
-    http.expectNone(() => true);
   });
   it('adds the selected variant from the product page', async () => {
     const harness = await RouterTestingHarness.create(`/winkel/${productId}`);
@@ -154,6 +158,10 @@ describe('Cart page', () => {
     cart.add(productId, variantId);
     cart.add(productId, secondId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+    paymentReply([
+      { code: 'payLater', name: 'Later betalen' },
+      { code: 'online', name: 'Direct online betalen' },
+    ]);
     const pending = request();
     expect(pending.request.method).toBe('GET');
     expect(pending.request.params.keys()).toEqual(['lines']);
@@ -175,13 +183,16 @@ describe('Cart page', () => {
     const page = harness.routeDebugElement!.componentInstance as ShopCart;
     expect(page.totals()).toEqual(response.totals);
     expect(page.complete()).toBe(true);
+    expect(page.selectedPayment()).toBe('payLater');
     expect(harness.routeNativeElement!.textContent).toContain('9999999999999999,99');
     expect(harness.routeNativeElement!.textContent).toContain('USD 0,00');
+    expect(harness.routeNativeElement!.querySelectorAll('input[type=radio]')).toHaveLength(2);
   });
   it('cancels obsolete quotes and clears old totals during changes and errors', async () => {
     const cart = TestBed.inject(Cart);
     cart.add(productId, variantId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+    paymentReply();
     request().flush(quote());
     await harness.fixture.whenStable();
     const page = harness.routeDebugElement!.componentInstance as ShopCart;
@@ -211,6 +222,7 @@ describe('Cart page', () => {
     async (failure) => {
       TestBed.inject(Cart).add(productId, variantId);
       const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+      paymentReply();
       request().flush({
         at: '2026-09-30T12:00:00Z',
         lines: [
@@ -238,6 +250,7 @@ describe('Cart page', () => {
   it('submits quantity edits through the form and can remove the last line', async () => {
     TestBed.inject(Cart).add(productId, variantId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+    paymentReply();
     request().flush(quote());
     await harness.fixture.whenStable();
     harness.routeNativeElement!.querySelector('input')!.value = '4';

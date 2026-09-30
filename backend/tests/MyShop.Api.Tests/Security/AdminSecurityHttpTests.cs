@@ -14,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MyShop.Api.Catalog;
+using MyShop.Api.Checkout;
 using MyShop.Api.Security;
 using MyShop.Infrastructure.Persistence;
 
@@ -206,6 +207,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.MapAdminEndpoints();
         App.MapCatalog();
         App.MapStorefront();
+        App.MapPaymentOptions();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.MigrateAsync();

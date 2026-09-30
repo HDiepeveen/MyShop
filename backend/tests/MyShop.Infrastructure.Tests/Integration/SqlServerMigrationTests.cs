@@ -8,7 +8,7 @@ namespace MyShop.Infrastructure.Tests.Integration;
 public sealed class SqlServerMigrationTests(SqlServerDatabase database)
 {
     [SqlServerFact]
-    public async Task AccountAndPresentationMigrationsPreserveExistingCatalogData()
+    public async Task LaterMigrationsPreserveExistingCatalogDataAndSeedPaymentOptions()
     {
         var isolated = new SqlServerDatabase();
         await isolated.InitializeAsync();
@@ -29,6 +29,10 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             Assert.Equal(version, product.Version);
             Assert.Equal("Existing catalog type", (await context.ProductTypes.SingleAsync(p => p.Id == id)).Name);
             Assert.Empty(await context.Users.ToListAsync());
+            var paymentOptions = await context.PaymentOptions.SingleAsync();
+            Assert.True(paymentOptions.PayLaterEnabled);
+            Assert.False(paymentOptions.OnlinePaymentEnabled);
+            Assert.NotEqual(Guid.Empty, paymentOptions.Version);
         }
         finally { await isolated.DisposeAsync(); }
     }
@@ -38,7 +42,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(3, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(4, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -55,7 +59,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(3, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(4, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

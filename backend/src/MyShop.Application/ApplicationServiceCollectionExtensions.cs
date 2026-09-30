@@ -111,6 +111,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Catalog.GetStorefrontProduct.GetStorefrontProduct>();
         services.AddScoped<Catalog.GetStorefrontPrices.GetStorefrontPrices>();
         services.AddScoped<Catalog.QuoteStorefrontCart.QuoteStorefrontCart>();
+        services.AddScoped<Checkout.GetPaymentOptions.GetPaymentOptions>();
+        services.AddScoped<Checkout.GetAdminPaymentOptions.GetAdminPaymentOptions>();
+        services.AddScoped<Checkout.UpdatePaymentOptions.UpdatePaymentOptions>();
         return services;
     }
 }

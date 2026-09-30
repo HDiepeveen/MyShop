@@ -2,6 +2,7 @@ using MyShop.Api.Storefront;
 using MyShop.Api.Security;
 using MyShop.Api;
 using MyShop.Api.Catalog;
+using MyShop.Api.Checkout;
 
 
 
@@ -23,5 +24,6 @@ app.MapAdminEndpoints();
 
 app.MapCatalog();
 app.MapStorefront();
+app.MapPaymentOptions();
 
 app.Run();

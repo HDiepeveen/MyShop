@@ -1,0 +1,107 @@
+import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, switchMap } from 'rxjs';
+import { PaymentOptionsApi, AdminPaymentOptions } from './payment-options.api';
+import { loadState } from '../catalog/load-state';
+import { errorMessage } from '../catalog/error-message';
+
+@Component({
+  imports: [FormsModule],
+  template: `
+    <div class="eyebrow">Checkout</div>
+    <h1>Betaalopties</h1>
+    <p class="muted">Bepaal uit welke opties klanten bij het afrekenen kunnen kiezen.</p>
+    @if (state()?.loading) {
+      <p role="status">Betaalopties ophalen…</p>
+    }
+    @if (state()?.error) {
+      <p role="alert" class="error">{{ state()?.error }}</p>
+      <button class="secondary" type="button" (click)="reload()">Opnieuw proberen</button>
+    }
+    @if (state()?.data; as options) {
+      <form class="panel" (ngSubmit)="save(options)">
+        <label
+          ><input type="checkbox" name="payLater" [(ngModel)]="payLater" [disabled]="busy()" />
+          Later betalen</label
+        >
+        <label
+          ><input
+            type="checkbox"
+            name="online"
+            [(ngModel)]="online"
+            [disabled]="busy() || !options.onlinePaymentConfigured"
+          />
+          Direct online betalen</label
+        >
+        @if (!options.onlinePaymentConfigured) {
+          <p class="muted">
+            Online betalen wordt beschikbaar nadat een betaalprovider is gekoppeld.
+          </p>
+        }
+        @if (validation()) {
+          <p role="alert" class="error">{{ validation() }}</p>
+        }
+        @if (message()) {
+          <p role="status">{{ message() }}</p>
+        }
+        <button [disabled]="busy()">{{ busy() ? 'Opslaan…' : 'Betaalopties opslaan' }}</button>
+      </form>
+    }
+  `,
+})
+export class PaymentSettings {
+  private readonly api = inject(PaymentOptionsApi);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly refresh = new BehaviorSubject(0);
+  readonly busy = signal(false);
+  readonly validation = signal('');
+  readonly message = signal('');
+  payLater = false;
+  online = false;
+  readonly state = toSignal(this.refresh.pipe(switchMap(() => loadState(this.api.adminOptions()))));
+  constructor() {
+    effect(() => {
+      const options = this.state()?.data;
+      if (options) {
+        this.payLater = options.payLaterEnabled;
+        this.online = options.onlinePaymentEnabled;
+      }
+    });
+  }
+  reload() {
+    this.message.set('');
+    this.refresh.next(this.refresh.value + 1);
+  }
+  save(options: AdminPaymentOptions) {
+    this.validation.set('');
+    this.message.set('');
+    if (!this.payLater && !this.online) {
+      this.validation.set('Schakel minimaal één betaaloptie in.');
+      return;
+    }
+    if (this.online && !options.onlinePaymentConfigured) {
+      this.validation.set('Koppel eerst een online betaalprovider.');
+      return;
+    }
+    this.busy.set(true);
+    this.api
+      .update({
+        payLaterEnabled: this.payLater,
+        onlinePaymentEnabled: this.online,
+        revision: options.revision,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          this.message.set('Betaalopties opgeslagen.');
+          this.refresh.next(this.refresh.value + 1);
+        },
+        error: (error) => {
+          this.busy.set(false);
+          this.validation.set(errorMessage(error));
+        },
+      });
+  }
+}

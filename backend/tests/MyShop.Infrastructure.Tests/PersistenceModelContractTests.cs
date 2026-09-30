@@ -82,10 +82,10 @@ public sealed class PersistenceModelContractTests
     }
 
     [Fact]
-    public void PersistenceModelInventory_ContainsExpectedNumberOfModels() => Assert.Equal(11, Models.Length);
+    public void PersistenceModelInventory_ContainsExpectedNumberOfModels() => Assert.Equal(12, Models.Length);
 
     [Fact]
-    public void PersistenceModelInventory_ContainsExpectedNumberOfConfigurations() => Assert.Equal(11, Configurations.Length);
+    public void PersistenceModelInventory_ContainsExpectedNumberOfConfigurations() => Assert.Equal(12, Configurations.Length);
 
     [Fact]
     public void PersistenceModelInventory_HasUniqueModelNames() =>

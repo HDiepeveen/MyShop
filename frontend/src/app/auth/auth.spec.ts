@@ -182,3 +182,6 @@ it('preserves a local product detail return path', () => {
     '/producten/123?search=shirt&offset=20',
   );
 });
+it('allows the protected payment settings return path', () => {
+  expect(safeReturnUrl('/instellingen/betalen')).toBe('/instellingen/betalen');
+});

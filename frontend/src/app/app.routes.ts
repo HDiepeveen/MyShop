@@ -3,6 +3,11 @@ import { adminGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
+    path: 'instellingen/betalen',
+    loadComponent: () => import('./checkout/payment-settings').then((m) => m.PaymentSettings),
+    title: 'Betaalopties · MyShop',
+  },
+  {
     path: 'account',
     loadComponent: () => import('./auth/password').then((m) => m.Password),
     title: 'Wachtwoord wijzigen · MyShop',

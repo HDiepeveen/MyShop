@@ -12,7 +12,7 @@ it('offers accessible navigation and a skip link', async () => {
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   expect(element.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
-  expect(element.querySelectorAll('nav a').length).toBe(4);
+  expect(element.querySelectorAll('nav a').length).toBe(5);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');
 });
 

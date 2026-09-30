@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyShop.Application.Catalog.Abstractions;
+using MyShop.Application.Checkout.Abstractions;
 using MyShop.Infrastructure.Persistence;
 using MyShop.Infrastructure.Persistence.Repositories;
+using MyShop.Infrastructure.Payments;
 
 namespace MyShop.Infrastructure;
 
@@ -47,6 +49,9 @@ public static class InfrastructureServiceCollectionExtensions
             new ProductSkuLookup(provider.GetRequiredService<MyShopDbContext>()));
 
         services.AddScoped<IStorefrontCatalog>(provider => new StorefrontCatalog(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IPaymentOptionsRepository>(provider =>
+            new PaymentOptionsRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability());
         return services;
     }
 }
