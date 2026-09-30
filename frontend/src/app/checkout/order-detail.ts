@@ -1,0 +1,104 @@
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, switchMap } from 'rxjs';
+import { loadState } from '../catalog/load-state';
+import { OrderManagementApi } from './order-management.api';
+
+@Component({
+  imports: [RouterLink, DatePipe, CurrencyPipe],
+  template: ` <a class="back" routerLink="/bestellingen">← Terug naar bestellingen</a>
+    @if (state()?.loading) {
+      <p class="loading" role="status">Bestelling ophalen…</p>
+    }
+    @if (state()?.error) {
+      <div class="error" role="alert">
+        {{ state()?.error }} <button class="secondary" (click)="retry()">Opnieuw proberen</button>
+      </div>
+    }
+    @if (state()?.data; as order) {
+      <div class="eyebrow">Bestelling</div>
+      <div class="page-head">
+        <div>
+          <h1>{{ order.number }}</h1>
+          <p class="muted">Geplaatst op {{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }}</p>
+        </div>
+        <span class="badge">Wacht op betaling</span>
+      </div>
+      <div class="grid">
+        <section class="panel">
+          <h2>Klant</h2>
+          <dl class="detail-list">
+            <dt>Naam</dt>
+            <dd>{{ order.customer.name }}</dd>
+            <dt>E-mail</dt>
+            <dd>
+              <a [href]="'mailto:' + order.customer.email">{{ order.customer.email }}</a>
+            </dd>
+          </dl>
+        </section>
+        <section class="panel">
+          <h2>Bezorgadres</h2>
+          <address>
+            {{ order.deliveryAddress.addressLine }}<br />{{ order.deliveryAddress.postalCode }}
+            {{ order.deliveryAddress.city }}<br />{{ order.deliveryAddress.countryCode }}
+          </address>
+        </section>
+      </div>
+      <section class="panel">
+        <h2>Artikelen</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Aantal</th>
+                <th>Prijs</th>
+                <th>Totaal</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of order.lines; track line.variantId) {
+                <tr>
+                  <td>
+                    {{ line.productName }}<br /><span class="muted">{{ line.variantName }}</span>
+                  </td>
+                  <td>{{ line.quantity }}</td>
+                  <td class="nowrap">{{ line.unitAmount | currency: line.currency }}</td>
+                  <td class="nowrap">{{ line.totalAmount | currency: line.currency }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Betaling</h2>
+        <dl class="detail-list">
+          <dt>Betaalmethode</dt>
+          <dd>Later betalen</dd>
+          <dt>Status</dt>
+          <dd>Wacht op betaling</dd>
+          @for (total of order.totals; track total.currency) {
+            <dt>Totaal ({{ total.currency }})</dt>
+            <dd>{{ total.amount | currency: total.currency }}</dd>
+          }
+        </dl>
+      </section>
+    }`,
+})
+export class OrderDetailComponent {
+  private readonly api = inject(OrderManagementApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly refresh = new BehaviorSubject(0);
+  readonly state = toSignal(
+    combineLatest([
+      this.route.paramMap.pipe(distinctUntilChanged((a, b) => a.get('id') === b.get('id'))),
+      this.refresh,
+    ]).pipe(switchMap(([params]) => loadState(this.api.get(params.get('id')!)))),
+  );
+  retry() {
+    this.refresh.next(this.refresh.value + 1);
+  }
+}

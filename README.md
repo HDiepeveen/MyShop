@@ -43,3 +43,5 @@ See [Beveiligd beheer](docs/admin-security.md) for the account migration, initia
 See [Productpresentatie](docs/product-presentation.md) for descriptions, image links, draft/publication status and revision checks.
 
 See [Klantwinkel](docs/storefront.md) for public browsing, publication rules and current scope.
+
+See [Order management](docs/order-management.md) for the protected order overview and recorded order details.

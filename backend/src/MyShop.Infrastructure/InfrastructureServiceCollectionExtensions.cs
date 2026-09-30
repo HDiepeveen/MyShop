@@ -54,6 +54,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability());
         services.AddScoped<IOrderRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IOrderReadRepository>(provider =>
+            new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         return services;
     }
 }

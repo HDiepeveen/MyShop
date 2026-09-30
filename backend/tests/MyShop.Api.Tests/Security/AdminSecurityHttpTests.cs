@@ -208,6 +208,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.MapCatalog();
         App.MapStorefront();
         App.MapPaymentOptions();
+        App.MapOrderManagement();
         await using (var scope = App.Services.CreateAsyncScope())
         {
             await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.MigrateAsync();

@@ -6,8 +6,13 @@ using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class OrderRepository(MyShopDbContext context) : IOrderRepository
+internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository
 {
+    private readonly MyShopDbContext context;
+
+    internal OrderRepository(MyShopDbContext context) =>
+        this.context = context ?? throw new ArgumentNullException(nameof(context));
+
     public async Task<OrderReceipt?> GetByCheckoutTokenAsync(Guid checkoutToken,
         CancellationToken cancellationToken) => await context.Orders.AsNoTracking()
             .Where(order => order.CheckoutToken == checkoutToken)
@@ -63,5 +68,74 @@ internal sealed class OrderRepository(MyShopDbContext context) : IOrderRepositor
                 ?? throw new InvalidOperationException("The order conflict could not be resolved.", exception);
         }
         return new(order.Id, order.Number, order.PlacedAt);
+    }
+
+    public async Task<OrderListPage> ListAsync(int offset, int limit, CancellationToken cancellationToken)
+    {
+        var totalCount = await context.Orders.AsNoTracking().CountAsync(cancellationToken);
+        var rows = await context.Orders.AsNoTracking()
+            .OrderByDescending(order => order.PlacedAt)
+            .ThenByDescending(order => order.Id)
+            .Skip(offset)
+            .Take(limit)
+            .Select(order => new
+            {
+                order.Id,
+                order.Number,
+                order.PlacedAt,
+                order.CustomerName,
+                order.PaymentMethod,
+                order.Status
+            })
+            .ToArrayAsync(cancellationToken);
+        var ids = rows.Select(row => row.Id).ToArray();
+        var totals = await context.OrderTotals.AsNoTracking()
+            .Where(total => ids.Contains(total.OrderId))
+            .OrderBy(total => total.Currency)
+            .Select(total => new { total.OrderId, total.Currency, total.Amount })
+            .ToArrayAsync(cancellationToken);
+        var totalsByOrder = totals.ToLookup(total => total.OrderId);
+        var items = rows.Select(row => new OrderListItem(
+            row.Id,
+            row.Number,
+            row.PlacedAt,
+            row.CustomerName,
+            (OrderPaymentMethod)row.PaymentMethod,
+            (OrderStatus)row.Status,
+            totalsByOrder[row.Id].Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray()))
+            .ToArray();
+        return new OrderListPage(items, totalCount);
+    }
+
+    public async Task<OrderDetail?> GetAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var order = await context.Orders.AsNoTracking()
+            .AsSplitQuery()
+            .Include(item => item.Lines)
+            .Include(item => item.Totals)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        return order is null ? null : new OrderDetail(
+            order.Id,
+            order.Number,
+            order.PlacedAt,
+            order.CustomerName,
+            order.Email,
+            order.AddressLine,
+            order.PostalCode,
+            order.City,
+            order.CountryCode,
+            (OrderPaymentMethod)order.PaymentMethod,
+            (OrderStatus)order.Status,
+            order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
+                line.ProductId,
+                line.VariantId,
+                line.ProductName,
+                line.VariantName,
+                line.Quantity,
+                line.UnitAmount,
+                line.Currency,
+                line.TotalAmount)).ToArray(),
+            order.Totals.OrderBy(total => total.Currency).Select(total =>
+                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray());
     }
 }

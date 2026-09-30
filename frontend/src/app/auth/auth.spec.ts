@@ -185,3 +185,6 @@ it('preserves a local product detail return path', () => {
 it('allows the protected payment settings return path', () => {
   expect(safeReturnUrl('/instellingen/betalen')).toBe('/instellingen/betalen');
 });
+it('allows a protected order detail return path', () => {
+  expect(safeReturnUrl('/bestellingen/123?offset=20')).toBe('/bestellingen/123?offset=20');
+});
