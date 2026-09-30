@@ -46,6 +46,8 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             Assert.NotEqual(Guid.Empty, order.Version);
             Assert.Null(order.PaidAt);
             Assert.Null(order.ShippedAt);
+            Assert.Null(order.CancelledAt);
+            Assert.Null(order.CancellationReason);
         }
         finally { await isolated.DisposeAsync(); }
     }
@@ -55,7 +57,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(7, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(8, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -72,7 +74,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(7, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(8, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

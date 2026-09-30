@@ -8,6 +8,7 @@ using ListUseCase = MyShop.Application.Checkout.ListOrders.ListOrders;
 using MyShop.Application.Checkout.ListOrders;
 using MyShop.Application.Checkout.MarkOrderPaid;
 using MyShop.Application.Checkout.MarkOrderShipped;
+using MyShop.Application.Checkout.CancelOrder;
 
 namespace MyShop.Api.Checkout;
 
@@ -66,11 +67,13 @@ public static class OrderManagementEndpoints
         UpdateOrderStatusRequest? request,
         [FromServices] MarkOrderPaid markPaid,
         [FromServices] MarkOrderShipped markShipped,
+        [FromServices] CancelOrder cancelOrder,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(markPaid);
         ArgumentNullException.ThrowIfNull(markShipped);
-        if (request?.Status is not ("paid" or "shipped"))
+        ArgumentNullException.ThrowIfNull(cancelOrder);
+        if (request?.Status is not ("paid" or "shipped" or "cancelled"))
             return Results.BadRequest(new { code = "invalidStatus", message = "Kies een geldige bestelstatus." });
         try
         {
@@ -90,17 +93,34 @@ public static class OrderManagementEndpoints
                     _ => throw new InvalidOperationException()
                 };
             }
-            var shipped = await markShipped.ExecuteAsync(new(id, request.Revision), cancellationToken);
-            return shipped.Failure switch
+            if (request.Status == "shipped")
             {
-                MarkOrderShippedFailure.NotFound => Results.NotFound(),
-                MarkOrderShippedFailure.InvalidTransition => Results.Conflict(new
+                var shipped = await markShipped.ExecuteAsync(new(id, request.Revision), cancellationToken);
+                return shipped.Failure switch
+                {
+                    MarkOrderShippedFailure.NotFound => Results.NotFound(),
+                    MarkOrderShippedFailure.InvalidTransition => Results.Conflict(new
+                    {
+                        code = "invalidTransition",
+                        message = "Alleen een betaalde bestelling kan als verzonden worden gemarkeerd."
+                    }),
+                    MarkOrderShippedFailure.ConcurrencyConflict => ConcurrencyConflict(),
+                    null => Results.Ok(MapStatus(shipped.Order!)),
+                    _ => throw new InvalidOperationException()
+                };
+            }
+            var cancelled = await cancelOrder.ExecuteAsync(
+                new(id, request.Revision, request.Reason ?? ""), cancellationToken);
+            return cancelled.Failure switch
+            {
+                CancelOrderFailure.NotFound => Results.NotFound(),
+                CancelOrderFailure.InvalidTransition => Results.Conflict(new
                 {
                     code = "invalidTransition",
-                    message = "Alleen een betaalde bestelling kan als verzonden worden gemarkeerd."
+                    message = "Alleen een bestelling die op betaling wacht kan worden geannuleerd."
                 }),
-                MarkOrderShippedFailure.ConcurrencyConflict => ConcurrencyConflict(),
-                null => Results.Ok(MapStatus(shipped.Order!)),
+                CancelOrderFailure.ConcurrencyConflict => ConcurrencyConflict(),
+                null => Results.Ok(MapStatus(cancelled.Order!)),
                 _ => throw new InvalidOperationException()
             };
         }
@@ -117,7 +137,8 @@ public static class OrderManagementEndpoints
     });
 
     private static OrderStatusResponse MapStatus(OrderStatusSnapshot order) =>
-        new(Status(order.Status), order.PaidAt, order.ShippedAt, order.Revision);
+        new(Status(order.Status), order.PaidAt, order.ShippedAt, order.CancelledAt,
+            order.CancellationReason, order.Revision);
 
     private static OrderSummaryResponse MapSummary(OrderListItem order) => new(
         order.Id,
@@ -128,6 +149,8 @@ public static class OrderManagementEndpoints
         Status(order.Status),
         order.PaidAt,
         order.ShippedAt,
+        order.CancelledAt,
+        order.CancellationReason,
         order.Totals.Select(MapTotal).ToArray());
 
     private static OrderDetailResponse MapDetail(OrderDetail order) => new(
@@ -140,6 +163,8 @@ public static class OrderManagementEndpoints
         Status(order.Status),
         order.PaidAt,
         order.ShippedAt,
+        order.CancelledAt,
+        order.CancellationReason,
         order.Revision,
         order.Lines.Select(line => new OrderLineResponse(
             line.ProductId,
@@ -166,6 +191,7 @@ public static class OrderManagementEndpoints
         OrderStatus.AwaitingPayment => "awaitingPayment",
         OrderStatus.Paid => "paid",
         OrderStatus.Shipped => "shipped",
+        OrderStatus.Cancelled => "cancelled",
         _ => throw new InvalidOperationException($"Unsupported order status: {value}.")
     };
 }
@@ -184,6 +210,8 @@ public sealed record OrderSummaryResponse(
     string Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancellationReason,
     IReadOnlyList<OrderTotalResponse> Totals);
 public sealed record OrderDetailResponse(
     Guid Id,
@@ -195,6 +223,8 @@ public sealed record OrderDetailResponse(
     string Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancellationReason,
     Guid Revision,
     IReadOnlyList<OrderLineResponse> Lines,
     IReadOnlyList<OrderTotalResponse> Totals);
@@ -210,9 +240,11 @@ public sealed record OrderLineResponse(
     string Currency,
     string TotalAmount);
 public sealed record OrderTotalResponse(string Currency, string Amount);
-public sealed record UpdateOrderStatusRequest(string Status, Guid Revision);
+public sealed record UpdateOrderStatusRequest(string Status, Guid Revision, string? Reason = null);
 public sealed record OrderStatusResponse(
     string Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancellationReason,
     Guid Revision);

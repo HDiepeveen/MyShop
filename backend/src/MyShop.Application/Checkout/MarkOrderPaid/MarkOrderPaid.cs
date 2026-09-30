@@ -33,6 +33,6 @@ public sealed class MarkOrderPaid(IOrderStatusRepository orders)
             paidAt, cancellationToken);
         return revision is null
             ? MarkOrderPaidResult.Failed(MarkOrderPaidFailure.ConcurrencyConflict)
-            : new(new(OrderStatus.Paid, paidAt, null, revision.Value), null);
+            : new(new(OrderStatus.Paid, paidAt, null, null, null, revision.Value), null);
     }
 }

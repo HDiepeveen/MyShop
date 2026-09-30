@@ -142,7 +142,9 @@ export class OrderList {
         ? 'Betaald'
         : status === 'shipped'
           ? 'Verzonden'
-          : status;
+          : status === 'cancelled'
+            ? 'Geannuleerd'
+            : status;
   }
   private readOffset(value: string | null) {
     const offset = Number(value);

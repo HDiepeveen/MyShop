@@ -17,6 +17,8 @@ public sealed record OrderListItem(
     OrderStatus Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancellationReason,
     IReadOnlyList<OrderTotalSnapshot> Totals);
 
 public sealed record OrderListPage(IReadOnlyList<OrderListItem> Items, int TotalCount);
@@ -35,6 +37,8 @@ public sealed record OrderDetail(
     OrderStatus Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancellationReason,
     Guid Revision,
     IReadOnlyList<OrderLineSnapshot> Lines,
     IReadOnlyList<OrderTotalSnapshot> Totals);
@@ -58,10 +62,14 @@ public interface IOrderStatusRepository
         DateTimeOffset paidAt, CancellationToken cancellationToken);
     Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
         DateTimeOffset shippedAt, CancellationToken cancellationToken);
+    Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
+        string reason, CancellationToken cancellationToken);
 }
 
 public sealed record OrderStatusSnapshot(
     OrderStatus Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    DateTimeOffset? CancelledAt,
+    string? CancellationReason,
     Guid Revision);

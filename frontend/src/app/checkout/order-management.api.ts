@@ -11,9 +11,11 @@ export interface OrderSummary {
   placedAt: string;
   customerName: string;
   paymentMethod: 'payLater';
-  status: 'awaitingPayment' | 'paid' | 'shipped';
+  status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled';
   paidAt: string | null;
   shippedAt: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
   totals: readonly OrderTotal[];
 }
 export interface OrderListPage {
@@ -29,9 +31,11 @@ export interface OrderDetail {
   customer: { name: string; email: string };
   deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
   paymentMethod: 'payLater';
-  status: 'awaitingPayment' | 'paid' | 'shipped';
+  status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled';
   paidAt: string | null;
   shippedAt: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
   revision: string;
   lines: readonly {
     productId: string;
@@ -70,5 +74,19 @@ export class OrderManagementApi {
       shippedAt: string;
       revision: string;
     }>('/api/orders/' + encodeURIComponent(id) + '/status', { status: 'shipped', revision });
+  }
+  cancel(id: string, revision: string, reason: string) {
+    return this.http.put<{
+      status: 'cancelled';
+      paidAt: null;
+      shippedAt: null;
+      cancelledAt: string;
+      cancellationReason: string;
+      revision: string;
+    }>('/api/orders/' + encodeURIComponent(id) + '/status', {
+      status: 'cancelled',
+      revision,
+      reason: reason.trim(),
+    });
   }
 }

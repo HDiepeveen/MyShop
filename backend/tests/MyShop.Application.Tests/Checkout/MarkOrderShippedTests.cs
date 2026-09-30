@@ -10,7 +10,7 @@ public sealed class MarkOrderShippedTests
     public async Task MarksPaidOrderShippedWithItsCurrentRevision()
     {
         var revision = Guid.NewGuid();
-        var repository = new Fake(new(OrderStatus.Paid, DateTimeOffset.UtcNow, null, revision));
+        var repository = new Fake(new(OrderStatus.Paid, DateTimeOffset.UtcNow, null, null, null, revision));
         var before = DateTimeOffset.UtcNow;
         var result = await new MarkOrderShipped(repository)
             .ExecuteAsync(new(Guid.NewGuid(), revision), CancellationToken.None);
@@ -25,7 +25,7 @@ public sealed class MarkOrderShippedTests
     [Fact]
     public async Task RejectsStaleRevisionBeforeWriting()
     {
-        var repository = new Fake(new(OrderStatus.Paid, DateTimeOffset.UtcNow, null, Guid.NewGuid()));
+        var repository = new Fake(new(OrderStatus.Paid, DateTimeOffset.UtcNow, null, null, null, Guid.NewGuid()));
         var result = await new MarkOrderShipped(repository)
             .ExecuteAsync(new(Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None);
         Assert.Equal(MarkOrderShippedFailure.ConcurrencyConflict, result.Failure);
@@ -39,7 +39,7 @@ public sealed class MarkOrderShippedTests
     public async Task RejectsMissingAndNonPaidOrders(OrderStatus? status, MarkOrderShippedFailure failure)
     {
         var revision = Guid.NewGuid();
-        var repository = new Fake(status is null ? null : new(status.Value, null, null, revision));
+        var repository = new Fake(status is null ? null : new(status.Value, null, null, null, null, revision));
         var result = await new MarkOrderShipped(repository)
             .ExecuteAsync(new(Guid.NewGuid(), revision), CancellationToken.None);
         Assert.Equal(failure, result.Failure);
@@ -60,5 +60,7 @@ public sealed class MarkOrderShippedTests
             WriteCalls++; ShippedAt = shippedAt;
             return Task.FromResult<Guid?>(Guid.NewGuid());
         }
+        public Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
+            string reason, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 }

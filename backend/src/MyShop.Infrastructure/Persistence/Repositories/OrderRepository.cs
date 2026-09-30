@@ -88,7 +88,9 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 order.PaymentMethod,
                 order.Status,
                 order.PaidAt,
-                order.ShippedAt
+                order.ShippedAt,
+                order.CancelledAt,
+                order.CancellationReason
             })
             .ToArrayAsync(cancellationToken);
         var ids = rows.Select(row => row.Id).ToArray();
@@ -107,6 +109,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             (OrderStatus)row.Status,
             row.PaidAt,
             row.ShippedAt,
+            row.CancelledAt,
+            row.CancellationReason,
             totalsByOrder[row.Id].Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray()))
             .ToArray();
         return new OrderListPage(items, totalCount);
@@ -133,6 +137,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             (OrderStatus)order.Status,
             order.PaidAt,
             order.ShippedAt,
+            order.CancelledAt,
+            order.CancellationReason,
             order.Version,
             order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
                 line.ProductId,
@@ -166,7 +172,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
         await context.Orders.AsNoTracking()
             .Where(order => order.Id == id)
             .Select(order => new OrderStatusSnapshot(
-                (OrderStatus)order.Status, order.PaidAt, order.ShippedAt, order.Version))
+                (OrderStatus)order.Status, order.PaidAt, order.ShippedAt,
+                order.CancelledAt, order.CancellationReason, order.Version))
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
@@ -180,6 +187,22 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             .ExecuteUpdateAsync(update => update
                 .SetProperty(order => order.Status, (int)OrderStatus.Shipped)
                 .SetProperty(order => order.ShippedAt, shippedAt.ToUniversalTime())
+                .SetProperty(order => order.Version, replacement), cancellationToken);
+        return changed == 0 ? null : replacement;
+    }
+
+    public async Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
+        string reason, CancellationToken cancellationToken)
+    {
+        var replacement = Guid.NewGuid();
+        var changed = await context.Orders
+            .Where(order => order.Id == id
+                && order.Version == expectedRevision
+                && order.Status == (int)OrderStatus.AwaitingPayment)
+            .ExecuteUpdateAsync(update => update
+                .SetProperty(order => order.Status, (int)OrderStatus.Cancelled)
+                .SetProperty(order => order.CancelledAt, cancelledAt.ToUniversalTime())
+                .SetProperty(order => order.CancellationReason, reason)
                 .SetProperty(order => order.Version, replacement), cancellationToken);
         return changed == 0 ? null : replacement;
     }

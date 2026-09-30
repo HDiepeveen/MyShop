@@ -119,6 +119,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Checkout.GetOrder.GetOrder>();
         services.AddScoped<Checkout.MarkOrderPaid.MarkOrderPaid>();
         services.AddScoped<Checkout.MarkOrderShipped.MarkOrderShipped>();
+        services.AddScoped<Checkout.CancelOrder.CancelOrder>();
         return services;
     }
 }

@@ -95,6 +95,12 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dt>Verzonden op</dt>
             <dd>{{ order.shippedAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
           }
+          @if (order.cancelledAt) {
+            <dt>Geannuleerd op</dt>
+            <dd>{{ order.cancelledAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
+            <dt>Reden</dt>
+            <dd class="preserve-lines">{{ order.cancellationReason }}</dd>
+          }
           @for (total of order.totals; track total.currency) {
             <dt>Totaal ({{ total.currency }})</dt>
             <dd>{{ total.amount | currency: total.currency }}</dd>
@@ -110,6 +116,26 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <p>De betaalstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
             <button type="button" [disabled]="saving()" (click)="markPaid(order)">
               {{ saving() ? 'Opslaan…' : 'Bevestigen als betaald' }}
+            </button>
+          </details>
+        </section>
+        <section class="panel">
+          <h2>Bestelling annuleren</h2>
+          <p class="muted">
+            Annuleren is alleen mogelijk zolang er nog geen betaling is vastgelegd.
+          </p>
+          <details>
+            <summary>Onbetaalde bestelling annuleren</summary>
+            <label>
+              Reden voor annulering
+              <textarea #reason rows="3" maxlength="500" required></textarea>
+            </label>
+            <button
+              type="button"
+              [disabled]="saving() || !reason.value.trim()"
+              (click)="cancelOrder(order, reason.value)"
+            >
+              {{ saving() ? 'Opslaan…' : 'Bestelling annuleren' }}
             </button>
           </details>
         </section>
@@ -149,7 +175,13 @@ export class OrderDetailComponent {
     this.refresh.next(this.refresh.value + 1);
   }
   statusLabel(status: OrderDetail['status']) {
-    return status === 'shipped' ? 'Verzonden' : status === 'paid' ? 'Betaald' : 'Wacht op betaling';
+    return status === 'cancelled'
+      ? 'Geannuleerd'
+      : status === 'shipped'
+        ? 'Verzonden'
+        : status === 'paid'
+          ? 'Betaald'
+          : 'Wacht op betaling';
   }
   markPaid(order: OrderDetail) {
     if (this.saving()) return;
@@ -183,6 +215,27 @@ export class OrderDetailComponent {
         next: () => {
           this.saving.set(false);
           this.notice.set('De bestelling is als verzonden gemarkeerd.');
+          this.retry();
+        },
+        error: (error) => {
+          this.saving.set(false);
+          this.actionError.set(errorMessage(error));
+        },
+      });
+  }
+  cancelOrder(order: OrderDetail, reason: string) {
+    reason = reason.trim();
+    if (this.saving() || !reason) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.notice.set('');
+    this.api
+      .cancel(order.id, order.revision, reason)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.notice.set('De bestelling is geannuleerd.');
           this.retry();
         },
         error: (error) => {

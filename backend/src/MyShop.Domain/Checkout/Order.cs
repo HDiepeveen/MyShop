@@ -4,7 +4,7 @@ using MyShop.Domain.Catalog;
 namespace MyShop.Domain.Checkout;
 
 public enum OrderPaymentMethod { PayLater = 1 }
-public enum OrderStatus { AwaitingPayment = 1, Paid = 2, Shipped = 3 }
+public enum OrderStatus { AwaitingPayment = 1, Paid = 2, Shipped = 3, Cancelled = 4 }
 
 public sealed record OrderCustomer
 {

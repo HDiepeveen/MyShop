@@ -57,6 +57,19 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.Equal(paidAt.ToUniversalTime(), persistedShipment.PaidAt);
         Assert.Equal(shippedAt.ToUniversalTime(), persistedShipment.ShippedAt);
         Assert.Equal(shipped.Value, persistedShipment.Revision);
+
+        var awaitingCancellation = await repository.GetAsync(older.Id, CancellationToken.None);
+        var cancelledAt = DateTimeOffset.UtcNow;
+        var cancelledRevision = await repository.CancelAsync(older.Id, awaitingCancellation!.Revision,
+            cancelledAt, "Klant ziet af van bestelling.", CancellationToken.None);
+        Assert.NotNull(cancelledRevision);
+        Assert.Null(await repository.CancelAsync(older.Id, awaitingCancellation.Revision,
+            cancelledAt, "Tweede poging", CancellationToken.None));
+        var cancelled = await repository.GetAsync(older.Id, CancellationToken.None);
+        Assert.Equal(OrderStatus.Cancelled, cancelled!.Status);
+        Assert.Equal(cancelledAt.ToUniversalTime(), cancelled.CancelledAt);
+        Assert.Equal("Klant ziet af van bestelling.", cancelled.CancellationReason);
+        Assert.Equal(cancelledRevision.Value, cancelled.Revision);
         Assert.Null(await repository.GetAsync(Guid.NewGuid(), CancellationToken.None));
     }
 

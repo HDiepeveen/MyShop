@@ -15,6 +15,8 @@ const summary = {
   status: 'awaitingPayment',
   paidAt: null,
   shippedAt: null,
+  cancelledAt: null,
+  cancellationReason: null,
   totals: [{ currency: 'EUR', amount: '12.50' }],
 };
 const revision = '33333333-3333-3333-3333-333333333333';
@@ -174,5 +176,74 @@ describe('Order management', () => {
       .flush({}, { status: 500, statusText: 'Error' });
     fixture.componentInstance.retry();
     http.expectOne('/api/orders/22222222-2222-2222-2222-222222222222');
+  });
+
+  it('cancels an awaiting order with a trimmed reason', () => {
+    const params = new BehaviorSubject(convertToParamMap({ id: summary.id }));
+    TestBed.configureTestingModule({
+      imports: [OrderDetailComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: params } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(OrderDetailComponent);
+    http.expectOne('/api/orders/' + summary.id).flush({
+      ...summary,
+      revision,
+      customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
+      deliveryAddress: {
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'NL',
+      },
+      lines: [],
+    });
+
+    fixture.componentInstance.cancelOrder(
+      fixture.componentInstance.state()!.data!,
+      '  Klant ziet af.  ',
+    );
+    fixture.componentInstance.cancelOrder(
+      fixture.componentInstance.state()!.data!,
+      'Tweede poging',
+    );
+    const update = http.expectOne('/api/orders/' + summary.id + '/status');
+    expect(update.request.body).toEqual({
+      status: 'cancelled',
+      revision,
+      reason: 'Klant ziet af.',
+    });
+    update.flush({
+      status: 'cancelled',
+      paidAt: null,
+      shippedAt: null,
+      cancelledAt: '2026-09-30T10:00:00Z',
+      cancellationReason: 'Klant ziet af.',
+      revision: 'cancelled-revision',
+    });
+    http.expectOne('/api/orders/' + summary.id).flush({
+      ...summary,
+      status: 'cancelled',
+      cancelledAt: '2026-09-30T10:00:00Z',
+      cancellationReason: 'Klant ziet af.',
+      revision: 'cancelled-revision',
+      customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
+      deliveryAddress: {
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'NL',
+      },
+      lines: [],
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Geannuleerd');
+    expect(fixture.nativeElement.textContent).toContain('Klant ziet af.');
+    expect(fixture.nativeElement.textContent).toContain('De bestelling is geannuleerd.');
   });
 });
