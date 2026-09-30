@@ -11,7 +11,7 @@ public sealed class CancelOrderTests
     {
         var revision = Guid.NewGuid();
         var repository = new Fake(new(
-            OrderStatus.AwaitingPayment, null, null, null, null, null, null, revision));
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null, revision));
         var before = DateTimeOffset.UtcNow;
         var result = await new CancelOrder(repository)
             .ExecuteAsync(new(Guid.NewGuid(), revision, "  Klant ziet af van bestelling.  "), CancellationToken.None);
@@ -48,7 +48,7 @@ public sealed class CancelOrderTests
     public async Task RejectsStaleRevisionBeforeWriting()
     {
         var repository = new Fake(new(
-            OrderStatus.AwaitingPayment, null, null, null, null, null, null, Guid.NewGuid()));
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, null, Guid.NewGuid()));
         var result = await new CancelOrder(repository)
             .ExecuteAsync(new(Guid.NewGuid(), Guid.NewGuid(), "Reden"), CancellationToken.None);
 
@@ -65,7 +65,7 @@ public sealed class CancelOrderTests
     {
         var revision = Guid.NewGuid();
         var repository = new Fake(status is null ? null : new(
-            status.Value, null, null, null, null, null, null, revision));
+            status.Value, null, null, null, null, null, null, null, revision));
         var result = await new CancelOrder(repository)
             .ExecuteAsync(new(Guid.NewGuid(), revision, "Reden"), CancellationToken.None);
         Assert.Equal(failure, result.Failure);
@@ -83,7 +83,8 @@ public sealed class CancelOrderTests
             ReadCalls++; return Task.FromResult(current);
         }
         public Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
-            DateTimeOffset paidAt, CancellationToken cancellationToken) => throw new NotSupportedException();
+            DateTimeOffset paidAt, string paymentReference,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
             DateTimeOffset shippedAt, string carrier, string trackingCode,
             CancellationToken cancellationToken) => throw new NotSupportedException();

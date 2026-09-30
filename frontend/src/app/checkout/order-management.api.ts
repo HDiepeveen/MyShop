@@ -34,6 +34,7 @@ export interface OrderDetail {
   paymentMethod: 'payLater';
   status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled';
   paidAt: string | null;
+  paymentReference: string | null;
   shippedAt: string | null;
   shippingCarrier: string | null;
   trackingCode: string | null;
@@ -67,10 +68,16 @@ export class OrderManagementApi {
   get(id: string) {
     return this.http.get<OrderDetail>('/api/orders/' + encodeURIComponent(id));
   }
-  markPaid(id: string, revision: string) {
-    return this.http.put<{ status: 'paid'; paidAt: string; shippedAt: null; revision: string }>(
+  markPaid(id: string, revision: string, paymentReference: string) {
+    return this.http.put<{
+      status: 'paid';
+      paidAt: string;
+      paymentReference: string;
+      shippedAt: null;
+      revision: string;
+    }>(
       '/api/orders/' + encodeURIComponent(id) + '/status',
-      { status: 'paid', revision },
+      { status: 'paid', revision, paymentReference: paymentReference.trim() },
     );
   }
   markShipped(id: string, revision: string, carrier: string, trackingCode: string) {

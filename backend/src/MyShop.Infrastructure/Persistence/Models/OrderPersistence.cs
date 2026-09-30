@@ -15,6 +15,7 @@ internal sealed class OrderPersistence
     public int PaymentMethod { get; set; }
     public int Status { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
+    public string? PaymentReference { get; set; }
     public DateTimeOffset? ShippedAt { get; set; }
     public string? ShippingCarrier { get; set; }
     public string? TrackingCode { get; set; }

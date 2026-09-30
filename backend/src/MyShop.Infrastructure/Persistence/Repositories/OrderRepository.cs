@@ -144,6 +144,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             (OrderPaymentMethod)order.PaymentMethod,
             (OrderStatus)order.Status,
             order.PaidAt,
+            order.PaymentReference,
             order.ShippedAt,
             order.ShippingCarrier,
             order.TrackingCode,
@@ -164,7 +165,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
     }
 
     public async Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
-        DateTimeOffset paidAt, CancellationToken cancellationToken)
+        DateTimeOffset paidAt, string paymentReference, CancellationToken cancellationToken)
     {
         var replacement = Guid.NewGuid();
         var changed = await context.Orders
@@ -174,6 +175,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             .ExecuteUpdateAsync(update => update
                 .SetProperty(order => order.Status, (int)OrderStatus.Paid)
                 .SetProperty(order => order.PaidAt, paidAt.ToUniversalTime())
+                .SetProperty(order => order.PaymentReference, paymentReference)
                 .SetProperty(order => order.Version, replacement), cancellationToken);
         return changed == 0 ? null : replacement;
     }
@@ -182,7 +184,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
         await context.Orders.AsNoTracking()
             .Where(order => order.Id == id)
             .Select(order => new OrderStatusSnapshot(
-                (OrderStatus)order.Status, order.PaidAt, order.ShippedAt,
+                (OrderStatus)order.Status, order.PaidAt, order.PaymentReference, order.ShippedAt,
                 order.ShippingCarrier, order.TrackingCode,
                 order.CancelledAt, order.CancellationReason, order.Version))
             .SingleOrDefaultAsync(cancellationToken);

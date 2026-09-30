@@ -92,6 +92,10 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           @if (order.paidAt) {
             <dt>Betaald op</dt>
             <dd>{{ order.paidAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
+            @if (order.paymentReference) {
+              <dt>Betalingskenmerk</dt>
+              <dd>{{ order.paymentReference }}</dd>
+            }
           }
           @if (order.shippedAt) {
             <dt>Verzonden op</dt>
@@ -124,7 +128,19 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           <details>
             <summary>Bestelling als betaald markeren</summary>
             <p>De betaalstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
-            <button type="button" [disabled]="saving()" (click)="markPaid(order)">
+            <label
+              >Betalingskenmerk
+              <input
+                #paymentReference
+                maxlength="100"
+                required
+                placeholder="Bijvoorbeeld: bankafschrift 12345"
+            /></label>
+            <button
+              type="button"
+              [disabled]="saving() || !paymentReference.value.trim()"
+              (click)="markPaid(order, paymentReference.value)"
+            >
               {{ saving() ? 'Opslaan…' : 'Bevestigen als betaald' }}
             </button>
           </details>
@@ -205,13 +221,14 @@ export class OrderDetailComponent {
           ? 'Betaald'
           : 'Wacht op betaling';
   }
-  markPaid(order: OrderDetail) {
-    if (this.saving()) return;
+  markPaid(order: OrderDetail, paymentReference: string) {
+    paymentReference = paymentReference.trim();
+    if (this.saving() || !paymentReference) return;
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
     this.api
-      .markPaid(order.id, order.revision)
+      .markPaid(order.id, order.revision, paymentReference)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

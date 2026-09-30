@@ -38,12 +38,15 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.NotEqual(Guid.Empty, detail.Revision);
 
         var paidAt = DateTimeOffset.UtcNow;
-        var updated = await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt, CancellationToken.None);
+        var updated = await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt,
+            "bankafschrift 12345", CancellationToken.None);
         Assert.NotNull(updated);
-        Assert.Null(await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt, CancellationToken.None));
+        Assert.Null(await repository.MarkPaidAsync(newer.Id, detail.Revision, paidAt,
+            "duplicate", CancellationToken.None));
         var paid = await repository.GetAsync(newer.Id, CancellationToken.None);
         Assert.Equal(OrderStatus.Paid, paid!.Status);
         Assert.Equal(paidAt.ToUniversalTime(), paid.PaidAt);
+        Assert.Equal("bankafschrift 12345", paid.PaymentReference);
         Assert.Equal(updated.Value, paid.Revision);
 
         var shippedAt = DateTimeOffset.UtcNow;
@@ -55,6 +58,7 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         var persistedShipment = await repository.GetAsync(newer.Id, CancellationToken.None);
         Assert.Equal(OrderStatus.Shipped, persistedShipment!.Status);
         Assert.Equal(paidAt.ToUniversalTime(), persistedShipment.PaidAt);
+        Assert.Equal("bankafschrift 12345", persistedShipment.PaymentReference);
         Assert.Equal(shippedAt.ToUniversalTime(), persistedShipment.ShippedAt);
         Assert.Equal("PostNL", persistedShipment.ShippingCarrier);
         Assert.Equal("3SMYSHOP123", persistedShipment.TrackingCode);

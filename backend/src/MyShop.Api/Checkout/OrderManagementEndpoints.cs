@@ -90,7 +90,8 @@ public static class OrderManagementEndpoints
         {
             if (request.Status == "paid")
             {
-                var result = await markPaid.ExecuteAsync(new(id, request.Revision), cancellationToken);
+                var result = await markPaid.ExecuteAsync(
+                    new(id, request.Revision, request.PaymentReference ?? ""), cancellationToken);
                 return result.Failure switch
                 {
                     MarkOrderPaidFailure.NotFound => Results.NotFound(),
@@ -149,7 +150,7 @@ public static class OrderManagementEndpoints
     });
 
     private static OrderStatusResponse MapStatus(OrderStatusSnapshot order) =>
-        new(Status(order.Status), order.PaidAt, order.ShippedAt,
+        new(Status(order.Status), order.PaidAt, order.PaymentReference, order.ShippedAt,
             order.ShippingCarrier, order.TrackingCode, order.CancelledAt,
             order.CancellationReason, order.Revision);
 
@@ -175,6 +176,7 @@ public static class OrderManagementEndpoints
         PaymentMethod(order.PaymentMethod),
         Status(order.Status),
         order.PaidAt,
+        order.PaymentReference,
         order.ShippedAt,
         order.ShippingCarrier,
         order.TrackingCode,
@@ -237,6 +239,7 @@ public sealed record OrderDetailResponse(
     string PaymentMethod,
     string Status,
     DateTimeOffset? PaidAt,
+    string? PaymentReference,
     DateTimeOffset? ShippedAt,
     string? ShippingCarrier,
     string? TrackingCode,
@@ -262,10 +265,12 @@ public sealed record UpdateOrderStatusRequest(
     Guid Revision,
     string? Reason = null,
     string? Carrier = null,
-    string? TrackingCode = null);
+    string? TrackingCode = null,
+    string? PaymentReference = null);
 public sealed record OrderStatusResponse(
     string Status,
     DateTimeOffset? PaidAt,
+    string? PaymentReference,
     DateTimeOffset? ShippedAt,
     string? ShippingCarrier,
     string? TrackingCode,

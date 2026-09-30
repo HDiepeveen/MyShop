@@ -123,6 +123,7 @@ describe('Order management', () => {
     const request = http.expectOne('/api/orders/' + summary.id);
     request.flush({
       ...summary,
+      paymentReference: null,
       revision,
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
@@ -150,14 +151,22 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Shirt');
     expect(fixture.nativeElement.textContent).toContain('Later betalen');
 
-    fixture.componentInstance.markPaid(fixture.componentInstance.state()!.data!);
-    fixture.componentInstance.markPaid(fixture.componentInstance.state()!.data!);
+    fixture.componentInstance.markPaid(
+      fixture.componentInstance.state()!.data!,
+      '  bankafschrift 12345  ',
+    );
+    fixture.componentInstance.markPaid(fixture.componentInstance.state()!.data!, 'Tweede poging');
     const update = http.expectOne('/api/orders/' + summary.id + '/status');
     expect(update.request.method).toBe('PUT');
-    expect(update.request.body).toEqual({ status: 'paid', revision });
+    expect(update.request.body).toEqual({
+      status: 'paid',
+      revision,
+      paymentReference: 'bankafschrift 12345',
+    });
     update.flush({
       status: 'paid',
       paidAt: '2026-09-30T09:00:00Z',
+      paymentReference: 'bankafschrift 12345',
       shippedAt: null,
       revision: 'new-revision',
     });
@@ -165,6 +174,7 @@ describe('Order management', () => {
       ...summary,
       status: 'paid',
       paidAt: '2026-09-30T09:00:00Z',
+      paymentReference: 'bankafschrift 12345',
       shippedAt: null,
       revision: 'new-revision',
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
@@ -178,6 +188,7 @@ describe('Order management', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Betaald');
+    expect(fixture.nativeElement.textContent).toContain('bankafschrift 12345');
     expect(fixture.nativeElement.textContent).toContain('De bestelling is als betaald gemarkeerd.');
 
     fixture.componentInstance.markShipped(
@@ -201,6 +212,7 @@ describe('Order management', () => {
     shipment.flush({
       status: 'shipped',
       paidAt: '2026-09-30T09:00:00Z',
+      paymentReference: 'bankafschrift 12345',
       shippedAt: '2026-09-30T10:00:00Z',
       shippingCarrier: 'PostNL',
       trackingCode: '3SMYSHOP123',
@@ -210,6 +222,7 @@ describe('Order management', () => {
       ...summary,
       status: 'shipped',
       paidAt: '2026-09-30T09:00:00Z',
+      paymentReference: 'bankafschrift 12345',
       shippedAt: '2026-09-30T10:00:00Z',
       shippingCarrier: 'PostNL',
       trackingCode: '3SMYSHOP123',
@@ -254,6 +267,7 @@ describe('Order management', () => {
     const fixture = TestBed.createComponent(OrderDetailComponent);
     http.expectOne('/api/orders/' + summary.id).flush({
       ...summary,
+      paymentReference: null,
       revision,
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
@@ -282,6 +296,7 @@ describe('Order management', () => {
     update.flush({
       status: 'cancelled',
       paidAt: null,
+      paymentReference: null,
       shippedAt: null,
       cancelledAt: '2026-09-30T10:00:00Z',
       cancellationReason: 'Klant ziet af.',
@@ -290,6 +305,7 @@ describe('Order management', () => {
     http.expectOne('/api/orders/' + summary.id).flush({
       ...summary,
       status: 'cancelled',
+      paymentReference: null,
       cancelledAt: '2026-09-30T10:00:00Z',
       cancellationReason: 'Klant ziet af.',
       revision: 'cancelled-revision',

@@ -37,6 +37,7 @@ public sealed record OrderDetail(
     OrderPaymentMethod PaymentMethod,
     OrderStatus Status,
     DateTimeOffset? PaidAt,
+    string? PaymentReference,
     DateTimeOffset? ShippedAt,
     string? ShippingCarrier,
     string? TrackingCode,
@@ -62,7 +63,7 @@ public interface IOrderStatusRepository
 {
     Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken);
     Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
-        DateTimeOffset paidAt, CancellationToken cancellationToken);
+        DateTimeOffset paidAt, string paymentReference, CancellationToken cancellationToken);
     Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
         DateTimeOffset shippedAt, string carrier, string trackingCode,
         CancellationToken cancellationToken);
@@ -73,6 +74,7 @@ public interface IOrderStatusRepository
 public sealed record OrderStatusSnapshot(
     OrderStatus Status,
     DateTimeOffset? PaidAt,
+    string? PaymentReference,
     DateTimeOffset? ShippedAt,
     string? ShippingCarrier,
     string? TrackingCode,
