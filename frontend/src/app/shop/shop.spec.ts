@@ -85,6 +85,9 @@ describe('Public storefront', () => {
   it('selects variants, escapes product text and retains the return context', async () => {
     const harness = await RouterTestingHarness.create('/winkel/p?search=shirt&offset=20');
     http.expectOne('/api/shop/products/p').flush(product);
+    http
+      .expectOne('/api/shop/products/p/prices')
+      .flush({ at: '2026-09-30T12:00:00Z', variants: [] });
     await harness.fixture.whenStable();
     harness.detectChanges();
     const detail = harness.routeDebugElement!.componentInstance as ShopDetail;
@@ -106,8 +109,14 @@ describe('Public storefront', () => {
   it('removes stale details when navigating to a missing or withdrawn product', async () => {
     const harness = await RouterTestingHarness.create('/winkel/p');
     http.expectOne('/api/shop/products/p').flush(product);
+    http
+      .expectOne('/api/shop/products/p/prices')
+      .flush({ at: '2026-09-30T12:00:00Z', variants: [] });
     await harness.fixture.whenStable();
     await harness.navigateByUrl('/winkel/withdrawn');
+    http
+      .expectOne('/api/shop/products/withdrawn/prices')
+      .flush({}, { status: 404, statusText: 'Not Found' });
     http
       .expectOne('/api/shop/products/withdrawn')
       .flush({}, { status: 404, statusText: 'Not Found' });
@@ -120,6 +129,65 @@ describe('Public storefront', () => {
     http.expectOne('/api/shop/products/withdrawn').flush(product);
     await harness.fixture.whenStable();
     expect(detail.selected()?.id).toBe('v1');
+  });
+  it('shows the selected price, zero and missing prices, and clears stale prices on refresh failure', async () => {
+    const harness = await RouterTestingHarness.create('/winkel/p');
+    http.expectOne('/api/shop/products/p').flush(product);
+    http.expectOne('/api/shop/products/p/prices').flush({
+      at: '2026-09-30T12:00:00Z',
+      variants: [
+        { variantId: 'v1', amount: 75, currency: 'EUR' },
+        { variantId: 'v2', amount: 0, currency: 'USD' },
+      ],
+    });
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('75.00');
+    const select = harness.routeNativeElement!.querySelector('select')!;
+    select.value = 'v2';
+    select.dispatchEvent(new Event('change'));
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('USD0.00');
+    const detail = harness.routeDebugElement!.componentInstance as ShopDetail;
+    detail.refreshPrices();
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('.price')).toBeNull();
+    http.expectOne('/api/shop/products/p/prices').flush({}, { status: 500, statusText: 'Error' });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.textContent).toContain('Prijs niet beschikbaar');
+    expect(detail.selectedId()).toBe('v2');
+    detail.refreshPrices();
+    http.expectOne('/api/shop/products/p/prices').flush({
+      at: '2026-09-30T12:01:00Z',
+      variants: [{ variantId: 'v2', amount: null, currency: null }],
+    });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.textContent).toContain('nog geen prijs beschikbaar');
+    expect(harness.routeNativeElement!.querySelector('.price')).toBeNull();
+  });
+  it('preserves the domain money precision for every currency', async () => {
+    const harness = await RouterTestingHarness.create('/winkel/p');
+    http.expectOne('/api/shop/products/p').flush(product);
+    http.expectOne('/api/shop/products/p/prices').flush({
+      at: '2026-09-30T12:00:00Z',
+      variants: [{ variantId: 'v1', amount: 10.25, currency: 'JPY' }],
+    });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('JPY10.25');
+  });
+  it('cancels obsolete price requests when the product changes', async () => {
+    const harness = await RouterTestingHarness.create('/winkel/p');
+    http.expectOne('/api/shop/products/p').flush(product);
+    const obsolete = http.expectOne('/api/shop/products/p/prices');
+    await harness.navigateByUrl('/winkel/other');
+    expect(obsolete.cancelled).toBe(true);
+    http.expectOne('/api/shop/products/other').flush({ ...product, id: 'other' });
+    http
+      .expectOne('/api/shop/products/other/prices')
+      .flush({ at: '2026-09-30T12:00:00Z', variants: [] });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelector('.price')).toBeNull();
+    expect(harness.routeNativeElement!.textContent).toContain('nog geen prijs beschikbaar');
   });
   it('keeps unknown shop paths in the public area', async () => {
     const harness = await RouterTestingHarness.create('/winkel/unknown/path');

@@ -1,3 +1,4 @@
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -8,7 +9,7 @@ import { ShopImage } from './shop-image';
 import { loadState } from '../catalog/load-state';
 import { readListQuery } from '../catalog/list-query';
 @Component({
-  imports: [FormsModule, RouterLink, ShopImage],
+  imports: [FormsModule, RouterLink, ShopImage, CurrencyPipe, DatePipe],
   styles: [
     `
       .description {
@@ -56,6 +57,35 @@ import { readListQuery } from '../catalog/list-query';
           } @else {
             <p>Er zijn geen varianten beschikbaar.</p>
           }
+          <section aria-label="Actuele prijs" aria-live="polite">
+            @if (prices()?.loading) {
+              <p>Prijs ophalen…</p>
+            } @else if (prices()?.error) {
+              <p role="alert">Prijs niet beschikbaar. Probeer de prijs opnieuw op te halen.</p>
+            } @else if (selectedPrice(); as price) {
+              @if (price.amount !== null && price.currency) {
+                <p class="price">
+                  {{ price.amount | currency: price.currency : 'code' : '1.2-2' }}
+                </p>
+              } @else {
+                <p>Voor deze variant is nog geen prijs beschikbaar.</p>
+              }
+            }
+            @if (prices()?.data && !selectedPrice()) {
+              <p>Voor deze variant is nog geen prijs beschikbaar.</p>
+            }
+            @if (prices()?.data; as quote) {
+              <p class="muted">Prijs opgehaald op {{ quote.at | date: 'dd-MM-yyyy HH:mm:ss' }}.</p>
+            }
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="prices()?.loading"
+              (click)="refreshPrices()"
+            >
+              Prijs vernieuwen
+            </button>
+          </section>
           <p class="muted">Bestellen is nog niet beschikbaar.</p>
         </section>
       </div>
@@ -67,6 +97,20 @@ export class ShopDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
   readonly query = toSignal(this.route.queryParamMap.pipe(map(readListQuery)));
+  private readonly priceRefresh = new BehaviorSubject(0);
+  readonly prices = toSignal(
+    this.route.paramMap.pipe(
+      map((params) => params.get('id')!),
+      distinctUntilChanged(),
+      switchMap((id) => this.priceRefresh.pipe(switchMap(() => loadState(this.api.prices(id))))),
+    ),
+  );
+  readonly selectedPrice = computed(() =>
+    this.prices()?.data?.variants.find((price) => price.variantId === this.selectedId()),
+  );
+  refreshPrices() {
+    this.priceRefresh.next(this.priceRefresh.value + 1);
+  }
   readonly selectedId = signal('');
   readonly state = toSignal(
     this.route.paramMap.pipe(

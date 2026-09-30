@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using MyShop.Application.Catalog.GetStorefrontPrices;
 using MyShop.Application.Catalog.BrowseStorefront;
 using MyShop.Application.Catalog.GetStorefrontProduct;
 using MyShop.Domain.Catalog;
@@ -9,6 +10,13 @@ public static class StorefrontEndpoints
 {
     public static void MapStorefront(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet("/api/shop/products/{productId}/prices", async (string productId,
+            [FromServices] GetStorefrontPrices useCase, CancellationToken cancellationToken) =>
+        {
+            if (!Guid.TryParse(productId, out var id) || id == Guid.Empty) return Results.NotFound();
+            var prices = await useCase.ExecuteAsync(new(ProductId.From(id), DateTimeOffset.UtcNow), cancellationToken);
+            return prices is null ? (IResult)Results.NotFound() : Results.Ok(prices);
+        }).AllowAnonymous();
         endpoints.MapGet("/api/shop/products", async (int? offset, int? limit, string? search,
             [FromServices] BrowseStorefront useCase, CancellationToken cancellationToken) =>
         {

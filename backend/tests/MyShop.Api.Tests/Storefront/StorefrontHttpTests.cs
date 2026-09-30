@@ -16,7 +16,7 @@ public sealed class StorefrontHttpTests
         using var visitor = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         var publicEndpoints = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText!.StartsWith("/api/shop/")).ToArray();
-        Assert.Equal(2, publicEndpoints.Length);
+        Assert.Equal(3, publicEndpoints.Length);
         Assert.All(publicEndpoints, e =>
         {
             Assert.Equal("GET", Assert.Single(e.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods));
@@ -51,6 +51,23 @@ public sealed class StorefrontHttpTests
         Assert.All(product.GetProperty("variants").EnumerateArray(), v => Assert.Equal(new[] { "id", "name" }, v.EnumerateObject().Select(p => p.Name).Order().ToArray()));
         foreach (var id in new[] { draft.ToString(), Guid.NewGuid().ToString(), Guid.Empty.ToString(), "invalid" })
             Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{id}")).StatusCode);
+        var variantId = product.GetProperty("variants")[0].GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{alpha}/variants/{variantId}/price", new { amount = 100m, currency = "EUR" })).StatusCode);
+        Assert.Equal(HttpStatusCode.Created, (await host.Client.PostAsJsonAsync($"/api/products/{alpha}/variants/{variantId}/price-rules", new { name = "Current offer", adjustmentType = 1, value = 25m, priority = 0, startsAt = DateTimeOffset.UtcNow.AddDays(-1), endsAt = DateTimeOffset.UtcNow.AddDays(1) })).StatusCode);
+        var before = DateTimeOffset.UtcNow;
+        var pricesResponse = await visitor.GetAsync($"/api/shop/products/{alpha}/prices?at=2000-01-01T00:00:00Z");
+        Assert.Equal(HttpStatusCode.OK, pricesResponse.StatusCode);
+        Assert.True(pricesResponse.Headers.CacheControl?.NoStore);
+        var prices = await pricesResponse.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.InRange(prices.GetProperty("at").GetDateTimeOffset(), before, DateTimeOffset.UtcNow);
+        Assert.Equal(new[] { "at", "variants" }, prices.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        var priced = prices.GetProperty("variants")[0];
+        Assert.Equal(new[] { "amount", "currency", "variantId" }, priced.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(75m, priced.GetProperty("amount").GetDecimal());
+        Assert.Equal("EUR", priced.GetProperty("currency").GetString());
+        Assert.Equal(JsonValueKind.Null, prices.GetProperty("variants")[1].GetProperty("amount").ValueKind);
+        foreach (var id in new[] { draft.ToString(), Guid.NewGuid().ToString(), Guid.Empty.ToString(), "invalid" })
+            Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{id}/prices")).StatusCode);
         var hidden = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?search=Onlydraft");
         Assert.Equal(0, hidden.GetProperty("totalCount").GetInt32());
         foreach (var query in new[] { "offset=-1", "limit=0", "limit=101", "offset=invalid", "search=" + new string('a', 201) })
@@ -60,6 +77,7 @@ public sealed class StorefrontHttpTests
         var stored = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{alpha}");
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{alpha}/presentation", new { description = "Withdrawn", imageUrl = "https://example.com/shirt.jpg", imageAlt = "Linen shirt", isPublished = false, revision = stored.GetProperty("revision").GetGuid() })).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{alpha}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{alpha}/prices")).StatusCode);
         page = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products");
         Assert.Equal(1, page.GetProperty("totalCount").GetInt32());
     }
