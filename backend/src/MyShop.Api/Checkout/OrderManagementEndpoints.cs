@@ -106,7 +106,8 @@ public static class OrderManagementEndpoints
             }
             if (request.Status == "shipped")
             {
-                var shipped = await markShipped.ExecuteAsync(new(id, request.Revision), cancellationToken);
+                var shipped = await markShipped.ExecuteAsync(new(id, request.Revision,
+                    request.Carrier ?? "", request.TrackingCode ?? ""), cancellationToken);
                 return shipped.Failure switch
                 {
                     MarkOrderShippedFailure.NotFound => Results.NotFound(),
@@ -148,7 +149,8 @@ public static class OrderManagementEndpoints
     });
 
     private static OrderStatusResponse MapStatus(OrderStatusSnapshot order) =>
-        new(Status(order.Status), order.PaidAt, order.ShippedAt, order.CancelledAt,
+        new(Status(order.Status), order.PaidAt, order.ShippedAt,
+            order.ShippingCarrier, order.TrackingCode, order.CancelledAt,
             order.CancellationReason, order.Revision);
 
     private static OrderSummaryResponse MapSummary(OrderListItem order) => new(
@@ -174,6 +176,8 @@ public static class OrderManagementEndpoints
         Status(order.Status),
         order.PaidAt,
         order.ShippedAt,
+        order.ShippingCarrier,
+        order.TrackingCode,
         order.CancelledAt,
         order.CancellationReason,
         order.Revision,
@@ -234,6 +238,8 @@ public sealed record OrderDetailResponse(
     string Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    string? ShippingCarrier,
+    string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
     Guid Revision,
@@ -251,11 +257,18 @@ public sealed record OrderLineResponse(
     string Currency,
     string TotalAmount);
 public sealed record OrderTotalResponse(string Currency, string Amount);
-public sealed record UpdateOrderStatusRequest(string Status, Guid Revision, string? Reason = null);
+public sealed record UpdateOrderStatusRequest(
+    string Status,
+    Guid Revision,
+    string? Reason = null,
+    string? Carrier = null,
+    string? TrackingCode = null);
 public sealed record OrderStatusResponse(
     string Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    string? ShippingCarrier,
+    string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
     Guid Revision);

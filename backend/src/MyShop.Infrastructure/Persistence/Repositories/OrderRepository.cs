@@ -145,6 +145,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             (OrderStatus)order.Status,
             order.PaidAt,
             order.ShippedAt,
+            order.ShippingCarrier,
+            order.TrackingCode,
             order.CancelledAt,
             order.CancellationReason,
             order.Version,
@@ -181,11 +183,13 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             .Where(order => order.Id == id)
             .Select(order => new OrderStatusSnapshot(
                 (OrderStatus)order.Status, order.PaidAt, order.ShippedAt,
+                order.ShippingCarrier, order.TrackingCode,
                 order.CancelledAt, order.CancellationReason, order.Version))
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
-        DateTimeOffset shippedAt, CancellationToken cancellationToken)
+        DateTimeOffset shippedAt, string carrier, string trackingCode,
+        CancellationToken cancellationToken)
     {
         var replacement = Guid.NewGuid();
         var changed = await context.Orders
@@ -195,6 +199,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             .ExecuteUpdateAsync(update => update
                 .SetProperty(order => order.Status, (int)OrderStatus.Shipped)
                 .SetProperty(order => order.ShippedAt, shippedAt.ToUniversalTime())
+                .SetProperty(order => order.ShippingCarrier, carrier)
+                .SetProperty(order => order.TrackingCode, trackingCode)
                 .SetProperty(order => order.Version, replacement), cancellationToken);
         return changed == 0 ? null : replacement;
     }

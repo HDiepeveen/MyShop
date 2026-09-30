@@ -48,14 +48,16 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
 
         var shippedAt = DateTimeOffset.UtcNow;
         var shipped = await repository.MarkShippedAsync(newer.Id, paid.Revision,
-            shippedAt, CancellationToken.None);
+            shippedAt, "PostNL", "3SMYSHOP123", CancellationToken.None);
         Assert.NotNull(shipped);
         Assert.Null(await repository.MarkShippedAsync(newer.Id, paid.Revision,
-            shippedAt, CancellationToken.None));
+            shippedAt, "DHL", "DUPLICATE", CancellationToken.None));
         var persistedShipment = await repository.GetAsync(newer.Id, CancellationToken.None);
         Assert.Equal(OrderStatus.Shipped, persistedShipment!.Status);
         Assert.Equal(paidAt.ToUniversalTime(), persistedShipment.PaidAt);
         Assert.Equal(shippedAt.ToUniversalTime(), persistedShipment.ShippedAt);
+        Assert.Equal("PostNL", persistedShipment.ShippingCarrier);
+        Assert.Equal("3SMYSHOP123", persistedShipment.TrackingCode);
         Assert.Equal(shipped.Value, persistedShipment.Revision);
 
         var awaitingCancellation = await repository.GetAsync(older.Id, CancellationToken.None);

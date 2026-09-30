@@ -96,6 +96,14 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           @if (order.shippedAt) {
             <dt>Verzonden op</dt>
             <dd>{{ order.shippedAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
+            @if (order.shippingCarrier) {
+              <dt>Vervoerder</dt>
+              <dd>{{ order.shippingCarrier }}</dd>
+            }
+            @if (order.trackingCode) {
+              <dt>Trackingcode</dt>
+              <dd>{{ order.trackingCode }}</dd>
+            }
           }
           @if (order.cancelledAt) {
             <dt>Geannuleerd op</dt>
@@ -151,7 +159,19 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           <details>
             <summary>Bestelling als verzonden markeren</summary>
             <p>De verzendstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
-            <button type="button" [disabled]="saving()" (click)="markShipped(order)">
+            <label
+              >Vervoerder
+              <input #carrier maxlength="100" required placeholder="Bijvoorbeeld: PostNL"
+            /></label>
+            <label
+              >Trackingcode
+              <input #trackingCode maxlength="100" required placeholder="Bijvoorbeeld: 3S…"
+            /></label>
+            <button
+              type="button"
+              [disabled]="saving() || !carrier.value.trim() || !trackingCode.value.trim()"
+              (click)="markShipped(order, carrier.value, trackingCode.value)"
+            >
               {{ saving() ? 'Opslaan…' : 'Bevestigen als verzonden' }}
             </button>
           </details>
@@ -205,13 +225,15 @@ export class OrderDetailComponent {
         },
       });
   }
-  markShipped(order: OrderDetail) {
-    if (this.saving()) return;
+  markShipped(order: OrderDetail, carrier: string, trackingCode: string) {
+    carrier = carrier.trim();
+    trackingCode = trackingCode.trim();
+    if (this.saving() || !carrier || !trackingCode) return;
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
     this.api
-      .markShipped(order.id, order.revision)
+      .markShipped(order.id, order.revision, carrier, trackingCode)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

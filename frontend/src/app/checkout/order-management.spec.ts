@@ -180,15 +180,30 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Betaald');
     expect(fixture.nativeElement.textContent).toContain('De bestelling is als betaald gemarkeerd.');
 
-    fixture.componentInstance.markShipped(fixture.componentInstance.state()!.data!);
-    fixture.componentInstance.markShipped(fixture.componentInstance.state()!.data!);
+    fixture.componentInstance.markShipped(
+      fixture.componentInstance.state()!.data!,
+      '  PostNL  ',
+      '  3SMYSHOP123  ',
+    );
+    fixture.componentInstance.markShipped(
+      fixture.componentInstance.state()!.data!,
+      'DHL',
+      'Tweede poging',
+    );
     const shipment = http.expectOne('/api/orders/' + summary.id + '/status');
     expect(shipment.request.method).toBe('PUT');
-    expect(shipment.request.body).toEqual({ status: 'shipped', revision: 'new-revision' });
+    expect(shipment.request.body).toEqual({
+      status: 'shipped',
+      revision: 'new-revision',
+      carrier: 'PostNL',
+      trackingCode: '3SMYSHOP123',
+    });
     shipment.flush({
       status: 'shipped',
       paidAt: '2026-09-30T09:00:00Z',
       shippedAt: '2026-09-30T10:00:00Z',
+      shippingCarrier: 'PostNL',
+      trackingCode: '3SMYSHOP123',
       revision: 'shipped-revision',
     });
     http.expectOne('/api/orders/' + summary.id).flush({
@@ -196,6 +211,8 @@ describe('Order management', () => {
       status: 'shipped',
       paidAt: '2026-09-30T09:00:00Z',
       shippedAt: '2026-09-30T10:00:00Z',
+      shippingCarrier: 'PostNL',
+      trackingCode: '3SMYSHOP123',
       revision: 'shipped-revision',
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
@@ -208,6 +225,8 @@ describe('Order management', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Verzonden');
+    expect(fixture.nativeElement.textContent).toContain('PostNL');
+    expect(fixture.nativeElement.textContent).toContain('3SMYSHOP123');
     expect(fixture.nativeElement.textContent).toContain(
       'De bestelling is als verzonden gemarkeerd.',
     );

@@ -35,6 +35,8 @@ export interface OrderDetail {
   status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled';
   paidAt: string | null;
   shippedAt: string | null;
+  shippingCarrier: string | null;
+  trackingCode: string | null;
   cancelledAt: string | null;
   cancellationReason: string | null;
   revision: string;
@@ -71,13 +73,20 @@ export class OrderManagementApi {
       { status: 'paid', revision },
     );
   }
-  markShipped(id: string, revision: string) {
+  markShipped(id: string, revision: string, carrier: string, trackingCode: string) {
     return this.http.put<{
       status: 'shipped';
       paidAt: string;
       shippedAt: string;
+      shippingCarrier: string;
+      trackingCode: string;
       revision: string;
-    }>('/api/orders/' + encodeURIComponent(id) + '/status', { status: 'shipped', revision });
+    }>('/api/orders/' + encodeURIComponent(id) + '/status', {
+      status: 'shipped',
+      revision,
+      carrier: carrier.trim(),
+      trackingCode: trackingCode.trim(),
+    });
   }
   cancel(id: string, revision: string, reason: string) {
     return this.http.put<{

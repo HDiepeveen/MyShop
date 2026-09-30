@@ -38,6 +38,8 @@ public sealed record OrderDetail(
     OrderStatus Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    string? ShippingCarrier,
+    string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
     Guid Revision,
@@ -62,7 +64,8 @@ public interface IOrderStatusRepository
     Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
         DateTimeOffset paidAt, CancellationToken cancellationToken);
     Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
-        DateTimeOffset shippedAt, CancellationToken cancellationToken);
+        DateTimeOffset shippedAt, string carrier, string trackingCode,
+        CancellationToken cancellationToken);
     Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
         string reason, CancellationToken cancellationToken);
 }
@@ -71,6 +74,8 @@ public sealed record OrderStatusSnapshot(
     OrderStatus Status,
     DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt,
+    string? ShippingCarrier,
+    string? TrackingCode,
     DateTimeOffset? CancelledAt,
     string? CancellationReason,
     Guid Revision);

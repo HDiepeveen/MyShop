@@ -73,7 +73,7 @@ public sealed class OrderManagementEndpointsTests
         var id = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.AwaitingPayment, null, null, null, null, Guid.NewGuid(),
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, Guid.NewGuid(),
             [new(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Blauw", 2, 3.5m, "EUR", 7m)], [new("EUR", 7m)]);
         var ok = await OrderManagementEndpoints.GetAsync(id, new GetUseCase(new Fake(new([], 0), detail)), CancellationToken.None);
         var response = Assert.IsType<Ok<OrderDetailResponse>>(ok.Result).Value!;
@@ -90,7 +90,7 @@ public sealed class OrderManagementEndpointsTests
         var revision = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.AwaitingPayment, null, null, null, null, revision, [], []);
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
         var result = await OrderManagementEndpoints.UpdateStatusAsync(id,
             new("paid", revision), new MarkOrderPaid(repository),
@@ -110,15 +110,18 @@ public sealed class OrderManagementEndpointsTests
         var paidAt = DateTimeOffset.UtcNow.AddMinutes(-5);
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.Paid, paidAt, null, null, null, revision, [], []);
+            OrderStatus.Paid, paidAt, null, null, null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
         var result = await OrderManagementEndpoints.UpdateStatusAsync(id,
-            new("shipped", revision), new MarkOrderPaid(repository),
+            new("shipped", revision, Carrier: "  PostNL  ", TrackingCode: "  3SMYSHOP123  "),
+            new MarkOrderPaid(repository),
             new MarkOrderShipped(repository), new CancelOrder(repository), CancellationToken.None);
         var response = Assert.IsType<Ok<OrderStatusResponse>>(result).Value!;
         Assert.Equal("shipped", response.Status);
         Assert.Equal(paidAt, response.PaidAt);
         Assert.NotNull(response.ShippedAt);
+        Assert.Equal("PostNL", response.ShippingCarrier);
+        Assert.Equal("3SMYSHOP123", response.TrackingCode);
     }
 
     [Fact]
@@ -128,7 +131,7 @@ public sealed class OrderManagementEndpointsTests
         var revision = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
             "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
-            OrderStatus.AwaitingPayment, null, null, null, null, revision, [], []);
+            OrderStatus.AwaitingPayment, null, null, null, null, null, null, revision, [], []);
         var repository = new Fake(new([], 0), detail);
         var result = await OrderManagementEndpoints.UpdateStatusAsync(id,
             new("cancelled", revision, "Klant ziet af van bestelling."),
@@ -160,6 +163,8 @@ public sealed class OrderManagementEndpointsTests
         public OrderStatus? ListStatus { get; private set; }
         public string? ListSearch { get; private set; }
         public string? Reason { get; private set; }
+        public string? Carrier { get; private set; }
+        public string? TrackingCode { get; private set; }
         public Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,
             CancellationToken cancellationToken)
         {
@@ -168,7 +173,8 @@ public sealed class OrderManagementEndpointsTests
         public Task<OrderDetail?> GetAsync(Guid id, CancellationToken cancellationToken) => Task.FromResult(detail);
         public Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult(detail is null ? null : new OrderStatusSnapshot(
-                detail.Status, detail.PaidAt, detail.ShippedAt, detail.CancelledAt,
+                detail.Status, detail.PaidAt, detail.ShippedAt,
+                detail.ShippingCarrier, detail.TrackingCode, detail.CancelledAt,
                 detail.CancellationReason, detail.Revision));
         public Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
             DateTimeOffset paidAt, CancellationToken cancellationToken)
@@ -177,9 +183,10 @@ public sealed class OrderManagementEndpointsTests
             return Task.FromResult<Guid?>(Guid.NewGuid());
         }
         public Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
-            DateTimeOffset shippedAt, CancellationToken cancellationToken)
+            DateTimeOffset shippedAt, string carrier, string trackingCode,
+            CancellationToken cancellationToken)
         {
-            WriteCalls++;
+            WriteCalls++; Carrier = carrier; TrackingCode = trackingCode;
             return Task.FromResult<Guid?>(Guid.NewGuid());
         }
         public Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,

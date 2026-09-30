@@ -24,6 +24,8 @@ internal sealed class OrderPersistenceConfiguration : IEntityTypeConfiguration<O
         builder.Property(order => order.Status).IsRequired().HasColumnType("int");
         builder.Property(order => order.PaidAt);
         builder.Property(order => order.ShippedAt);
+        builder.Property(order => order.ShippingCarrier).HasMaxLength(100);
+        builder.Property(order => order.TrackingCode).HasMaxLength(100);
         builder.Property(order => order.CancelledAt);
         builder.Property(order => order.CancellationReason).HasMaxLength(500);
         builder.Property(order => order.Version).IsRequired().IsConcurrencyToken();

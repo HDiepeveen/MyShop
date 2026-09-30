@@ -51,7 +51,8 @@ public sealed class MarkOrderPaidTests
     private static OrderDetail Detail(Guid id, Guid revision, OrderStatus status) => new(
         id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test", "Street 1", "1234 AB",
         "Utrecht", "NL", OrderPaymentMethod.PayLater, status,
-        status == OrderStatus.Paid ? DateTimeOffset.UtcNow : null, null, null, null, revision, [], []);
+        status == OrderStatus.Paid ? DateTimeOffset.UtcNow : null,
+        null, null, null, null, null, revision, [], []);
 
     private sealed class Fake(OrderDetail? detail) : IOrderStatusRepository
     {
@@ -60,7 +61,8 @@ public sealed class MarkOrderPaidTests
         public DateTimeOffset PaidAt { get; private set; }
         public Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken) =>
             Task.FromResult(Detail is null ? null : new OrderStatusSnapshot(
-                Detail.Status, Detail.PaidAt, Detail.ShippedAt, Detail.CancelledAt,
+                Detail.Status, Detail.PaidAt, Detail.ShippedAt,
+                Detail.ShippingCarrier, Detail.TrackingCode, Detail.CancelledAt,
                 Detail.CancellationReason, Detail.Revision));
         public Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
             DateTimeOffset paidAt, CancellationToken cancellationToken)
@@ -69,7 +71,8 @@ public sealed class MarkOrderPaidTests
             return Task.FromResult<Guid?>(Guid.NewGuid());
         }
         public Task<Guid?> MarkShippedAsync(Guid id, Guid expectedRevision,
-            DateTimeOffset shippedAt, CancellationToken cancellationToken) => throw new NotSupportedException();
+            DateTimeOffset shippedAt, string carrier, string trackingCode,
+            CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
             string reason, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
