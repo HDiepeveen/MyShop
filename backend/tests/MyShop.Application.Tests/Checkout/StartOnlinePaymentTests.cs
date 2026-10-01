@@ -23,6 +23,9 @@ public sealed class StartOnlinePaymentTests
         Assert.Equal($"https://payments.example.test/test_{scenario.Token:N}",
             result.Payment.CheckoutUrl.ToString());
         Assert.Equal($"OP-{scenario.Token:N}".ToUpperInvariant(), scenario.Provider.Request!.PaymentReference);
+        Assert.Equal(scenario.Token, scenario.Starts.Payment!.CheckoutToken);
+        Assert.Equal(result.Payment.ProviderPaymentId, scenario.Starts.Payment.ProviderPaymentId);
+        Assert.Equal(result.Payment.CheckoutUrl, scenario.Starts.Payment.CheckoutUrl);
         Assert.Equal(57.50m, Assert.Single(result.Payment.Totals).Amount);
         Assert.Equal("Standaardbezorging", result.Payment.DeliveryMethod.Name);
         Assert.Equal(1, scenario.Products.Calls);
@@ -74,13 +77,14 @@ public sealed class StartOnlinePaymentTests
         public Availability Availability { get; } = new();
         public DeliveryMethods DeliveryMethods { get; } = new();
         public Provider Provider { get; } = new();
+        public Starts Starts { get; } = new();
         public Guid Token { get; } = Guid.NewGuid();
 
         public Task<StartOnlinePaymentResult> Execute()
         {
             var variant = Products.Product.Variants.Single();
             var useCase = new StartOnlinePayment(new QuoteStorefrontCart(Products), Payments,
-                Availability, Provider, DeliveryMethods);
+                Availability, Provider, Starts, DeliveryMethods);
             return useCase.ExecuteAsync(new(Token, DeliveryMethods.Id,
                 [new(Products.Product.Id.Value, variant.Id.Value, 2, 25m, "EUR")]),
                 CancellationToken.None);
@@ -133,6 +137,16 @@ public sealed class StartOnlinePaymentTests
             Request = request;
             return Task.FromResult(new OnlinePaymentProviderStart($"test_{request.CheckoutToken:N}",
                 new Uri($"https://payments.example.test/test_{request.CheckoutToken:N}")));
+        }
+    }
+
+    private sealed class Starts : IOnlinePaymentStartRepository
+    {
+        public OnlinePaymentStartRecord? Payment { get; private set; }
+        public Task SaveAsync(OnlinePaymentStartRecord payment, CancellationToken cancellationToken)
+        {
+            Payment = payment;
+            return Task.CompletedTask;
         }
     }
 

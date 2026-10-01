@@ -65,6 +65,7 @@ public static class InfrastructureServiceCollectionExtensions
             new DeliveryMethodRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability(configuration));
         services.AddScoped<IOnlinePaymentProvider, TestOnlinePaymentProvider>();
+        services.AddScoped<IOnlinePaymentStartRepository, OnlinePaymentStartRepository>();
         services.AddScoped<IOrderRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IOrderReadRepository>(provider =>

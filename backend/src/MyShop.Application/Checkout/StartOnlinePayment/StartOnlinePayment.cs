@@ -19,13 +19,15 @@ public sealed record StartOnlinePaymentResult(OnlinePaymentStart? Payment, Start
 
 public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOptionsRepository paymentOptions,
     IOnlinePaymentAvailability onlinePayment, IOnlinePaymentProvider onlinePaymentProvider,
-    IDeliveryMethodRepository deliveryMethods)
+    IOnlinePaymentStartRepository onlinePaymentStarts, IDeliveryMethodRepository deliveryMethods)
 {
     private readonly QuoteStorefrontCart quoteCart = quoteCart ?? throw new ArgumentNullException(nameof(quoteCart));
     private readonly IPaymentOptionsRepository paymentOptions = paymentOptions ?? throw new ArgumentNullException(nameof(paymentOptions));
     private readonly IOnlinePaymentAvailability onlinePayment = onlinePayment ?? throw new ArgumentNullException(nameof(onlinePayment));
     private readonly IOnlinePaymentProvider onlinePaymentProvider = onlinePaymentProvider
         ?? throw new ArgumentNullException(nameof(onlinePaymentProvider));
+    private readonly IOnlinePaymentStartRepository onlinePaymentStarts = onlinePaymentStarts
+        ?? throw new ArgumentNullException(nameof(onlinePaymentStarts));
     private readonly IDeliveryMethodRepository deliveryMethods = deliveryMethods
         ?? throw new ArgumentNullException(nameof(deliveryMethods));
 
@@ -73,8 +75,12 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         var paymentReference = PaymentReference(command.CheckoutToken);
         var providerStart = await onlinePaymentProvider.StartAsync(new(onlinePayment.ProviderName,
             command.CheckoutToken, paymentReference, totals), cancellationToken);
-        return new(new(command.CheckoutToken, onlinePayment.ProviderName, paymentReference,
-            providerStart.ProviderPaymentId, providerStart.CheckoutUrl, totals, deliverySnapshot), null);
+        var payment = new OnlinePaymentStartRecord(command.CheckoutToken, onlinePayment.ProviderName,
+            paymentReference, providerStart.ProviderPaymentId, providerStart.CheckoutUrl, totals,
+            deliverySnapshot, DateTimeOffset.UtcNow);
+        await onlinePaymentStarts.SaveAsync(payment, cancellationToken);
+        return new(new(payment.CheckoutToken, payment.ProviderName, payment.PaymentReference,
+            payment.ProviderPaymentId, payment.CheckoutUrl, payment.Totals, payment.DeliveryMethod), null);
     }
 
     private static string PaymentReference(Guid checkoutToken) =>

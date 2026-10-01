@@ -23,6 +23,8 @@ public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) :
     internal DbSet<OrderPersistence> Orders => Set<OrderPersistence>();
     internal DbSet<OrderLinePersistence> OrderLines => Set<OrderLinePersistence>();
     internal DbSet<OrderTotalPersistence> OrderTotals => Set<OrderTotalPersistence>();
+    internal DbSet<OnlinePaymentStartPersistence> OnlinePaymentStarts => Set<OnlinePaymentStartPersistence>();
+    internal DbSet<OnlinePaymentStartTotalPersistence> OnlinePaymentStartTotals => Set<OnlinePaymentStartTotalPersistence>();
     internal DbSet<CustomerProfilePersistence> CustomerProfiles => Set<CustomerProfilePersistence>();
     internal DbSet<WishlistItemPersistence> WishlistItems => Set<WishlistItemPersistence>();
 
