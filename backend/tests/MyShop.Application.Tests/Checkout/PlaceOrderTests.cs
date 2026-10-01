@@ -24,6 +24,7 @@ public sealed class PlaceOrderTests
         Assert.Equal("Betaal binnen 14 dagen.", scenario.Orders.Saved.PaymentInstructions);
         Assert.Equal(scenario.Orders.Saved.PaymentInstructions, result.Receipt.PaymentInstructions);
         Assert.Equal(scenario.Token, scenario.Orders.Token);
+        Assert.Equal("customer-user", scenario.Orders.CustomerUserId);
     }
 
     [Fact]
@@ -106,7 +107,7 @@ public sealed class PlaceOrderTests
                 new Availability(), Orders);
             return useCase.ExecuteAsync(new(Token, PaymentMethod, " Ada ", "ada@example.com",
                 "Street 1", "1234 AB", "Amsterdam", "NL",
-                [new(Products.Product.Id.Value, variant.Id.Value, 2, 25m, "EUR")]), CancellationToken.None);
+                [new(Products.Product.Id.Value, variant.Id.Value, 2, 25m, "EUR")], "customer-user"), CancellationToken.None);
         }
     }
 
@@ -147,14 +148,15 @@ public sealed class PlaceOrderTests
         public OrderReceipt? Existing { get; set; }
         public Order? Saved { get; private set; }
         public Guid Token { get; private set; }
+        public string? CustomerUserId { get; private set; }
         public bool RejectStock { get; set; }
         public Task<OrderReceipt?> GetByCheckoutTokenAsync(Guid checkoutToken, CancellationToken cancellationToken) =>
             Task.FromResult(Existing);
-        public Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken,
+        public Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
             IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken)
         {
             if (RejectStock) return Task.FromResult<OrderReceipt?>(null);
-            Saved = order; Token = checkoutToken;
+            Saved = order; Token = checkoutToken; CustomerUserId = customerUserId;
             return Task.FromResult<OrderReceipt?>(new OrderReceipt(order.Id, order.Number,
                 order.PlacedAt, order.PaymentInstructions));
         }

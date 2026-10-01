@@ -92,12 +92,28 @@ export const routes: Routes = [
         title: 'Registreren · MyShop',
       },
       {
-        path: 'account', canActivate: [customerGuard],
+        path: 'account',
+        canActivate: [customerGuard],
         loadComponent: () => import('./customer/customer-profile').then((m) => m.CustomerProfile),
         title: 'Mijn account · MyShop',
       },
       {
-        path: 'account/wachtwoord', canActivate: [customerGuard],
+        path: 'account/bestellingen/:id',
+        canActivate: [customerGuard],
+        loadComponent: () =>
+          import('./customer/customer-order-detail').then((m) => m.CustomerOrderDetail),
+        title: 'Bestelling · MyShop',
+      },
+      {
+        path: 'account/bestellingen',
+        canActivate: [customerGuard],
+        loadComponent: () =>
+          import('./customer/customer-order-list').then((m) => m.CustomerOrderList),
+        title: 'Mijn bestellingen · MyShop',
+      },
+      {
+        path: 'account/wachtwoord',
+        canActivate: [customerGuard],
         loadComponent: () => import('./auth/password').then((m) => m.Password),
         title: 'Wachtwoord wijzigen · MyShop',
       },

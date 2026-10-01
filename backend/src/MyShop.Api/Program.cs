@@ -22,6 +22,7 @@ if (!app.Environment.IsDevelopment()) { app.UseHsts(); app.UseHttpsRedirection()
 app.UseAdminSecurity();
 app.MapAdminEndpoints();
 app.MapCustomerEndpoints();
+app.MapCustomerOrderEndpoints();
 
 app.MapCatalog();
 app.MapStorefront();

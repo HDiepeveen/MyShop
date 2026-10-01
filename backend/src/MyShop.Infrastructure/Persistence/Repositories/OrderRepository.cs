@@ -1,12 +1,14 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MyShop.Application.Checkout.Abstractions;
+using MyShop.Application.Customers.Abstractions;
 using MyShop.Domain.Checkout;
 using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
-internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, IOrderStatusRepository
+internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, IOrderStatusRepository,
+    ICustomerOrderReadRepository
 {
     private readonly MyShopDbContext context;
 
@@ -20,12 +22,14 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 order.PaymentInstructions))
             .SingleOrDefaultAsync(cancellationToken);
 
-    public async Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken,
+    public async Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
         IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(order);
         ArgumentNullException.ThrowIfNull(stock);
         if (checkoutToken == Guid.Empty) throw new ArgumentException("Checkout token is required.", nameof(checkoutToken));
+        if (customerUserId is not null && string.IsNullOrWhiteSpace(customerUserId))
+            throw new ArgumentException("Customer user ID must not be blank.", nameof(customerUserId));
         if (stock.Any(item => item.ProductId == Guid.Empty || item.VariantId == Guid.Empty
                 || item.Quantity < 1)
             || stock.Select(item => (item.ProductId, item.VariantId)).Distinct().Count() != stock.Count)
@@ -64,6 +68,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
         {
             Id = order.Id,
             CheckoutToken = checkoutToken,
+            CustomerUserId = customerUserId,
             Number = order.Number,
             PlacedAt = order.PlacedAt,
             CustomerName = order.Customer.Name,
@@ -210,6 +215,52 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 line.UnitAmount,
                 line.Currency,
                 line.TotalAmount)).ToArray(),
+            order.Totals.OrderBy(total => total.Currency).Select(total =>
+                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray());
+    }
+
+    public async Task<CustomerOrderPage> ListAsync(string customerUserId, int offset, int limit,
+        CancellationToken cancellationToken)
+    {
+        var query = context.Orders.AsNoTracking()
+            .Where(order => order.CustomerUserId == customerUserId);
+        var totalCount = await query.CountAsync(cancellationToken);
+        var rows = await query.OrderByDescending(order => order.PlacedAt)
+            .ThenByDescending(order => order.Id)
+            .Skip(offset).Take(limit)
+            .Select(order => new
+            {
+                order.Id, order.Number, order.PlacedAt, order.PaymentMethod, order.Status
+            })
+            .ToArrayAsync(cancellationToken);
+        var ids = rows.Select(row => row.Id).ToArray();
+        var totals = await context.OrderTotals.AsNoTracking()
+            .Where(total => ids.Contains(total.OrderId))
+            .OrderBy(total => total.Currency)
+            .Select(total => new { total.OrderId, total.Currency, total.Amount })
+            .ToArrayAsync(cancellationToken);
+        var totalsByOrder = totals.ToLookup(total => total.OrderId);
+        return new(rows.Select(row => new CustomerOrderListItem(row.Id, row.Number, row.PlacedAt,
+            (OrderPaymentMethod)row.PaymentMethod, (OrderStatus)row.Status,
+            totalsByOrder[row.Id].Select(total =>
+                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray())).ToArray(), totalCount);
+    }
+
+    public async Task<CustomerOrderDetail?> GetAsync(string customerUserId, Guid orderId,
+        CancellationToken cancellationToken)
+    {
+        var order = await context.Orders.AsNoTracking().AsSplitQuery()
+            .Include(item => item.Lines).Include(item => item.Totals)
+            .SingleOrDefaultAsync(item => item.Id == orderId
+                && item.CustomerUserId == customerUserId, cancellationToken);
+        return order is null ? null : new CustomerOrderDetail(order.Id, order.Number, order.PlacedAt,
+            order.CustomerName, order.Email, order.AddressLine, order.PostalCode, order.City,
+            order.CountryCode, (OrderPaymentMethod)order.PaymentMethod, order.PaymentInstructions,
+            (OrderStatus)order.Status, order.PaidAt, order.ShippedAt, order.ShippingCarrier,
+            order.TrackingCode, order.CancelledAt, order.RefundedAt,
+            order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
+                line.ProductId, line.VariantId, line.ProductName, line.VariantName, line.Quantity,
+                line.UnitAmount, line.Currency, line.TotalAmount)).ToArray(),
             order.Totals.OrderBy(total => total.Currency).Select(total =>
                 new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray());
     }

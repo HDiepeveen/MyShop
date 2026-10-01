@@ -14,7 +14,20 @@ Registratie en klantlogin zijn begrensd tot tien pogingen per bron-IP per minuut
 HttpOnly sessiecookie, CSRF-bescherming, wachtwoordeisen, blokkering na mislukte pogingen en sessieduur
 als voor beheerders worden gebruikt. Wachtwoorden en adressen worden nooit in browseropslag bewaard.
 
+## Bestelgeschiedenis
+
+Een bestelling die tijdens een ingelogde klantsessie wordt geplaatst, wordt aan dat klantaccount
+gekoppeld. Gastbestellingen blijven los van accounts en worden niet achteraf op basis van een
+e-mailadres gekoppeld. Daardoor kan een andere gebruiker van hetzelfde e-mailadres geen oude
+gastbestellingen overnemen.
+
+Onder **Mijn bestellingen** ziet de klant uitsluitend bestellingen die aan het eigen account zijn
+gekoppeld. Het overzicht toont de nieuwste eerst, met paginering, status en totalen. De detailpagina
+toont de onveranderlijke artikel-, klant- en adressnapshot, betaalinstructies en beschikbare
+betaal- en verzendmomenten. Interne beheerreferenties en redenen worden niet via deze klant-API
+gedeeld. Een onbekende bestelling en een bestelling van een ander account geven beide 404.
+
 De routes zijn `POST /api/customer/auth/register`, `POST /api/customer/auth/login`,
-`GET /api/customer/profile` en `PUT /api/customer/profile`. De profielroutes vereisen de rol
-`Customer`. E-mailbevestiging, wachtwoordherstel per e-mail en een bestelgeschiedenis voor klanten
-volgen in afzonderlijke onderdelen.
+`GET /api/customer/profile`, `PUT /api/customer/profile`, `GET /api/customer/orders` en
+`GET /api/customer/orders/{id}`. Alle profiel- en bestelroutes vereisen de rol `Customer`.
+E-mailbevestiging en wachtwoordherstel per e-mail volgen in afzonderlijke onderdelen.

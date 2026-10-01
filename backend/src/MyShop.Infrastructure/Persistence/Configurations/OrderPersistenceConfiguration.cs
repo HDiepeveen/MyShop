@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.AspNetCore.Identity;
 using MyShop.Infrastructure.Persistence.Models;
 
 namespace MyShop.Infrastructure.Persistence.Configurations;
@@ -11,6 +12,9 @@ internal sealed class OrderPersistenceConfiguration : IEntityTypeConfiguration<O
         builder.ToTable("Orders");
         builder.HasKey(order => order.Id);
         builder.Property(order => order.Id).ValueGeneratedNever();
+        builder.Property(order => order.CustomerUserId).HasMaxLength(450);
+        builder.HasOne<IdentityUser>().WithMany().HasForeignKey(order => order.CustomerUserId)
+            .OnDelete(DeleteBehavior.SetNull);
         builder.Property(order => order.CheckoutToken).IsRequired().ValueGeneratedNever();
         builder.Property(order => order.Number).IsRequired().HasMaxLength(40);
         builder.Property(order => order.PlacedAt).IsRequired();

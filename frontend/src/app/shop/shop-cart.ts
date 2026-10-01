@@ -11,6 +11,7 @@ import { loadState } from '../catalog/load-state';
 import { PaymentOptionsApi } from '../checkout/payment-options.api';
 import { ShopCheckout } from '../checkout/shop-checkout';
 import { OrderReceipt } from '../checkout/order.api';
+import { Auth } from '../auth/auth';
 
 @Component({
   imports: [DatePipe, FormsModule, RouterLink, ShopCheckout],
@@ -36,7 +37,11 @@ import { OrderReceipt } from '../checkout/order.api';
         } @else {
           <p>Bewaar dit nummer voor de verdere afhandeling van je betaling.</p>
         }
-        <a routerLink="/winkel">Verder winkelen</a>
+        @if (auth.session()?.customer) {
+          <a [routerLink]="['/winkel/account/bestellingen', receipt.id]">Bestelling bekijken</a>
+        } @else {
+          <a routerLink="/winkel">Verder winkelen</a>
+        }
       </section>
     } @else if (!cart.lines().length) {
       <p>Je winkelmand is leeg.</p>
@@ -140,6 +145,7 @@ import { OrderReceipt } from '../checkout/order.api';
 })
 export class ShopCart {
   readonly cart = inject(Cart);
+  readonly auth = inject(Auth);
   private readonly api = inject(ShopApi);
   private readonly paymentApi = inject(PaymentOptionsApi);
   private readonly reload = new BehaviorSubject(0);

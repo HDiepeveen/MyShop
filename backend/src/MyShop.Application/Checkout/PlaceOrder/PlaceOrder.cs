@@ -9,7 +9,7 @@ public sealed record PlaceOrderLine(Guid ProductId, Guid VariantId, int Quantity
     decimal ExpectedAmount, string ExpectedCurrency);
 public sealed record PlaceOrderCommand(Guid CheckoutToken, string PaymentMethod, string CustomerName,
     string Email, string AddressLine, string PostalCode, string City, string CountryCode,
-    IReadOnlyList<PlaceOrderLine> Lines);
+    IReadOnlyList<PlaceOrderLine> Lines, string? CustomerUserId = null);
 public enum PlaceOrderFailure { CartUnavailable, PaymentUnavailable, OnlinePaymentRequired }
 public sealed record PlaceOrderResult(OrderReceipt? Receipt, PlaceOrderFailure? Failure)
 {
@@ -63,7 +63,7 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
             quote.Lines.Select(line => (line.ProductId, line.VariantId, line.Name!, line.Variant!,
                 line.Quantity, Money.Create(line.Amount!.Value, line.Currency!))),
             settings.PayLaterInstructions);
-        var receipt = await orders.AddAsync(order, command.CheckoutToken,
+        var receipt = await orders.AddAsync(order, command.CheckoutToken, command.CustomerUserId,
             quote.Lines.Select(line => new StockReservation(line.ProductId, line.VariantId,
                 line.Quantity)).ToArray(), cancellationToken);
         return receipt is null

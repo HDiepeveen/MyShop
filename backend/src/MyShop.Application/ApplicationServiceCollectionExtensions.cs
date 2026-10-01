@@ -128,6 +128,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Checkout.RefundOrder.RefundOrder>();
         services.AddScoped<Customers.GetCustomerProfile.GetCustomerProfile>();
         services.AddScoped<Customers.UpdateCustomerProfile.UpdateCustomerProfile>();
+        services.AddScoped<Customers.ListCustomerOrders.ListCustomerOrders>();
+        services.AddScoped<Customers.GetCustomerOrder.GetCustomerOrder>();
         return services;
     }
 }

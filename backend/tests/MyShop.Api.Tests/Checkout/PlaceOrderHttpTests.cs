@@ -49,6 +49,8 @@ public sealed class PlaceOrderHttpTests
             payLaterInstructions = "Betaal binnen 14 dagen.",
             revision = paymentSettings.GetProperty("revision").GetGuid()
         })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,
+            (await host.Client.GetAsync("/api/customer/orders")).StatusCode);
 
         var cookies = new CookieContainer();
         using var visitor = new HttpClient(new HttpClientHandler
@@ -96,17 +98,51 @@ public sealed class PlaceOrderHttpTests
         var restored = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{productId}");
         Assert.Equal(2, restored.GetProperty("variants")[0].GetProperty("stockQuantity").GetInt32());
 
+        Assert.Equal(HttpStatusCode.Unauthorized,
+            (await visitor.GetAsync("/api/customer/orders")).StatusCode);
+        var customerCookies = new CookieContainer();
+        using var customer = new HttpClient(new HttpClientHandler
+        {
+            CookieContainer = customerCookies,
+            AllowAutoRedirect = false
+        }) { BaseAddress = host.Client.BaseAddress };
+        Assert.Equal(HttpStatusCode.NoContent, (await customer.GetAsync("/api/auth/csrf")).StatusCode);
+        customer.DefaultRequestHeaders.Add("X-XSRF-TOKEN",
+            customerCookies.GetCookies(customer.BaseAddress!)["XSRF-TOKEN"]!.Value);
+        Assert.Equal(HttpStatusCode.NoContent, (await customer.PostAsJsonAsync(
+            "/api/customer/auth/register",
+            new { email = "customer@example.test", password = "Customer-Password42!" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await customer.GetAsync("/api/auth/csrf")).StatusCode);
+        customer.DefaultRequestHeaders.Remove("X-XSRF-TOKEN");
+        customer.DefaultRequestHeaders.Add("X-XSRF-TOKEN",
+            customerCookies.GetCookies(customer.BaseAddress!)["XSRF-TOKEN"]!.Value);
+        var customerResponse = await customer.PostAsJsonAsync("/api/shop/orders",
+            request with { checkoutToken = Guid.NewGuid() });
+        Assert.Equal(HttpStatusCode.OK, customerResponse.StatusCode);
+        var customerOrder = await customerResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var history = await customer.GetFromJsonAsync<JsonElement>("/api/customer/orders?offset=0&limit=20");
+        Assert.Equal(1, history.GetProperty("totalCount").GetInt32());
+        Assert.Equal(customerOrder.GetProperty("id").GetGuid(),
+            history.GetProperty("items")[0].GetProperty("id").GetGuid());
+        var historyDetail = await customer.GetAsync(
+            $"/api/customer/orders/{customerOrder.GetProperty("id").GetGuid()}");
+        Assert.Equal(HttpStatusCode.OK, historyDetail.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await customer.GetAsync(
+            $"/api/customer/orders/{first.GetProperty("id").GetGuid()}")).StatusCode);
+
         await using var scope = host.App.Services.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();
-        Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
+        Assert.Equal(2, await database.Database.SqlQueryRaw<int>(
             "SELECT COUNT(*) AS [Value] FROM [Orders]").SingleAsync());
         Assert.Equal("Ada Lovelace", await database.Database.SqlQueryRaw<string>(
-            "SELECT [CustomerName] AS [Value] FROM [Orders]").SingleAsync());
+            "SELECT [CustomerName] AS [Value] FROM [Orders] WHERE [CustomerUserId] IS NULL").SingleAsync());
         Assert.Equal(12.50m, await database.Database.SqlQueryRaw<decimal>(
-            "SELECT [UnitAmount] AS [Value] FROM [OrderLines]").SingleAsync());
+            "SELECT TOP(1) [UnitAmount] AS [Value] FROM [OrderLines]").SingleAsync());
         Assert.Equal(25m, await database.Database.SqlQueryRaw<decimal>(
-            "SELECT [Amount] AS [Value] FROM [OrderTotals]").SingleAsync());
+            "SELECT TOP(1) [Amount] AS [Value] FROM [OrderTotals]").SingleAsync());
         Assert.Equal("Betaal binnen 14 dagen.", await database.Database.SqlQueryRaw<string>(
-            "SELECT [PaymentInstructions] AS [Value] FROM [Orders]").SingleAsync());
+            "SELECT TOP(1) [PaymentInstructions] AS [Value] FROM [Orders]").SingleAsync());
+        Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS [Value] FROM [Orders] WHERE [CustomerUserId] IS NOT NULL").SingleAsync());
     }
 }

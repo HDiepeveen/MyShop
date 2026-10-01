@@ -1,6 +1,7 @@
 using MyShop.Domain.Catalog;
 using MyShop.Domain.Checkout;
 using MyShop.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Identity;
 
 namespace MyShop.Infrastructure.Tests.Integration;
 
@@ -14,16 +15,28 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         var newer = CreateOrder(DateTimeOffset.UtcNow, "Second customer",
             "Betaal binnen 14 dagen onder vermelding van het bestelnummer.");
         var refundable = CreateOrder(DateTimeOffset.UtcNow.AddMinutes(-2), "Refund customer");
+        var owned = CreateOrder(DateTimeOffset.UtcNow.AddMinutes(1), "Account customer");
+        var customerUserId = Guid.NewGuid().ToString();
         await using (var writeContext = database.CreateContext())
         {
+            writeContext.Users.Add(new IdentityUser { Id = customerUserId, UserName = "customer@example.test" });
+            await writeContext.SaveChangesAsync();
             var writer = new OrderRepository(writeContext);
-            await writer.AddAsync(older, Guid.NewGuid(), [], CancellationToken.None);
-            await writer.AddAsync(newer, Guid.NewGuid(), [], CancellationToken.None);
-            await writer.AddAsync(refundable, Guid.NewGuid(), [], CancellationToken.None);
+            await writer.AddAsync(older, Guid.NewGuid(), null, [], CancellationToken.None);
+            await writer.AddAsync(newer, Guid.NewGuid(), null, [], CancellationToken.None);
+            await writer.AddAsync(refundable, Guid.NewGuid(), null, [], CancellationToken.None);
+            await writer.AddAsync(owned, Guid.NewGuid(), customerUserId, [], CancellationToken.None);
         }
 
         await using var readContext = database.CreateContext();
         var repository = new OrderRepository(readContext);
+        var customerPage = await repository.ListAsync(customerUserId, 0, 20, CancellationToken.None);
+        Assert.Equal(1, customerPage.TotalCount);
+        Assert.Equal(owned.Id, Assert.Single(customerPage.Items).Id);
+        Assert.Equal(owned.Id, (await repository.GetAsync(customerUserId, owned.Id,
+            CancellationToken.None))!.Id);
+        Assert.Null(await repository.GetAsync("another-customer", owned.Id, CancellationToken.None));
+        Assert.Null(await repository.GetAsync(customerUserId, newer.Id, CancellationToken.None));
         var page = await repository.ListAsync(0, 100, null, null, CancellationToken.None);
         var olderIndex = page.Items.ToList().FindIndex(item => item.Id == older.Id);
         var newerIndex = page.Items.ToList().FindIndex(item => item.Id == newer.Id);

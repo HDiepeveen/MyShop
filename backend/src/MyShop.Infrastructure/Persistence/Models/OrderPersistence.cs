@@ -4,6 +4,7 @@ internal sealed class OrderPersistence
 {
     public Guid Id { get; set; }
     public Guid CheckoutToken { get; set; }
+    public string? CustomerUserId { get; set; }
     public string Number { get; set; } = null!;
     public DateTimeOffset PlacedAt { get; set; }
     public string CustomerName { get; set; } = null!;

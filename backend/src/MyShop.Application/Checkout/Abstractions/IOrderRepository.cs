@@ -9,6 +9,6 @@ public sealed record StockReservation(Guid ProductId, Guid VariantId, int Quanti
 public interface IOrderRepository
 {
     Task<OrderReceipt?> GetByCheckoutTokenAsync(Guid checkoutToken, CancellationToken cancellationToken);
-    Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken,
+    Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
         IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken);
 }

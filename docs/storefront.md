@@ -8,7 +8,8 @@ De openbare leesroutes zijn `/api/shop/categories`, `/api/shop/products`, `/api/
 
 Publiceer producten, beheer variantvoorraad en beheer de betaalopties via het beveiligde beheer. Zie [Voorraadbeheer](inventory.md). Online betalen volgt in een afzonderlijk onderdeel.
 
-Klanten kunnen als gast bestellen of een account gebruiken om hun standaardafleveradres te bewaren;
+Klanten kunnen als gast bestellen of een account gebruiken om hun standaardafleveradres en
+bestelgeschiedenis te bewaren;
 zie [Klantaccounts](customer-accounts.md).
 
 ## Actuele variantprijzen

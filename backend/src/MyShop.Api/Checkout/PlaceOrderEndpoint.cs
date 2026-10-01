@@ -1,5 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
+using MyShop.Api.Security;
 using MyShop.Application.Checkout.PlaceOrder;
 
 namespace MyShop.Api.Checkout;
@@ -11,6 +13,7 @@ public static class PlaceOrderEndpoint
             .RequireRateLimiting("storefront-order");
 
     private static async Task<IResult> ExecuteAsync(PlaceOrderRequest? request,
+        HttpContext context, UserManager<IdentityUser> users,
         [FromServices] PlaceOrder useCase, CancellationToken cancellationToken)
     {
         if (request?.Lines is null || request.Lines.Count is < 1 or > 20)
@@ -28,7 +31,9 @@ public static class PlaceOrderEndpoint
             }
             var result = await useCase.ExecuteAsync(new(request.CheckoutToken, request.PaymentMethod,
                 request.CustomerName, request.Email, request.AddressLine, request.PostalCode,
-                request.City, request.CountryCode, lines), cancellationToken);
+                request.City, request.CountryCode, lines,
+                context.User.IsInRole(AdminSecurity.CustomerRole) ? users.GetUserId(context.User) : null),
+                cancellationToken);
             return result.Failure switch
             {
                 PlaceOrderFailure.CartUnavailable => Results.Conflict(new

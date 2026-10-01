@@ -247,6 +247,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.UseAdminSecurity();
         App.MapAdminEndpoints();
         App.MapCustomerEndpoints();
+        App.MapCustomerOrderEndpoints();
         App.MapCatalog();
         App.MapStorefront();
         App.MapPaymentOptions();

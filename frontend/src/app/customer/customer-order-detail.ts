@@ -1,0 +1,106 @@
+import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs';
+import { errorMessage } from '../catalog/error-message';
+import {
+  CustomerOrderApi,
+  CustomerOrderDetail as Detail,
+  customerOrderStatus,
+} from './customer-order.api';
+
+@Component({
+  imports: [DatePipe, RouterLink],
+  template: `<a routerLink="/winkel/account/bestellingen">← Mijn bestellingen</a>
+    @if (loading()) {
+      <p role="status">Bestelling ophalen…</p>
+    }
+    @if (failure()) {
+      <p class="error" role="alert">{{ failure() }}</p>
+    }
+    @if (order(); as item) {
+      <div class="eyebrow">{{ status(item.status) }}</div>
+      <h1>Bestelling {{ item.number }}</h1>
+      <p>Geplaatst op {{ item.placedAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
+      <section class="panel">
+        <h2>Artikelen</h2>
+        @for (line of item.lines; track line.productId + line.variantId) {
+          <h3>{{ line.productName }} · {{ line.variantName }}</h3>
+          <p>
+            {{ line.quantity }} × {{ line.currency }} {{ amount(line.unitAmount) }} =
+            <strong>{{ line.currency }} {{ amount(line.totalAmount) }}</strong>
+          </p>
+        }
+        @for (total of item.totals; track total.currency) {
+          <p>
+            <strong>Totaal {{ total.currency }} {{ amount(total.amount) }}</strong>
+          </p>
+        }
+      </section>
+      <section class="panel">
+        <h2>Bezorgadres</h2>
+        <p>
+          {{ item.customer.name }}<br />
+          {{ item.deliveryAddress.addressLine }}<br />{{ item.deliveryAddress.postalCode }}
+          {{ item.deliveryAddress.city }}<br />
+          {{ item.deliveryAddress.countryCode }}
+        </p>
+        <p>{{ item.customer.email }}</p>
+      </section>
+      <section class="panel">
+        <h2>Betaling en verzending</h2>
+        <p>Betaalmethode: later betalen</p>
+        @if (item.paymentInstructions) {
+          <p class="preserve-lines">{{ item.paymentInstructions }}</p>
+        }
+        @if (item.paidAt) {
+          <p>Betaald op {{ item.paidAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
+        }
+        @if (item.shippedAt) {
+          <p>Verzonden op {{ item.shippedAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
+        }
+        @if (item.shippingCarrier || item.trackingCode) {
+          <p>
+            Vervoerder: {{ item.shippingCarrier ?? 'Onbekend' }}<br />Track-en-trace:
+            {{ item.trackingCode ?? 'Niet beschikbaar' }}
+          </p>
+        }
+        @if (item.cancelledAt) {
+          <p>Geannuleerd op {{ item.cancelledAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
+        }
+        @if (item.refundedAt) {
+          <p>Terugbetaald op {{ item.refundedAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
+        }
+      </section>
+    }`,
+})
+export class CustomerOrderDetail {
+  private readonly api = inject(CustomerOrderApi);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly order = signal<Detail | null>(null);
+  readonly loading = signal(true);
+  readonly failure = signal('');
+  readonly status = customerOrderStatus;
+  constructor() {
+    this.route.paramMap
+      .pipe(
+        switchMap((params) => this.api.get(params.get('id') ?? '')),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (order) => {
+          this.order.set(order);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.failure.set(errorMessage(error));
+          this.loading.set(false);
+        },
+      });
+  }
+  amount(value: string) {
+    return value.replace('.', ',');
+  }
+}
