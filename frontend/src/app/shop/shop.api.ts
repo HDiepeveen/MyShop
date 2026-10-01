@@ -16,6 +16,7 @@ export interface ShopPage {
 }
 export interface ShopListItem extends ShopItem {
   prices: { currency: string; minimumAmount: string; maximumAmount: string }[];
+  isAvailable?: boolean;
 }
 export interface ShopCategory {
   id: string;
@@ -24,7 +25,7 @@ export interface ShopCategory {
 export interface ShopProduct extends ShopItem {
   description: string;
   categories: ShopCategory[];
-  variants: { id: string; name: string }[];
+  variants: { id: string; name: string; isAvailable?: boolean }[];
 }
 export interface ShopPrices {
   at: string;
@@ -41,7 +42,7 @@ export interface CartQuote {
     amount: string | null;
     currency: string | null;
     total: string | null;
-    failure: 'unavailable' | 'priceMissing' | null;
+    failure: 'unavailable' | 'priceMissing' | 'outOfStock' | null;
   }[];
   totals: { currency: string; amount: string }[];
 }

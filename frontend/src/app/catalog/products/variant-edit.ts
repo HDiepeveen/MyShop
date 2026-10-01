@@ -90,6 +90,28 @@ import { errorMessage } from '../error-message';
           Basisprijs wissen
         </button>
       }
+      <form (ngSubmit)="saveStock()">
+        @if (stock.trim() && parsedStock() === null) {
+          <p class="form-errors">Vul een heel aantal van 0 tot en met 2.147.483.647 in.</p>
+        }
+        <label class="field"
+          >Voorraad<input
+            name="stock"
+            inputmode="numeric"
+            [(ngModel)]="stock"
+            required
+            [disabled]="busy()"
+            placeholder="Bijvoorbeeld: 25"
+        /></label>
+        <button class="secondary" [disabled]="busy() || parsedStock() === null">
+          Voorraad opslaan
+        </button>
+      </form>
+      @if (variant().stockQuantity !== null && variant().stockQuantity !== undefined) {
+        <button type="button" class="secondary" [disabled]="busy()" (click)="clearStock()">
+          Voorraad niet meer volgen
+        </button>
+      }
       @if (variantCount() > 1) {
         <div class="remove-section">
           @if (confirmingRemove()) {
@@ -140,12 +162,14 @@ export class VariantEdit {
   sku = '';
   amount = '';
   currency = 'EUR';
+  stock = '';
   constructor() {
     effect(() => {
       this.name = this.variant().name;
       this.sku = this.variant().sku ?? '';
       this.amount = this.variant().price?.amount.toString() ?? '';
       this.currency = this.variant().price?.currency ?? 'EUR';
+      this.stock = this.variant().stockQuantity?.toString() ?? '';
     });
   }
   rename() {
@@ -207,6 +231,32 @@ export class VariantEdit {
     this.save(
       this.api.clearVariantPrice(this.productId(), this.variant().id),
       'De basisprijs is gewist.',
+    );
+  }
+  parsedStock(): number | null {
+    const text = this.stock.trim();
+    if (!/^\d+$/.test(text)) return null;
+    const quantity = Number(text);
+    return Number.isInteger(quantity) && quantity <= 2147483647 ? quantity : null;
+  }
+  saveStock() {
+    const quantity = this.parsedStock();
+    if (this.busy() || quantity === null || quantity === this.variant().stockQuantity) return;
+    this.save(
+      this.api.setVariantStock(this.productId(), this.variant().id, quantity),
+      'De voorraad is bijgewerkt.',
+    );
+  }
+  clearStock() {
+    if (
+      this.busy() ||
+      this.variant().stockQuantity === null ||
+      this.variant().stockQuantity === undefined
+    )
+      return;
+    this.save(
+      this.api.clearVariantStock(this.productId(), this.variant().id),
+      'De voorraad wordt niet meer gevolgd.',
     );
   }
   removeVariant() {

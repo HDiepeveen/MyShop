@@ -132,6 +132,16 @@ import { readProductListQuery } from './product-list-query';
                     : 'Nog niet ingesteld'
                 }}
               </dd>
+              <dt>Voorraad</dt>
+              <dd>
+                {{
+                  variant.stockQuantity === null || variant.stockQuantity === undefined
+                    ? 'Niet gevolgd'
+                    : variant.stockQuantity === 0
+                      ? 'Uitverkocht'
+                      : variant.stockQuantity
+                }}
+              </dd>
             </dl>
             @for (definition of detail.type.attributeDefinitions; track definition.id) {
               @if (definition.scope === 'Variant') {

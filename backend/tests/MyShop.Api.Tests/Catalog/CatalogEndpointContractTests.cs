@@ -57,6 +57,8 @@ public sealed class CatalogEndpointContractTests
         new("GetCategoryUsage", "GET", "/api/categories/{categoryId:guid}/usage"),
         new("GetProductTypeUsage", "GET", "/api/product-types/{productTypeId:guid}/usage"),
         new("SetProductVariantPrice", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/price"),
+        new("SetProductVariantStock", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/stock"),
+        new("ClearProductVariantStock", "DELETE", "/api/products/{productId:guid}/variants/{variantId:guid}/stock"),
         new("SetProductVariantSku", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/sku"),
         new("SetVariantAttributeValue", "PUT", "/api/products/{productId:guid}/variants/{variantId:guid}/attributes/{attributeDefinitionId:guid}")
     ];
@@ -182,6 +184,8 @@ public sealed class CatalogEndpointContractTests
         endpoints.MapRenameProductVariant();
         endpoints.MapSetProductVariantSku();
         endpoints.MapSetProductVariantPrice();
+        endpoints.MapSetProductVariantStock();
+        endpoints.MapClearProductVariantStock();
         endpoints.MapGetProductTypeUsage();
         endpoints.MapGetCategoryUsage();
         endpoints.MapGetProductTypeAttribute();

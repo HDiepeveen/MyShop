@@ -28,14 +28,18 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
                 .Include(variant => variant.PriceRules)
                 .ToListAsync(cancellationToken);
         var variantsByProduct = ProductPersistenceMapper.ToPricingVariants(persistedVariants);
-        var items = rows.Select(row => new StorefrontItem(row.Id, row.Name, row.ImageUrl, row.ImageAlt,
-            PriceRanges(variantsByProduct.GetValueOrDefault(row.Id, []), at))).ToList();
+        var items = rows.Select(row =>
+        {
+            var variants = variantsByProduct.GetValueOrDefault(row.Id, []);
+            return new StorefrontItem(row.Id, row.Name, row.ImageUrl, row.ImageAlt,
+                variants.Any(variant => variant.CanFulfill(1)), PriceRanges(variants, at));
+        }).ToList();
         return new(at, items, count, offset, limit);
     }
 
     private static IReadOnlyList<StorefrontPriceRange> PriceRanges(
         IReadOnlyList<ProductVariant> variants, DateTimeOffset at) => variants
-        .Where(variant => variant.Price is not null)
+        .Where(variant => variant.Price is not null && variant.CanFulfill(1))
         .Select(variant => variant.CalculatePrice(at))
         .GroupBy(price => price.Currency)
         .OrderBy(group => group.Key, StringComparer.Ordinal)
@@ -63,6 +67,7 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
                     .ThenBy(item => item.Category.Id)
                     .Select(item => new StorefrontCategory(item.Category.Id, item.Category.Name)).ToList(),
                 product.Variants.OrderBy(variant => variant.Ordinal)
-                    .Select(variant => new StorefrontVariant(variant.Id, variant.Name)).ToList()))
+                    .Select(variant => new StorefrontVariant(variant.Id, variant.Name,
+                        variant.StockQuantity == null || variant.StockQuantity > 0)).ToList()))
             .SingleOrDefaultAsync(cancellationToken);
 }

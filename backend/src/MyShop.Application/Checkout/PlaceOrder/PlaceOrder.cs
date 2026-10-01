@@ -63,6 +63,11 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
             quote.Lines.Select(line => (line.ProductId, line.VariantId, line.Name!, line.Variant!,
                 line.Quantity, Money.Create(line.Amount!.Value, line.Currency!))),
             settings.PayLaterInstructions);
-        return new(await orders.AddAsync(order, command.CheckoutToken, cancellationToken), null);
+        var receipt = await orders.AddAsync(order, command.CheckoutToken,
+            quote.Lines.Select(line => new StockReservation(line.ProductId, line.VariantId,
+                line.Quantity)).ToArray(), cancellationToken);
+        return receipt is null
+            ? PlaceOrderResult.Failed(PlaceOrderFailure.CartUnavailable)
+            : new(receipt, null);
     }
 }

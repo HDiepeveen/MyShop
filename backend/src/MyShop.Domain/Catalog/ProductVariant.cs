@@ -26,12 +26,14 @@ public sealed class ProductVariant
         Sku? sku,
         List<AttributeValue> attributeValues,
         Money? price,
-        List<PriceRule> priceRules)
+        List<PriceRule> priceRules,
+        int? stockQuantity)
     {
         Id = id;
         Name = name;
         Sku = sku;
         Price = price;
+        StockQuantity = ValidateStockQuantity(stockQuantity);
         _attributeValues.AddRange(attributeValues);
         _readOnlyAttributeValues = _attributeValues.AsReadOnly();
         _priceRules.AddRange(priceRules);
@@ -43,6 +45,8 @@ public sealed class ProductVariant
     public Money? Price { get; private set; }
     public IReadOnlyCollection<PriceRule> PriceRules => _readOnlyPriceRules;
     public Sku? Sku { get; private set; }
+    public int? StockQuantity { get; private set; }
+    public bool TracksStock => StockQuantity is not null;
     public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
 
     internal static ProductVariant Rehydrate(
@@ -51,7 +55,8 @@ public sealed class ProductVariant
         Sku? sku,
         IEnumerable<AttributeValue> attributeValues,
         Money? price = null,
-        IEnumerable<PriceRule>? priceRules = null)
+        IEnumerable<PriceRule>? priceRules = null,
+        int? stockQuantity = null)
     {
         ArgumentNullException.ThrowIfNull(attributeValues);
 
@@ -67,7 +72,7 @@ public sealed class ProductVariant
         var rules = (priceRules ?? []).ToList();
         if (rules.Any(rule => rule is null)) throw new InvalidOperationException("A variant cannot contain null price rules.");
         if (rules.GroupBy(rule => rule.Id).Any(group => group.Count() > 1)) throw new InvalidOperationException("A variant cannot contain duplicate price rules.");
-        return new ProductVariant(id, validatedName, sku, values, price, rules);
+        return new ProductVariant(id, validatedName, sku, values, price, rules, stockQuantity);
     }
 
     internal void Rename(string name) => Name = ValidateName(name);
@@ -88,6 +93,28 @@ public sealed class ProductVariant
     }
 
     internal void ClearPrice() => Price = null;
+
+    internal void SetStockQuantity(int quantity) => StockQuantity = ValidateStockQuantity(quantity);
+
+    internal void ClearStockTracking() => StockQuantity = null;
+
+    public bool CanFulfill(int quantity)
+    {
+        if (quantity < 1) throw new ArgumentOutOfRangeException(nameof(quantity));
+        return StockQuantity is null || StockQuantity >= quantity;
+    }
+
+    internal void ReserveStock(int quantity)
+    {
+        if (!CanFulfill(quantity)) throw new InvalidOperationException("Insufficient variant stock.");
+        if (StockQuantity is not null) StockQuantity -= quantity;
+    }
+
+    internal void ReleaseStock(int quantity)
+    {
+        if (quantity < 1) throw new ArgumentOutOfRangeException(nameof(quantity));
+        if (StockQuantity is not null) StockQuantity = checked(StockQuantity.Value + quantity);
+    }
 
     internal void AddPriceRule(PriceRule rule)
     {
@@ -177,5 +204,11 @@ public sealed class ProductVariant
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Product variant name must not be empty or whitespace.", nameof(name));
         return name;
+    }
+
+    private static int? ValidateStockQuantity(int? quantity)
+    {
+        if (quantity < 0) throw new ArgumentOutOfRangeException(nameof(quantity));
+        return quantity;
     }
 }

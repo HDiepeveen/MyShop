@@ -90,7 +90,8 @@ public sealed record ProductVariantResponse(
     string? Sku,
     IReadOnlyList<AttributeValueResponse> AttributeValues,
     MoneyResponse? Price,
-    IReadOnlyList<PriceRuleResponse> PriceRules)
+    IReadOnlyList<PriceRuleResponse> PriceRules,
+    int? StockQuantity)
 {
     internal static ProductVariantResponse FromDomain(ProductVariant variant) => new(
         variant.Id.Value,
@@ -99,7 +100,8 @@ public sealed record ProductVariantResponse(
         variant.AttributeValues.Select(AttributeValueResponse.FromDomain).ToArray(),
         variant.Price is { } price ? new MoneyResponse(price.Amount, price.Currency) : null,
         variant.PriceRules.OrderByDescending(rule => rule.Priority).ThenBy(rule => rule.Id)
-            .Select(PriceRuleResponse.FromDomain).ToArray());
+            .Select(PriceRuleResponse.FromDomain).ToArray(),
+        variant.StockQuantity);
 }
 
 public sealed record AttributeValueResponse(

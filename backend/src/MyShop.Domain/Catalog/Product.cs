@@ -147,6 +147,18 @@ public sealed class Product
 
     public void ClearVariantPrice(ProductVariantId variantId) => FindVariant(variantId).ClearPrice();
 
+    public void SetVariantStockQuantity(ProductVariantId variantId, int quantity) =>
+        FindVariant(variantId).SetStockQuantity(quantity);
+
+    public void ClearVariantStockTracking(ProductVariantId variantId) =>
+        FindVariant(variantId).ClearStockTracking();
+
+    public void ReserveVariantStock(ProductVariantId variantId, int quantity) =>
+        FindVariant(variantId).ReserveStock(quantity);
+
+    public void ReleaseVariantStock(ProductVariantId variantId, int quantity) =>
+        FindVariant(variantId).ReleaseStock(quantity);
+
     public void AddVariantPriceRule(ProductVariantId variantId, PriceRule rule)
     {
         ArgumentNullException.ThrowIfNull(rule);

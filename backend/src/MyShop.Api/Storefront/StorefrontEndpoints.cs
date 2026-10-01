@@ -38,7 +38,7 @@ public static class StorefrontEndpoints
                     cancellationToken);
                 return Results.Ok(new StorefrontPageResponse(page.At,
                     page.Items.Select(item => new StorefrontItemResponse(item.Id, item.Name,
-                        item.ImageUrl, item.ImageAlt, item.Prices.Select(price =>
+                        item.ImageUrl, item.ImageAlt, item.IsAvailable, item.Prices.Select(price =>
                             new StorefrontPriceRangeResponse(price.Currency,
                                 price.MinimumAmount.ToString("F2", CultureInfo.InvariantCulture),
                                 price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()))
@@ -59,7 +59,7 @@ public static class StorefrontEndpoints
 public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<StorefrontItemResponse> Items,
     int TotalCount, int Offset, int Limit);
 public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,
-    IReadOnlyList<StorefrontPriceRangeResponse> Prices);
+    bool IsAvailable, IReadOnlyList<StorefrontPriceRangeResponse> Prices);
 public sealed record StorefrontPriceRangeResponse(string Currency, string MinimumAmount, string MaximumAmount);
 public sealed record StorefrontPricesResponse(DateTimeOffset At,
     IReadOnlyList<StorefrontVariantPriceResponse> Variants);

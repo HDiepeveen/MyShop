@@ -82,6 +82,15 @@ public sealed class PlaceOrderTests
         Assert.Null(scenario.Orders.Saved);
     }
 
+    [Fact]
+    public async Task RejectsWhenStockChangesDuringAtomicPlacement()
+    {
+        var scenario = new Scenario();
+        scenario.Orders.RejectStock = true;
+        var result = await scenario.Execute();
+        Assert.Equal(PlaceOrderFailure.CartUnavailable, result.Failure);
+    }
+
     private sealed class Scenario
     {
         public Products Products { get; } = new();
@@ -138,13 +147,16 @@ public sealed class PlaceOrderTests
         public OrderReceipt? Existing { get; set; }
         public Order? Saved { get; private set; }
         public Guid Token { get; private set; }
+        public bool RejectStock { get; set; }
         public Task<OrderReceipt?> GetByCheckoutTokenAsync(Guid checkoutToken, CancellationToken cancellationToken) =>
             Task.FromResult(Existing);
-        public Task<OrderReceipt> AddAsync(Order order, Guid checkoutToken, CancellationToken cancellationToken)
+        public Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken,
+            IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken)
         {
+            if (RejectStock) return Task.FromResult<OrderReceipt?>(null);
             Saved = order; Token = checkoutToken;
-            return Task.FromResult(new OrderReceipt(order.Id, order.Number, order.PlacedAt,
-                order.PaymentInstructions));
+            return Task.FromResult<OrderReceipt?>(new OrderReceipt(order.Id, order.Number,
+                order.PlacedAt, order.PaymentInstructions));
         }
     }
 }

@@ -234,7 +234,7 @@ describe('Cart page', () => {
     await harness.fixture.whenStable();
     expect(page.totals()).toEqual([{ currency: 'EUR', amount: '45.00' }]);
   });
-  it.each(['unavailable', 'priceMissing'])(
+  it.each(['unavailable', 'priceMissing', 'outOfStock'] as const)(
     'displays unavailable lines without totals: %s',
     async (failure) => {
       TestBed.inject(Cart).add(productId, variantId);

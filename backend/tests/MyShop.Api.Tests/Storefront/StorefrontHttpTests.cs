@@ -79,7 +79,8 @@ public sealed class StorefrontHttpTests
         Assert.Equal(2, page.GetProperty("totalCount").GetInt32());
         var item = Assert.Single(page.GetProperty("items").EnumerateArray());
         Assert.Equal(beta, item.GetProperty("id").GetGuid());
-        Assert.Equal(new[] { "id", "imageAlt", "imageUrl", "name", "prices" }, item.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(new[] { "id", "imageAlt", "imageUrl", "isAvailable", "name", "prices" }, item.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.True(item.GetProperty("isAvailable").GetBoolean());
         Assert.Empty(item.GetProperty("prices").EnumerateArray());
         var product = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}");
         Assert.Equal(new[] { "categories", "description", "id", "imageAlt", "imageUrl", "name", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
@@ -89,12 +90,16 @@ public sealed class StorefrontHttpTests
         Assert.Equal(clothingId, productCategory.GetProperty("id").GetGuid());
         Assert.Equal("Clothing", productCategory.GetProperty("name").GetString());
         Assert.Equal(new[] { "Small", "Large" }, product.GetProperty("variants").EnumerateArray().Select(v => v.GetProperty("name").GetString()).ToArray());
-        Assert.All(product.GetProperty("variants").EnumerateArray(), v => Assert.Equal(new[] { "id", "name" }, v.EnumerateObject().Select(p => p.Name).Order().ToArray()));
+        Assert.All(product.GetProperty("variants").EnumerateArray(), v => Assert.Equal(new[] { "id", "isAvailable", "name" }, v.EnumerateObject().Select(p => p.Name).Order().ToArray()));
         foreach (var id in new[] { draft.ToString(), Guid.NewGuid().ToString(), Guid.Empty.ToString(), "invalid" })
             Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync($"/api/shop/products/{id}")).StatusCode);
         var variantId = product.GetProperty("variants")[0].GetProperty("id").GetGuid();
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{alpha}/variants/{variantId}/price", new { amount = 100m, currency = "EUR" })).StatusCode);
         Assert.Equal(HttpStatusCode.Created, (await host.Client.PostAsJsonAsync($"/api/products/{alpha}/variants/{variantId}/price-rules", new { name = "Current offer", adjustmentType = 1, value = 25m, priority = 0, startsAt = DateTimeOffset.UtcNow.AddDays(-1), endsAt = DateTimeOffset.UtcNow.AddDays(1) })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync(
+            $"/api/products/{alpha}/variants/{variantId}/stock", new { quantity = 3 })).StatusCode);
+        var managedWithStock = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{alpha}");
+        Assert.Equal(3, managedWithStock.GetProperty("variants")[0].GetProperty("stockQuantity").GetInt32());
         var before = DateTimeOffset.UtcNow;
         var pricesResponse = await visitor.GetAsync($"/api/shop/products/{alpha}/prices?at=2000-01-01T00:00:00Z");
         Assert.Equal(HttpStatusCode.OK, pricesResponse.StatusCode);
@@ -121,6 +126,10 @@ public sealed class StorefrontHttpTests
         Assert.Equal("75.00", quotedLine.GetProperty("amount").GetString());
         Assert.Equal("225.00", quotedLine.GetProperty("total").GetString());
         Assert.Equal("225.00", Assert.Single(quote.GetProperty("totals").EnumerateArray()).GetProperty("amount").GetString());
+        var shortStock = await visitor.GetFromJsonAsync<JsonElement>(
+            $"/api/shop/cart/quote?lines={alpha}:{variantId}:4");
+        Assert.Equal("outOfStock", shortStock.GetProperty("lines")[0].GetProperty("failure").GetString());
+        Assert.Empty(shortStock.GetProperty("totals").EnumerateArray());
         var unpricedId = product.GetProperty("variants")[1].GetProperty("id").GetGuid();
         foreach (var invalidLine in new[] { $"{draft}:{variantId}:1", $"{alpha}:{Guid.NewGuid()}:1", $"{alpha}:{unpricedId}:1" })
         {
@@ -146,6 +155,15 @@ public sealed class StorefrontHttpTests
         Assert.Equal("EUR", range.GetProperty("currency").GetString());
         Assert.Equal("75.00", range.GetProperty("minimumAmount").GetString());
         Assert.Equal("9999999999999999.99", range.GetProperty("maximumAmount").GetString());
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync(
+            $"/api/products/{alpha}/variants/{variantId}/stock", new { quantity = 0 })).StatusCode);
+        var unavailableProduct = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}");
+        Assert.False(unavailableProduct.GetProperty("variants")[0].GetProperty("isAvailable").GetBoolean());
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await host.Client.DeleteAsync($"/api/products/{alpha}/variants/{variantId}/stock")).StatusCode);
+        var untrackedProduct = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{alpha}");
+        Assert.Equal(JsonValueKind.Null,
+            untrackedProduct.GetProperty("variants")[0].GetProperty("stockQuantity").ValueKind);
         var hidden = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?search=Onlydraft");
         Assert.Equal(0, hidden.GetProperty("totalCount").GetInt32());
         foreach (var query in new[] { "offset=-1", "limit=0", "limit=101", "offset=invalid",

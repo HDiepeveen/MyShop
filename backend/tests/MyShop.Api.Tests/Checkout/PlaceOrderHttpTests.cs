@@ -31,6 +31,9 @@ public sealed class PlaceOrderHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync(
             $"/api/products/{productId}/variants/{variantId}/price",
             new { amount = 12.50m, currency = "EUR" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync(
+            $"/api/products/{productId}/variants/{variantId}/stock",
+            new { quantity = 2 })).StatusCode);
         var current = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{productId}");
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync(
             $"/api/products/{productId}/presentation", new
@@ -75,6 +78,23 @@ public sealed class PlaceOrderHttpTests
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(first.GetProperty("id").GetGuid(), repeated.GetProperty("id").GetGuid());
         Assert.Equal("Betaal binnen 14 dagen.", repeated.GetProperty("paymentInstructions").GetString());
+        var depleted = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{productId}");
+        Assert.Equal(0, depleted.GetProperty("variants")[0].GetProperty("stockQuantity").GetInt32());
+        var competing = await visitor.PostAsJsonAsync("/api/shop/orders",
+            request with { checkoutToken = Guid.NewGuid() });
+        Assert.Equal(HttpStatusCode.Conflict, competing.StatusCode);
+        Assert.Equal("cartChanged", (await competing.Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("code").GetString());
+        var order = await host.Client.GetFromJsonAsync<JsonElement>(
+            $"/api/orders/{first.GetProperty("id").GetGuid()}");
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync(
+            $"/api/orders/{first.GetProperty("id").GetGuid()}/status", new
+            {
+                status = "cancelled", reason = "Klant annuleert",
+                revision = order.GetProperty("revision").GetGuid()
+            })).StatusCode);
+        var restored = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{productId}");
+        Assert.Equal(2, restored.GetProperty("variants")[0].GetProperty("stockQuantity").GetInt32());
 
         await using var scope = host.App.Services.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();

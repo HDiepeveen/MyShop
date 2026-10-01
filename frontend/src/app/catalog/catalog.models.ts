@@ -79,6 +79,7 @@ export interface Variant {
   price: { amount: number; currency: string } | null;
   priceRules: PriceRule[];
   attributeValues: AttributeValue[];
+  stockQuantity?: number | null;
 }
 export interface ProductPresentation {
   description: string;

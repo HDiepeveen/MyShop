@@ -171,7 +171,9 @@ export class ShopCart {
         message:
           line.failure === 'unavailable'
             ? 'Dit artikel is niet meer beschikbaar. Verwijder het uit je winkelmand.'
-            : 'Voor deze variant is geen prijs beschikbaar.',
+            : line.failure === 'outOfStock'
+              ? 'Er is onvoldoende voorraad voor dit aantal. Verlaag het aantal of verwijder de regel.'
+              : 'Voor deze variant is geen prijs beschikbaar.',
       })) ?? [],
   );
   readonly totals = computed(() => this.quote()?.totals ?? []);

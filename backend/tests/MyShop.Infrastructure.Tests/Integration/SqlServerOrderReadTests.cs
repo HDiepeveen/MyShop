@@ -17,9 +17,9 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         await using (var writeContext = database.CreateContext())
         {
             var writer = new OrderRepository(writeContext);
-            await writer.AddAsync(older, Guid.NewGuid(), CancellationToken.None);
-            await writer.AddAsync(newer, Guid.NewGuid(), CancellationToken.None);
-            await writer.AddAsync(refundable, Guid.NewGuid(), CancellationToken.None);
+            await writer.AddAsync(older, Guid.NewGuid(), [], CancellationToken.None);
+            await writer.AddAsync(newer, Guid.NewGuid(), [], CancellationToken.None);
+            await writer.AddAsync(refundable, Guid.NewGuid(), [], CancellationToken.None);
         }
 
         await using var readContext = database.CreateContext();

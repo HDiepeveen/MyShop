@@ -35,6 +35,8 @@ public static class CatalogEndpoints
         app.MapRenameProductVariant();
         app.MapSetProductVariantSku();
         app.MapSetProductVariantPrice();
+        app.MapSetProductVariantStock();
+        app.MapClearProductVariantStock();
         app.MapGetProductTypeUsage();
         app.MapGetCategoryUsage();
         app.MapGetProductTypeAttribute();

@@ -59,12 +59,17 @@ import { readListQuery } from '../catalog/list-query';
                 (ngModelChange)="selectedId.set($event)"
               >
                 @for (variant of product.variants; track variant.id) {
-                  <option [value]="variant.id">{{ variant.name }}</option>
+                  <option [value]="variant.id" [disabled]="variant.isAvailable === false">
+                    {{ variant.name }}{{ variant.isAvailable === false ? ' – uitverkocht' : '' }}
+                  </option>
                 }
               </select></label
             >
             @if (selected(); as variant) {
               <p role="status">Gekozen variant: {{ variant.name }}</p>
+              @if (variant.isAvailable === false) {
+                <p role="status">Deze variant is uitverkocht.</p>
+              }
             }
           } @else {
             <p>Er zijn geen varianten beschikbaar.</p>
@@ -102,6 +107,7 @@ import { readListQuery } from '../catalog/list-query';
             type="button"
             [disabled]="
               !selected() || prices()?.loading || prices()?.error || selectedPrice()?.amount == null
+              || selected()?.isAvailable === false
             "
             (click)="addToCart()"
           >
@@ -179,7 +185,11 @@ export class ShopDetail {
     effect(() => {
       const product = this.state()?.data;
       this.cartMessage.set('');
-      this.selectedId.set(product?.variants[0]?.id ?? '');
+      this.selectedId.set(
+        product?.variants.find((variant) => variant.isAvailable !== false)?.id ??
+          product?.variants[0]?.id ??
+          '',
+      );
     });
   }
   contextQuery() {

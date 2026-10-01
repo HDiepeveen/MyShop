@@ -21,6 +21,8 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             var productId = Guid.NewGuid();
             var version = Guid.NewGuid();
             await context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO [Products] ([Id], [ProductTypeId], [Name], [Version]) VALUES ({productId}, {id}, {"Existing product"}, {version})");
+            var variantId = Guid.NewGuid();
+            await context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO [ProductVariants] ([Id], [ProductId], [Name], [Ordinal]) VALUES ({variantId}, {productId}, {"Existing variant"}, {0})");
             await context.GetService<IMigrator>().MigrateAsync("20260930085252_PlaceOrders");
             var orderId = Guid.NewGuid();
             var checkoutToken = Guid.NewGuid();
@@ -36,6 +38,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             Assert.Equal("", product.Description);
             Assert.Null(product.ImageUrl);
             Assert.Equal(version, product.Version);
+            Assert.Null((await context.ProductVariants.SingleAsync(item => item.Id == variantId)).StockQuantity);
             Assert.Equal("Existing catalog type", (await context.ProductTypes.SingleAsync(p => p.Id == id)).Name);
             Assert.Empty(await context.Users.ToListAsync());
             var paymentOptions = await context.PaymentOptions.SingleAsync();
@@ -65,7 +68,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(12, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(13, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -82,7 +85,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(12, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(13, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

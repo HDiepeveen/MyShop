@@ -204,6 +204,7 @@ internal static class ProductPersistenceSynchronizer
             persistedVariant.Sku = domainVariant.Sku?.Value;
             persistedVariant.PriceAmount = domainVariant.Price?.Amount;
             persistedVariant.PriceCurrency = domainVariant.Price?.Currency;
+            persistedVariant.StockQuantity = domainVariant.StockQuantity;
             persistedVariant.Ordinal = ordinal++;
             SynchronizePriceRules(domainVariant, persistedVariant);
             SynchronizeVariantAttributeValues(domainVariant, persistedVariant);

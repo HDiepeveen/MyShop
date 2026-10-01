@@ -38,6 +38,7 @@ Vanuit een categorie of producttype kun je de bijbehorende producten openen. De 
 - Product aanmaken met een gekozen producttype en eerste variant.
 - Productnaam wijzigen, varianten toevoegen en variantnamen wijzigen.
 - Artikelnummers en basisprijzen per variant opslaan en wissen.
+- Voorraad per variant volgen, inclusief nulvoorraad, of terugzetten naar onbeperkt.
 - Kortingsregels per variant bekijken, toevoegen, wijzigen en na bevestiging wissen.
 - Producten aan categorieën koppelen en ontkoppelen met een doorzoekbare, gepagineerde kiezer.
 - Categorieën naar een ander bovenliggend niveau verplaatsen of terugbrengen naar hoofdniveau.
@@ -48,7 +49,7 @@ Vanuit een categorie of producttype kun je de bijbehorende producten openen. De 
 De producttypekiezer en categoriekiezer hebben een eigen zoekfunctie en paginering; ze beperken de keuze niet tot de eerste pagina.
 Categorie- en producttypelijsten hebben volgens het huidige backendcontract geen totaaltelling. Na een precies volle laatste pagina kan nog een lege pagina volgen; terugbladeren blijft mogelijk.
 
-De openbare klantwinkel op `/winkel` biedt zoeken, filteren op categorie, bladeren, actuele prijsbereiken per valuta, productdetails en variantkeuze. De winkelmand bewaart varianten en aantallen in deze browser en laat de server de beschikbaarheid, actuele prijzen en subtotalen opnieuw bepalen. Klanten kunnen met een beschikbare betaaloptie afrekenen; het bestelnummer en eventuele betaalinstructies worden daarna getoond. In het beheer wordt de basisprijs getoond. De klantwinkel toont op de productpagina de actuele variantprijs na toepassing van de bestaande kortingsregels. Deze prijs blijft ook boven JavaScripts veilige getalgrens exact op de cent; zie [Klantwinkel](../docs/storefront.md).
+De openbare klantwinkel op `/winkel` biedt zoeken, filteren op categorie, bladeren, actuele prijsbereiken per valuta, productdetails, variantkeuze en voorraadbeschikbaarheid. De winkelmand bewaart varianten en aantallen in deze browser en laat de server de beschikbaarheid, gevolgde voorraad, actuele prijzen en subtotalen opnieuw bepalen. Klanten kunnen met een beschikbare betaaloptie afrekenen; het bestelnummer en eventuele betaalinstructies worden daarna getoond. In het beheer wordt de basisprijs getoond. De klantwinkel toont op de productpagina de actuele variantprijs na toepassing van de bestaande kortingsregels. Deze prijs blijft ook boven JavaScripts veilige getalgrens exact op de cent; zie [Klantwinkel](../docs/storefront.md) en [Voorraadbeheer](../docs/inventory.md).
 
 Basisprijzen accepteren een komma of punt en maximaal twee decimalen. Nul is een geldige prijs; wissen maakt de prijs afwezig. Bedragen die JavaScript niet exact op centen kan versturen worden geweigerd. De valuta bestaat uit drie letters, bijvoorbeeld EUR. Artikelnummers bevatten maximaal 64 tekens zonder spaties en worden in hoofdletters opgeslagen. Een mislukte wijziging behoudt de ingevoerde gegevens; er zijn geen automatische herhaalpogingen voor schrijfacties.
 

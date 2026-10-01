@@ -20,11 +20,46 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 order.PaymentInstructions))
             .SingleOrDefaultAsync(cancellationToken);
 
-    public async Task<OrderReceipt> AddAsync(Order order, Guid checkoutToken,
-        CancellationToken cancellationToken)
+    public async Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken,
+        IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(order);
+        ArgumentNullException.ThrowIfNull(stock);
         if (checkoutToken == Guid.Empty) throw new ArgumentException("Checkout token is required.", nameof(checkoutToken));
+        if (stock.Any(item => item.ProductId == Guid.Empty || item.VariantId == Guid.Empty
+                || item.Quantity < 1)
+            || stock.Select(item => (item.ProductId, item.VariantId)).Distinct().Count() != stock.Count)
+            throw new ArgumentException("Stock reservations must contain unique valid variants.", nameof(stock));
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        foreach (var reservation in stock)
+        {
+            var quantity = reservation.Quantity;
+            var changed = await context.ProductVariants
+                .Where(variant => variant.Id == reservation.VariantId
+                    && variant.ProductId == reservation.ProductId
+                    && variant.Product.IsPublished
+                    && variant.StockQuantity != null
+                    && variant.StockQuantity >= quantity)
+                .ExecuteUpdateAsync(update => update.SetProperty(variant => variant.StockQuantity,
+                    variant => variant.StockQuantity!.Value - quantity), cancellationToken);
+            if (changed == 1)
+            {
+                await context.Products.Where(product => product.Id == reservation.ProductId)
+                    .ExecuteUpdateAsync(update => update.SetProperty(product => product.Version,
+                        Guid.NewGuid()), cancellationToken);
+                continue;
+            }
+            var isUntracked = await context.ProductVariants.AnyAsync(variant =>
+                variant.Id == reservation.VariantId
+                && variant.ProductId == reservation.ProductId
+                && variant.Product.IsPublished
+                && variant.StockQuantity == null, cancellationToken);
+            if (!isUntracked)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return null;
+            }
+        }
         var persistence = new OrderPersistence
         {
             Id = order.Id,
@@ -62,9 +97,14 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             }).ToArray()
         };
         context.Orders.Add(persistence);
-        try { await context.SaveChangesAsync(cancellationToken); }
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
         catch (DbUpdateException exception) when (exception.InnerException is SqlException { Number: 2601 or 2627 })
         {
+            await transaction.RollbackAsync(cancellationToken);
             foreach (var entry in context.ChangeTracker.Entries().Where(entry => entry.State == EntityState.Added).ToArray())
                 entry.State = EntityState.Detached;
             return await GetByCheckoutTokenAsync(checkoutToken, cancellationToken)
@@ -221,6 +261,11 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
     public async Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
         string reason, CancellationToken cancellationToken)
     {
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
+        var lines = await context.OrderLines.AsNoTracking()
+            .Where(line => line.OrderId == id)
+            .Select(line => new { line.ProductId, line.VariantId, line.Quantity })
+            .ToArrayAsync(cancellationToken);
         var replacement = Guid.NewGuid();
         var changed = await context.Orders
             .Where(order => order.Id == id
@@ -231,7 +276,28 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 .SetProperty(order => order.CancelledAt, cancelledAt.ToUniversalTime())
                 .SetProperty(order => order.CancellationReason, reason)
                 .SetProperty(order => order.Version, replacement), cancellationToken);
-        return changed == 0 ? null : replacement;
+        if (changed == 0)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return null;
+        }
+        foreach (var line in lines)
+        {
+            var quantity = line.Quantity;
+            var restored = await context.ProductVariants
+                .Where(variant => variant.Id == line.VariantId && variant.ProductId == line.ProductId
+                    && variant.StockQuantity != null)
+                .ExecuteUpdateAsync(update => update.SetProperty(variant => variant.StockQuantity,
+                    variant => variant.StockQuantity!.Value > int.MaxValue - quantity
+                        ? int.MaxValue
+                        : variant.StockQuantity.Value + quantity), cancellationToken);
+            if (restored == 1)
+                await context.Products.Where(product => product.Id == line.ProductId)
+                    .ExecuteUpdateAsync(update => update.SetProperty(product => product.Version,
+                        Guid.NewGuid()), cancellationToken);
+        }
+        await transaction.CommitAsync(cancellationToken);
+        return replacement;
     }
 
     public async Task<Guid?> RefundAsync(Guid id, Guid expectedRevision, DateTimeOffset refundedAt,

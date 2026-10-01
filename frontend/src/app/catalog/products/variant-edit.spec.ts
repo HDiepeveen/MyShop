@@ -179,6 +179,29 @@ describe('VariantEdit', () => {
     http.expectOne('/api/products/p/variants/v/price').flush(null);
     expect(saved).toHaveBeenCalledExactlyOnceWith('De basisprijs is gewist.');
   });
+  it('sets zero stock, rejects invalid quantities and can stop tracking stock', () => {
+    const fixture = setup();
+    const editor = fixture.componentInstance;
+    for (const quantity of ['', '-1', '1.5', '2147483648']) {
+      editor.stock = quantity;
+      editor.saveStock();
+    }
+    http.expectNone('/api/products/p/variants/v/stock');
+    editor.stock = '0';
+    editor.saveStock();
+    const set = http.expectOne('/api/products/p/variants/v/stock');
+    expect(set.request.body).toEqual({ quantity: 0 });
+    set.flush(null);
+    fixture.componentRef.setInput('variant', {
+      ...editor.variant(),
+      stockQuantity: 0,
+    });
+    fixture.detectChanges();
+    editor.clearStock();
+    const clear = http.expectOne('/api/products/p/variants/v/stock');
+    expect(clear.request.method).toBe('DELETE');
+    clear.flush(null);
+  });
   it('preserves user input on conflict and allows a deliberate retry', () => {
     const editor = setup().componentInstance;
     const saved = vi.fn();

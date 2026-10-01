@@ -42,6 +42,7 @@ public sealed class StorefrontCartQuoteTests
     [InlineData("missingProduct")]
     [InlineData("missingVariant")]
     [InlineData("noPrice")]
+    [InlineData("outOfStock")]
     public async Task WithholdsTotalsAndInternalDetailsWhenAnyLineIsUnavailable(string scenario)
     {
         var repository = new Repository();
@@ -51,12 +52,18 @@ public sealed class StorefrontCartQuoteTests
         if (scenario == "draft") repository.Product.SetPresentation(ProductPresentation.Draft);
         var line = new CartQuoteLine(scenario == "missingProduct" ? Guid.NewGuid() : repository.Product.Id.Value,
             scenario == "missingVariant" ? Guid.NewGuid() : first.Id.Value, 1);
+        if (scenario == "outOfStock") repository.Product.SetVariantStockQuantity(first.Id, 0);
         var result = await new QuoteStorefrontCart(repository).ExecuteAsync(new([line, new(repository.Product.Id.Value, valid.Id.Value, 1)], At), CancellationToken.None);
         Assert.Empty(result.Totals);
-        Assert.Equal(scenario == "noPrice" ? "priceMissing" : "unavailable", result.Lines[0].Failure);
+        Assert.Equal(scenario switch { "noPrice" => "priceMissing", "outOfStock" => "outOfStock",
+            _ => "unavailable" }, result.Lines[0].Failure);
         Assert.Null(result.Lines[0].Amount);
         Assert.Null(result.Lines[0].Total);
-        if (scenario != "noPrice") { Assert.Null(result.Lines[0].Name); Assert.Null(result.Lines[0].Variant); }
+        if (scenario is not "noPrice" and not "outOfStock")
+        {
+            Assert.Null(result.Lines[0].Name);
+            Assert.Null(result.Lines[0].Variant);
+        }
     }
 
     [Fact]

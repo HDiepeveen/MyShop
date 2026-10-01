@@ -36,6 +36,9 @@ public sealed class QuoteStorefrontCart(IProductRepository products)
                 ? product.Variants.SingleOrDefault(variant => variant.Id.Value == line.VariantId) : null;
             if (variant is null)
                 return new CartQuotedLine(line.ProductId, line.VariantId, line.Quantity, null, null, null, null, null, "unavailable");
+            if (!variant.CanFulfill(line.Quantity))
+                return new CartQuotedLine(line.ProductId, line.VariantId, line.Quantity,
+                    product!.Name, variant.Name, null, null, null, "outOfStock");
             if (variant.Price is null)
                 return new CartQuotedLine(line.ProductId, line.VariantId, line.Quantity, product!.Name, variant.Name, null, null, null, "priceMissing");
             var price = variant.CalculatePrice(query.At);

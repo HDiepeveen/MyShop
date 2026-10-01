@@ -82,6 +82,9 @@ import { readListQuery } from '../catalog/list-query';
             >
               <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" />
               <h2>{{ product.name }}</h2>
+              @if (product.isAvailable === false) {
+                <p><strong>Uitverkocht</strong></p>
+              }
               @if (product.prices.length) {
                 @for (price of product.prices; track price.currency) {
                   <p>

@@ -285,6 +285,12 @@ export class CatalogApi {
   clearVariantPrice(productId: string, variantId: string) {
     return this.http.delete<void>(this.variantUrl(productId, variantId) + '/price');
   }
+  setVariantStock(productId: string, variantId: string, quantity: number) {
+    return this.http.put<void>(this.variantUrl(productId, variantId) + '/stock', { quantity });
+  }
+  clearVariantStock(productId: string, variantId: string) {
+    return this.http.delete<void>(this.variantUrl(productId, variantId) + '/stock');
+  }
   private variantUrl(productId: string, variantId: string) {
     return (
       '/api/products/' +

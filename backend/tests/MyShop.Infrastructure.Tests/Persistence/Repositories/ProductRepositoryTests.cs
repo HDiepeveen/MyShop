@@ -54,6 +54,7 @@ public sealed class ProductRepositoryTests
         Assert.Single(capture.Product.AttributeValues);
         Assert.Single(capture.Product.AttributeValues.Single().MultiChoiceValues);
         Assert.Single(capture.Product.Variants.First().AttributeValues);
+        Assert.Equal(7, capture.Product.Variants.First().StockQuantity);
         Assert.Single(capture.Product.Variants.First().AttributeValues.Single().MultiChoiceValues);
     }
 
@@ -301,6 +302,7 @@ public sealed class ProductRepositoryTests
         var primary = product.Variants.Single();
         var secondary = product.AddVariant("Secondary");
         product.SetVariantSku(primary.Id, Sku.Create("sku-primary"));
+        product.SetVariantStockQuantity(primary.Id, 7);
         product.AssignToCategory(CategoryId.New());
         product.SetAttributeValue(MultiChoiceAttributeValue.Create(
             AttributeDefinitionId.New(), [ChoiceValue.Create("product choice")]));
