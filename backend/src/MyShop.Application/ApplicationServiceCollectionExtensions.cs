@@ -123,6 +123,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Checkout.ManageDeliveryMethods.SaveDeliveryMethod>();
         services.AddScoped<Checkout.ManageDeliveryMethods.DeleteDeliveryMethod>();
         services.AddScoped<Checkout.PlaceOrder.PlaceOrder>();
+        services.AddScoped<Checkout.StartOnlinePayment.StartOnlinePayment>();
         services.AddScoped<Checkout.ListOrders.ListOrders>();
         services.AddScoped<Checkout.GetOrder.GetOrder>();
         services.AddScoped<Checkout.MarkOrderPaid.MarkOrderPaid>();

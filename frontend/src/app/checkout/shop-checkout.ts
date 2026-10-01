@@ -67,11 +67,14 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
         @if (failure()) {
           <p class="error" role="alert">{{ failure() }}</p>
         }
-        @if (paymentMethod() === 'online') {
-          <p class="muted">Online betalen is voorbereid. De betaalstart wordt in een volgende stap gekoppeld.</p>
+        @if (notice()) {
+          <p class="notice">{{ notice() }}</p>
         }
-        <button [disabled]="busy() || paymentMethod() !== 'payLater'">
-          {{ busy() ? 'Bestelling plaatsen…' : 'Bestelling plaatsen' }}
+        @if (paymentMethod() === 'online') {
+          <p class="muted">Je bestelling wordt gecontroleerd voordat de betaalprovider wordt gestart.</p>
+        }
+        <button [disabled]="busy()">
+          {{ buttonText() }}
         </button>
       </form>
     </section>
@@ -88,6 +91,7 @@ export class ShopCheckout implements OnInit {
   readonly placed = output<OrderReceipt>();
   readonly busy = signal(false);
   readonly failure = signal('');
+  readonly notice = signal('');
   customerName = '';
   email = '';
   addressLine = '';
@@ -114,34 +118,61 @@ export class ShopCheckout implements OnInit {
   submit() {
     if (this.busy()) return;
     this.failure.set('');
+    this.notice.set('');
     this.busy.set(true);
+    const request = {
+      checkoutToken: this.checkoutToken,
+      paymentMethod: this.paymentMethod(),
+      deliveryMethodId: this.deliveryMethodId(),
+      customerName: this.customerName,
+      email: this.email,
+      addressLine: this.addressLine,
+      postalCode: this.postalCode,
+      city: this.city,
+      countryCode: this.countryCode,
+      lines: this.lines(),
+    };
+    if (this.paymentMethod() === 'online') {
+      this.api
+        .startOnlinePayment({
+          checkoutToken: request.checkoutToken,
+          deliveryMethodId: request.deliveryMethodId,
+          lines: request.lines,
+        })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (payment) => {
+            this.busy.set(false);
+            this.notice.set(payment.message);
+          },
+          error: (error) => this.showFailure(error),
+        });
+      return;
+    }
     this.api
-      .place({
-        checkoutToken: this.checkoutToken,
-        paymentMethod: this.paymentMethod(),
-        deliveryMethodId: this.deliveryMethodId(),
-        customerName: this.customerName,
-        email: this.email,
-        addressLine: this.addressLine,
-        postalCode: this.postalCode,
-        city: this.city,
-        countryCode: this.countryCode,
-        lines: this.lines(),
-      })
+      .place(request)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (receipt) => {
           this.busy.set(false);
           this.placed.emit(receipt);
         },
-        error: (error) => {
-          this.busy.set(false);
-          this.failure.set(
-            error instanceof HttpErrorResponse && typeof error.error?.message === 'string'
-              ? error.error.message
-              : errorMessage(error),
-          );
-        },
+        error: (error) => this.showFailure(error),
       });
+  }
+
+  private showFailure(error: unknown) {
+    this.busy.set(false);
+    this.failure.set(
+      error instanceof HttpErrorResponse && typeof error.error?.message === 'string'
+        ? error.error.message
+        : errorMessage(error),
+    );
+  }
+
+  buttonText() {
+    if (this.busy())
+      return this.paymentMethod() === 'online' ? 'Betaling voorbereiden…' : 'Bestelling plaatsen…';
+    return this.paymentMethod() === 'online' ? 'Online betaling voorbereiden' : 'Bestelling plaatsen';
   }
 }

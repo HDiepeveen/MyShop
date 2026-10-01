@@ -17,13 +17,13 @@ public sealed class StorefrontHttpTests
         using var visitor = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         var publicEndpoints = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText!.StartsWith("/api/shop/")).ToArray();
-        Assert.Equal(8, publicEndpoints.Length);
+        Assert.Equal(9, publicEndpoints.Length);
         Assert.All(publicEndpoints, e =>
         {
-            Assert.Equal(e.RoutePattern.RawText == "/api/shop/orders" ? "POST" : "GET",
+            Assert.Equal(e.RoutePattern.RawText is "/api/shop/orders" or "/api/shop/online-payments" ? "POST" : "GET",
                 Assert.Single(e.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods));
             Assert.NotNull(e.Metadata.GetMetadata<IAllowAnonymous>());
-            if (e.RoutePattern.RawText == "/api/shop/orders")
+            if (e.RoutePattern.RawText is "/api/shop/orders" or "/api/shop/online-payments")
                 Assert.Equal("storefront-order",
                     e.Metadata.GetMetadata<EnableRateLimitingAttribute>()!.PolicyName);
         });

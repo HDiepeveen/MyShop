@@ -46,6 +46,20 @@ export interface PlaceOrderRequest {
   lines: readonly CheckoutOrderLine[];
 }
 
+export interface StartOnlinePaymentRequest {
+  checkoutToken: string;
+  deliveryMethodId: string;
+  lines: readonly CheckoutOrderLine[];
+}
+
+export interface OnlinePaymentStart {
+  checkoutToken: string;
+  providerName: string;
+  message: string;
+  totals: readonly OrderReceiptTotal[];
+  deliveryMethod: OrderReceiptDeliveryMethod;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderApi {
   private readonly http = inject(HttpClient);
@@ -55,5 +69,11 @@ export class OrderApi {
     return this.auth
       .prepare()
       .pipe(switchMap(() => this.http.post<OrderReceipt>('/api/shop/orders', request)));
+  }
+
+  startOnlinePayment(request: StartOnlinePaymentRequest) {
+    return this.auth
+      .prepare()
+      .pipe(switchMap(() => this.http.post<OnlinePaymentStart>('/api/shop/online-payments', request)));
   }
 }

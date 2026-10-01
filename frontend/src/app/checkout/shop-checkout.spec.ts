@@ -93,4 +93,42 @@ describe('Shop checkout', () => {
       paymentInstructions: 'Betaal binnen 14 dagen.',
     });
   });
+
+  it('prepares an online payment without placing the order yet', () => {
+    const fixture = TestBed.createComponent(ShopCheckout);
+    fixture.componentRef.setInput('lines', [line]);
+    fixture.componentRef.setInput('paymentMethod', 'online');
+    fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
+    const page = fixture.componentInstance;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Online betaling voorbereiden');
+
+    page.submit();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const request = http.expectOne('/api/shop/online-payments');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      checkoutToken: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      deliveryMethodId: '40000000-0000-0000-0000-000000000001',
+      lines: [line],
+    });
+    request.flush({
+      checkoutToken: request.request.body.checkoutToken,
+      providerName: 'Mollie',
+      message: 'De online betaalprovider is klaar om gekoppeld te worden.',
+      totals: [{ currency: 'EUR', amount: '29.95' }],
+      deliveryMethod: {
+        id: '40000000-0000-0000-0000-000000000001',
+        name: 'Pakketdienst',
+        description: null,
+        amount: '4.95',
+        currency: 'EUR',
+      },
+    });
+    expect(page.notice()).toBe('De online betaalprovider is klaar om gekoppeld te worden.');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain(
+      'De online betaalprovider is klaar om gekoppeld te worden.',
+    );
+  });
 });
