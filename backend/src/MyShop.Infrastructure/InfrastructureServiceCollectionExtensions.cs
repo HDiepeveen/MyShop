@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Application.Checkout.Abstractions;
 using MyShop.Application.Customers.Abstractions;
+using MyShop.Application.Dashboard.Abstractions;
 using MyShop.Infrastructure.Persistence;
 using MyShop.Infrastructure.Persistence.Repositories;
 using MyShop.Infrastructure.Payments;
@@ -71,6 +72,8 @@ public static class InfrastructureServiceCollectionExtensions
             new CustomerProfileRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IWishlistRepository>(provider =>
             new WishlistRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IDashboardReadRepository>(provider =>
+            new DashboardReadRepository(provider.GetRequiredService<MyShopDbContext>()));
         return services;
     }
 }

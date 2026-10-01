@@ -48,6 +48,8 @@ See [Order management](docs/order-management.md) for the protected order overvie
 
 See [Klantenbeheer](docs/customer-management.md) for searching, viewing, blocking and unblocking customer accounts.
 
+See [Beheerdersdashboard](docs/admin-dashboard.md) for the protected management overview and operational counters.
+
 See [Bezorgopties](docs/delivery-methods.md) for managed checkout choices and immutable order delivery snapshots.
 
 See [Verlanglijst](docs/customer-wishlist.md) for customer product saving and availability behavior.

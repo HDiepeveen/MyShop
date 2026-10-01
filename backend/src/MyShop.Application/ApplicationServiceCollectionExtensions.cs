@@ -141,6 +141,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Customers.ManageWishlist.GetWishlistState>();
         services.AddScoped<Customers.ManageWishlist.AddWishlistItem>();
         services.AddScoped<Customers.ManageWishlist.RemoveWishlistItem>();
+        services.AddScoped<Dashboard.GetDashboard.GetDashboard>();
         return services;
     }
 }

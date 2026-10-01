@@ -3,6 +3,7 @@ using MyShop.Api.Security;
 using MyShop.Api;
 using MyShop.Api.Catalog;
 using MyShop.Api.Checkout;
+using MyShop.Api.Dashboard;
 
 
 
@@ -31,5 +32,6 @@ app.MapStorefront();
 app.MapPaymentOptions();
 app.MapDeliveryMethods();
 app.MapOrderManagement();
+app.MapDashboard();
 
 app.Run();
