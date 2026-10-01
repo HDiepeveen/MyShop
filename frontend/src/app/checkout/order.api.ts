@@ -16,6 +16,21 @@ export interface OrderReceipt {
   number: string;
   placedAt: string;
   paymentInstructions: string | null;
+  totals: readonly OrderReceiptTotal[];
+  deliveryMethod: OrderReceiptDeliveryMethod | null;
+}
+
+export interface OrderReceiptTotal {
+  currency: string;
+  amount: string;
+}
+
+export interface OrderReceiptDeliveryMethod {
+  id: string;
+  name: string;
+  description: string | null;
+  amount: string;
+  currency: string;
 }
 
 export interface PlaceOrderRequest {

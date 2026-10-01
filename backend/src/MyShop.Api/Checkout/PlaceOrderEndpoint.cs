@@ -1,7 +1,8 @@
 using System.Globalization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using MyShop.Api.Security;
+using MyShop.Application.Checkout.Abstractions;
 using MyShop.Application.Checkout.PlaceOrder;
 
 namespace MyShop.Api.Checkout;
@@ -58,7 +59,9 @@ public static class PlaceOrderEndpoint
                     message = "De gekozen bezorgoptie is niet meer beschikbaar."
                 }),
                 null => Results.Ok(new PlaceOrderResponse(result.Receipt!.Id, result.Receipt.Number,
-                    result.Receipt.PlacedAt, result.Receipt.PaymentInstructions)),
+                    result.Receipt.PlacedAt, result.Receipt.PaymentInstructions,
+                    result.Receipt.Totals.Select(MapTotal).ToArray(),
+                    result.Receipt.DeliveryMethod is null ? null : MapDelivery(result.Receipt.DeliveryMethod))),
                 _ => throw new InvalidOperationException()
             };
         }
@@ -71,6 +74,13 @@ public static class PlaceOrderEndpoint
             });
         }
     }
+
+    private static PlaceOrderTotalResponse MapTotal(OrderTotalSnapshot total) =>
+        new(total.Currency, total.Amount.ToString("0.00", CultureInfo.InvariantCulture));
+
+    private static PlaceOrderDeliveryMethodResponse MapDelivery(OrderDeliveryMethodSnapshot delivery) =>
+        new(delivery.Id, delivery.Name, delivery.Description,
+            delivery.Amount.ToString("0.00", CultureInfo.InvariantCulture), delivery.Currency);
 }
 
 public sealed record PlaceOrderRequest(Guid CheckoutToken, string PaymentMethod, string CustomerName,
@@ -79,4 +89,8 @@ public sealed record PlaceOrderRequest(Guid CheckoutToken, string PaymentMethod,
 public sealed record PlaceOrderLineRequest(Guid ProductId, Guid VariantId, int Quantity,
     string ExpectedAmount, string ExpectedCurrency);
 public sealed record PlaceOrderResponse(Guid Id, string Number, DateTimeOffset PlacedAt,
-    string? PaymentInstructions);
+    string? PaymentInstructions, IReadOnlyList<PlaceOrderTotalResponse> Totals,
+    PlaceOrderDeliveryMethodResponse? DeliveryMethod);
+public sealed record PlaceOrderTotalResponse(string Currency, string Amount);
+public sealed record PlaceOrderDeliveryMethodResponse(Guid Id, string Name, string? Description,
+    string Amount, string Currency);

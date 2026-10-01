@@ -32,6 +32,23 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
           Je bestelnummer is <strong>{{ receipt.number }}</strong
           >.
         </p>
+        <dl class="detail-list">
+          <dt>Geplaatst op</dt>
+          <dd>{{ receipt.placedAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
+          @if (receipt.deliveryMethod; as delivery) {
+            <dt>Ontvangst</dt>
+            <dd>
+              {{ delivery.name }} · {{ delivery.currency }} {{ amount(delivery.amount) }}
+              @if (delivery.description) {
+                <br /><span class="muted preserve-lines">{{ delivery.description }}</span>
+              }
+            </dd>
+          }
+          @for (total of receipt.totals; track total.currency) {
+            <dt>Totaal {{ total.currency }}</dt>
+            <dd>{{ total.currency }} {{ amount(total.amount) }}</dd>
+          }
+        </dl>
         @if (receipt.paymentInstructions) {
           <h3>Betaalinstructies</h3>
           <p class="preserve-lines">{{ receipt.paymentInstructions }}</p>

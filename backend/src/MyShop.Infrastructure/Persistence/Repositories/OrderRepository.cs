@@ -17,9 +17,14 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
 
     public async Task<OrderReceipt?> GetByCheckoutTokenAsync(Guid checkoutToken,
         CancellationToken cancellationToken) => await context.Orders.AsNoTracking()
+            .AsSplitQuery()
+            .Include(order => order.Totals)
             .Where(order => order.CheckoutToken == checkoutToken)
             .Select(order => new OrderReceipt(order.Id, order.Number, order.PlacedAt,
-                order.PaymentInstructions))
+                order.PaymentInstructions,
+                order.Totals.OrderBy(total => total.Currency).Select(total =>
+                    new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
+                Delivery(order)))
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
@@ -120,7 +125,12 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             return await GetByCheckoutTokenAsync(checkoutToken, cancellationToken)
                 ?? throw new InvalidOperationException("The order conflict could not be resolved.", exception);
         }
-        return new(order.Id, order.Number, order.PlacedAt, order.PaymentInstructions);
+        return new(order.Id, order.Number, order.PlacedAt, order.PaymentInstructions,
+            order.Totals.OrderBy(total => total.Currency).Select(total =>
+                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
+            order.DeliveryMethod is null ? null : new OrderDeliveryMethodSnapshot(order.DeliveryMethod.Id,
+                order.DeliveryMethod.Name, order.DeliveryMethod.Description, order.DeliveryMethod.Fee.Amount,
+                order.DeliveryMethod.Fee.Currency));
     }
 
     public async Task<OrderListPage> ListAsync(int offset, int limit, OrderStatus? status, string? search,

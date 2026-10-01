@@ -24,6 +24,8 @@ public sealed class PlaceOrderTests
         Assert.Equal("Ada", scenario.Orders.Saved.Customer.Name);
         Assert.Equal("Betaal binnen 14 dagen.", scenario.Orders.Saved.PaymentInstructions);
         Assert.Equal(scenario.Orders.Saved.PaymentInstructions, result.Receipt.PaymentInstructions);
+        Assert.Equal(57.50m, Assert.Single(result.Receipt.Totals).Amount);
+        Assert.Equal("Standaardbezorging", result.Receipt.DeliveryMethod!.Name);
         Assert.Equal(scenario.Token, scenario.Orders.Token);
         Assert.Equal("customer-user", scenario.Orders.CustomerUserId);
     }
@@ -33,7 +35,8 @@ public sealed class PlaceOrderTests
     {
         var scenario = new Scenario();
         scenario.Orders.Existing = new(Guid.NewGuid(), "MS-EXISTING", DateTimeOffset.UtcNow,
-            "Bestaande instructies");
+            "Bestaande instructies", [new("EUR", 42m)],
+            new(Guid.NewGuid(), "Afhalen", null, 0m, "EUR"));
 
         var result = await scenario.Execute();
 
@@ -174,7 +177,11 @@ public sealed class PlaceOrderTests
             if (RejectStock) return Task.FromResult<OrderReceipt?>(null);
             Saved = order; Token = checkoutToken; CustomerUserId = customerUserId;
             return Task.FromResult<OrderReceipt?>(new OrderReceipt(order.Id, order.Number,
-                order.PlacedAt, order.PaymentInstructions));
+                order.PlacedAt, order.PaymentInstructions,
+                order.Totals.Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
+                order.DeliveryMethod is null ? null : new OrderDeliveryMethodSnapshot(order.DeliveryMethod.Id,
+                    order.DeliveryMethod.Name, order.DeliveryMethod.Description, order.DeliveryMethod.Fee.Amount,
+                    order.DeliveryMethod.Fee.Currency)));
         }
     }
 }

@@ -144,9 +144,20 @@ describe('Cart page', () => {
       number: 'MS-3000',
       placedAt: '2026-09-30T12:00:00Z',
       paymentInstructions: 'Betaal binnen 14 dagen.',
+      totals: [{ currency: 'EUR', amount: '17.45' }],
+      deliveryMethod: {
+        id: '40000000-0000-0000-0000-000000000001',
+        name: 'Pakketdienst',
+        description: 'Binnen twee werkdagen.',
+        amount: '4.95',
+        currency: 'EUR',
+      },
     });
     await harness.fixture.whenStable();
     expect(harness.routeNativeElement!.textContent).toContain('Je bestelnummer is MS-3000');
+    expect(harness.routeNativeElement!.textContent).toContain('Pakketdienst');
+    expect(harness.routeNativeElement!.textContent).toContain('Binnen twee werkdagen.');
+    expect(harness.routeNativeElement!.textContent).toContain('EUR 17,45');
     expect(harness.routeNativeElement!.textContent).toContain('Betaal binnen 14 dagen.');
   });
   it('adds the selected variant from the product page', async () => {

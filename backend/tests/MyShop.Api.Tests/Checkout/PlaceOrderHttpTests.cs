@@ -82,10 +82,16 @@ public sealed class PlaceOrderHttpTests
         var first = await firstResponse.Content.ReadFromJsonAsync<JsonElement>();
         Assert.StartsWith("MS-", first.GetProperty("number").GetString(), StringComparison.Ordinal);
         Assert.Equal("Betaal binnen 14 dagen.", first.GetProperty("paymentInstructions").GetString());
+        Assert.Equal("Pakketdienst", first.GetProperty("deliveryMethod").GetProperty("name").GetString());
+        Assert.Equal("4.95", first.GetProperty("deliveryMethod").GetProperty("amount").GetString());
+        Assert.Equal("29.95", Assert.Single(first.GetProperty("totals").EnumerateArray())
+            .GetProperty("amount").GetString());
         var repeated = await (await visitor.PostAsJsonAsync("/api/shop/orders", request))
             .Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(first.GetProperty("id").GetGuid(), repeated.GetProperty("id").GetGuid());
         Assert.Equal("Betaal binnen 14 dagen.", repeated.GetProperty("paymentInstructions").GetString());
+        Assert.Equal("29.95", Assert.Single(repeated.GetProperty("totals").EnumerateArray())
+            .GetProperty("amount").GetString());
         var depleted = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{productId}");
         Assert.Equal(0, depleted.GetProperty("variants")[0].GetProperty("stockQuantity").GetInt32());
         var competing = await visitor.PostAsJsonAsync("/api/shop/orders",
