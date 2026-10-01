@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Checkout.Abstractions;
@@ -19,9 +20,28 @@ public static class OrderManagementEndpoints
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         endpoints.MapGet("/api/orders", ListAsync).WithName("ListOrders");
+        endpoints.MapGet("/api/orders/export", ExportAsync).WithName("ExportOrders");
         endpoints.MapGet("/api/orders/{id:guid}", GetAsync).WithName("GetOrder");
         endpoints.MapPut("/api/orders/{id:guid}/status", UpdateStatusAsync).WithName("UpdateOrderStatus");
         return endpoints;
+    }
+
+    public static async Task<IResult> ExportAsync(
+        [FromQuery] string? status,
+        [FromQuery] string? search,
+        [FromServices] ListUseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(useCase);
+        var result = await ListAsync(0, ListUseCase.MaximumLimit, status, search, useCase, cancellationToken);
+        if (result.Result is not Ok<OrderListResponse> ok) return Results.BadRequest(new ProblemDetails
+        {
+            Title = "Invalid order export",
+            Detail = "The order export filters are invalid."
+        });
+        var csv = ExportCsv(ok.Value!.Items);
+        return Results.File(Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(csv)).ToArray(),
+            "text/csv; charset=utf-8", "myshop-orders.csv");
     }
 
     public static async Task<Results<Ok<OrderListResponse>, BadRequest<ProblemDetails>>> ListAsync(
@@ -229,6 +249,30 @@ public static class OrderManagementEndpoints
         new(total.Currency, Amount(total.Amount));
 
     private static string Amount(decimal value) => value.ToString("0.00", CultureInfo.InvariantCulture);
+    private static string ExportCsv(IReadOnlyList<OrderSummaryResponse> orders)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Bestelling,Geplaatst,Klant,Betaalmethode,Status,Betaald op,Verzonden op,Geannuleerd op,Terugbetaald op,Totaal");
+        foreach (var order in orders)
+        {
+            builder.Append(Csv(order.Number)).Append(',')
+                .Append(Csv(order.PlacedAt.ToString("O", CultureInfo.InvariantCulture))).Append(',')
+                .Append(Csv(order.CustomerName)).Append(',')
+                .Append(Csv(order.PaymentMethod)).Append(',')
+                .Append(Csv(order.Status)).Append(',')
+                .Append(Csv(order.PaidAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")).Append(',')
+                .Append(Csv(order.ShippedAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")).Append(',')
+                .Append(Csv(order.CancelledAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")).Append(',')
+                .Append(Csv(order.RefundedAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")).Append(',')
+                .AppendLine(Csv(string.Join(" | ", order.Totals.Select(total => $"{total.Currency} {total.Amount}"))));
+        }
+        return builder.ToString();
+    }
+    private static string Csv(string value)
+    {
+        if (value is ['=' or '+' or '-' or '@', ..]) value = "'" + value;
+        return "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
+    }
     private static string PaymentMethod(OrderPaymentMethod value) => value switch
     {
         OrderPaymentMethod.PayLater => "payLater",

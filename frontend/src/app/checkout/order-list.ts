@@ -45,6 +45,7 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
         <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
           Overzicht verversen
         </button>
+        <a class="button secondary" [href]="exportUrl()" download="myshop-orders.csv">CSV exporteren</a>
       </div>
       @if (state()?.loading) {
         <p class="loading" role="status">Bestellingen ophalen…</p>
@@ -211,6 +212,9 @@ export class OrderList {
   }
   retry() {
     this.refresh.next(this.refresh.value + 1);
+  }
+  exportUrl() {
+    return this.api.exportUrl(this.status(), this.listQuery().search);
   }
   statusLabel(status: string) {
     return status === 'awaitingPayment'

@@ -23,10 +23,32 @@ public sealed class OrderManagementEndpointsTests
         var app = WebApplication.CreateBuilder().Build();
         Assert.Same(app, app.MapOrderManagement());
         var endpoints = ((IEndpointRouteBuilder)app).DataSources.SelectMany(source => source.Endpoints).Cast<RouteEndpoint>().ToArray();
-        Assert.Equal(["/api/orders", "/api/orders/{id:guid}", "/api/orders/{id:guid}/status"],
+        Assert.Equal(["/api/orders", "/api/orders/export", "/api/orders/{id:guid}", "/api/orders/{id:guid}/status"],
             endpoints.Select(item => item.RoutePattern.RawText));
-        Assert.Equal(["GET", "GET", "PUT"],
+        Assert.Equal(["GET", "GET", "GET", "PUT"],
             endpoints.Select(item => Assert.Single(item.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods)));
+    }
+
+    [Fact]
+    public async Task ExportAsync_UsesFiltersAndEscapesCsv()
+    {
+        var item = new OrderListItem(Guid.NewGuid(), "MS-1", DateTimeOffset.Parse("2026-10-01T10:30:00Z"),
+            "=Ada, \"Admin\"", OrderPaymentMethod.PayLater, OrderStatus.Paid,
+            DateTimeOffset.Parse("2026-10-01T10:35:00Z"), null, null, null, null, null,
+            [new("EUR", 12.5m), new("USD", 7m)]);
+        var repository = new Fake(new([item], 1), null);
+
+        var result = await OrderManagementEndpoints.ExportAsync("paid", "  Ada  ",
+            new ListUseCase(repository), CancellationToken.None);
+
+        var file = Assert.IsType<FileContentHttpResult>(result);
+        Assert.Equal("text/csv; charset=utf-8", file.ContentType);
+        Assert.Equal("myshop-orders.csv", file.FileDownloadName);
+        var csv = System.Text.Encoding.UTF8.GetString(file.FileContents.ToArray());
+        Assert.Contains("\"MS-1\",\"2026-10-01T10:30:00.0000000+00:00\",\"'=Ada, \"\"Admin\"\"\"", csv);
+        Assert.Contains("\"EUR 12.50 | USD 7.00\"", csv);
+        Assert.Equal(OrderStatus.Paid, repository.ListStatus);
+        Assert.Equal("Ada", repository.ListSearch);
     }
 
     [Fact]

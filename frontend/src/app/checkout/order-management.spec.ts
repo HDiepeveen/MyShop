@@ -87,6 +87,14 @@ describe('Order management', () => {
       )
       .flush({ items: [summary], offset: 0, limit: 20, totalCount: 21 });
     expect(fixture.componentInstance.listQuery().search).toBe('Ada');
+    expect(fixture.componentInstance.exportUrl()).toBe(
+      '/api/orders/export?status=awaitingPayment&search=Ada',
+    );
+    fixture.detectChanges();
+    const exportLink = fixture.nativeElement.querySelector('a[download="myshop-orders.csv"]');
+    expect(exportLink.getAttribute('href')).toBe(
+      '/api/orders/export?status=awaitingPayment&search=Ada',
+    );
 
     fixture.componentInstance.changePage(20);
     http

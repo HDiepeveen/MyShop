@@ -72,6 +72,13 @@ export class OrderManagementApi {
       params,
     });
   }
+  exportUrl(status: OrderStatus | null = null, search = '') {
+    let params = new HttpParams();
+    if (status) params = params.set('status', status);
+    if (search.trim()) params = params.set('search', search.trim());
+    const query = params.toString();
+    return '/api/orders/export' + (query ? '?' + query : '');
+  }
   get(id: string) {
     return this.http.get<OrderDetail>('/api/orders/' + encodeURIComponent(id));
   }
