@@ -26,6 +26,9 @@ public sealed class StartOnlinePaymentTests
         Assert.Equal(scenario.Token, scenario.Starts.Payment!.CheckoutToken);
         Assert.Equal(result.Payment.ProviderPaymentId, scenario.Starts.Payment.ProviderPaymentId);
         Assert.Equal(result.Payment.CheckoutUrl, scenario.Starts.Payment.CheckoutUrl);
+        Assert.Equal("Ada Lovelace", scenario.Starts.Payment.Customer.Name);
+        Assert.Equal("Main street 1", scenario.Starts.Payment.Address.AddressLine);
+        Assert.Equal("Shirt", Assert.Single(scenario.Starts.Payment.Lines).ProductName);
         Assert.Equal(57.50m, Assert.Single(result.Payment.Totals).Amount);
         Assert.Equal("Standaardbezorging", result.Payment.DeliveryMethod.Name);
         Assert.Equal(1, scenario.Products.Calls);
@@ -37,6 +40,9 @@ public sealed class StartOnlinePaymentTests
         var scenario = new Scenario();
         scenario.Starts.Payment = new OnlinePaymentStartRecord(scenario.Token, "Mollie",
             "OP-EXISTING", "test_existing", new Uri("https://payments.example.test/test_existing"),
+            new("Ada Lovelace", "ada@example.com"),
+            new("Main street 1", "1234 AB", "Amsterdam", "NL"),
+            [new(scenario.Products.Product.Id.Value, scenario.Products.Product.Variants.Single().Id.Value, "Shirt", "Small", 2, 25m, "EUR", 50m)],
             [new("EUR", 99m)], new(scenario.DeliveryMethods.Id, "Pakketdienst", null, 4.95m, "EUR"),
             DateTimeOffset.UtcNow);
 
@@ -104,7 +110,8 @@ public sealed class StartOnlinePaymentTests
             var variant = Products.Product.Variants.Single();
             var useCase = new StartOnlinePayment(new QuoteStorefrontCart(Products), Payments,
                 Availability, Provider, Starts, DeliveryMethods);
-            return useCase.ExecuteAsync(new(Token, DeliveryMethods.Id,
+            return useCase.ExecuteAsync(new(Token, DeliveryMethods.Id, "Ada Lovelace", "ada@example.com",
+                "Main street 1", "1234 AB", "Amsterdam", "NL",
                 [new(Products.Product.Id.Value, variant.Id.Value, 2, 25m, "EUR")]),
                 CancellationToken.None);
         }

@@ -153,6 +153,12 @@ export class ShopCheckout implements OnInit {
         .startOnlinePayment({
           checkoutToken: request.checkoutToken,
           deliveryMethodId: request.deliveryMethodId,
+          customerName: request.customerName,
+          email: request.email,
+          addressLine: request.addressLine,
+          postalCode: request.postalCode,
+          city: request.city,
+          countryCode: request.countryCode,
           lines: request.lines,
         })
         .pipe(takeUntilDestroyed(this.destroyRef))

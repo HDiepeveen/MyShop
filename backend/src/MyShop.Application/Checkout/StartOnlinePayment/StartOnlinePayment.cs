@@ -1,13 +1,15 @@
 using MyShop.Application.Catalog.QuoteStorefrontCart;
 using MyShop.Application.Checkout.Abstractions;
 using MyShop.Domain.Catalog;
+using MyShop.Domain.Checkout;
 
 namespace MyShop.Application.Checkout.StartOnlinePayment;
 
 public sealed record StartOnlinePaymentLine(Guid ProductId, Guid VariantId, int Quantity,
     decimal ExpectedAmount, string ExpectedCurrency);
 public sealed record StartOnlinePaymentCommand(Guid CheckoutToken, Guid DeliveryMethodId,
-    IReadOnlyList<StartOnlinePaymentLine> Lines);
+    string CustomerName, string Email, string AddressLine, string PostalCode, string City,
+    string CountryCode, IReadOnlyList<StartOnlinePaymentLine> Lines);
 public enum StartOnlinePaymentFailure { CartUnavailable, PaymentUnavailable, DeliveryUnavailable }
 public sealed record OnlinePaymentStart(Guid CheckoutToken, string ProviderName, string PaymentReference,
     string ProviderPaymentId, Uri CheckoutUrl, IReadOnlyList<OrderTotalSnapshot> Totals,
@@ -58,6 +60,9 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         if (delivery is null || !delivery.Enabled)
             return StartOnlinePaymentResult.Failed(StartOnlinePaymentFailure.DeliveryUnavailable);
 
+        var customer = OrderCustomer.Create(command.CustomerName, command.Email);
+        var address = DeliveryAddress.Create(command.AddressLine, command.PostalCode,
+            command.City, command.CountryCode);
         var expectedPrices = command.Lines.Select(line =>
             Money.Create(line.ExpectedAmount, line.ExpectedCurrency)).ToArray();
         var quote = await quoteCart.ExecuteAsync(new(command.Lines.Select(line =>
@@ -80,8 +85,13 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         var providerStart = await onlinePaymentProvider.StartAsync(new(onlinePayment.ProviderName,
             command.CheckoutToken, paymentReference, totals), cancellationToken);
         var payment = new OnlinePaymentStartRecord(command.CheckoutToken, onlinePayment.ProviderName,
-            paymentReference, providerStart.ProviderPaymentId, providerStart.CheckoutUrl, totals,
-            deliverySnapshot, DateTimeOffset.UtcNow);
+            paymentReference, providerStart.ProviderPaymentId, providerStart.CheckoutUrl,
+            new(customer.Name, customer.Email), new(address.AddressLine, address.PostalCode,
+                address.City, address.CountryCode),
+            quote.Lines.Select(line => new OnlinePaymentStartLineSnapshot(line.ProductId,
+                line.VariantId, line.Name!, line.Variant!, line.Quantity, line.Amount!.Value,
+                line.Currency!, line.Total!.Value)).ToArray(), totals, deliverySnapshot,
+            DateTimeOffset.UtcNow);
         await onlinePaymentStarts.SaveAsync(payment, cancellationToken);
         return new(ToStart(payment), null);
     }

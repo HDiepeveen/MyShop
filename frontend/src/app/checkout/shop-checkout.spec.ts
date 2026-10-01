@@ -110,6 +110,12 @@ describe('Shop checkout', () => {
     expect(request.request.body).toEqual({
       checkoutToken: expect.stringMatching(/^[0-9a-f-]{36}$/),
       deliveryMethodId: '40000000-0000-0000-0000-000000000001',
+      customerName: '',
+      email: '',
+      addressLine: '',
+      postalCode: '',
+      city: '',
+      countryCode: 'NL',
       lines: [line],
     });
     request.flush({

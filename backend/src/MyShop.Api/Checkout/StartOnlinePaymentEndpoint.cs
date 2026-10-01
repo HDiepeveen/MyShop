@@ -27,7 +27,9 @@ public static class StartOnlinePaymentEndpoint
                 lines.Add(new(line.ProductId, line.VariantId, line.Quantity,
                     expectedAmount, line.ExpectedCurrency));
             }
-            var result = await useCase.ExecuteAsync(new(request.CheckoutToken, request.DeliveryMethodId, lines),
+            var result = await useCase.ExecuteAsync(new(request.CheckoutToken, request.DeliveryMethodId,
+                request.CustomerName, request.Email, request.AddressLine, request.PostalCode,
+                request.City, request.CountryCode, lines),
                 cancellationToken);
             return result.Failure switch
             {
@@ -73,7 +75,8 @@ public static class StartOnlinePaymentEndpoint
 }
 
 public sealed record StartOnlinePaymentRequest(Guid CheckoutToken, Guid DeliveryMethodId,
-    IReadOnlyList<StartOnlinePaymentLineRequest?> Lines);
+    string CustomerName, string Email, string AddressLine, string PostalCode, string City,
+    string CountryCode, IReadOnlyList<StartOnlinePaymentLineRequest?> Lines);
 public sealed record StartOnlinePaymentLineRequest(Guid ProductId, Guid VariantId, int Quantity,
     string ExpectedAmount, string ExpectedCurrency);
 public sealed record StartOnlinePaymentResponse(Guid CheckoutToken, string ProviderName,

@@ -70,6 +70,12 @@ public sealed class StartOnlinePaymentHttpTests
         {
             checkoutToken,
             deliveryMethodId = delivery.GetProperty("id").GetGuid(),
+            customerName = "Ada Lovelace",
+            email = "ada@example.com",
+            addressLine = "Main street 1",
+            postalCode = "1234 AB",
+            city = "Amsterdam",
+            countryCode = "NL",
             lines = new[]
             {
                 new { productId, variantId, quantity = 2, expectedAmount = "12.50", expectedCurrency = "EUR" }
@@ -89,7 +95,13 @@ public sealed class StartOnlinePaymentHttpTests
         Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
             "SELECT COUNT(*) AS [Value] FROM [OnlinePaymentStarts]").SingleAsync());
         Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS [Value] FROM [OnlinePaymentStartLines]").SingleAsync());
+        Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
             "SELECT COUNT(*) AS [Value] FROM [OnlinePaymentStartTotals]").SingleAsync());
+        Assert.Equal("Ada Lovelace", await database.Database.SqlQueryRaw<string>(
+            "SELECT [CustomerName] AS [Value] FROM [OnlinePaymentStarts]").SingleAsync());
+        Assert.Equal("Shirt", await database.Database.SqlQueryRaw<string>(
+            "SELECT [ProductName] AS [Value] FROM [OnlinePaymentStartLines]").SingleAsync());
         Assert.Equal($"test_{checkoutToken:N}", await database.Database.SqlQueryRaw<string>(
             "SELECT [ProviderPaymentId] AS [Value] FROM [OnlinePaymentStarts]").SingleAsync());
         Assert.Equal(29.95m, await database.Database.SqlQueryRaw<decimal>(
@@ -99,6 +111,12 @@ public sealed class StartOnlinePaymentHttpTests
         {
             checkoutToken,
             deliveryMethodId = delivery.GetProperty("id").GetGuid(),
+            customerName = "Ada Lovelace",
+            email = "ada@example.com",
+            addressLine = "Main street 1",
+            postalCode = "1234 AB",
+            city = "Amsterdam",
+            countryCode = "NL",
             lines = new[]
             {
                 new { productId, variantId, quantity = 2, expectedAmount = "12.50", expectedCurrency = "EUR" }

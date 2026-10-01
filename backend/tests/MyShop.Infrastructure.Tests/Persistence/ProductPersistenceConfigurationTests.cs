@@ -15,7 +15,7 @@ public sealed class ProductPersistenceConfigurationTests
         var types = context.Model.GetEntityTypes().Select(entity => entity.ClrType)
             .Where(type => type.Namespace == typeof(ProductPersistence).Namespace).ToHashSet();
 
-        Assert.Equal(20, types.Count);
+        Assert.Equal(21, types.Count);
         Assert.True(types.SetEquals([
             typeof(ProductTypePersistence), typeof(AttributeDefinitionPersistence),
             typeof(CategoryPersistence), typeof(ProductPersistence), typeof(ProductVariantPersistence),
@@ -25,7 +25,8 @@ public sealed class ProductPersistenceConfigurationTests
             typeof(ProductVariantAttributeMultiChoiceValuePersistence), typeof(PriceRulePersistence),
             typeof(PaymentOptionsPersistence), typeof(OrderPersistence),
             typeof(OrderLinePersistence), typeof(OrderTotalPersistence),
-            typeof(OnlinePaymentStartPersistence), typeof(OnlinePaymentStartTotalPersistence),
+            typeof(OnlinePaymentStartPersistence), typeof(OnlinePaymentStartLinePersistence),
+            typeof(OnlinePaymentStartTotalPersistence),
             typeof(CustomerProfilePersistence), typeof(DeliveryMethodPersistence),
             typeof(WishlistItemPersistence)]));
         Assert.DoesNotContain(types, type => type.Assembly == typeof(MyShop.Domain.Catalog.Product).Assembly);

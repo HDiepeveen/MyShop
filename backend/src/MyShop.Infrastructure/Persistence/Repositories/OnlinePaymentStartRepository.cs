@@ -13,6 +13,7 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
             throw new ArgumentException("Checkout token is required.", nameof(checkoutToken));
         var payment = await context.OnlinePaymentStarts.AsNoTracking()
             .AsSplitQuery()
+            .Include(item => item.Lines)
             .Include(item => item.Totals)
             .SingleOrDefaultAsync(item => item.CheckoutToken == checkoutToken, cancellationToken);
         return payment is null ? null : Map(payment);
@@ -32,12 +33,31 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
             PaymentReference = payment.PaymentReference,
             ProviderPaymentId = payment.ProviderPaymentId,
             CheckoutUrl = payment.CheckoutUrl.ToString(),
+            CustomerName = payment.Customer.Name,
+            Email = payment.Customer.Email,
+            AddressLine = payment.Address.AddressLine,
+            PostalCode = payment.Address.PostalCode,
+            City = payment.Address.City,
+            CountryCode = payment.Address.CountryCode,
             CreatedAt = payment.CreatedAt.ToUniversalTime(),
             DeliveryMethodId = payment.DeliveryMethod.Id,
             DeliveryMethodName = payment.DeliveryMethod.Name,
             DeliveryDescription = payment.DeliveryMethod.Description,
             DeliveryAmount = payment.DeliveryMethod.Amount,
             DeliveryCurrency = payment.DeliveryMethod.Currency,
+            Lines = payment.Lines.Select((line, index) => new OnlinePaymentStartLinePersistence
+            {
+                OnlinePaymentStartId = payment.CheckoutToken,
+                Ordinal = index,
+                ProductId = line.ProductId,
+                VariantId = line.VariantId,
+                ProductName = line.ProductName,
+                VariantName = line.VariantName,
+                Quantity = line.Quantity,
+                UnitAmount = line.UnitAmount,
+                Currency = line.Currency,
+                TotalAmount = line.TotalAmount
+            }).ToArray(),
             Totals = payment.Totals.Select(total => new OnlinePaymentStartTotalPersistence
             {
                 OnlinePaymentStartId = payment.CheckoutToken,
@@ -51,6 +71,12 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
     private static OnlinePaymentStartRecord Map(OnlinePaymentStartPersistence payment) =>
         new(payment.CheckoutToken, payment.ProviderName, payment.PaymentReference,
             payment.ProviderPaymentId, new Uri(payment.CheckoutUrl),
+            new(payment.CustomerName, payment.Email),
+            new(payment.AddressLine, payment.PostalCode, payment.City, payment.CountryCode),
+            payment.Lines.OrderBy(line => line.Ordinal).Select(line =>
+                new OnlinePaymentStartLineSnapshot(line.ProductId, line.VariantId,
+                    line.ProductName, line.VariantName, line.Quantity, line.UnitAmount,
+                    line.Currency, line.TotalAmount)).ToArray(),
             payment.Totals.OrderBy(total => total.Currency, StringComparer.Ordinal)
                 .Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
             new OrderDeliveryMethodSnapshot(payment.DeliveryMethodId, payment.DeliveryMethodName,

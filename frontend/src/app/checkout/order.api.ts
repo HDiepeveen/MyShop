@@ -49,6 +49,12 @@ export interface PlaceOrderRequest {
 export interface StartOnlinePaymentRequest {
   checkoutToken: string;
   deliveryMethodId: string;
+  customerName: string;
+  email: string;
+  addressLine: string;
+  postalCode: string;
+  city: string;
+  countryCode: string;
   lines: readonly CheckoutOrderLine[];
 }
 
