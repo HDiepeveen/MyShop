@@ -1,14 +1,16 @@
 import { Cart } from './cart';
 import { DatePipe } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ShopApi } from './shop.api';
 import { ShopImage } from './shop-image';
 import { loadState } from '../catalog/load-state';
 import { readListQuery } from '../catalog/list-query';
+import { Auth } from '../auth/auth';
+import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
 @Component({
   imports: [FormsModule, RouterLink, ShopImage, DatePipe],
   styles: [
@@ -121,12 +123,24 @@ import { readListQuery } from '../catalog/list-query';
           @if (cart.warning()) {
             <p role="status">{{ cart.warning() }}</p>
           }
+          @if (auth.session()?.customer) {
+            <button type="button" class="secondary" [disabled]="wishlistBusy()" (click)="toggleWishlist(product.id)">
+              {{ wishlistSaved() ? 'Van verlanglijst verwijderen' : 'Op verlanglijst zetten' }}
+            </button>
+            @if (wishlistMessage()) { <p role="status">{{ wishlistMessage() }}</p> }
+          }
         </section>
       </div>
     }
   `,
 })
 export class ShopDetail {
+  readonly auth = inject(Auth);
+  private readonly wishlistApi = inject(CustomerWishlistApi);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly wishlistSaved = signal(false);
+  readonly wishlistBusy = signal(false);
+  readonly wishlistMessage = signal('');
   readonly cart = inject(Cart);
   readonly cartMessage = signal('');
   addToCart() {
@@ -190,6 +204,21 @@ export class ShopDetail {
           product?.variants[0]?.id ??
           '',
       );
+      if (product && this.auth.session()?.customer) this.loadWishlistState(product.id);
+    });
+  }
+  private loadWishlistState(productId: string) {
+    this.wishlistApi.state(productId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (state) => this.wishlistSaved.set(state.saved),
+      error: () => this.wishlistMessage.set('De verlanglijststatus kon niet worden opgehaald.'),
+    });
+  }
+  toggleWishlist(productId: string) {
+    this.wishlistBusy.set(true); this.wishlistMessage.set('');
+    const request = this.wishlistSaved() ? this.wishlistApi.remove(productId) : this.wishlistApi.add(productId);
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => { const saved = !this.wishlistSaved(); this.wishlistSaved.set(saved); this.wishlistBusy.set(false); this.wishlistMessage.set(saved ? 'Toegevoegd aan je verlanglijst.' : 'Verwijderd van je verlanglijst.'); },
+      error: () => { this.wishlistBusy.set(false); this.wishlistMessage.set('Je verlanglijst kon niet worden bijgewerkt.'); },
     });
   }
   contextQuery() {

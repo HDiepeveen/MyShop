@@ -29,6 +29,7 @@
           <a routerLink="/winkel">Assortiment</a
           ><a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
           @if (auth.session()?.customer) {
+            <a routerLink="/winkel/account/verlanglijst">Verlanglijst</a>
             <a routerLink="/winkel/account/bestellingen">Mijn bestellingen</a>
             <a routerLink="/winkel/account">Mijn account</a>
           } @else {

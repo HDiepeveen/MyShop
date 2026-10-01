@@ -9,13 +9,13 @@ namespace MyShop.Infrastructure.Tests.Persistence;
 public sealed class ProductPersistenceConfigurationTests
 {
     [Fact]
-    public void Model_ContainsExactlySeventeenPersistenceEntities()
+    public void Model_ContainsExactlyEighteenPersistenceEntities()
     {
         using var context = CreateContext();
         var types = context.Model.GetEntityTypes().Select(entity => entity.ClrType)
             .Where(type => type.Namespace == typeof(ProductPersistence).Namespace).ToHashSet();
 
-        Assert.Equal(17, types.Count);
+        Assert.Equal(18, types.Count);
         Assert.True(types.SetEquals([
             typeof(ProductTypePersistence), typeof(AttributeDefinitionPersistence),
             typeof(CategoryPersistence), typeof(ProductPersistence), typeof(ProductVariantPersistence),
@@ -25,7 +25,8 @@ public sealed class ProductPersistenceConfigurationTests
             typeof(ProductVariantAttributeMultiChoiceValuePersistence), typeof(PriceRulePersistence),
             typeof(PaymentOptionsPersistence), typeof(OrderPersistence),
             typeof(OrderLinePersistence), typeof(OrderTotalPersistence),
-            typeof(CustomerProfilePersistence), typeof(DeliveryMethodPersistence)]));
+            typeof(CustomerProfilePersistence), typeof(DeliveryMethodPersistence),
+            typeof(WishlistItemPersistence)]));
         Assert.DoesNotContain(types, type => type.Assembly == typeof(MyShop.Domain.Catalog.Product).Assembly);
     }
 

@@ -39,4 +39,7 @@ De routes zijn `POST /api/customer/auth/register`, `POST /api/customer/auth/logi
 `GET /api/customer/orders/{id}`. Annuleren gebruikt
 `POST /api/customer/orders/{id}/cancel` met de actuele revisie en vereist een antiforgerytoken.
 Alle profiel- en bestelroutes vereisen de rol `Customer`.
+
+Klanten kunnen bovendien gepubliceerde producten op een persoonlijke verlanglijst bewaren; zie
+[Verlanglijst](customer-wishlist.md).
 E-mailbevestiging en wachtwoordherstel per e-mail volgen in afzonderlijke onderdelen.

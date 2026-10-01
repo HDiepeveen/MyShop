@@ -137,6 +137,10 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Customers.ManageCustomers.ListManagedCustomers>();
         services.AddScoped<Customers.ManageCustomers.GetManagedCustomer>();
         services.AddScoped<Customers.ManageCustomers.SetCustomerLock>();
+        services.AddScoped<Customers.ManageWishlist.ListWishlist>();
+        services.AddScoped<Customers.ManageWishlist.GetWishlistState>();
+        services.AddScoped<Customers.ManageWishlist.AddWishlistItem>();
+        services.AddScoped<Customers.ManageWishlist.RemoveWishlistItem>();
         return services;
     }
 }

@@ -23,6 +23,7 @@ app.UseAdminSecurity();
 app.MapAdminEndpoints();
 app.MapCustomerEndpoints();
 app.MapCustomerOrderEndpoints();
+app.MapCustomerWishlistEndpoints();
 app.MapCustomerManagementEndpoints();
 
 app.MapCatalog();

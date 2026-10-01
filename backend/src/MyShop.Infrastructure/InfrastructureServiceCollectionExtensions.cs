@@ -69,6 +69,8 @@ public static class InfrastructureServiceCollectionExtensions
             new ManagedCustomerRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<ICustomerProfileRepository>(provider =>
             new CustomerProfileRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IWishlistRepository>(provider =>
+            new WishlistRepository(provider.GetRequiredService<MyShopDbContext>()));
         return services;
     }
 }

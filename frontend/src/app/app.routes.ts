@@ -115,6 +115,13 @@ export const routes: Routes = [
         title: 'Mijn account · MyShop',
       },
       {
+        path: 'account/verlanglijst',
+        canActivate: [customerGuard],
+        loadComponent: () =>
+          import('./customer/customer-wishlist').then((m) => m.CustomerWishlist),
+        title: 'Mijn verlanglijst · MyShop',
+      },
+      {
         path: 'account/bestellingen/:id',
         canActivate: [customerGuard],
         loadComponent: () =>

@@ -40,6 +40,7 @@ import { errorMessage } from '../catalog/error-message';
       </form>
     }
     <p><a routerLink="/winkel/account/bestellingen">Mijn bestellingen bekijken</a></p>
+    <p><a routerLink="/winkel/account/verlanglijst">Mijn verlanglijst bekijken</a></p>
     <p><a routerLink="/winkel/account/wachtwoord">Wachtwoord wijzigen</a></p>`,
 })
 export class CustomerProfile {
