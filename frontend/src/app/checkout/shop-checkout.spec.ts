@@ -115,6 +115,9 @@ describe('Shop checkout', () => {
     request.flush({
       checkoutToken: request.request.body.checkoutToken,
       providerName: 'Mollie',
+      paymentReference: 'OP-123',
+      providerPaymentId: 'test_123',
+      checkoutUrl: 'https://payments.example.test/test_123',
       message: 'De online betaalprovider is klaar om gekoppeld te worden.',
       totals: [{ currency: 'EUR', amount: '29.95' }],
       deliveryMethod: {
@@ -130,6 +133,10 @@ describe('Shop checkout', () => {
     const content = fixture.nativeElement.textContent;
     expect(content).toContain('De online betaalprovider is klaar om gekoppeld te worden.');
     expect(content).toContain('Betaalprovider: Mollie');
+    expect(content).toContain('Betalingskenmerk: OP-123');
+    expect(content).toContain('Providerbetaling: test_123');
+    const link = fixture.nativeElement.querySelector('a');
+    expect(link.getAttribute('href')).toBe('https://payments.example.test/test_123');
     expect(content).toContain('Bezorging: Pakketdienst');
     expect(content).toContain('Totaal EUR 29,95');
   });

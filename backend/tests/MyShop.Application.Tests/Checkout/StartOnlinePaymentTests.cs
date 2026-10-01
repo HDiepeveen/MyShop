@@ -19,6 +19,10 @@ public sealed class StartOnlinePaymentTests
         Assert.Equal(scenario.Token, result.Payment!.CheckoutToken);
         Assert.Equal("Mollie", result.Payment.ProviderName);
         Assert.Equal($"OP-{scenario.Token:N}".ToUpperInvariant(), result.Payment.PaymentReference);
+        Assert.Equal($"test_{scenario.Token:N}", result.Payment.ProviderPaymentId);
+        Assert.Equal($"https://payments.example.test/test_{scenario.Token:N}",
+            result.Payment.CheckoutUrl.ToString());
+        Assert.Equal($"OP-{scenario.Token:N}".ToUpperInvariant(), scenario.Provider.Request!.PaymentReference);
         Assert.Equal(57.50m, Assert.Single(result.Payment.Totals).Amount);
         Assert.Equal("Standaardbezorging", result.Payment.DeliveryMethod.Name);
         Assert.Equal(1, scenario.Products.Calls);
@@ -69,13 +73,14 @@ public sealed class StartOnlinePaymentTests
         public Payments Payments { get; } = new();
         public Availability Availability { get; } = new();
         public DeliveryMethods DeliveryMethods { get; } = new();
+        public Provider Provider { get; } = new();
         public Guid Token { get; } = Guid.NewGuid();
 
         public Task<StartOnlinePaymentResult> Execute()
         {
             var variant = Products.Product.Variants.Single();
             var useCase = new StartOnlinePayment(new QuoteStorefrontCart(Products), Payments,
-                Availability, DeliveryMethods);
+                Availability, Provider, DeliveryMethods);
             return useCase.ExecuteAsync(new(Token, DeliveryMethods.Id,
                 [new(Products.Product.Id.Value, variant.Id.Value, 2, 25m, "EUR")]),
                 CancellationToken.None);
@@ -117,6 +122,18 @@ public sealed class StartOnlinePaymentTests
         public bool Configured { get; set; } = true;
         public bool IsConfigured => Configured;
         public string? ProviderName => Configured ? "Mollie" : null;
+    }
+
+    private sealed class Provider : IOnlinePaymentProvider
+    {
+        public OnlinePaymentProviderRequest? Request { get; private set; }
+        public Task<OnlinePaymentProviderStart> StartAsync(OnlinePaymentProviderRequest request,
+            CancellationToken cancellationToken)
+        {
+            Request = request;
+            return Task.FromResult(new OnlinePaymentProviderStart($"test_{request.CheckoutToken:N}",
+                new Uri($"https://payments.example.test/test_{request.CheckoutToken:N}")));
+        }
     }
 
     private sealed class DeliveryMethods : IDeliveryMethodRepository

@@ -77,6 +77,8 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
           <section class="notice" aria-label="Online betaalstart">
             <p>Betaalprovider: {{ payment.providerName }}</p>
             <p>Betalingskenmerk: {{ payment.paymentReference }}</p>
+            <p>Providerbetaling: {{ payment.providerPaymentId }}</p>
+            <p><a [href]="payment.checkoutUrl">Testbetaling openen</a></p>
             <p>Bezorging: {{ payment.deliveryMethod.name }}</p>
             <ul>
               @for (total of payment.totals; track total.currency) {

@@ -10,18 +10,22 @@ public sealed record StartOnlinePaymentCommand(Guid CheckoutToken, Guid Delivery
     IReadOnlyList<StartOnlinePaymentLine> Lines);
 public enum StartOnlinePaymentFailure { CartUnavailable, PaymentUnavailable, DeliveryUnavailable }
 public sealed record OnlinePaymentStart(Guid CheckoutToken, string ProviderName, string PaymentReference,
-    IReadOnlyList<OrderTotalSnapshot> Totals, OrderDeliveryMethodSnapshot DeliveryMethod);
+    string ProviderPaymentId, Uri CheckoutUrl, IReadOnlyList<OrderTotalSnapshot> Totals,
+    OrderDeliveryMethodSnapshot DeliveryMethod);
 public sealed record StartOnlinePaymentResult(OnlinePaymentStart? Payment, StartOnlinePaymentFailure? Failure)
 {
     public static StartOnlinePaymentResult Failed(StartOnlinePaymentFailure failure) => new(null, failure);
 }
 
 public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOptionsRepository paymentOptions,
-    IOnlinePaymentAvailability onlinePayment, IDeliveryMethodRepository deliveryMethods)
+    IOnlinePaymentAvailability onlinePayment, IOnlinePaymentProvider onlinePaymentProvider,
+    IDeliveryMethodRepository deliveryMethods)
 {
     private readonly QuoteStorefrontCart quoteCart = quoteCart ?? throw new ArgumentNullException(nameof(quoteCart));
     private readonly IPaymentOptionsRepository paymentOptions = paymentOptions ?? throw new ArgumentNullException(nameof(paymentOptions));
     private readonly IOnlinePaymentAvailability onlinePayment = onlinePayment ?? throw new ArgumentNullException(nameof(onlinePayment));
+    private readonly IOnlinePaymentProvider onlinePaymentProvider = onlinePaymentProvider
+        ?? throw new ArgumentNullException(nameof(onlinePaymentProvider));
     private readonly IDeliveryMethodRepository deliveryMethods = deliveryMethods
         ?? throw new ArgumentNullException(nameof(deliveryMethods));
 
@@ -66,8 +70,11 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
             .OrderBy(total => total.Currency, StringComparer.Ordinal).ToArray();
         var deliverySnapshot = new OrderDeliveryMethodSnapshot(delivery.Id, delivery.Name,
             delivery.Description, delivery.Amount, delivery.Currency);
-        return new(new(command.CheckoutToken, onlinePayment.ProviderName, PaymentReference(command.CheckoutToken),
-            totals, deliverySnapshot), null);
+        var paymentReference = PaymentReference(command.CheckoutToken);
+        var providerStart = await onlinePaymentProvider.StartAsync(new(onlinePayment.ProviderName,
+            command.CheckoutToken, paymentReference, totals), cancellationToken);
+        return new(new(command.CheckoutToken, onlinePayment.ProviderName, paymentReference,
+            providerStart.ProviderPaymentId, providerStart.CheckoutUrl, totals, deliverySnapshot), null);
     }
 
     private static string PaymentReference(Guid checkoutToken) =>

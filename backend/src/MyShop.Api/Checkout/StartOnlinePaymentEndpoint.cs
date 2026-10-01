@@ -47,7 +47,8 @@ public static class StartOnlinePaymentEndpoint
                     message = "De gekozen bezorgoptie is niet meer beschikbaar."
                 }),
                 null => Results.Ok(new StartOnlinePaymentResponse(result.Payment!.CheckoutToken,
-                    result.Payment.ProviderName, result.Payment.PaymentReference,
+                    result.Payment.ProviderName, result.Payment.PaymentReference, result.Payment.ProviderPaymentId,
+                    result.Payment.CheckoutUrl.ToString(),
                     "De online betaalprovider is klaar om gekoppeld te worden.",
                     result.Payment.Totals.Select(MapTotal).ToArray(), MapDelivery(result.Payment.DeliveryMethod))),
                 _ => throw new InvalidOperationException()
@@ -76,7 +77,7 @@ public sealed record StartOnlinePaymentRequest(Guid CheckoutToken, Guid Delivery
 public sealed record StartOnlinePaymentLineRequest(Guid ProductId, Guid VariantId, int Quantity,
     string ExpectedAmount, string ExpectedCurrency);
 public sealed record StartOnlinePaymentResponse(Guid CheckoutToken, string ProviderName,
-    string PaymentReference, string Message,
+    string PaymentReference, string ProviderPaymentId, string CheckoutUrl, string Message,
     IReadOnlyList<StartOnlinePaymentTotalResponse> Totals,
     StartOnlinePaymentDeliveryMethodResponse DeliveryMethod);
 public sealed record StartOnlinePaymentTotalResponse(string Currency, string Amount);

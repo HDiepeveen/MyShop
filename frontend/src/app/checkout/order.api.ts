@@ -56,6 +56,8 @@ export interface OnlinePaymentStart {
   checkoutToken: string;
   providerName: string;
   paymentReference: string;
+  providerPaymentId: string;
+  checkoutUrl: string;
   message: string;
   totals: readonly OrderReceiptTotal[];
   deliveryMethod: OrderReceiptDeliveryMethod;
