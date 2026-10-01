@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MyShop.Application.Checkout.Abstractions;
 using MyShop.Infrastructure.Persistence.Models;
 
@@ -5,6 +6,18 @@ namespace MyShop.Infrastructure.Persistence.Repositories;
 
 internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IOnlinePaymentStartRepository
 {
+    public async Task<OnlinePaymentStartRecord?> GetByCheckoutTokenAsync(Guid checkoutToken,
+        CancellationToken cancellationToken)
+    {
+        if (checkoutToken == Guid.Empty)
+            throw new ArgumentException("Checkout token is required.", nameof(checkoutToken));
+        var payment = await context.OnlinePaymentStarts.AsNoTracking()
+            .AsSplitQuery()
+            .Include(item => item.Totals)
+            .SingleOrDefaultAsync(item => item.CheckoutToken == checkoutToken, cancellationToken);
+        return payment is null ? null : Map(payment);
+    }
+
     public async Task SaveAsync(OnlinePaymentStartRecord payment, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(payment);
@@ -34,4 +47,13 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
         });
         await context.SaveChangesAsync(cancellationToken);
     }
+
+    private static OnlinePaymentStartRecord Map(OnlinePaymentStartPersistence payment) =>
+        new(payment.CheckoutToken, payment.ProviderName, payment.PaymentReference,
+            payment.ProviderPaymentId, new Uri(payment.CheckoutUrl),
+            payment.Totals.OrderBy(total => total.Currency, StringComparer.Ordinal)
+                .Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
+            new OrderDeliveryMethodSnapshot(payment.DeliveryMethodId, payment.DeliveryMethodName,
+                payment.DeliveryDescription, payment.DeliveryAmount, payment.DeliveryCurrency),
+            payment.CreatedAt);
 }

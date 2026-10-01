@@ -7,5 +7,7 @@ public sealed record OnlinePaymentStartRecord(Guid CheckoutToken, string Provide
 
 public interface IOnlinePaymentStartRepository
 {
+    Task<OnlinePaymentStartRecord?> GetByCheckoutTokenAsync(Guid checkoutToken,
+        CancellationToken cancellationToken);
     Task SaveAsync(OnlinePaymentStartRecord payment, CancellationToken cancellationToken);
 }

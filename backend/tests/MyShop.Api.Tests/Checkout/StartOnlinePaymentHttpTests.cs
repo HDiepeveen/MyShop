@@ -94,5 +94,21 @@ public sealed class StartOnlinePaymentHttpTests
             "SELECT [ProviderPaymentId] AS [Value] FROM [OnlinePaymentStarts]").SingleAsync());
         Assert.Equal(29.95m, await database.Database.SqlQueryRaw<decimal>(
             "SELECT [Amount] AS [Value] FROM [OnlinePaymentStartTotals]").SingleAsync());
+
+        var repeated = await visitor.PostAsJsonAsync("/api/shop/online-payments", new
+        {
+            checkoutToken,
+            deliveryMethodId = delivery.GetProperty("id").GetGuid(),
+            lines = new[]
+            {
+                new { productId, variantId, quantity = 2, expectedAmount = "12.50", expectedCurrency = "EUR" }
+            }
+        });
+        Assert.Equal(HttpStatusCode.OK, repeated.StatusCode);
+        var repeatedPayment = await repeated.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(payment.GetProperty("providerPaymentId").GetString(),
+            repeatedPayment.GetProperty("providerPaymentId").GetString());
+        Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS [Value] FROM [OnlinePaymentStarts]").SingleAsync());
     }
 }

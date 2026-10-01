@@ -43,6 +43,10 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
             throw new ArgumentException("Order lines must not contain null values.", nameof(command));
         if (command.Lines.Count is < 1 or > 20)
             throw new ArgumentException("Order must contain 1 to 20 lines.", nameof(command));
+        var existing = await onlinePaymentStarts.GetByCheckoutTokenAsync(command.CheckoutToken,
+            cancellationToken);
+        if (existing is not null)
+            return new(ToStart(existing), null);
         if (command.DeliveryMethodId == Guid.Empty)
             return StartOnlinePaymentResult.Failed(StartOnlinePaymentFailure.DeliveryUnavailable);
 
@@ -79,9 +83,12 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
             paymentReference, providerStart.ProviderPaymentId, providerStart.CheckoutUrl, totals,
             deliverySnapshot, DateTimeOffset.UtcNow);
         await onlinePaymentStarts.SaveAsync(payment, cancellationToken);
-        return new(new(payment.CheckoutToken, payment.ProviderName, payment.PaymentReference,
-            payment.ProviderPaymentId, payment.CheckoutUrl, payment.Totals, payment.DeliveryMethod), null);
+        return new(ToStart(payment), null);
     }
+
+    private static OnlinePaymentStart ToStart(OnlinePaymentStartRecord payment) =>
+        new(payment.CheckoutToken, payment.ProviderName, payment.PaymentReference,
+            payment.ProviderPaymentId, payment.CheckoutUrl, payment.Totals, payment.DeliveryMethod);
 
     private static string PaymentReference(Guid checkoutToken) =>
         $"OP-{checkoutToken:N}".ToUpperInvariant();

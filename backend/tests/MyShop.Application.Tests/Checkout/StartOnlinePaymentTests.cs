@@ -31,6 +31,25 @@ public sealed class StartOnlinePaymentTests
         Assert.Equal(1, scenario.Products.Calls);
     }
 
+    [Fact]
+    public async Task ReturnsExistingPaymentStartWithoutRequotingOrCallingProvider()
+    {
+        var scenario = new Scenario();
+        scenario.Starts.Payment = new OnlinePaymentStartRecord(scenario.Token, "Mollie",
+            "OP-EXISTING", "test_existing", new Uri("https://payments.example.test/test_existing"),
+            [new("EUR", 99m)], new(scenario.DeliveryMethods.Id, "Pakketdienst", null, 4.95m, "EUR"),
+            DateTimeOffset.UtcNow);
+
+        var result = await scenario.Execute();
+
+        Assert.Null(result.Failure);
+        Assert.Equal("OP-EXISTING", result.Payment!.PaymentReference);
+        Assert.Equal("test_existing", result.Payment.ProviderPaymentId);
+        Assert.Equal(0, scenario.Products.Calls);
+        Assert.Equal(0, scenario.Provider.Calls);
+        Assert.Equal(0, scenario.Starts.SaveCalls);
+    }
+
     [Theory]
     [InlineData(false, true)]
     [InlineData(true, false)]
@@ -131,9 +150,11 @@ public sealed class StartOnlinePaymentTests
     private sealed class Provider : IOnlinePaymentProvider
     {
         public OnlinePaymentProviderRequest? Request { get; private set; }
+        public int Calls { get; private set; }
         public Task<OnlinePaymentProviderStart> StartAsync(OnlinePaymentProviderRequest request,
             CancellationToken cancellationToken)
         {
+            Calls++;
             Request = request;
             return Task.FromResult(new OnlinePaymentProviderStart($"test_{request.CheckoutToken:N}",
                 new Uri($"https://payments.example.test/test_{request.CheckoutToken:N}")));
@@ -142,9 +163,13 @@ public sealed class StartOnlinePaymentTests
 
     private sealed class Starts : IOnlinePaymentStartRepository
     {
-        public OnlinePaymentStartRecord? Payment { get; private set; }
+        public OnlinePaymentStartRecord? Payment { get; set; }
+        public int SaveCalls { get; private set; }
+        public Task<OnlinePaymentStartRecord?> GetByCheckoutTokenAsync(Guid checkoutToken,
+            CancellationToken cancellationToken) => Task.FromResult(Payment);
         public Task SaveAsync(OnlinePaymentStartRecord payment, CancellationToken cancellationToken)
         {
+            SaveCalls++;
             Payment = payment;
             return Task.CompletedTask;
         }
