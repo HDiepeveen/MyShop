@@ -103,18 +103,25 @@ describe('Admin authentication', () => {
     http.expectOne('/api/auth/csrf').flush(null);
     const customerLogin = http.expectOne('/api/customer/auth/login');
     expect(customerLogin.request.body).toEqual({
-      email: 'customer@example.com', password: 'secret',
+      email: 'customer@example.com',
+      password: 'secret',
     });
     customerLogin.flush(null);
     http.expectOne('/api/auth/csrf').flush(null);
     http.expectOne('/api/auth/session').flush({
-      authenticated: true, administrator: false, customer: true, name: 'customer@example.com',
+      authenticated: true,
+      administrator: false,
+      customer: true,
+      name: 'customer@example.com',
     });
     const harness = await RouterTestingHarness.create();
     const navigation = harness.navigateByUrl('/winkel/account');
     await new Promise((resolve) => setTimeout(resolve, 0));
     http.expectOne('/api/auth/session').flush({
-      authenticated: true, administrator: false, customer: true, name: 'customer@example.com',
+      authenticated: true,
+      administrator: false,
+      customer: true,
+      name: 'customer@example.com',
     });
     http.expectOne('/api/auth/csrf').flush(null);
     await navigation;
@@ -212,4 +219,5 @@ it('allows the protected payment settings return path', () => {
 });
 it('allows a protected order detail return path', () => {
   expect(safeReturnUrl('/bestellingen/123?offset=20')).toBe('/bestellingen/123?offset=20');
+  expect(safeReturnUrl('/klanten/123')).toBe('/klanten/123');
 });

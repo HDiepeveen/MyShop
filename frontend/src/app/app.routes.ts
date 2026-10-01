@@ -3,6 +3,18 @@ import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
+    path: 'klanten/:id',
+    loadComponent: () =>
+      import('./customer/customer-management-detail').then((m) => m.CustomerManagementDetail),
+    title: 'Klant · MyShop',
+  },
+  {
+    path: 'klanten',
+    loadComponent: () =>
+      import('./customer/customer-management-list').then((m) => m.CustomerManagementList),
+    title: 'Klanten · MyShop',
+  },
+  {
     path: 'bestellingen/:id',
     loadComponent: () => import('./checkout/order-detail').then((m) => m.OrderDetailComponent),
     title: 'Bestelling · MyShop',

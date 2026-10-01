@@ -45,3 +45,5 @@ See [Productpresentatie](docs/product-presentation.md) for descriptions, image l
 See [Klantwinkel](docs/storefront.md) for public browsing, publication rules and current scope.
 
 See [Order management](docs/order-management.md) for the protected order overview and recorded order details.
+
+See [Klantenbeheer](docs/customer-management.md) for searching, viewing, blocking and unblocking customer accounts.

@@ -30,8 +30,12 @@ export const customerGuard: CanActivateFn = (_, state) => {
   return auth.load().pipe(
     switchMap((session) => {
       if (!session.authenticated)
-        return of(router.createUrlTree(['/winkel/inloggen'], { queryParams: { returnUrl: state.url } }));
-      return session.customer ? auth.prepare().pipe(map(() => true)) : of(router.createUrlTree(['/geen-toegang']));
+        return of(
+          router.createUrlTree(['/winkel/inloggen'], { queryParams: { returnUrl: state.url } }),
+        );
+      return session.customer
+        ? auth.prepare().pipe(map(() => true))
+        : of(router.createUrlTree(['/geen-toegang']));
     }),
     catchError(() => of(router.createUrlTree(['/winkel/inloggen']))),
   );
@@ -76,7 +80,7 @@ export const authErrors: HttpInterceptorFn = (request, next) => {
 export function safeReturnUrl(value: string | null): string {
   // Only routes within this administration app; never interpret an external URL.
   return value &&
-    /^\/(?:producten|categorieen|producttypen|bestellingen|instellingen\/betalen)(?:[/?]|$)/.test(
+    /^\/(?:producten|categorieen|producttypen|bestellingen|klanten|instellingen\/betalen)(?:[/?]|$)/.test(
       value,
     ) &&
     !/[\\\r\n]/.test(value)

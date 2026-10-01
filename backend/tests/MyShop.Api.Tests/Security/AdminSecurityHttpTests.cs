@@ -213,6 +213,48 @@ public sealed class AdminSecurityHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync("/api/auth/password",
             new { currentPassword = SecurityHost.Password, newPassword = "New-Customer-Password42!" })).StatusCode);
     }
+
+    [SecuritySqlFact]
+    public async Task AdministratorCanFindBlockAndUnblockCustomerAccounts()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode);
+        await host.Csrf();
+
+        var cookies = new CookieContainer();
+        using var customer = new HttpClient(new HttpClientHandler
+        { CookieContainer = cookies, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
+        Assert.Equal(HttpStatusCode.NoContent, (await customer.GetAsync("/api/auth/csrf")).StatusCode);
+        customer.DefaultRequestHeaders.Add("X-XSRF-TOKEN",
+            cookies.GetCookies(customer.BaseAddress!)["XSRF-TOKEN"]!.Value);
+        Assert.Equal(HttpStatusCode.NoContent, (await customer.PostAsJsonAsync(
+            "/api/customer/auth/register", new { email = "managed@example.com", password = SecurityHost.Password })).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await customer.GetAsync("/api/customers")).StatusCode);
+
+        var page = await host.Client.GetFromJsonAsync<JsonElement>("/api/customers?search=managed&limit=20");
+        Assert.Equal(1, page.GetProperty("totalCount").GetInt32());
+        var id = page.GetProperty("items")[0].GetProperty("id").GetString()!;
+        var detail = await host.Client.GetFromJsonAsync<JsonElement>("/api/customers/" + id);
+        Assert.False(detail.GetProperty("isLocked").GetBoolean());
+        var locked = await host.Client.PutAsJsonAsync("/api/customers/" + id + "/access", new
+        { locked = true, revision = detail.GetProperty("revision").GetString() });
+        Assert.Equal(HttpStatusCode.OK, locked.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await customer.GetAsync("/api/customer/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await customer.GetAsync("/api/auth/csrf")).StatusCode);
+        customer.DefaultRequestHeaders.Remove("X-XSRF-TOKEN");
+        customer.DefaultRequestHeaders.Add("X-XSRF-TOKEN",
+            cookies.GetCookies(customer.BaseAddress!)["XSRF-TOKEN"]!.Value);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await customer.PostAsJsonAsync(
+            "/api/customer/auth/login", new { email = "managed@example.com", password = SecurityHost.Password })).StatusCode);
+
+        var lockedResult = await locked.Content.ReadFromJsonAsync<JsonElement>();
+        var unlocked = await host.Client.PutAsJsonAsync("/api/customers/" + id + "/access", new
+        { locked = false, revision = lockedResult.GetProperty("revision").GetString() });
+        Assert.Equal(HttpStatusCode.OK, unlocked.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await customer.PostAsJsonAsync(
+            "/api/customer/auth/login", new { email = "managed@example.com", password = SecurityHost.Password })).StatusCode);
+    }
 }
 
 internal sealed class SecurityHost : IAsyncDisposable
@@ -248,6 +290,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.MapAdminEndpoints();
         App.MapCustomerEndpoints();
         App.MapCustomerOrderEndpoints();
+        App.MapCustomerManagementEndpoints();
         App.MapCatalog();
         App.MapStorefront();
         App.MapPaymentOptions();

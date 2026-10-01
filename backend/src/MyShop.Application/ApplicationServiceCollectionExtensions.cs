@@ -131,6 +131,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Customers.ListCustomerOrders.ListCustomerOrders>();
         services.AddScoped<Customers.GetCustomerOrder.GetCustomerOrder>();
         services.AddScoped<Customers.CancelCustomerOrder.CancelCustomerOrder>();
+        services.AddScoped<Customers.ManageCustomers.ListManagedCustomers>();
+        services.AddScoped<Customers.ManageCustomers.GetManagedCustomer>();
+        services.AddScoped<Customers.ManageCustomers.SetCustomerLock>();
         return services;
     }
 }
