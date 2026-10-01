@@ -127,8 +127,10 @@ describe('Shop checkout', () => {
     });
     expect(page.notice()).toBe('De online betaalprovider is klaar om gekoppeld te worden.');
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain(
-      'De online betaalprovider is klaar om gekoppeld te worden.',
-    );
+    const content = fixture.nativeElement.textContent;
+    expect(content).toContain('De online betaalprovider is klaar om gekoppeld te worden.');
+    expect(content).toContain('Betaalprovider: Mollie');
+    expect(content).toContain('Bezorging: Pakketdienst');
+    expect(content).toContain('Totaal EUR 29,95');
   });
 });

@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CheckoutOrderLine, OrderApi, OrderReceipt } from './order.api';
+import { CheckoutOrderLine, OnlinePaymentStart, OrderApi, OrderReceipt } from './order.api';
 import { errorMessage } from '../catalog/error-message';
 import { Auth } from '../auth/auth';
 import { CustomerAccountApi } from '../customer/customer-account.api';
@@ -73,6 +73,17 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
         @if (paymentMethod() === 'online') {
           <p class="muted">Je bestelling wordt gecontroleerd voordat de betaalprovider wordt gestart.</p>
         }
+        @if (onlinePayment(); as payment) {
+          <section class="notice" aria-label="Online betaalstart">
+            <p>Betaalprovider: {{ payment.providerName }}</p>
+            <p>Bezorging: {{ payment.deliveryMethod.name }}</p>
+            <ul>
+              @for (total of payment.totals; track total.currency) {
+                <li>Totaal {{ total.currency }} {{ amount(total.amount) }}</li>
+              }
+            </ul>
+          </section>
+        }
         <button [disabled]="busy()">
           {{ buttonText() }}
         </button>
@@ -92,6 +103,7 @@ export class ShopCheckout implements OnInit {
   readonly busy = signal(false);
   readonly failure = signal('');
   readonly notice = signal('');
+  readonly onlinePayment = signal<OnlinePaymentStart | null>(null);
   customerName = '';
   email = '';
   addressLine = '';
@@ -119,6 +131,7 @@ export class ShopCheckout implements OnInit {
     if (this.busy()) return;
     this.failure.set('');
     this.notice.set('');
+    this.onlinePayment.set(null);
     this.busy.set(true);
     const request = {
       checkoutToken: this.checkoutToken,
@@ -144,6 +157,7 @@ export class ShopCheckout implements OnInit {
           next: (payment) => {
             this.busy.set(false);
             this.notice.set(payment.message);
+            this.onlinePayment.set(payment);
           },
           error: (error) => this.showFailure(error),
         });
@@ -168,6 +182,10 @@ export class ShopCheckout implements OnInit {
         ? error.error.message
         : errorMessage(error),
     );
+  }
+
+  amount(value: string) {
+    return value.replace('.', ',');
   }
 
   buttonText() {
