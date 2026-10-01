@@ -9,7 +9,9 @@ internal sealed class TestOnlinePaymentProvider : IOnlinePaymentProvider
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
-        ArgumentException.ThrowIfNullOrWhiteSpace(request.ProviderName);
+        if (!string.Equals(request.ProviderName, OnlinePaymentAvailability.TestPayProviderName,
+                StringComparison.Ordinal))
+            throw new InvalidOperationException("TestPay can only start TestPay payment requests.");
         ArgumentException.ThrowIfNullOrWhiteSpace(request.PaymentReference);
         if (request.CheckoutToken == Guid.Empty)
             throw new ArgumentException("Checkout token is required.", nameof(request));

@@ -6,6 +6,7 @@ namespace MyShop.Infrastructure.Payments;
 internal sealed class OnlinePaymentAvailability : IOnlinePaymentAvailability
 {
     public const string ProviderKey = "Payments:Online:Provider";
+    public const string TestPayProviderName = "TestPay";
 
     public OnlinePaymentAvailability(IConfiguration configuration)
     {
@@ -19,6 +20,10 @@ internal sealed class OnlinePaymentAvailability : IOnlinePaymentAvailability
     private static string? Normalize(string? value)
     {
         value = value?.Trim();
-        return string.IsNullOrWhiteSpace(value) ? null : value;
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+        return string.Equals(value, TestPayProviderName, StringComparison.OrdinalIgnoreCase)
+            ? TestPayProviderName
+            : null;
     }
 }

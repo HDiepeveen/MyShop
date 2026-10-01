@@ -82,6 +82,31 @@ public sealed class PaymentOptionsHttpTests
 public sealed class ConfiguredOnlinePaymentOptionsHttpTests
 {
     [SecuritySqlFact]
+    public async Task UnsupportedProviderIsNotExposedAsConfigured()
+    {
+        await using var host = await SecurityHost.Create(new Dictionary<string, string?>
+        {
+            ["Payments:Online:Provider"] = "Mollie"
+        });
+
+        await host.Csrf();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode);
+        await host.Csrf();
+        var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/payment-options");
+        Assert.False(settings.GetProperty("onlinePaymentConfigured").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, settings.GetProperty("onlinePaymentProvider").ValueKind);
+
+        var response = await host.Client.PutAsJsonAsync("/api/payment-options", new
+        {
+            payLaterEnabled = true,
+            onlinePaymentEnabled = true,
+            revision = settings.GetProperty("revision").GetGuid()
+        });
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("onlinePaymentNotConfigured",
+            (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+    [SecuritySqlFact]
     public async Task AdministratorCanExposeConfiguredOnlinePaymentMethod()
     {
         await using var host = await SecurityHost.Create(new Dictionary<string, string?>
