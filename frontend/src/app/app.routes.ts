@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from './auth/auth-routing';
+import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
@@ -80,6 +80,26 @@ export const routes: Routes = [
         path: 'winkelmand',
         loadComponent: () => import('./shop/shop-cart').then((m) => m.ShopCart),
         title: 'Winkelmand · MyShop',
+      },
+      {
+        path: 'inloggen',
+        loadComponent: () => import('./customer/customer-login').then((m) => m.CustomerLogin),
+        title: 'Inloggen · MyShop',
+      },
+      {
+        path: 'registreren',
+        loadComponent: () => import('./customer/customer-register').then((m) => m.CustomerRegister),
+        title: 'Registreren · MyShop',
+      },
+      {
+        path: 'account', canActivate: [customerGuard],
+        loadComponent: () => import('./customer/customer-profile').then((m) => m.CustomerProfile),
+        title: 'Mijn account · MyShop',
+      },
+      {
+        path: 'account/wachtwoord', canActivate: [customerGuard],
+        loadComponent: () => import('./auth/password').then((m) => m.Password),
+        title: 'Wachtwoord wijzigen · MyShop',
       },
       {
         path: ':id',

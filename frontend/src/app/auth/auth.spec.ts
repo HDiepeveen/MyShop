@@ -5,7 +5,7 @@ import { Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Auth } from './auth';
-import { adminGuard, authErrors, safeReturnUrl } from './auth-routing';
+import { adminGuard, authErrors, customerGuard, safeReturnUrl } from './auth-routing';
 import { Login } from './login';
 import { Password } from './password';
 
@@ -25,6 +25,7 @@ describe('Admin authentication', () => {
           { path: 'inloggen', component: Login },
           { path: 'geen-toegang', component: Forbidden },
           { path: 'producten', component: Protected, canActivate: [adminGuard] },
+          { path: 'winkel/account', component: Protected, canActivate: [customerGuard] },
           { path: 'account', component: Password },
         ]),
       ],
@@ -96,6 +97,30 @@ describe('Admin authentication', () => {
     expect(TestBed.inject(Auth).session()?.name).toBe('admin');
   });
 
+  it('logs a customer in and permits the protected customer account route', async () => {
+    const auth = TestBed.inject(Auth);
+    auth.customerLogin('customer@example.com', 'secret').subscribe();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const customerLogin = http.expectOne('/api/customer/auth/login');
+    expect(customerLogin.request.body).toEqual({
+      email: 'customer@example.com', password: 'secret',
+    });
+    customerLogin.flush(null);
+    http.expectOne('/api/auth/csrf').flush(null);
+    http.expectOne('/api/auth/session').flush({
+      authenticated: true, administrator: false, customer: true, name: 'customer@example.com',
+    });
+    const harness = await RouterTestingHarness.create();
+    const navigation = harness.navigateByUrl('/winkel/account');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    http.expectOne('/api/auth/session').flush({
+      authenticated: true, administrator: false, customer: true, name: 'customer@example.com',
+    });
+    http.expectOne('/api/auth/csrf').flush(null);
+    await navigation;
+    expect(harness.routeNativeElement!.textContent).toBe('Protected');
+  });
+
   it('shows a generic login failure and clears the password without retrying', () => {
     const fixture = TestBed.createComponent(Login);
     const login = fixture.componentInstance;
@@ -152,7 +177,7 @@ describe('Admin authentication', () => {
 
   it('clears local session state when logout confirms the session has already expired', () => {
     const auth = TestBed.inject(Auth);
-    auth.session.set({ authenticated: true, administrator: true, name: 'admin' });
+    auth.session.set({ authenticated: true, administrator: true, customer: false, name: 'admin' });
     let completed = false;
     auth.logout().subscribe(() => (completed = true));
     http.expectOne('/api/auth/csrf').flush(null);
@@ -163,7 +188,7 @@ describe('Admin authentication', () => {
 
   it('does not consider a failed logout a completed logout', () => {
     const auth = TestBed.inject(Auth);
-    auth.session.set({ authenticated: true, administrator: true, name: 'admin' });
+    auth.session.set({ authenticated: true, administrator: true, customer: false, name: 'admin' });
     auth.logout().subscribe({ error: () => {} });
     http.expectOne('/api/auth/csrf').flush(null);
     http.expectOne('/api/auth/logout').flush({}, { status: 503, statusText: 'Unavailable' });

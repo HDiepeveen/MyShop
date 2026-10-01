@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Application.Checkout.Abstractions;
+using MyShop.Application.Customers.Abstractions;
 using MyShop.Infrastructure.Persistence;
 using MyShop.Infrastructure.Persistence.Repositories;
 using MyShop.Infrastructure.Payments;
@@ -58,6 +59,8 @@ public static class InfrastructureServiceCollectionExtensions
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IOrderStatusRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<ICustomerProfileRepository>(provider =>
+            new CustomerProfileRepository(provider.GetRequiredService<MyShopDbContext>()));
         return services;
     }
 }

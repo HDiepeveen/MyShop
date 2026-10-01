@@ -10,6 +10,8 @@ namespace MyShop.Api.Security;
 public static class AdminSecurity
 {
     public const string Role = "Administrator";
+    public const string CustomerRole = "Customer";
+    public const string CustomerPolicy = "Customer";
 
     public static IServiceCollection AddAdminSecurity(this IServiceCollection services, bool development)
     {
@@ -37,8 +39,12 @@ public static class AdminSecurity
             options.Events.OnRedirectToLogin = context => { context.Response.StatusCode = 401; return Task.CompletedTask; };
             options.Events.OnRedirectToAccessDenied = context => { context.Response.StatusCode = 403; return Task.CompletedTask; };
         });
-        services.AddAuthorization(options => options.FallbackPolicy = new AuthorizationPolicyBuilder()
-            .RequireAuthenticatedUser().RequireRole(Role).Build());
+        services.AddAuthorization(options =>
+        {
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser().RequireRole(Role).Build();
+            options.AddPolicy(CustomerPolicy, policy => policy.RequireRole(CustomerRole));
+        });
         services.AddAntiforgery(options =>
         {
             options.HeaderName = "X-XSRF-TOKEN";
@@ -53,6 +59,9 @@ public static class AdminSecurity
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
                 { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
             options.AddPolicy("storefront-order", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+                { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            options.AddPolicy("customer-auth", context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
                 { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
         });

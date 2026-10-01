@@ -79,7 +79,8 @@ export class Password {
       .subscribe({
         next: () => {
           this.current = this.password = this.confirm = '';
-          void this.router.navigate(['/inloggen'], { queryParams: { reason: 'changed' } });
+          const login = this.router.url.startsWith('/winkel/') ? '/winkel/inloggen' : '/inloggen';
+          void this.router.navigate([login], { queryParams: { reason: 'changed' } });
         },
         error: () => {
           this.busy.set(false);

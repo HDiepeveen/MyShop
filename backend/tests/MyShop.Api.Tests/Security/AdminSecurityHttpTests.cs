@@ -39,7 +39,9 @@ public sealed class AdminSecurityHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode);
         host.Client.DefaultRequestHeaders.Remove("X-XSRF-TOKEN");
         var routes = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
-            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth") && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
+            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth")
+                && !e.RoutePattern.RawText.StartsWith("/api/customer/")
+                && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
         foreach (var endpoint in routes)
         foreach (var method in endpoint.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods.Where(m => m != "GET"))
         {
@@ -55,7 +57,9 @@ public sealed class AdminSecurityHttpTests
     {
         await using var host = await SecurityHost.Create();
         var routes = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
-            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth") && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
+            .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth")
+                && !e.RoutePattern.RawText.StartsWith("/api/customer/")
+                && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
         Assert.NotEmpty(routes);
         foreach (var endpoint in routes)
         foreach (var method in endpoint.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods)
@@ -172,6 +176,43 @@ public sealed class AdminSecurityHttpTests
         for (var i = 0; i < 4; i++) await host.Login("wrong");
         Assert.Equal(HttpStatusCode.TooManyRequests, (await host.Login()).StatusCode);
     }
+
+    [SecuritySqlFact]
+    public async Task CustomerCanRegisterLoginAndMaintainOwnProfileWithoutAdminAccess()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf();
+        var registered = await host.Client.PostAsJsonAsync("/api/customer/auth/register", new
+            { email = "customer@example.com", password = SecurityHost.Password });
+        Assert.Equal(HttpStatusCode.NoContent, registered.StatusCode);
+        var session = await host.Client.GetFromJsonAsync<JsonElement>("/api/auth/session");
+        Assert.True(session.GetProperty("customer").GetBoolean());
+        Assert.False(session.GetProperty("administrator").GetBoolean());
+        Assert.Equal(HttpStatusCode.Forbidden, (await host.Client.GetAsync("/api/products")).StatusCode);
+        await host.Csrf();
+        var saved = await host.Client.PutAsJsonAsync("/api/customer/profile", new
+        {
+            name = "Ada Lovelace", addressLine = "Straat 1", postalCode = "1234 AB",
+            city = "Utrecht", countryCode = "nl", revision = (Guid?)null
+        });
+        Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+        var profile = await saved.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("NL", profile.GetProperty("countryCode").GetString());
+        Assert.NotEqual(Guid.Empty, profile.GetProperty("revision").GetGuid());
+        Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PostAsJsonAsync(
+            "/api/customer/auth/register", new { email = "customer@example.com", password = SecurityHost.Password })).StatusCode);
+        await host.Csrf();
+        Assert.Equal(HttpStatusCode.NoContent,
+            (await host.Client.PostAsJsonAsync("/api/auth/logout", new { })).StatusCode);
+        await host.Csrf();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync(
+            "/api/customer/auth/login", new { email = "customer@example.com", password = SecurityHost.Password })).StatusCode);
+        var loaded = await host.Client.GetFromJsonAsync<JsonElement>("/api/customer/profile");
+        Assert.Equal("Ada Lovelace", loaded.GetProperty("name").GetString());
+        await host.Csrf();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync("/api/auth/password",
+            new { currentPassword = SecurityHost.Password, newPassword = "New-Customer-Password42!" })).StatusCode);
+    }
 }
 
 internal sealed class SecurityHost : IAsyncDisposable
@@ -205,6 +246,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App = builder.Build();
         App.UseAdminSecurity();
         App.MapAdminEndpoints();
+        App.MapCustomerEndpoints();
         App.MapCatalog();
         App.MapStorefront();
         App.MapPaymentOptions();

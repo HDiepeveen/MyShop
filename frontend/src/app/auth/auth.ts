@@ -5,6 +5,7 @@ import { catchError, of, switchMap, tap, throwError } from 'rxjs';
 export interface AdminSession {
   authenticated: boolean;
   administrator: boolean;
+  customer: boolean;
   name: string | null;
 }
 @Injectable({ providedIn: 'root' })
@@ -22,6 +23,20 @@ export class Auth {
   login(userName: string, password: string) {
     return this.csrf().pipe(
       switchMap(() => this.http.post<void>('/api/auth/login', { userName, password })),
+      switchMap(() => this.csrf()),
+      switchMap(() => this.load()),
+    );
+  }
+  customerLogin(email: string, password: string) {
+    return this.csrf().pipe(
+      switchMap(() => this.http.post<void>('/api/customer/auth/login', { email, password })),
+      switchMap(() => this.csrf()),
+      switchMap(() => this.load()),
+    );
+  }
+  registerCustomer(email: string, password: string) {
+    return this.csrf().pipe(
+      switchMap(() => this.http.post<void>('/api/customer/auth/register', { email, password })),
       switchMap(() => this.csrf()),
       switchMap(() => this.load()),
     );

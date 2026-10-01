@@ -21,6 +21,7 @@ if (args.Contains("--create-admin") || args.Contains("--reset-admin"))
 if (!app.Environment.IsDevelopment()) { app.UseHsts(); app.UseHttpsRedirection(); }
 app.UseAdminSecurity();
 app.MapAdminEndpoints();
+app.MapCustomerEndpoints();
 
 app.MapCatalog();
 app.MapStorefront();

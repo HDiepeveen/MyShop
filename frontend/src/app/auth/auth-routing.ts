@@ -24,14 +24,38 @@ export const adminGuard: CanActivateFn = (_, state) => {
   );
 };
 
+export const customerGuard: CanActivateFn = (_, state) => {
+  const auth = inject(Auth);
+  const router = inject(Router);
+  return auth.load().pipe(
+    switchMap((session) => {
+      if (!session.authenticated)
+        return of(router.createUrlTree(['/winkel/inloggen'], { queryParams: { returnUrl: state.url } }));
+      return session.customer ? auth.prepare().pipe(map(() => true)) : of(router.createUrlTree(['/geen-toegang']));
+    }),
+    catchError(() => of(router.createUrlTree(['/winkel/inloggen']))),
+  );
+};
+
 export const authErrors: HttpInterceptorFn = (request, next) => {
   const router = inject(Router);
   const auth = inject(Auth);
   return next(request).pipe(
     catchError((error) => {
       if (
+        request.url.startsWith('/api/customer/') &&
+        error instanceof HttpErrorResponse &&
+        error.status === 401
+      ) {
+        auth.session.set(null);
+        void router.navigate(['/winkel/inloggen'], {
+          queryParams: { returnUrl: router.url, reason: 'expired' },
+        });
+      }
+      if (
         request.url.startsWith('/api/') &&
         !request.url.startsWith('/api/auth/') &&
+        !request.url.startsWith('/api/customer/') &&
         !request.url.startsWith('/api/shop/') &&
         error instanceof HttpErrorResponse
       ) {

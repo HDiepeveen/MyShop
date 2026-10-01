@@ -35,7 +35,7 @@ export class App {
     this.auth.logout().subscribe({
       next: () => {
         this.signingOut.set(false);
-        void this.router.navigate(['/inloggen']);
+        void this.router.navigate([this.storefront() ? '/winkel' : '/inloggen']);
       },
       error: () => {
         this.signingOut.set(false);

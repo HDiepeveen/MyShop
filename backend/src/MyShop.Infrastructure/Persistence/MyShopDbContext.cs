@@ -22,6 +22,7 @@ public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) :
     internal DbSet<OrderPersistence> Orders => Set<OrderPersistence>();
     internal DbSet<OrderLinePersistence> OrderLines => Set<OrderLinePersistence>();
     internal DbSet<OrderTotalPersistence> OrderTotals => Set<OrderTotalPersistence>();
+    internal DbSet<CustomerProfilePersistence> CustomerProfiles => Set<CustomerProfilePersistence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

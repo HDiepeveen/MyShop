@@ -1,9 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CheckoutOrderLine, OrderApi, OrderReceipt } from './order.api';
 import { errorMessage } from '../catalog/error-message';
+import { Auth } from '../auth/auth';
+import { CustomerAccountApi } from '../customer/customer-account.api';
 
 @Component({
   selector: 'app-shop-checkout',
@@ -72,9 +74,11 @@ import { errorMessage } from '../catalog/error-message';
     </section>
   `,
 })
-export class ShopCheckout {
+export class ShopCheckout implements OnInit {
   private readonly api = inject(OrderApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly auth = inject(Auth);
+  private readonly account = inject(CustomerAccountApi);
   readonly lines = input.required<readonly CheckoutOrderLine[]>();
   readonly paymentMethod = input.required<string>();
   readonly placed = output<OrderReceipt>();
@@ -87,6 +91,21 @@ export class ShopCheckout {
   city = '';
   countryCode = 'NL';
   private checkoutToken = crypto.randomUUID();
+
+  ngOnInit() {
+    if (!this.auth.session()?.customer) return;
+    this.account.profile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (profile) => {
+        if (this.customerName || this.addressLine || this.postalCode || this.city) return;
+        this.customerName = profile.name ?? '';
+        this.email = profile.email;
+        this.addressLine = profile.addressLine ?? '';
+        this.postalCode = profile.postalCode ?? '';
+        this.city = profile.city ?? '';
+        this.countryCode = profile.countryCode ?? 'NL';
+      },
+    });
+  }
 
   submit() {
     if (this.busy()) return;

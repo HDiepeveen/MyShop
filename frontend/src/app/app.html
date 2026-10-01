@@ -26,8 +26,17 @@
         <nav aria-label="Winkelnavigatie" class="actions">
           <a routerLink="/winkel">Assortiment</a
           ><a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
+          @if (auth.session()?.customer) {
+            <a routerLink="/winkel/account">Mijn account</a>
+          } @else {
+            <a routerLink="/winkel/inloggen">Inloggen</a>
+          }
         </nav>
-        <a routerLink="/inloggen">Beheer</a>
+        @if (auth.session()?.authenticated) {
+          <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">Uitloggen</button>
+        } @else {
+          <a routerLink="/inloggen">Beheer</a>
+        }
       } @else {
         <a routerLink="/winkel">Bekijk winkel</a>
         <span>Mijn winkel <span class="divider">/</span> Beheer</span>

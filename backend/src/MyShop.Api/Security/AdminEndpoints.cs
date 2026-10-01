@@ -23,7 +23,8 @@ public static class AdminEndpoints
         {
             authenticated = context.User.Identity?.IsAuthenticated == true,
             name = context.User.Identity?.Name,
-            administrator = context.User.IsInRole(AdminSecurity.Role)
+            administrator = context.User.IsInRole(AdminSecurity.Role),
+            customer = context.User.IsInRole(AdminSecurity.CustomerRole)
         })).AllowAnonymous();
         app.MapPost("/api/auth/login", Login).AllowAnonymous().RequireRateLimiting("admin-login");
         app.MapPost("/api/auth/logout", async (HttpContext context, UserManager<IdentityUser> users, SignInManager<IdentityUser> signIn) =>
@@ -44,7 +45,7 @@ public static class AdminEndpoints
             if (!result.Succeeded) return Results.BadRequest(new { message = "Controleer het huidige wachtwoord en de eisen voor het nieuwe wachtwoord." });
             await signIn.SignOutAsync();
             return Results.NoContent();
-        });
+        }).RequireAuthorization(policy => policy.RequireAuthenticatedUser());
     }
 
     private static async Task<IResult> Login(LoginRequest request, UserManager<IdentityUser> users, SignInManager<IdentityUser> signIn)

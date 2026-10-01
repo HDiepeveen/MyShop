@@ -8,6 +8,9 @@ De openbare leesroutes zijn `/api/shop/categories`, `/api/shop/products`, `/api/
 
 Publiceer producten, beheer variantvoorraad en beheer de betaalopties via het beveiligde beheer. Zie [Voorraadbeheer](inventory.md). Online betalen volgt in een afzonderlijk onderdeel.
 
+Klanten kunnen als gast bestellen of een account gebruiken om hun standaardafleveradres te bewaren;
+zie [Klantaccounts](customer-accounts.md).
+
 ## Actuele variantprijzen
 
 De productpagina haalt prijzen afzonderlijk op en toont het bedrag en de valuta van de gekozen variant. De server berekent alle varianten op hetzelfde UTC-tijdstip met de bestaande domeinregels: alleen de actieve regel met de hoogste prioriteit, bij gelijke prioriteit het laagste regel-ID. Begintijd en eindtijd zijn inclusief. Er worden geen kortingen gestapeld. Bedragen worden volgens de bestaande Money-regels afgerond en nooit negatief.
