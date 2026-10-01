@@ -19,7 +19,8 @@ public sealed class PlaceOrderTests
         Assert.Equal(scenario.Orders.Saved!.Id, result.Receipt!.Id);
         Assert.Equal(2, Assert.Single(scenario.Orders.Saved.Lines).Quantity);
         Assert.Equal(25m, Assert.Single(scenario.Orders.Saved.Lines).UnitPrice.Amount);
-        Assert.Equal(50m, Assert.Single(scenario.Orders.Saved.Totals).Amount);
+        Assert.Equal(57.50m, Assert.Single(scenario.Orders.Saved.Totals).Amount);
+        Assert.Equal("Standaardbezorging", scenario.Orders.Saved.DeliveryMethod!.Name);
         Assert.Equal("Ada", scenario.Orders.Saved.Customer.Name);
         Assert.Equal("Betaal binnen 14 dagen.", scenario.Orders.Saved.PaymentInstructions);
         Assert.Equal(scenario.Orders.Saved.PaymentInstructions, result.Receipt.PaymentInstructions);
@@ -97,6 +98,7 @@ public sealed class PlaceOrderTests
         public Products Products { get; } = new();
         public Payments Payments { get; } = new();
         public Orders Orders { get; } = new();
+        public DeliveryMethods DeliveryMethods { get; } = new();
         public Guid Token { get; } = Guid.NewGuid();
         public string PaymentMethod { get; init; } = "payLater";
 
@@ -104,10 +106,11 @@ public sealed class PlaceOrderTests
         {
             var variant = Products.Product.Variants.Single();
             var useCase = new PlaceOrder(new QuoteStorefrontCart(Products), Payments,
-                new Availability(), Orders);
+                new Availability(), DeliveryMethods, Orders);
             return useCase.ExecuteAsync(new(Token, PaymentMethod, " Ada ", "ada@example.com",
                 "Street 1", "1234 AB", "Amsterdam", "NL",
-                [new(Products.Product.Id.Value, variant.Id.Value, 2, 25m, "EUR")], "customer-user"), CancellationToken.None);
+                [new(Products.Product.Id.Value, variant.Id.Value, 2, 25m, "EUR")], "customer-user",
+                DeliveryMethods.Id), CancellationToken.None);
         }
     }
 
@@ -142,6 +145,19 @@ public sealed class PlaceOrderTests
     }
 
     private sealed class Availability : IOnlinePaymentAvailability { public bool IsConfigured => false; }
+
+    private sealed class DeliveryMethods : IDeliveryMethodRepository
+    {
+        public Guid Id { get; } = Guid.NewGuid();
+        public Task<DeliveryMethodSnapshot?> GetAsync(Guid id, CancellationToken cancellationToken) =>
+            Task.FromResult<DeliveryMethodSnapshot?>(id == Id
+                ? new(Id, "Standaardbezorging", null, 7.50m, "EUR", true, Guid.NewGuid()) : null);
+        public Task<bool> NameExistsAsync(string name, Guid? excludingId, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<IReadOnlyList<DeliveryMethodSnapshot>> ListAsync(bool enabledOnly, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<DeliveryMethodSnapshot> AddAsync(string name, string? description, decimal amount, string currency, bool enabled, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<DeliveryMethodSnapshot?> UpdateAsync(Guid id, string name, string? description, decimal amount, string currency, bool enabled, Guid expectedRevision, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public Task<bool> DeleteAsync(Guid id, Guid expectedRevision, CancellationToken cancellationToken) => throw new NotSupportedException();
+    }
 
     private sealed class Orders : IOrderRepository
     {

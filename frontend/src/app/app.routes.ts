@@ -25,6 +25,11 @@ const protectedRoutes: Routes = [
     title: 'Bestellingen · MyShop',
   },
   {
+    path: 'instellingen/bezorgen',
+    loadComponent: () => import('./checkout/delivery-settings').then((m) => m.DeliverySettings),
+    title: 'Bezorgopties · MyShop',
+  },
+  {
     path: 'instellingen/betalen',
     loadComponent: () => import('./checkout/payment-settings').then((m) => m.PaymentSettings),
     title: 'Betaalopties · MyShop',

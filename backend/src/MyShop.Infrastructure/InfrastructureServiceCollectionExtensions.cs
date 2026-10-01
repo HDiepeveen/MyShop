@@ -52,6 +52,8 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IStorefrontCatalog>(provider => new StorefrontCatalog(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IPaymentOptionsRepository>(provider =>
             new PaymentOptionsRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<IDeliveryMethodRepository>(provider =>
+            new DeliveryMethodRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability());
         services.AddScoped<IOrderRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));

@@ -32,7 +32,8 @@ public static class PlaceOrderEndpoint
             var result = await useCase.ExecuteAsync(new(request.CheckoutToken, request.PaymentMethod,
                 request.CustomerName, request.Email, request.AddressLine, request.PostalCode,
                 request.City, request.CountryCode, lines,
-                context.User.IsInRole(AdminSecurity.CustomerRole) ? users.GetUserId(context.User) : null),
+                context.User.IsInRole(AdminSecurity.CustomerRole) ? users.GetUserId(context.User) : null,
+                request.DeliveryMethodId),
                 cancellationToken);
             return result.Failure switch
             {
@@ -50,6 +51,11 @@ public static class PlaceOrderEndpoint
                 {
                     code = "onlinePaymentRequired",
                     message = "Start eerst de online betaling."
+                }),
+                PlaceOrderFailure.DeliveryUnavailable => Results.Conflict(new
+                {
+                    code = "deliveryUnavailable",
+                    message = "De gekozen bezorgoptie is niet meer beschikbaar."
                 }),
                 null => Results.Ok(new PlaceOrderResponse(result.Receipt!.Id, result.Receipt.Number,
                     result.Receipt.PlacedAt, result.Receipt.PaymentInstructions)),
@@ -69,7 +75,7 @@ public static class PlaceOrderEndpoint
 
 public sealed record PlaceOrderRequest(Guid CheckoutToken, string PaymentMethod, string CustomerName,
     string Email, string AddressLine, string PostalCode, string City, string CountryCode,
-    IReadOnlyList<PlaceOrderLineRequest?> Lines);
+    Guid DeliveryMethodId, IReadOnlyList<PlaceOrderLineRequest?> Lines);
 public sealed record PlaceOrderLineRequest(Guid ProductId, Guid VariantId, int Quantity,
     string ExpectedAmount, string ExpectedCurrency);
 public sealed record PlaceOrderResponse(Guid Id, string Number, DateTimeOffset PlacedAt,

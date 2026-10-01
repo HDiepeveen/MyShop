@@ -103,7 +103,10 @@ public static class CustomerOrderEndpoints
         order.Lines.Select(line => new CustomerOrderLineResponse(line.ProductId, line.VariantId,
             line.ProductName, line.VariantName, line.Quantity, Amount(line.UnitAmount),
             line.Currency, Amount(line.TotalAmount))).ToArray(),
-        order.Totals.Select(MapTotal).ToArray());
+        order.Totals.Select(MapTotal).ToArray(),
+        order.DeliveryMethod is null ? null : new(order.DeliveryMethod.Id,
+            order.DeliveryMethod.Name, order.DeliveryMethod.Description,
+            Amount(order.DeliveryMethod.Amount), order.DeliveryMethod.Currency));
 
     private static CustomerOrderTotalResponse MapTotal(OrderTotalSnapshot total) =>
         new(total.Currency, Amount(total.Amount));
@@ -133,7 +136,10 @@ public sealed record CustomerOrderDetailResponse(Guid Id, string Number, DateTim
     string PaymentMethod, string? PaymentInstructions, string Status, DateTimeOffset? PaidAt,
     DateTimeOffset? ShippedAt, string? ShippingCarrier, string? TrackingCode,
     DateTimeOffset? CancelledAt, DateTimeOffset? RefundedAt, Guid Revision,
-    IReadOnlyList<CustomerOrderLineResponse> Lines, IReadOnlyList<CustomerOrderTotalResponse> Totals);
+    IReadOnlyList<CustomerOrderLineResponse> Lines, IReadOnlyList<CustomerOrderTotalResponse> Totals,
+    CustomerOrderDeliveryMethodResponse? DeliveryMethod = null);
+public sealed record CustomerOrderDeliveryMethodResponse(Guid Id, string Name, string? Description,
+    string Amount, string Currency);
 public sealed record CustomerOrderCustomerResponse(string Name, string Email);
 public sealed record CustomerOrderAddressResponse(string AddressLine, string PostalCode, string City,
     string CountryCode);

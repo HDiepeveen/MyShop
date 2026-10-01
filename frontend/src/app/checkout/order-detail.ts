@@ -47,6 +47,12 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             </dd>
           </dl>
         </section>
+        @if (order.deliveryMethod; as delivery) {
+          <section class="panel"><h2>Bezorgoptie</h2>
+            <p><strong>{{ delivery.name }}</strong> · {{ delivery.currency }} {{ delivery.amount.replace('.', ',') }}</p>
+            @if (delivery.description) { <p class="preserve-lines">{{ delivery.description }}</p> }
+          </section>
+        }
         <section class="panel">
           <h2>Bezorgadres</h2>
           <address>

@@ -82,7 +82,7 @@ public sealed class PersistenceConfigurationContractTests
 
     [Fact]
     public void PersistenceConfigurationInventory_ContainsExpectedNumberOfConfigurations() =>
-        Assert.Equal(16, Configurations.Length);
+        Assert.Equal(17, Configurations.Length);
 
     [Fact]
     public void PersistenceConfigurationInventory_HasUniqueNames() =>

@@ -28,6 +28,7 @@ describe('Shop checkout', () => {
     const fixture = TestBed.createComponent(ShopCheckout);
     fixture.componentRef.setInput('lines', [line]);
     fixture.componentRef.setInput('paymentMethod', 'payLater');
+    fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
     const page = fixture.componentInstance;
     page.customerName = 'Ada Lovelace';
     page.email = 'ada@example.com';
@@ -45,6 +46,7 @@ describe('Shop checkout', () => {
     expect(request.request.body).toEqual({
       checkoutToken: expect.stringMatching(/^[0-9a-f-]{36}$/),
       paymentMethod: 'payLater',
+      deliveryMethodId: '40000000-0000-0000-0000-000000000001',
       customerName: 'Ada Lovelace',
       email: 'ada@example.com',
       addressLine: 'Main street 1',
@@ -67,6 +69,7 @@ describe('Shop checkout', () => {
     const fixture = TestBed.createComponent(ShopCheckout);
     fixture.componentRef.setInput('lines', [line]);
     fixture.componentRef.setInput('paymentMethod', 'payLater');
+    fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
     const page = fixture.componentInstance;
 
     page.submit();

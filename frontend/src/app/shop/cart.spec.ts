@@ -96,7 +96,10 @@ describe('Cart page', () => {
     });
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.match('/api/shop/delivery-methods').forEach((request) => request.flush([]));
+    http.verify();
+  });
   function priceReply(amount: string | null = '12.50') {
     http.expectOne(`/api/shop/products/${productId}`).flush(product);
     http

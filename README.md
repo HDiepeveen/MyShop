@@ -47,3 +47,5 @@ See [Klantwinkel](docs/storefront.md) for public browsing, publication rules and
 See [Order management](docs/order-management.md) for the protected order overview and recorded order details.
 
 See [Klantenbeheer](docs/customer-management.md) for searching, viewing, blocking and unblocking customer accounts.
+
+See [Bezorgopties](docs/delivery-methods.md) for managed checkout choices and immutable order delivery snapshots.

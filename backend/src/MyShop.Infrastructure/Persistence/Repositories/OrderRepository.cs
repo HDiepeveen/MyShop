@@ -77,6 +77,11 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             PostalCode = order.DeliveryAddress.PostalCode,
             City = order.DeliveryAddress.City,
             CountryCode = order.DeliveryAddress.CountryCode,
+            DeliveryMethodId = order.DeliveryMethod?.Id,
+            DeliveryMethodName = order.DeliveryMethod?.Name,
+            DeliveryDescription = order.DeliveryMethod?.Description,
+            DeliveryAmount = order.DeliveryMethod?.Fee.Amount,
+            DeliveryCurrency = order.DeliveryMethod?.Fee.Currency,
             PaymentMethod = (int)order.PaymentMethod,
             PaymentInstructions = order.PaymentInstructions,
             Status = (int)order.Status,
@@ -216,7 +221,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 line.Currency,
                 line.TotalAmount)).ToArray(),
             order.Totals.OrderBy(total => total.Currency).Select(total =>
-                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray());
+                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
+            Delivery(order));
     }
 
     public async Task<CustomerOrderPage> ListAsync(string customerUserId, int offset, int limit,
@@ -262,8 +268,15 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 line.ProductId, line.VariantId, line.ProductName, line.VariantName, line.Quantity,
                 line.UnitAmount, line.Currency, line.TotalAmount)).ToArray(),
             order.Totals.OrderBy(total => total.Currency).Select(total =>
-                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray());
+                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(), Delivery(order));
     }
+
+    private static OrderDeliveryMethodSnapshot? Delivery(OrderPersistence order) =>
+        order.DeliveryMethodId is null || order.DeliveryMethodName is null
+            || order.DeliveryAmount is null || order.DeliveryCurrency is null
+            ? null
+            : new(order.DeliveryMethodId.Value, order.DeliveryMethodName,
+                order.DeliveryDescription, order.DeliveryAmount.Value, order.DeliveryCurrency);
 
     public async Task<Guid?> MarkPaidAsync(Guid id, Guid expectedRevision,
         DateTimeOffset paidAt, string paymentReference, CancellationToken cancellationToken)

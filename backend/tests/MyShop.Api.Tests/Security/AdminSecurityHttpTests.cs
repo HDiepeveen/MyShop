@@ -294,6 +294,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.MapCatalog();
         App.MapStorefront();
         App.MapPaymentOptions();
+        App.MapDeliveryMethods();
         App.MapOrderManagement();
         await using (var scope = App.Services.CreateAsyncScope())
         {

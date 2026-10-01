@@ -80,7 +80,7 @@ export const authErrors: HttpInterceptorFn = (request, next) => {
 export function safeReturnUrl(value: string | null): string {
   // Only routes within this administration app; never interpret an external URL.
   return value &&
-    /^\/(?:producten|categorieen|producttypen|bestellingen|klanten|instellingen\/betalen)(?:[/?]|$)/.test(
+    /^\/(?:producten|categorieen|producttypen|bestellingen|klanten|instellingen\/(?:betalen|bezorgen))(?:[/?]|$)/.test(
       value,
     ) &&
     !/[\\\r\n]/.test(value)

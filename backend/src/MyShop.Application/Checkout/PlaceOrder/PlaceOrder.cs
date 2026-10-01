@@ -9,20 +9,23 @@ public sealed record PlaceOrderLine(Guid ProductId, Guid VariantId, int Quantity
     decimal ExpectedAmount, string ExpectedCurrency);
 public sealed record PlaceOrderCommand(Guid CheckoutToken, string PaymentMethod, string CustomerName,
     string Email, string AddressLine, string PostalCode, string City, string CountryCode,
-    IReadOnlyList<PlaceOrderLine> Lines, string? CustomerUserId = null);
-public enum PlaceOrderFailure { CartUnavailable, PaymentUnavailable, OnlinePaymentRequired }
+    IReadOnlyList<PlaceOrderLine> Lines, string? CustomerUserId = null, Guid DeliveryMethodId = default);
+public enum PlaceOrderFailure { CartUnavailable, PaymentUnavailable, OnlinePaymentRequired, DeliveryUnavailable }
 public sealed record PlaceOrderResult(OrderReceipt? Receipt, PlaceOrderFailure? Failure)
 {
     public static PlaceOrderResult Failed(PlaceOrderFailure failure) => new(null, failure);
 }
 
 public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRepository paymentOptions,
-    IOnlinePaymentAvailability onlinePayment, IOrderRepository orders)
+    IOnlinePaymentAvailability onlinePayment, IDeliveryMethodRepository deliveryMethods,
+    IOrderRepository orders)
 {
     private readonly QuoteStorefrontCart quoteCart = quoteCart ?? throw new ArgumentNullException(nameof(quoteCart));
     private readonly IPaymentOptionsRepository paymentOptions = paymentOptions ?? throw new ArgumentNullException(nameof(paymentOptions));
     private readonly IOnlinePaymentAvailability onlinePayment = onlinePayment ?? throw new ArgumentNullException(nameof(onlinePayment));
     private readonly IOrderRepository orders = orders ?? throw new ArgumentNullException(nameof(orders));
+    private readonly IDeliveryMethodRepository deliveryMethods = deliveryMethods
+        ?? throw new ArgumentNullException(nameof(deliveryMethods));
 
     public async Task<PlaceOrderResult> ExecuteAsync(PlaceOrderCommand command, CancellationToken cancellationToken)
     {
@@ -37,6 +40,11 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
         if (existing is not null) return new(existing, null);
         if (command.Lines.Count is < 1 or > 20)
             throw new ArgumentException("Order must contain 1 to 20 lines.", nameof(command));
+        if (command.DeliveryMethodId == Guid.Empty)
+            return PlaceOrderResult.Failed(PlaceOrderFailure.DeliveryUnavailable);
+        var delivery = await deliveryMethods.GetAsync(command.DeliveryMethodId, cancellationToken);
+        if (delivery is null || !delivery.Enabled)
+            return PlaceOrderResult.Failed(PlaceOrderFailure.DeliveryUnavailable);
 
         var settings = await paymentOptions.GetAsync(cancellationToken);
         if (command.PaymentMethod == "online")
@@ -62,7 +70,8 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
         var order = Order.Place(Guid.NewGuid(), at, customer, address,
             quote.Lines.Select(line => (line.ProductId, line.VariantId, line.Name!, line.Variant!,
                 line.Quantity, Money.Create(line.Amount!.Value, line.Currency!))),
-            settings.PayLaterInstructions);
+            settings.PayLaterInstructions, new OrderDeliveryMethod(delivery.Id, delivery.Name,
+                delivery.Description, Money.Create(delivery.Amount, delivery.Currency)));
         var receipt = await orders.AddAsync(order, command.CheckoutToken, command.CustomerUserId,
             quote.Lines.Select(line => new StockReservation(line.ProductId, line.VariantId,
                 line.Quantity)).ToArray(), cancellationToken);

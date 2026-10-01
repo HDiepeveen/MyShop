@@ -119,6 +119,9 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Checkout.GetPaymentOptions.GetPaymentOptions>();
         services.AddScoped<Checkout.GetAdminPaymentOptions.GetAdminPaymentOptions>();
         services.AddScoped<Checkout.UpdatePaymentOptions.UpdatePaymentOptions>();
+        services.AddScoped<Checkout.ManageDeliveryMethods.ListDeliveryMethods>();
+        services.AddScoped<Checkout.ManageDeliveryMethods.SaveDeliveryMethod>();
+        services.AddScoped<Checkout.ManageDeliveryMethods.DeleteDeliveryMethod>();
         services.AddScoped<Checkout.PlaceOrder.PlaceOrder>();
         services.AddScoped<Checkout.ListOrders.ListOrders>();
         services.AddScoped<Checkout.GetOrder.GetOrder>();

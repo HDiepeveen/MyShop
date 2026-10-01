@@ -28,6 +28,7 @@ app.MapCustomerManagementEndpoints();
 app.MapCatalog();
 app.MapStorefront();
 app.MapPaymentOptions();
+app.MapDeliveryMethods();
 app.MapOrderManagement();
 
 app.Run();

@@ -28,4 +28,4 @@ public sealed record CustomerOrderDetail(Guid Id, string Number, DateTimeOffset 
     OrderStatus Status, DateTimeOffset? PaidAt, DateTimeOffset? ShippedAt,
     string? ShippingCarrier, string? TrackingCode, DateTimeOffset? CancelledAt,
     DateTimeOffset? RefundedAt, Guid Revision, IReadOnlyList<OrderLineSnapshot> Lines,
-    IReadOnlyList<OrderTotalSnapshot> Totals);
+    IReadOnlyList<OrderTotalSnapshot> Totals, OrderDeliveryMethodSnapshot? DeliveryMethod = null);

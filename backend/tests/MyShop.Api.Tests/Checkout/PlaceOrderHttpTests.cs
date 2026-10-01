@@ -49,6 +49,11 @@ public sealed class PlaceOrderHttpTests
             payLaterInstructions = "Betaal binnen 14 dagen.",
             revision = paymentSettings.GetProperty("revision").GetGuid()
         })).StatusCode);
+        var delivery = await (await host.Client.PostAsJsonAsync("/api/delivery-methods", new
+        {
+            name = "Pakketdienst", description = "Binnen twee werkdagen.", amount = "4.95",
+            currency = "EUR", enabled = true
+        })).Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(HttpStatusCode.Forbidden,
             (await host.Client.GetAsync("/api/customer/orders")).StatusCode);
 
@@ -63,6 +68,7 @@ public sealed class PlaceOrderHttpTests
             checkoutToken = Guid.NewGuid(), paymentMethod = "payLater", customerName = "Ada Lovelace",
             email = "ada@example.com", addressLine = "Main street 1", postalCode = "1234 AB",
             city = "Amsterdam", countryCode = "NL",
+            deliveryMethodId = delivery.GetProperty("id").GetGuid(),
             lines = new[] { new { productId, variantId, quantity = 2, expectedAmount = "12.50", expectedCurrency = "EUR" } }
         };
         Assert.Equal(HttpStatusCode.BadRequest,
@@ -89,6 +95,10 @@ public sealed class PlaceOrderHttpTests
             .GetProperty("code").GetString());
         var order = await host.Client.GetFromJsonAsync<JsonElement>(
             $"/api/orders/{first.GetProperty("id").GetGuid()}");
+        Assert.Equal("Pakketdienst", order.GetProperty("deliveryMethod").GetProperty("name").GetString());
+        Assert.Equal("4.95", order.GetProperty("deliveryMethod").GetProperty("amount").GetString());
+        Assert.Equal("29.95", Assert.Single(order.GetProperty("totals").EnumerateArray())
+            .GetProperty("amount").GetString());
         Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync(
             $"/api/orders/{first.GetProperty("id").GetGuid()}/status", new
             {
@@ -155,7 +165,7 @@ public sealed class PlaceOrderHttpTests
             "SELECT [CustomerName] AS [Value] FROM [Orders] WHERE [CustomerUserId] IS NULL").SingleAsync());
         Assert.Equal(12.50m, await database.Database.SqlQueryRaw<decimal>(
             "SELECT TOP(1) [UnitAmount] AS [Value] FROM [OrderLines]").SingleAsync());
-        Assert.Equal(25m, await database.Database.SqlQueryRaw<decimal>(
+        Assert.Equal(29.95m, await database.Database.SqlQueryRaw<decimal>(
             "SELECT TOP(1) [Amount] AS [Value] FROM [OrderTotals]").SingleAsync());
         Assert.Equal("Betaal binnen 14 dagen.", await database.Database.SqlQueryRaw<string>(
             "SELECT TOP(1) [PaymentInstructions] AS [Value] FROM [Orders]").SingleAsync());

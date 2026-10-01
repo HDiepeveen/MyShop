@@ -21,6 +21,7 @@ export interface OrderReceipt {
 export interface PlaceOrderRequest {
   checkoutToken: string;
   paymentMethod: string;
+  deliveryMethodId: string;
   customerName: string;
   email: string;
   addressLine: string;

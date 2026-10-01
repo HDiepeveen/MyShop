@@ -220,7 +220,10 @@ public static class OrderManagementEndpoints
             Amount(line.UnitAmount),
             line.Currency,
             Amount(line.TotalAmount))).ToArray(),
-        order.Totals.Select(MapTotal).ToArray());
+        order.Totals.Select(MapTotal).ToArray(),
+        order.DeliveryMethod is null ? null : new(order.DeliveryMethod.Id,
+            order.DeliveryMethod.Name, order.DeliveryMethod.Description,
+            Amount(order.DeliveryMethod.Amount), order.DeliveryMethod.Currency));
 
     private static OrderTotalResponse MapTotal(OrderTotalSnapshot total) =>
         new(total.Currency, Amount(total.Amount));
@@ -261,6 +264,8 @@ public sealed record OrderSummaryResponse(
     DateTimeOffset? RefundedAt,
     string? RefundReason,
     IReadOnlyList<OrderTotalResponse> Totals);
+public sealed record OrderDeliveryMethodResponse(Guid Id, string Name, string? Description,
+    string Amount, string Currency);
 public sealed record OrderDetailResponse(
     Guid Id,
     string Number,
@@ -282,7 +287,8 @@ public sealed record OrderDetailResponse(
     string? RefundReason,
     Guid Revision,
     IReadOnlyList<OrderLineResponse> Lines,
-    IReadOnlyList<OrderTotalResponse> Totals);
+    IReadOnlyList<OrderTotalResponse> Totals,
+    OrderDeliveryMethodResponse? DeliveryMethod = null);
 public sealed record OrderCustomerResponse(string Name, string Email);
 public sealed record OrderAddressResponse(string AddressLine, string PostalCode, string City, string CountryCode);
 public sealed record OrderLineResponse(

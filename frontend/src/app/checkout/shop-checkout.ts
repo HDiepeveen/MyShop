@@ -81,6 +81,7 @@ export class ShopCheckout implements OnInit {
   private readonly account = inject(CustomerAccountApi);
   readonly lines = input.required<readonly CheckoutOrderLine[]>();
   readonly paymentMethod = input.required<string>();
+  readonly deliveryMethodId = input.required<string>();
   readonly placed = output<OrderReceipt>();
   readonly busy = signal(false);
   readonly failure = signal('');
@@ -115,6 +116,7 @@ export class ShopCheckout implements OnInit {
       .place({
         checkoutToken: this.checkoutToken,
         paymentMethod: this.paymentMethod(),
+        deliveryMethodId: this.deliveryMethodId(),
         customerName: this.customerName,
         email: this.email,
         addressLine: this.addressLine,

@@ -13,6 +13,11 @@ internal sealed class OrderPersistence
     public string PostalCode { get; set; } = null!;
     public string City { get; set; } = null!;
     public string CountryCode { get; set; } = null!;
+    public Guid? DeliveryMethodId { get; set; }
+    public string? DeliveryMethodName { get; set; }
+    public string? DeliveryDescription { get; set; }
+    public decimal? DeliveryAmount { get; set; }
+    public string? DeliveryCurrency { get; set; }
     public int PaymentMethod { get; set; }
     public string? PaymentInstructions { get; set; }
     public int Status { get; set; }

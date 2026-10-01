@@ -66,15 +66,18 @@ public sealed record DeliveryAddress
 public sealed record OrderLine(Guid ProductId, Guid VariantId, string ProductName, string VariantName,
     int Quantity, Money UnitPrice, Money Total);
 public sealed record OrderTotal(string Currency, decimal Amount);
+public sealed record OrderDeliveryMethod(Guid Id, string Name, string? Description, Money Fee);
 
 public sealed class Order
 {
     private Order(Guid id, DateTimeOffset placedAt, OrderCustomer customer, DeliveryAddress address,
-        IReadOnlyList<OrderLine> lines, IReadOnlyList<OrderTotal> totals, string? paymentInstructions)
+        IReadOnlyList<OrderLine> lines, IReadOnlyList<OrderTotal> totals, string? paymentInstructions,
+        OrderDeliveryMethod? deliveryMethod)
     {
         Id = id; PlacedAt = placedAt; Customer = customer; DeliveryAddress = address;
         Lines = lines; Totals = totals;
         PaymentInstructions = paymentInstructions;
+        DeliveryMethod = deliveryMethod;
     }
 
     public Guid Id { get; }
@@ -87,10 +90,12 @@ public sealed class Order
     public IReadOnlyList<OrderLine> Lines { get; }
     public IReadOnlyList<OrderTotal> Totals { get; }
     public string? PaymentInstructions { get; }
+    public OrderDeliveryMethod? DeliveryMethod { get; }
 
     public static Order Place(Guid id, DateTimeOffset placedAt, OrderCustomer customer,
         DeliveryAddress address, IEnumerable<(Guid ProductId, Guid VariantId, string ProductName,
-            string VariantName, int Quantity, Money UnitPrice)> lines, string? paymentInstructions = null)
+            string VariantName, int Quantity, Money UnitPrice)> lines, string? paymentInstructions = null,
+        OrderDeliveryMethod? deliveryMethod = null)
     {
         if (id == Guid.Empty) throw new ArgumentException("Order ID is required.", nameof(id));
         ArgumentNullException.ThrowIfNull(customer);
@@ -107,8 +112,10 @@ public sealed class Order
         }).ToArray();
         if (snapshots.Length is < 1 or > 20 || snapshots.Select(line => (line.ProductId, line.VariantId)).Distinct().Count() != snapshots.Length)
             throw new ArgumentException("Order must contain 1 to 20 unique variants.", nameof(lines));
-        var totals = snapshots.GroupBy(line => line.Total.Currency)
-            .Select(group => new OrderTotal(group.Key, group.Sum(line => line.Total.Amount)))
+        var totals = snapshots.Select(line => line.Total)
+            .Concat(deliveryMethod is null ? [] : [deliveryMethod.Fee])
+            .GroupBy(total => total.Currency)
+            .Select(group => new OrderTotal(group.Key, group.Sum(total => total.Amount)))
             .OrderBy(total => total.Currency, StringComparer.Ordinal).ToArray();
         paymentInstructions = string.IsNullOrWhiteSpace(paymentInstructions)
             ? null
@@ -116,8 +123,16 @@ public sealed class Order
         if (paymentInstructions?.Length > 2000)
             throw new ArgumentException("Payment instructions must contain at most 2000 characters.",
                 nameof(paymentInstructions));
+        if (deliveryMethod is not null)
+        {
+            if (deliveryMethod.Id == Guid.Empty) throw new ArgumentException("Delivery method ID is required.", nameof(deliveryMethod));
+            var deliveryName = Required(deliveryMethod.Name, nameof(deliveryMethod));
+            var description = string.IsNullOrWhiteSpace(deliveryMethod.Description) ? null : deliveryMethod.Description.Trim();
+            if (description?.Length > 500) throw new ArgumentException("Delivery description must contain at most 500 characters.", nameof(deliveryMethod));
+            deliveryMethod = new(deliveryMethod.Id, deliveryName, description, deliveryMethod.Fee);
+        }
         return new(id, placedAt.ToUniversalTime(), customer, address, snapshots, totals,
-            paymentInstructions);
+            paymentInstructions, deliveryMethod);
     }
 
     private static string Required(string value, int maximum, string parameter)

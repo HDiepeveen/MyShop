@@ -24,6 +24,10 @@ internal sealed class OrderPersistenceConfiguration : IEntityTypeConfiguration<O
         builder.Property(order => order.PostalCode).IsRequired().HasMaxLength(32);
         builder.Property(order => order.City).IsRequired().HasMaxLength(100);
         builder.Property(order => order.CountryCode).IsRequired().HasMaxLength(2).IsFixedLength();
+        builder.Property(order => order.DeliveryMethodName).HasMaxLength(100);
+        builder.Property(order => order.DeliveryDescription).HasMaxLength(500);
+        builder.Property(order => order.DeliveryAmount).HasPrecision(18, 2);
+        builder.Property(order => order.DeliveryCurrency).HasMaxLength(3).IsFixedLength();
         builder.Property(order => order.PaymentMethod).IsRequired().HasColumnType("int");
         builder.Property(order => order.PaymentInstructions).HasMaxLength(2000);
         builder.Property(order => order.Status).IsRequired().HasColumnType("int");

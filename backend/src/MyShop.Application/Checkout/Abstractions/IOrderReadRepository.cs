@@ -51,7 +51,8 @@ public sealed record OrderDetail(
     string? RefundReason,
     Guid Revision,
     IReadOnlyList<OrderLineSnapshot> Lines,
-    IReadOnlyList<OrderTotalSnapshot> Totals);
+    IReadOnlyList<OrderTotalSnapshot> Totals,
+    OrderDeliveryMethodSnapshot? DeliveryMethod = null);
 
 public sealed record OrderLineSnapshot(
     Guid ProductId,
@@ -64,6 +65,8 @@ public sealed record OrderLineSnapshot(
     decimal TotalAmount);
 
 public sealed record OrderTotalSnapshot(string Currency, decimal Amount);
+public sealed record OrderDeliveryMethodSnapshot(Guid Id, string Name, string? Description,
+    decimal Amount, string Currency);
 
 public interface IOrderStatusRepository
 {

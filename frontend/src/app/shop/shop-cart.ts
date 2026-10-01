@@ -12,6 +12,7 @@ import { PaymentOptionsApi } from '../checkout/payment-options.api';
 import { ShopCheckout } from '../checkout/shop-checkout';
 import { OrderReceipt } from '../checkout/order.api';
 import { Auth } from '../auth/auth';
+import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
 
 @Component({
   imports: [DatePipe, FormsModule, RouterLink, ShopCheckout],
@@ -93,9 +94,22 @@ import { Auth } from '../auth/auth';
             <strong>Subtotaal {{ total.currency }}: {{ amount(total.amount) }}</strong>
           </p>
         }
-        <p class="muted">
-          Zonder eventuele verzendkosten. Prijzen worden opnieuw gecontroleerd bij wijzigingen.
-        </p>
+        <section class="panel">
+          <h2>Hoe wil je je bestelling ontvangen?</h2>
+          @if (deliveryMethods()?.loading) { <p role="status">Bezorgopties ophalen…</p> }
+          @if (deliveryMethods()?.error) { <p role="alert">Bezorgopties konden niet worden opgehaald.</p> }
+          @for (method of deliveryMethods()?.data ?? []; track method.id) {
+            <label><input type="radio" name="delivery" [value]="method.id"
+              [ngModel]="selectedDelivery()" (ngModelChange)="selectedDelivery.set($event)" />
+              {{ method.name }} · {{ method.currency }} {{ amount(method.amount) }}</label>
+            @if (method.id === selectedDelivery() && method.description) {
+              <p class="muted preserve-lines">{{ method.description }}</p>
+            }
+          }
+          @if (deliveryMethods()?.data && !deliveryMethods()?.data?.length) {
+            <p role="alert">Er is momenteel geen bezorgoptie beschikbaar.</p>
+          }
+        </section>
         <section class="panel">
           <h2>Hoe wil je betalen?</h2>
           @if (paymentOptions()?.loading) {
@@ -123,10 +137,11 @@ import { Auth } from '../auth/auth';
             <p role="alert">Er is momenteel geen betaaloptie beschikbaar.</p>
           }
         </section>
-        @if (selectedPayment()) {
+        @if (selectedPayment() && selectedDelivery()) {
           <app-shop-checkout
             [lines]="checkoutLines()"
             [paymentMethod]="selectedPayment()"
+            [deliveryMethodId]="selectedDelivery()"
             (placed)="orderPlaced($event)"
           />
         }
@@ -148,11 +163,14 @@ export class ShopCart {
   readonly auth = inject(Auth);
   private readonly api = inject(ShopApi);
   private readonly paymentApi = inject(PaymentOptionsApi);
+  private readonly deliveryApi = inject(DeliveryMethodsApi);
   private readonly reload = new BehaviorSubject(0);
   readonly error = signal('');
   readonly selectedPayment = signal('');
+  readonly selectedDelivery = signal('');
   readonly orderReceipt = signal<OrderReceipt | null>(null);
   readonly paymentOptions = toSignal(loadState(this.paymentApi.publicOptions()));
+  readonly deliveryMethods = toSignal(loadState(this.deliveryApi.publicMethods()));
   readonly state = toSignal(
     combineLatest([toObservable(this.cart.lines), this.reload]).pipe(
       switchMap(([lines]) => {
@@ -205,6 +223,11 @@ export class ShopCart {
       const items = this.paymentOptions()?.data?.items ?? [];
       if (!items.some((option) => option.code === this.selectedPayment()))
         this.selectedPayment.set(items[0]?.code ?? '');
+    });
+    effect(() => {
+      const methods = this.deliveryMethods()?.data ?? [];
+      if (!methods.some((method) => method.id === this.selectedDelivery()))
+        this.selectedDelivery.set(methods[0]?.id ?? '');
     });
   }
   amount(value: string | null) {
