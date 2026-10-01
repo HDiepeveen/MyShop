@@ -79,7 +79,7 @@ import {
       </section>
       <section class="panel">
         <h2>Betaling en verzending</h2>
-        <p>Betaalmethode: later betalen</p>
+        <p>Betaalmethode: {{ paymentMethod(item.paymentMethod) }}</p>
         @if (item.paymentInstructions) {
           <p class="preserve-lines">{{ item.paymentInstructions }}</p>
         }
@@ -115,6 +115,9 @@ export class CustomerOrderDetail {
   readonly notice = signal('');
   readonly cancelling = signal(false);
   readonly status = customerOrderStatus;
+  paymentMethod(method: Detail['paymentMethod']) {
+    return method === 'online' ? 'direct online betalen' : 'later betalen';
+  }
   constructor() {
     this.route.paramMap
       .pipe(

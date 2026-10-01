@@ -55,7 +55,7 @@ public sealed class OrderManagementEndpointsTests
     public async Task ListAsync_MapsStableNamesAndExactMoneyStrings()
     {
         var item = new OrderListItem(Guid.NewGuid(), "MS-1", DateTimeOffset.UtcNow, "Ada",
-            OrderPaymentMethod.PayLater, OrderStatus.AwaitingPayment, null, null,
+            OrderPaymentMethod.Online, OrderStatus.AwaitingPayment, null, null,
             null, null, null, null, [new("EUR", 12.5m)]);
         var repository = new Fake(new([item], 21), null);
         var result = await OrderManagementEndpoints.ListAsync(5, 10, "paid", "  Ada  ",
@@ -63,7 +63,7 @@ public sealed class OrderManagementEndpointsTests
         var response = Assert.IsType<Ok<OrderListResponse>>(result.Result).Value!;
         Assert.Equal((5, 10, 21), (response.Offset, response.Limit, response.TotalCount));
         var mapped = Assert.Single(response.Items);
-        Assert.Equal("payLater", mapped.PaymentMethod);
+        Assert.Equal("online", mapped.PaymentMethod);
         Assert.Equal("awaitingPayment", mapped.Status);
         Assert.Equal("12.50", Assert.Single(mapped.Totals).Amount);
         Assert.Equal(OrderStatus.Paid, repository.ListStatus);
@@ -95,7 +95,7 @@ public sealed class OrderManagementEndpointsTests
     {
         var id = Guid.NewGuid();
         var detail = new OrderDetail(id, "MS-1", DateTimeOffset.UtcNow, "Ada", "ada@example.test",
-            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.PayLater,
+            "Straat 1", "1234 AB", "Utrecht", "NL", OrderPaymentMethod.Online,
             "Betaal binnen 14 dagen.",
             OrderStatus.AwaitingPayment, null, null, null, null, null, null, null,
             null, null, null, Guid.NewGuid(),
@@ -105,6 +105,7 @@ public sealed class OrderManagementEndpointsTests
         Assert.Equal("3.50", Assert.Single(response.Lines).UnitAmount);
         Assert.Equal("7.00", Assert.Single(response.Totals).Amount);
         Assert.Equal("Betaal binnen 14 dagen.", response.PaymentInstructions);
+        Assert.Equal("online", response.PaymentMethod);
         var missing = await OrderManagementEndpoints.GetAsync(Guid.NewGuid(), new GetUseCase(new Fake(new([], 0), null)), CancellationToken.None);
         Assert.IsType<NotFound>(missing.Result);
     }

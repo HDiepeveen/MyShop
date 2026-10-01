@@ -133,6 +133,7 @@ describe('Order management', () => {
     const request = http.expectOne('/api/orders/' + summary.id);
     request.flush({
       ...summary,
+      paymentMethod: 'online',
       paymentReference: null,
       paymentInstructions: 'Betaal binnen 14 dagen.',
       revision,
@@ -160,7 +161,7 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('ada@example.test');
     expect(fixture.nativeElement.textContent).toContain('Straat 1');
     expect(fixture.nativeElement.textContent).toContain('Shirt');
-    expect(fixture.nativeElement.textContent).toContain('Later betalen');
+    expect(fixture.nativeElement.textContent).toContain('Direct online betalen');
     expect(fixture.nativeElement.textContent).toContain('Betaal binnen 14 dagen.');
     expect(fixture.nativeElement.textContent).toContain('Tijdlijn');
     expect(fixture.nativeElement.textContent).toContain('Bestelling geplaatst');
@@ -284,6 +285,7 @@ describe('Order management', () => {
     const fixture = TestBed.createComponent(OrderDetailComponent);
     http.expectOne('/api/orders/' + summary.id).flush({
       ...summary,
+      paymentMethod: 'online',
       paymentReference: null,
       paymentInstructions: null,
       revision,

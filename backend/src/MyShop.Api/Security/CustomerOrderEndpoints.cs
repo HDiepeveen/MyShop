@@ -115,6 +115,7 @@ public static class CustomerOrderEndpoints
     private static string PaymentMethod(OrderPaymentMethod value) => value switch
     {
         OrderPaymentMethod.PayLater => "payLater",
+        OrderPaymentMethod.Online => "online",
         _ => throw new InvalidOperationException($"Unsupported order payment method: {value}.")
     };
     private static string Status(OrderStatus value) => value switch

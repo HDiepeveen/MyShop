@@ -6,4 +6,6 @@ Beheerders beheren betaalopties via **Betaalopties**. Minimaal één betaaloptie
 
 **Direct online betalen** is voorbereid maar vereist providerconfiguratie. Zet in configuratie `Payments:Online:Provider` op de naam van de gekozen provider, bijvoorbeeld `Mollie` of `Stripe`. Zolang deze waarde leeg is, kan beheer online betalen niet inschakelen en blijft de optie verborgen voor klanten.
 
+Bestellingen kunnen de stabiele betaalmethode `online` al tonen in beheer en klantoverzichten; het plaatsen van een echte online betaling volgt wanneer de provider-start wordt aangesloten.
+
 Wanneer de providernaam is gevuld en beheer online betalen inschakelt, verschijnt de optie in de winkel met de melding dat de klant naar die provider wordt doorgestuurd. De echte betaalstart en providerredirect worden in de volgende online-betalingsslice gekoppeld.

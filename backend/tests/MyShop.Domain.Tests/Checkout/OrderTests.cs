@@ -28,6 +28,28 @@ public sealed class OrderTests
         Assert.Equal(30m, Assert.Single(order.Totals).Amount);
     }
 
+    [Fact]
+    public void PlaceCanCaptureAnOnlinePaymentMethod()
+    {
+        var order = Order.Place(Guid.NewGuid(), DateTimeOffset.UtcNow,
+            OrderCustomer.Create("Ada", "ada@example.com"),
+            DeliveryAddress.Create("Street 1", "1234 AB", "Amsterdam", "NL"),
+            [(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Small", 1, Money.Create(10, "EUR"))],
+            paymentMethod: OrderPaymentMethod.Online);
+
+        Assert.Equal(OrderPaymentMethod.Online, order.PaymentMethod);
+    }
+
+    [Fact]
+    public void PlaceRejectsUnsupportedPaymentMethod()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => Order.Place(Guid.NewGuid(), DateTimeOffset.UtcNow,
+            OrderCustomer.Create("Ada", "ada@example.com"),
+            DeliveryAddress.Create("Street 1", "1234 AB", "Amsterdam", "NL"),
+            [(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Small", 1, Money.Create(10, "EUR"))],
+            paymentMethod: (OrderPaymentMethod)999));
+    }
+
     [Theory]
     [InlineData("", "ada@example.com")]
     [InlineData("Ada", "invalid")]

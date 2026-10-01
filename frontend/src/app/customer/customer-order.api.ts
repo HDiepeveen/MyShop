@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { switchMap } from 'rxjs';
 import { Auth } from '../auth/auth';
 
+export type CustomerOrderPaymentMethod = 'payLater' | 'online';
 export type CustomerOrderStatus = 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled' | 'refunded';
 export interface CustomerOrderTotal {
   currency: string;
@@ -12,7 +13,7 @@ export interface CustomerOrderSummary {
   id: string;
   number: string;
   placedAt: string;
-  paymentMethod: 'payLater';
+  paymentMethod: CustomerOrderPaymentMethod;
   status: CustomerOrderStatus;
   shippedAt: string | null;
   shippingCarrier: string | null;

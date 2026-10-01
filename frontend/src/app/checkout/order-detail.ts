@@ -104,7 +104,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
         <h2>Betaling</h2>
         <dl class="detail-list">
           <dt>Betaalmethode</dt>
-          <dd>Later betalen</dd>
+          <dd>{{ paymentMethodLabel(order.paymentMethod) }}</dd>
           @if (order.paymentInstructions) {
             <dt>Betaalinstructies</dt>
             <dd class="preserve-lines">{{ order.paymentInstructions }}</dd>
@@ -269,6 +269,9 @@ export class OrderDetailComponent {
   );
   retry() {
     this.refresh.next(this.refresh.value + 1);
+  }
+  paymentMethodLabel(method: OrderDetail['paymentMethod']) {
+    return method === 'online' ? 'Direct online betalen' : 'Later betalen';
   }
   statusLabel(status: OrderDetail['status']) {
     return status === 'cancelled'

@@ -3,7 +3,7 @@ using MyShop.Domain.Catalog;
 
 namespace MyShop.Domain.Checkout;
 
-public enum OrderPaymentMethod { PayLater = 1 }
+public enum OrderPaymentMethod { PayLater = 1, Online = 2 }
 public enum OrderStatus { AwaitingPayment = 1, Paid = 2, Shipped = 3, Cancelled = 4, Refunded = 5 }
 
 public sealed record OrderCustomer
@@ -71,11 +71,13 @@ public sealed record OrderDeliveryMethod(Guid Id, string Name, string? Descripti
 public sealed class Order
 {
     private Order(Guid id, DateTimeOffset placedAt, OrderCustomer customer, DeliveryAddress address,
-        IReadOnlyList<OrderLine> lines, IReadOnlyList<OrderTotal> totals, string? paymentInstructions,
+        IReadOnlyList<OrderLine> lines, IReadOnlyList<OrderTotal> totals,
+        OrderPaymentMethod paymentMethod, string? paymentInstructions,
         OrderDeliveryMethod? deliveryMethod)
     {
         Id = id; PlacedAt = placedAt; Customer = customer; DeliveryAddress = address;
         Lines = lines; Totals = totals;
+        PaymentMethod = paymentMethod;
         PaymentInstructions = paymentInstructions;
         DeliveryMethod = deliveryMethod;
     }
@@ -85,7 +87,7 @@ public sealed class Order
     public DateTimeOffset PlacedAt { get; }
     public OrderCustomer Customer { get; }
     public DeliveryAddress DeliveryAddress { get; }
-    public OrderPaymentMethod PaymentMethod => OrderPaymentMethod.PayLater;
+    public OrderPaymentMethod PaymentMethod { get; }
     public OrderStatus Status => OrderStatus.AwaitingPayment;
     public IReadOnlyList<OrderLine> Lines { get; }
     public IReadOnlyList<OrderTotal> Totals { get; }
@@ -95,12 +97,14 @@ public sealed class Order
     public static Order Place(Guid id, DateTimeOffset placedAt, OrderCustomer customer,
         DeliveryAddress address, IEnumerable<(Guid ProductId, Guid VariantId, string ProductName,
             string VariantName, int Quantity, Money UnitPrice)> lines, string? paymentInstructions = null,
-        OrderDeliveryMethod? deliveryMethod = null)
+        OrderDeliveryMethod? deliveryMethod = null,
+        OrderPaymentMethod paymentMethod = OrderPaymentMethod.PayLater)
     {
         if (id == Guid.Empty) throw new ArgumentException("Order ID is required.", nameof(id));
         ArgumentNullException.ThrowIfNull(customer);
         ArgumentNullException.ThrowIfNull(address);
         ArgumentNullException.ThrowIfNull(lines);
+        if (!Enum.IsDefined(paymentMethod)) throw new ArgumentOutOfRangeException(nameof(paymentMethod));
         var snapshots = lines.Select(line =>
         {
             if (line.ProductId == Guid.Empty || line.VariantId == Guid.Empty || line.Quantity is < 1 or > 99)
@@ -132,7 +136,7 @@ public sealed class Order
             deliveryMethod = new(deliveryMethod.Id, deliveryName, description, deliveryMethod.Fee);
         }
         return new(id, placedAt.ToUniversalTime(), customer, address, snapshots, totals,
-            paymentInstructions, deliveryMethod);
+            paymentMethod, paymentInstructions, deliveryMethod);
     }
 
     private static string Required(string value, int maximum, string parameter)

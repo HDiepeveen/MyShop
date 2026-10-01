@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 
+export type OrderPaymentMethod = 'payLater' | 'online';
 export interface OrderTotal {
   currency: string;
   amount: string;
@@ -10,7 +11,7 @@ export interface OrderSummary {
   number: string;
   placedAt: string;
   customerName: string;
-  paymentMethod: 'payLater';
+  paymentMethod: OrderPaymentMethod;
   status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled' | 'refunded';
   paidAt: string | null;
   shippedAt: string | null;
@@ -34,7 +35,7 @@ export interface OrderDetail {
   customer: { name: string; email: string };
   deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
   deliveryMethod?: { id: string; name: string; description: string | null; amount: string; currency: string } | null;
-  paymentMethod: 'payLater';
+  paymentMethod: OrderPaymentMethod;
   paymentInstructions: string | null;
   status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled' | 'refunded';
   paidAt: string | null;

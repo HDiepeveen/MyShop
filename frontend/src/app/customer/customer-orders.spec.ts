@@ -83,6 +83,7 @@ describe('Customer orders', () => {
     const fixture = TestBed.createComponent(CustomerOrderDetail);
     http.expectOne('/api/customer/orders/' + id).flush({
       ...summary,
+      paymentMethod: 'online',
       status: 'shipped',
       customer: { name: 'Ada', email: 'ada@example.test' },
       deliveryAddress: {
@@ -117,6 +118,7 @@ describe('Customer orders', () => {
     expect(fixture.nativeElement.textContent).toContain('Bestelling geplaatst');
     expect(fixture.nativeElement.textContent).toContain('Betaling ontvangen');
     expect(fixture.nativeElement.textContent).toContain('Bestelling verzonden');
+    expect(fixture.nativeElement.textContent).toContain('direct online betalen');
     expect(fixture.nativeElement.textContent).toContain('Shirt · Blauw');
     expect(fixture.nativeElement.textContent).toContain('PostNL');
     expect(fixture.nativeElement.textContent).toContain('3S123');

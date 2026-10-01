@@ -7,7 +7,7 @@ The management endpoints are protected by the same administrator policy as catal
 - `GET /api/orders?offset=0&limit=20&status=awaitingPayment&search=MS-2026`
 - `GET /api/orders/{id}`
 
-Amounts are returned as two-decimal strings, together with their currency. Payment methods and statuses use stable API names (`payLater`, `awaitingPayment`, `paid`, `shipped`, `cancelled` and `refunded`).
+Amounts are returned as two-decimal strings, together with their currency. Payment methods and statuses use stable API names (`payLater`, `online`, `awaitingPayment`, `paid`, `shipped`, `cancelled` and `refunded`).
 
 The overview can be filtered by one status. Omitting `status` returns all orders. The filtered total controls paging, and an unsupported status returns 400.
 
