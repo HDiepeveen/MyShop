@@ -33,6 +33,7 @@ public sealed class PaymentOptionsHttpTests
         Assert.False(settings.GetProperty("onlinePaymentEnabled").GetBoolean());
         Assert.Equal(JsonValueKind.Null, settings.GetProperty("payLaterInstructions").ValueKind);
         Assert.False(settings.GetProperty("onlinePaymentConfigured").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, settings.GetProperty("onlinePaymentProvider").ValueKind);
         var revision = settings.GetProperty("revision").GetGuid();
 
         var none = await host.Client.PutAsJsonAsync("/api/payment-options", new
@@ -76,5 +77,42 @@ public sealed class PaymentOptionsHttpTests
         });
         Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
         Assert.Equal("concurrency", (await stale.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+    }
+}
+public sealed class ConfiguredOnlinePaymentOptionsHttpTests
+{
+    [SecuritySqlFact]
+    public async Task AdministratorCanExposeConfiguredOnlinePaymentMethod()
+    {
+        await using var host = await SecurityHost.Create(new Dictionary<string, string?>
+        {
+            ["Payments:Online:Provider"] = "TestPay"
+        });
+        using var visitor = new HttpClient(new HttpClientHandler
+        {
+            UseCookies = false,
+            AllowAutoRedirect = false
+        }) { BaseAddress = host.Client.BaseAddress };
+
+        await host.Csrf();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode);
+        await host.Csrf();
+        var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/payment-options");
+        Assert.True(settings.GetProperty("onlinePaymentConfigured").GetBoolean());
+        Assert.Equal("TestPay", settings.GetProperty("onlinePaymentProvider").GetString());
+
+        var savedResponse = await host.Client.PutAsJsonAsync("/api/payment-options", new
+        {
+            payLaterEnabled = true,
+            onlinePaymentEnabled = true,
+            revision = settings.GetProperty("revision").GetGuid()
+        });
+        Assert.Equal(HttpStatusCode.OK, savedResponse.StatusCode);
+
+        var publicOptions = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/payment-options");
+        var online = publicOptions.GetProperty("items").EnumerateArray()
+            .Single(option => option.GetProperty("code").GetString() == "online");
+        Assert.Equal("Direct online betalen", online.GetProperty("name").GetString());
+        Assert.Equal("Je wordt doorgestuurd naar TestPay.", online.GetProperty("instructions").GetString());
     }
 }

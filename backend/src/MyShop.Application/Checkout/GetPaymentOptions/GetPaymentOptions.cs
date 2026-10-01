@@ -18,7 +18,10 @@ public sealed class GetPaymentOptions(IPaymentOptionsRepository repository, IOnl
         if (settings.PayLaterEnabled)
             items.Add(new("payLater", "Later betalen", settings.PayLaterInstructions));
         if (settings.OnlinePaymentEnabled && online.IsConfigured)
-            items.Add(new("online", "Direct online betalen", null));
+            items.Add(new("online", "Direct online betalen",
+                online.ProviderName is null
+                    ? "Je wordt doorgestuurd naar de betaalprovider."
+                    : $"Je wordt doorgestuurd naar {online.ProviderName}."));
         return new(items);
     }
 }

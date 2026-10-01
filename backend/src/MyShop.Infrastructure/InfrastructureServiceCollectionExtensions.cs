@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Application.Checkout.Abstractions;
@@ -14,10 +15,17 @@ public static class InfrastructureServiceCollectionExtensions
 {
     public static IServiceCollection AddMyShopInfrastructure(
         this IServiceCollection services,
-        string connectionString)
+        string connectionString) =>
+        services.AddMyShopInfrastructure(connectionString, new ConfigurationBuilder().Build());
+
+    public static IServiceCollection AddMyShopInfrastructure(
+        this IServiceCollection services,
+        string connectionString,
+        IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
+        ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddDbContext<MyShopDbContext>(options =>
             options.UseSqlServer(connectionString));
@@ -55,7 +63,7 @@ public static class InfrastructureServiceCollectionExtensions
             new PaymentOptionsRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IDeliveryMethodRepository>(provider =>
             new DeliveryMethodRepository(provider.GetRequiredService<MyShopDbContext>()));
-        services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability());
+        services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability(configuration));
         services.AddScoped<IOrderRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IOrderReadRepository>(provider =>

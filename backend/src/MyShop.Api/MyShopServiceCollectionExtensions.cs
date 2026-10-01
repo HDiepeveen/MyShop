@@ -20,7 +20,7 @@ public static class MyShopServiceCollectionExtensions
                 $"Connection string '{ConnectionStringName}' is not configured.");
 
         services.AddMyShopApplication();
-        services.AddMyShopInfrastructure(connectionString);
+        services.AddMyShopInfrastructure(connectionString, configuration);
 
         return services;
     }

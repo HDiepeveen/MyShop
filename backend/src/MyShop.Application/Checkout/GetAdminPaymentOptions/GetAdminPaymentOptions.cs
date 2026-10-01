@@ -3,7 +3,8 @@ using MyShop.Application.Checkout.Abstractions;
 namespace MyShop.Application.Checkout.GetAdminPaymentOptions;
 
 public sealed record AdminPaymentOptions(bool PayLaterEnabled, bool OnlinePaymentEnabled,
-    string? PayLaterInstructions, bool OnlinePaymentConfigured, Guid Revision);
+    string? PayLaterInstructions, bool OnlinePaymentConfigured, string? OnlinePaymentProvider,
+    Guid Revision);
 
 public sealed class GetAdminPaymentOptions(
     IPaymentOptionsRepository repository,
@@ -19,6 +20,6 @@ public sealed class GetAdminPaymentOptions(
         cancellationToken.ThrowIfCancellationRequested();
         var settings = await repository.GetAsync(cancellationToken);
         return new(settings.PayLaterEnabled, settings.OnlinePaymentEnabled,
-            settings.PayLaterInstructions, online.IsConfigured, settings.Revision);
+            settings.PayLaterInstructions, online.IsConfigured, online.ProviderName, settings.Revision);
     }
 }

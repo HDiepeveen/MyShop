@@ -147,7 +147,7 @@ public sealed class PlaceOrderTests
             CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
-    private sealed class Availability : IOnlinePaymentAvailability { public bool IsConfigured => false; }
+    private sealed class Availability : IOnlinePaymentAvailability { public bool IsConfigured => false; public string? ProviderName => null; }
 
     private sealed class DeliveryMethods : IDeliveryMethodRepository
     {

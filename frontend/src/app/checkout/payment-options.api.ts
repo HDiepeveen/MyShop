@@ -6,6 +6,7 @@ export interface AdminPaymentOptions {
   onlinePaymentEnabled: boolean;
   payLaterInstructions: string | null;
   onlinePaymentConfigured: boolean;
+  onlinePaymentProvider: string | null;
   revision: string;
 }
 

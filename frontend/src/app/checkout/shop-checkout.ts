@@ -67,6 +67,9 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
         @if (failure()) {
           <p class="error" role="alert">{{ failure() }}</p>
         }
+        @if (paymentMethod() === 'online') {
+          <p class="muted">Online betalen is voorbereid. De betaalstart wordt in een volgende stap gekoppeld.</p>
+        }
         <button [disabled]="busy() || paymentMethod() !== 'payLater'">
           {{ busy() ? 'Bestelling plaatsen…' : 'Bestelling plaatsen' }}
         </button>

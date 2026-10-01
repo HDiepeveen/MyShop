@@ -13,4 +13,5 @@ public sealed record PaymentOptionsSnapshot(bool PayLaterEnabled, bool OnlinePay
 public interface IOnlinePaymentAvailability
 {
     bool IsConfigured { get; }
+    string? ProviderName { get; }
 }

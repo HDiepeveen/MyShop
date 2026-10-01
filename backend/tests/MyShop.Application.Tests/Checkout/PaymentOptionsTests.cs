@@ -16,24 +16,28 @@ public sealed class PaymentOptionsTests
         bool payLater, bool online, bool configured, string expected)
     {
         var store = new Store(payLater, online, "Betaal binnen 14 dagen.");
-        var result = await new GetPaymentOptions(store, new Availability(configured))
+        var result = await new GetPaymentOptions(store, new Availability(configured, "TestPay"))
             .ExecuteAsync(CancellationToken.None);
 
         Assert.Equal(expected, string.Join(',', result.Items.Select(option => option.Code)));
+        if (result.Items.Any(option => option.Code == "online"))
+            Assert.Equal("Je wordt doorgestuurd naar TestPay.",
+                result.Items.Single(option => option.Code == "online").Instructions);
         if (payLater)
             Assert.Equal("Betaal binnen 14 dagen.", result.Items.Single(option => option.Code == "payLater").Instructions);
     }
 
     [Fact]
-    public async Task AdminOptionsIncludePersistedSettingsAvailabilityAndRevision()
+    public async Task AdminOptionsIncludePersistedSettingsAvailabilityProviderAndRevision()
     {
         var store = new Store(true, false, "Betaal binnen 14 dagen.");
-        var result = await new GetAdminPaymentOptions(store, new Availability(false))
+        var result = await new GetAdminPaymentOptions(store, new Availability(true, "TestPay"))
             .ExecuteAsync(CancellationToken.None);
 
         Assert.True(result.PayLaterEnabled);
         Assert.False(result.OnlinePaymentEnabled);
-        Assert.False(result.OnlinePaymentConfigured);
+        Assert.True(result.OnlinePaymentConfigured);
+        Assert.Equal("TestPay", result.OnlinePaymentProvider);
         Assert.Equal("Betaal binnen 14 dagen.", result.PayLaterInstructions);
         Assert.Equal(store.Revision, result.Revision);
     }
@@ -97,9 +101,10 @@ public sealed class PaymentOptionsTests
         Assert.Equal(0, store.SaveCalls);
     }
 
-    private sealed class Availability(bool configured) : IOnlinePaymentAvailability
+    private sealed class Availability(bool configured, string? providerName = null) : IOnlinePaymentAvailability
     {
         public bool IsConfigured => configured;
+        public string? ProviderName => configured ? providerName : null;
     }
 
     private sealed class Store(bool payLater, bool online, string? instructions = null) : IPaymentOptionsRepository

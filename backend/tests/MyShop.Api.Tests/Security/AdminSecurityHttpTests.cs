@@ -267,10 +267,14 @@ internal sealed class SecurityHost : IAsyncDisposable
     private readonly CookieContainer cookies = new();
     private readonly string databaseName = "MyShopTests_" + Guid.NewGuid().ToString("N");
     private string connection = "";
+    private readonly Dictionary<string, string?>? configuration;
 
-    internal static async Task<SecurityHost> Create()
+    private SecurityHost(Dictionary<string, string?>? configuration = null) =>
+        this.configuration = configuration;
+
+    internal static async Task<SecurityHost> Create(Dictionary<string, string?>? configuration = null)
     {
-        var host = new SecurityHost();
+        var host = new SecurityHost(configuration);
         try { await host.Start(); return host; }
         catch { await host.DisposeAsync(); throw; }
     }
@@ -282,7 +286,10 @@ internal sealed class SecurityHost : IAsyncDisposable
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Logging.ClearProviders();
-        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?> { ["ConnectionStrings:MyShop"] = connection });
+        var values = new Dictionary<string, string?> { ["ConnectionStrings:MyShop"] = connection };
+        if (configuration is not null)
+            foreach (var item in configuration) values[item.Key] = item.Value;
+        builder.Configuration.AddInMemoryCollection(values);
         builder.Services.AddMyShop(builder.Configuration);
         builder.Services.AddAdminSecurity(true);
         builder.Services.Configure<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme, options => options.TimeProvider = Clock);

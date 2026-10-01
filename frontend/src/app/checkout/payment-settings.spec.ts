@@ -24,6 +24,7 @@ describe('Payment settings', () => {
       onlinePaymentEnabled: false,
       payLaterInstructions: 'Betaal binnen 14 dagen.',
       onlinePaymentConfigured: false,
+      onlinePaymentProvider: null,
       revision,
     });
     fixture.detectChanges();
@@ -68,6 +69,7 @@ describe('Payment settings', () => {
       onlinePaymentEnabled: false,
       payLaterInstructions: 'Nieuwe instructies.',
       onlinePaymentConfigured: false,
+      onlinePaymentProvider: null,
       revision: '98e2f651-835c-4821-8905-ec8c054256ea',
     });
     http.expectOne('/api/payment-options').flush({
@@ -75,8 +77,27 @@ describe('Payment settings', () => {
       onlinePaymentEnabled: false,
       payLaterInstructions: 'Nieuwe instructies.',
       onlinePaymentConfigured: false,
+      onlinePaymentProvider: null,
       revision: '98e2f651-835c-4821-8905-ec8c054256ea',
     });
     expect(page.message()).toBe('Betaalopties opgeslagen.');
+  });
+  it('shows the prepared provider when online payment is configured', async () => {
+    const fixture = TestBed.createComponent(PaymentSettings);
+    http.expectOne('/api/payment-options').flush({
+      payLaterEnabled: true,
+      onlinePaymentEnabled: false,
+      payLaterInstructions: null,
+      onlinePaymentConfigured: true,
+      onlinePaymentProvider: 'TestPay',
+      revision,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
+    expect(inputs[1].disabled).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('Online betalen is voorbereid via TestPay.');
   });
 });
