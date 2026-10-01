@@ -127,8 +127,25 @@ public sealed class PlaceOrderHttpTests
         var historyDetail = await customer.GetAsync(
             $"/api/customer/orders/{customerOrder.GetProperty("id").GetGuid()}");
         Assert.Equal(HttpStatusCode.OK, historyDetail.StatusCode);
+        var historyOrder = await historyDetail.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(HttpStatusCode.NotFound, (await customer.GetAsync(
             $"/api/customer/orders/{first.GetProperty("id").GetGuid()}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await customer.PostAsJsonAsync(
+            $"/api/customer/orders/{first.GetProperty("id").GetGuid()}/cancel",
+            new { revision = Guid.NewGuid() })).StatusCode);
+        var cancellation = await customer.PostAsJsonAsync(
+            $"/api/customer/orders/{customerOrder.GetProperty("id").GetGuid()}/cancel",
+            new { revision = historyOrder.GetProperty("revision").GetGuid() });
+        Assert.Equal(HttpStatusCode.OK, cancellation.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await customer.PostAsJsonAsync(
+            $"/api/customer/orders/{customerOrder.GetProperty("id").GetGuid()}/cancel",
+            new { revision = historyOrder.GetProperty("revision").GetGuid() })).StatusCode);
+        var cancelledHistory = await customer.GetFromJsonAsync<JsonElement>(
+            $"/api/customer/orders/{customerOrder.GetProperty("id").GetGuid()}");
+        Assert.Equal("cancelled", cancelledHistory.GetProperty("status").GetString());
+        Assert.Equal(2, (await host.Client.GetFromJsonAsync<JsonElement>(
+            $"/api/products/{productId}")).GetProperty("variants")[0]
+            .GetProperty("stockQuantity").GetInt32());
 
         await using var scope = host.App.Services.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();

@@ -8,7 +8,7 @@ using MyShop.Infrastructure.Persistence.Models;
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
 internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, IOrderStatusRepository,
-    ICustomerOrderReadRepository
+    ICustomerOrderReadRepository, ICustomerOrderCancellationRepository
 {
     private readonly MyShopDbContext context;
 
@@ -257,7 +257,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             order.CustomerName, order.Email, order.AddressLine, order.PostalCode, order.City,
             order.CountryCode, (OrderPaymentMethod)order.PaymentMethod, order.PaymentInstructions,
             (OrderStatus)order.Status, order.PaidAt, order.ShippedAt, order.ShippingCarrier,
-            order.TrackingCode, order.CancelledAt, order.RefundedAt,
+            order.TrackingCode, order.CancelledAt, order.RefundedAt, order.Version,
             order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
                 line.ProductId, line.VariantId, line.ProductName, line.VariantName, line.Quantity,
                 line.UnitAmount, line.Currency, line.TotalAmount)).ToArray(),
@@ -310,18 +310,32 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
     }
 
     public async Task<Guid?> CancelAsync(Guid id, Guid expectedRevision, DateTimeOffset cancelledAt,
-        string reason, CancellationToken cancellationToken)
+        string reason, CancellationToken cancellationToken) => await CancelAsync(id, null,
+            expectedRevision, cancelledAt, reason, cancellationToken);
+
+    public async Task<Guid?> CancelAsync(string customerUserId, Guid orderId, Guid expectedRevision,
+        DateTimeOffset cancelledAt, string reason, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(customerUserId);
+        return await CancelAsync(orderId, customerUserId, expectedRevision, cancelledAt, reason,
+            cancellationToken);
+    }
+
+    private async Task<Guid?> CancelAsync(Guid id, string? customerUserId, Guid expectedRevision,
+        DateTimeOffset cancelledAt, string reason, CancellationToken cancellationToken)
     {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         var lines = await context.OrderLines.AsNoTracking()
-            .Where(line => line.OrderId == id)
+            .Where(line => line.OrderId == id
+                && (customerUserId == null || line.Order.CustomerUserId == customerUserId))
             .Select(line => new { line.ProductId, line.VariantId, line.Quantity })
             .ToArrayAsync(cancellationToken);
         var replacement = Guid.NewGuid();
         var changed = await context.Orders
             .Where(order => order.Id == id
                 && order.Version == expectedRevision
-                && order.Status == (int)OrderStatus.AwaitingPayment)
+                && order.Status == (int)OrderStatus.AwaitingPayment
+                && (customerUserId == null || order.CustomerUserId == customerUserId))
             .ExecuteUpdateAsync(update => update
                 .SetProperty(order => order.Status, (int)OrderStatus.Cancelled)
                 .SetProperty(order => order.CancelledAt, cancelledAt.ToUniversalTime())

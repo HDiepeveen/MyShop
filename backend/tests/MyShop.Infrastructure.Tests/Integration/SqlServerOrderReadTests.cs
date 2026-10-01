@@ -33,10 +33,14 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         var customerPage = await repository.ListAsync(customerUserId, 0, 20, CancellationToken.None);
         Assert.Equal(1, customerPage.TotalCount);
         Assert.Equal(owned.Id, Assert.Single(customerPage.Items).Id);
-        Assert.Equal(owned.Id, (await repository.GetAsync(customerUserId, owned.Id,
-            CancellationToken.None))!.Id);
+        var ownedDetail = await repository.GetAsync(customerUserId, owned.Id, CancellationToken.None);
+        Assert.Equal(owned.Id, ownedDetail!.Id);
         Assert.Null(await repository.GetAsync("another-customer", owned.Id, CancellationToken.None));
         Assert.Null(await repository.GetAsync(customerUserId, newer.Id, CancellationToken.None));
+        Assert.Null(await repository.CancelAsync("another-customer", owned.Id, ownedDetail.Revision,
+            DateTimeOffset.UtcNow, "Must not cancel", CancellationToken.None));
+        Assert.Equal(OrderStatus.AwaitingPayment,
+            (await repository.GetAsync(customerUserId, owned.Id, CancellationToken.None))!.Status);
         var page = await repository.ListAsync(0, 100, null, null, CancellationToken.None);
         var olderIndex = page.Items.ToList().FindIndex(item => item.Id == older.Id);
         var newerIndex = page.Items.ToList().FindIndex(item => item.Id == newer.Id);

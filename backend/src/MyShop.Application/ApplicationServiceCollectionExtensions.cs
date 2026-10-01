@@ -130,6 +130,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Customers.UpdateCustomerProfile.UpdateCustomerProfile>();
         services.AddScoped<Customers.ListCustomerOrders.ListCustomerOrders>();
         services.AddScoped<Customers.GetCustomerOrder.GetCustomerOrder>();
+        services.AddScoped<Customers.CancelCustomerOrder.CancelCustomerOrder>();
         return services;
     }
 }

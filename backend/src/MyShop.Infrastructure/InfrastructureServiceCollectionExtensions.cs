@@ -61,6 +61,8 @@ public static class InfrastructureServiceCollectionExtensions
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<ICustomerOrderReadRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
+        services.AddScoped<ICustomerOrderCancellationRepository>(provider =>
+            new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<ICustomerProfileRepository>(provider =>
             new CustomerProfileRepository(provider.GetRequiredService<MyShopDbContext>()));
         return services;

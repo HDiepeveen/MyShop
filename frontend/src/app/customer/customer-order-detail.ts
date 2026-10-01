@@ -23,6 +23,17 @@ import {
       <div class="eyebrow">{{ status(item.status) }}</div>
       <h1>Bestelling {{ item.number }}</h1>
       <p>Geplaatst op {{ item.placedAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
+      @if (notice()) {
+        <p role="status">{{ notice() }}</p>
+      }
+      @if (actionFailure()) {
+        <p class="error" role="alert">{{ actionFailure() }}</p>
+      }
+      @if (item.status === 'awaitingPayment') {
+        <button type="button" class="secondary" [disabled]="cancelling()" (click)="cancel(item)">
+          {{ cancelling() ? 'Annuleren…' : 'Bestelling annuleren' }}
+        </button>
+      }
       <section class="panel">
         <h2>Artikelen</h2>
         @for (line of item.lines; track line.productId + line.variantId) {
@@ -82,6 +93,9 @@ export class CustomerOrderDetail {
   readonly order = signal<Detail | null>(null);
   readonly loading = signal(true);
   readonly failure = signal('');
+  readonly actionFailure = signal('');
+  readonly notice = signal('');
+  readonly cancelling = signal(false);
   readonly status = customerOrderStatus;
   constructor() {
     this.route.paramMap
@@ -102,5 +116,28 @@ export class CustomerOrderDetail {
   }
   amount(value: string) {
     return value.replace('.', ',');
+  }
+  cancel(order: Detail) {
+    if (this.cancelling() || !window.confirm('Wil je deze bestelling definitief annuleren?'))
+      return;
+    this.cancelling.set(true);
+    this.actionFailure.set('');
+    this.notice.set('');
+    this.api
+      .cancel(order.id, order.revision)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (result) => {
+          this.order.set({ ...order, ...result });
+          this.cancelling.set(false);
+          this.notice.set(
+            'De bestelling is geannuleerd. De gereserveerde voorraad is vrijgegeven.',
+          );
+        },
+        error: (error) => {
+          this.cancelling.set(false);
+          this.actionFailure.set(errorMessage(error));
+        },
+      });
   }
 }

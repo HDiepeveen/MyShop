@@ -27,7 +27,16 @@ toont de onveranderlijke artikel-, klant- en adressnapshot, betaalinstructies en
 betaal- en verzendmomenten. Interne beheerreferenties en redenen worden niet via deze klant-API
 gedeeld. Een onbekende bestelling en een bestelling van een ander account geven beide 404.
 
+Een klant kan een eigen bestelling annuleren zolang deze nog op betaling wacht. De interface vraagt
+eerst om bevestiging. De server controleert nogmaals het account, de status en de revisie en legt als
+reden **Geannuleerd door klant** vast. Een gelijktijdige betaling of eerdere wijziging geeft een
+conflict en wordt nooit overschreven. Gevolgde voorraad wordt in dezelfde transactie teruggegeven;
+onbeperkte voorraad blijft onbeperkt. Betaalde, verzonden, geannuleerde en terugbetaalde bestellingen
+kunnen door de klant niet worden geannuleerd.
+
 De routes zijn `POST /api/customer/auth/register`, `POST /api/customer/auth/login`,
 `GET /api/customer/profile`, `PUT /api/customer/profile`, `GET /api/customer/orders` en
-`GET /api/customer/orders/{id}`. Alle profiel- en bestelroutes vereisen de rol `Customer`.
+`GET /api/customer/orders/{id}`. Annuleren gebruikt
+`POST /api/customer/orders/{id}/cancel` met de actuele revisie en vereist een antiforgerytoken.
+Alle profiel- en bestelroutes vereisen de rol `Customer`.
 E-mailbevestiging en wachtwoordherstel per e-mail volgen in afzonderlijke onderdelen.

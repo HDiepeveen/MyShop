@@ -11,8 +11,8 @@ voorraad verdwijnt het subtotaal en moet de klant het aantal verlagen of de rege
 Bij bestellen wordt gevolgde voorraad in dezelfde databasetransactie als de bestelling afgeboekt.
 Een gelijktijdige bestelling kan daardoor niet dezelfde laatste voorraad verkopen. Herhalen met
 hetzelfde checkouttoken maakt geen tweede bestelling en boekt niet opnieuw af. Annuleren van een nog
-niet betaalde bestelling geeft de afgeboekte gevolgde voorraad terug. Verzonden of terugbetaalde
-bestellingen wijzigen de voorraad niet automatisch.
+niet betaalde bestelling geeft de afgeboekte gevolgde voorraad terug, zowel vanuit beheer als door
+de klant zelf. Verzonden of terugbetaalde bestellingen wijzigen de voorraad niet automatisch.
 
 De beheerroutes zijn `PUT /api/products/{productId}/variants/{variantId}/stock` met `quantity` en
 `DELETE /api/products/{productId}/variants/{variantId}/stock`. Beide routes gebruiken de bestaande

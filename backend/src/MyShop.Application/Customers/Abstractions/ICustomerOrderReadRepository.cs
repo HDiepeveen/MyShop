@@ -11,6 +11,12 @@ public interface ICustomerOrderReadRepository
         CancellationToken cancellationToken);
 }
 
+public interface ICustomerOrderCancellationRepository
+{
+    Task<Guid?> CancelAsync(string customerUserId, Guid orderId, Guid expectedRevision,
+        DateTimeOffset cancelledAt, string reason, CancellationToken cancellationToken);
+}
+
 public sealed record CustomerOrderPage(IReadOnlyList<CustomerOrderListItem> Items, int TotalCount);
 
 public sealed record CustomerOrderListItem(Guid Id, string Number, DateTimeOffset PlacedAt,
@@ -21,5 +27,5 @@ public sealed record CustomerOrderDetail(Guid Id, string Number, DateTimeOffset 
     string CountryCode, OrderPaymentMethod PaymentMethod, string? PaymentInstructions,
     OrderStatus Status, DateTimeOffset? PaidAt, DateTimeOffset? ShippedAt,
     string? ShippingCarrier, string? TrackingCode, DateTimeOffset? CancelledAt,
-    DateTimeOffset? RefundedAt, IReadOnlyList<OrderLineSnapshot> Lines,
+    DateTimeOffset? RefundedAt, Guid Revision, IReadOnlyList<OrderLineSnapshot> Lines,
     IReadOnlyList<OrderTotalSnapshot> Totals);
