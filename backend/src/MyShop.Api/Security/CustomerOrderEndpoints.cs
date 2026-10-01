@@ -91,7 +91,8 @@ public static class CustomerOrderEndpoints
 
     private static CustomerOrderSummaryResponse MapSummary(CustomerOrderListItem order) => new(
         order.Id, order.Number, order.PlacedAt, PaymentMethod(order.PaymentMethod),
-        Status(order.Status), order.Totals.Select(MapTotal).ToArray());
+        Status(order.Status), order.ShippedAt, order.ShippingCarrier, order.TrackingCode,
+        order.Totals.Select(MapTotal).ToArray());
 
     private static CustomerOrderDetailResponse MapDetail(CustomerOrderDetail order) => new(
         order.Id, order.Number, order.PlacedAt,
@@ -130,7 +131,8 @@ public static class CustomerOrderEndpoints
 public sealed record CustomerOrderListResponse(IReadOnlyList<CustomerOrderSummaryResponse> Items,
     int Offset, int Limit, int TotalCount);
 public sealed record CustomerOrderSummaryResponse(Guid Id, string Number, DateTimeOffset PlacedAt,
-    string PaymentMethod, string Status, IReadOnlyList<CustomerOrderTotalResponse> Totals);
+    string PaymentMethod, string Status, DateTimeOffset? ShippedAt, string? ShippingCarrier,
+    string? TrackingCode, IReadOnlyList<CustomerOrderTotalResponse> Totals);
 public sealed record CustomerOrderDetailResponse(Guid Id, string Number, DateTimeOffset PlacedAt,
     CustomerOrderCustomerResponse Customer, CustomerOrderAddressResponse DeliveryAddress,
     string PaymentMethod, string? PaymentInstructions, string Status, DateTimeOffset? PaidAt,

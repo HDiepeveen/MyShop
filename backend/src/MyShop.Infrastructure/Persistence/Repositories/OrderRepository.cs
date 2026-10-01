@@ -236,7 +236,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             .Skip(offset).Take(limit)
             .Select(order => new
             {
-                order.Id, order.Number, order.PlacedAt, order.PaymentMethod, order.Status
+                order.Id, order.Number, order.PlacedAt, order.PaymentMethod, order.Status,
+                order.ShippedAt, order.ShippingCarrier, order.TrackingCode
             })
             .ToArrayAsync(cancellationToken);
         var ids = rows.Select(row => row.Id).ToArray();
@@ -247,7 +248,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             .ToArrayAsync(cancellationToken);
         var totalsByOrder = totals.ToLookup(total => total.OrderId);
         return new(rows.Select(row => new CustomerOrderListItem(row.Id, row.Number, row.PlacedAt,
-            (OrderPaymentMethod)row.PaymentMethod, (OrderStatus)row.Status,
+            (OrderPaymentMethod)row.PaymentMethod, (OrderStatus)row.Status, row.ShippedAt,
+            row.ShippingCarrier, row.TrackingCode,
             totalsByOrder[row.Id].Select(total =>
                 new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray())).ToArray(), totalCount);
     }

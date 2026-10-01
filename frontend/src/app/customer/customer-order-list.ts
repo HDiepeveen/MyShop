@@ -28,6 +28,15 @@ import { CustomerOrderApi, CustomerOrderPage, customerOrderStatus } from './cust
             <a [routerLink]="[order.id]">{{ order.number }}</a>
           </h2>
           <p>{{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }} · {{ status(order.status) }}</p>
+          @if (order.shippedAt) {
+            <p>
+              Verzonden op {{ order.shippedAt | date: 'dd-MM-yyyy HH:mm' }}.
+              @if (order.shippingCarrier || order.trackingCode) {
+                <br />{{ order.shippingCarrier ?? 'Vervoerder onbekend' }} ·
+                {{ order.trackingCode ?? 'tracking niet beschikbaar' }}
+              }
+            </p>
+          }
           @for (total of order.totals; track total.currency) {
             <p>
               <strong>{{ total.currency }} {{ amount(total.amount) }}</strong>

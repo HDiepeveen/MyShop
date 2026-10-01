@@ -14,6 +14,9 @@ export interface CustomerOrderSummary {
   placedAt: string;
   paymentMethod: 'payLater';
   status: CustomerOrderStatus;
+  shippedAt: string | null;
+  shippingCarrier: string | null;
+  trackingCode: string | null;
   totals: readonly CustomerOrderTotal[];
 }
 export interface CustomerOrderPage {

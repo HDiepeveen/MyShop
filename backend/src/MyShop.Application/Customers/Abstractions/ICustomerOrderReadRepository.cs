@@ -20,7 +20,8 @@ public interface ICustomerOrderCancellationRepository
 public sealed record CustomerOrderPage(IReadOnlyList<CustomerOrderListItem> Items, int TotalCount);
 
 public sealed record CustomerOrderListItem(Guid Id, string Number, DateTimeOffset PlacedAt,
-    OrderPaymentMethod PaymentMethod, OrderStatus Status, IReadOnlyList<OrderTotalSnapshot> Totals);
+    OrderPaymentMethod PaymentMethod, OrderStatus Status, DateTimeOffset? ShippedAt,
+    string? ShippingCarrier, string? TrackingCode, IReadOnlyList<OrderTotalSnapshot> Totals);
 
 public sealed record CustomerOrderDetail(Guid Id, string Number, DateTimeOffset PlacedAt,
     string CustomerName, string Email, string AddressLine, string PostalCode, string City,

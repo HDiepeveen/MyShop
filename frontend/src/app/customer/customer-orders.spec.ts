@@ -13,6 +13,9 @@ const summary = {
   placedAt: '2026-10-01T08:00:00Z',
   paymentMethod: 'payLater',
   status: 'awaitingPayment',
+  shippedAt: null,
+  shippingCarrier: null,
+  trackingCode: null,
   totals: [{ currency: 'EUR', amount: '25.00' }],
 };
 
@@ -37,10 +40,23 @@ describe('Customer orders', () => {
           request.params.get('offset') === '0' &&
           request.params.get('limit') === '20',
       )
-      .flush({ items: [summary], offset: 0, limit: 20, totalCount: 21 });
+      .flush({
+        items: [{
+          ...summary,
+          status: 'shipped',
+          shippedAt: '2026-10-01T10:00:00Z',
+          shippingCarrier: 'PostNL',
+          trackingCode: '3S123',
+        }],
+        offset: 0,
+        limit: 20,
+        totalCount: 21,
+      });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('MS-1');
-    expect(fixture.nativeElement.textContent).toContain('Wacht op betaling');
+    expect(fixture.nativeElement.textContent).toContain('Verzonden');
+    expect(fixture.nativeElement.textContent).toContain('PostNL');
+    expect(fixture.nativeElement.textContent).toContain('3S123');
     expect(fixture.nativeElement.textContent).toContain('EUR 25,00');
     fixture.componentInstance.next();
     http
