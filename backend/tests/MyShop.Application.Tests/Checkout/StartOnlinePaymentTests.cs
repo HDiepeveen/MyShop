@@ -18,6 +18,7 @@ public sealed class StartOnlinePaymentTests
         Assert.Null(result.Failure);
         Assert.Equal(scenario.Token, result.Payment!.CheckoutToken);
         Assert.Equal("Mollie", result.Payment.ProviderName);
+        Assert.Equal($"OP-{scenario.Token:N}".ToUpperInvariant(), result.Payment.PaymentReference);
         Assert.Equal(57.50m, Assert.Single(result.Payment.Totals).Amount);
         Assert.Equal("Standaardbezorging", result.Payment.DeliveryMethod.Name);
         Assert.Equal(1, scenario.Products.Calls);

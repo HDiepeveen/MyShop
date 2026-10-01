@@ -9,7 +9,7 @@ public sealed record StartOnlinePaymentLine(Guid ProductId, Guid VariantId, int 
 public sealed record StartOnlinePaymentCommand(Guid CheckoutToken, Guid DeliveryMethodId,
     IReadOnlyList<StartOnlinePaymentLine> Lines);
 public enum StartOnlinePaymentFailure { CartUnavailable, PaymentUnavailable, DeliveryUnavailable }
-public sealed record OnlinePaymentStart(Guid CheckoutToken, string ProviderName,
+public sealed record OnlinePaymentStart(Guid CheckoutToken, string ProviderName, string PaymentReference,
     IReadOnlyList<OrderTotalSnapshot> Totals, OrderDeliveryMethodSnapshot DeliveryMethod);
 public sealed record StartOnlinePaymentResult(OnlinePaymentStart? Payment, StartOnlinePaymentFailure? Failure)
 {
@@ -66,6 +66,10 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
             .OrderBy(total => total.Currency, StringComparer.Ordinal).ToArray();
         var deliverySnapshot = new OrderDeliveryMethodSnapshot(delivery.Id, delivery.Name,
             delivery.Description, delivery.Amount, delivery.Currency);
-        return new(new(command.CheckoutToken, onlinePayment.ProviderName, totals, deliverySnapshot), null);
+        return new(new(command.CheckoutToken, onlinePayment.ProviderName, PaymentReference(command.CheckoutToken),
+            totals, deliverySnapshot), null);
     }
+
+    private static string PaymentReference(Guid checkoutToken) =>
+        $"OP-{checkoutToken:N}".ToUpperInvariant();
 }
