@@ -62,6 +62,18 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
         </section>
       </div>
       <section class="panel">
+        <h2>Tijdlijn</h2>
+        <ol class="timeline">
+          @for (event of timeline(order); track event.label) {
+            <li>
+              <strong>{{ event.label }}</strong>
+              <span>{{ event.at | date: 'dd-MM-yyyy HH:mm' }}</span>
+              @if (event.note) { <p>{{ event.note }}</p> }
+            </li>
+          }
+        </ol>
+      </section>
+      <section class="panel">
         <h2>Artikelen</h2>
         <div class="table-wrap">
           <table>
@@ -268,6 +280,32 @@ export class OrderDetailComponent {
           : status === 'paid'
             ? 'Betaald'
             : 'Wacht op betaling';
+  }
+  timeline(order: OrderDetail) {
+    const events: { label: string; at: string; note?: string }[] = [
+      { label: 'Bestelling geplaatst', at: order.placedAt },
+    ];
+    if (order.paidAt) events.push({
+      label: 'Betaling ontvangen',
+      at: order.paidAt,
+      note: order.paymentReference ? `Kenmerk: ${order.paymentReference}` : undefined,
+    });
+    if (order.shippedAt) events.push({
+      label: 'Bestelling verzonden',
+      at: order.shippedAt,
+      note: [order.shippingCarrier, order.trackingCode].filter(Boolean).join(' · ') || undefined,
+    });
+    if (order.cancelledAt) events.push({
+      label: 'Bestelling geannuleerd',
+      at: order.cancelledAt,
+      note: order.cancellationReason ?? undefined,
+    });
+    if (order.refundedAt) events.push({
+      label: 'Terugbetaling geregistreerd',
+      at: order.refundedAt,
+      note: order.refundReference ? `Kenmerk: ${order.refundReference}` : undefined,
+    });
+    return events;
   }
   markPaid(order: OrderDetail, paymentReference: string) {
     paymentReference = paymentReference.trim();

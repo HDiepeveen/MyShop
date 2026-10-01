@@ -15,6 +15,8 @@ The optional trimmed `search` value matches part of the order number, customer n
 
 Administrators can download a CSV export from the order overview. The export uses the active status and search filters and returns at most the first 100 matching orders. Amounts are exported as exact currency plus decimal-text pairs, without currency conversion.
 
+The order detail screen includes a timeline with the recorded placement, payment, shipment, cancellation and refund moments that exist for the order. References and public tracking data are shown next to the relevant timeline events.
+
 An administrator can mark an order awaiting payment as paid and then mark a paid order as shipped from its detail page. Recording a payment requires a payment reference of at most 100 characters; it is stored and shown with the payment time. Existing paid orders from before this addition may have no payment reference. Shipping requires a carrier and tracking code of at most 100 characters each; both are recorded and shown with the shipment time. Existing shipped orders from before this addition may have no tracking details. An order that still awaits payment can instead be cancelled with a required reason of at most 500 characters.
 
 An authenticated customer can also cancel their own order while it awaits payment. That action uses

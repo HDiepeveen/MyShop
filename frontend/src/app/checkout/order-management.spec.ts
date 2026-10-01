@@ -162,6 +162,8 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Shirt');
     expect(fixture.nativeElement.textContent).toContain('Later betalen');
     expect(fixture.nativeElement.textContent).toContain('Betaal binnen 14 dagen.');
+    expect(fixture.nativeElement.textContent).toContain('Tijdlijn');
+    expect(fixture.nativeElement.textContent).toContain('Bestelling geplaatst');
 
     fixture.componentInstance.markPaid(
       fixture.componentInstance.state()!.data!,
@@ -252,6 +254,7 @@ describe('Order management', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Verzonden');
+    expect(fixture.nativeElement.textContent).toContain('Bestelling verzonden');
     expect(fixture.nativeElement.textContent).toContain('PostNL');
     expect(fixture.nativeElement.textContent).toContain('3SMYSHOP123');
     expect(fixture.nativeElement.textContent).toContain(
@@ -336,6 +339,7 @@ describe('Order management', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Geannuleerd');
+    expect(fixture.nativeElement.textContent).toContain('Bestelling geannuleerd');
     expect(fixture.nativeElement.textContent).toContain('Klant ziet af.');
     expect(fixture.nativeElement.textContent).toContain('De bestelling is geannuleerd.');
   });
@@ -418,6 +422,7 @@ describe('Order management', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Terugbetaald');
+    expect(fixture.nativeElement.textContent).toContain('Terugbetaling geregistreerd');
     expect(fixture.nativeElement.textContent).toContain('bankafschrift 67890');
     expect(fixture.nativeElement.textContent).toContain('Dubbele betaling.');
     expect(fixture.nativeElement.textContent).toContain('De terugbetaling is geregistreerd.');

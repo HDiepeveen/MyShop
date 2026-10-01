@@ -24,7 +24,8 @@ gastbestellingen overnemen.
 Onder **Mijn bestellingen** ziet de klant uitsluitend bestellingen die aan het eigen account zijn
 gekoppeld. Het overzicht toont de nieuwste eerst, met paginering, status, totalen en beschikbare
 trackinginformatie voor verzonden bestellingen. De detailpagina toont de onveranderlijke artikel-,
-klant- en adressnapshot, betaalinstructies en beschikbare betaal- en verzendmomenten. Interne
+klant- en adressnapshot, betaalinstructies en een tijdlijn met beschikbare bestel-, betaal-,
+verzend-, annulerings- en terugbetalingsmomenten. Interne
 beheerreferenties en redenen worden niet via deze klant-API gedeeld. Een onbekende bestelling en
 een bestelling van een ander account geven beide 404.
 

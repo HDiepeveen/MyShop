@@ -35,6 +35,18 @@ import {
         </button>
       }
       <section class="panel">
+        <h2>Tijdlijn</h2>
+        <ol class="timeline">
+          @for (event of timeline(item); track event.label) {
+            <li>
+              <strong>{{ event.label }}</strong>
+              <span>{{ event.at | date: 'dd-MM-yyyy HH:mm' }}</span>
+              @if (event.note) { <p>{{ event.note }}</p> }
+            </li>
+          }
+        </ol>
+      </section>
+      <section class="panel">
         <h2>Artikelen</h2>
         @for (line of item.lines; track line.productId + line.variantId) {
           <h3>{{ line.productName }} · {{ line.variantName }}</h3>
@@ -122,6 +134,20 @@ export class CustomerOrderDetail {
   }
   amount(value: string) {
     return value.replace('.', ',');
+  }
+  timeline(order: Detail) {
+    const events: { label: string; at: string; note?: string }[] = [
+      { label: 'Bestelling geplaatst', at: order.placedAt },
+    ];
+    if (order.paidAt) events.push({ label: 'Betaling ontvangen', at: order.paidAt });
+    if (order.shippedAt) events.push({
+      label: 'Bestelling verzonden',
+      at: order.shippedAt,
+      note: [order.shippingCarrier, order.trackingCode].filter(Boolean).join(' · ') || undefined,
+    });
+    if (order.cancelledAt) events.push({ label: 'Bestelling geannuleerd', at: order.cancelledAt });
+    if (order.refundedAt) events.push({ label: 'Terugbetaling geregistreerd', at: order.refundedAt });
+    return events;
   }
   cancel(order: Detail) {
     if (this.cancelling() || !window.confirm('Wil je deze bestelling definitief annuleren?'))

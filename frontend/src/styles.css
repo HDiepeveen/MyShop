@@ -435,6 +435,39 @@ textarea:disabled {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.timeline li {
+  position: relative;
+  padding: 0 0 18px 24px;
+  border-left: 2px solid #dce5d2;
+}
+.timeline li::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #285941;
+}
+.timeline li:last-child {
+  padding-bottom: 0;
+}
+.timeline strong {
+  display: block;
+}
+.timeline span,
+.timeline p {
+  display: block;
+  margin: 2px 0 0;
+  color: #718070;
+  font-size: 14px;
+}
 .editor {
   max-width: 660px;
 }

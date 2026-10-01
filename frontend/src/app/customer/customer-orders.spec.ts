@@ -114,6 +114,9 @@ describe('Customer orders', () => {
     });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Verzonden');
+    expect(fixture.nativeElement.textContent).toContain('Bestelling geplaatst');
+    expect(fixture.nativeElement.textContent).toContain('Betaling ontvangen');
+    expect(fixture.nativeElement.textContent).toContain('Bestelling verzonden');
     expect(fixture.nativeElement.textContent).toContain('Shirt · Blauw');
     expect(fixture.nativeElement.textContent).toContain('PostNL');
     expect(fixture.nativeElement.textContent).toContain('3S123');
