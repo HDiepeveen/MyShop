@@ -3,7 +3,12 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { errorMessage } from '../catalog/error-message';
-import { CustomerOrderApi, CustomerOrderPage, customerOrderStatus } from './customer-order.api';
+import {
+  CustomerOrderApi,
+  CustomerOrderPage,
+  CustomerOrderPaymentMethod,
+  customerOrderStatus,
+} from './customer-order.api';
 
 @Component({
   imports: [DatePipe, RouterLink],
@@ -27,7 +32,10 @@ import { CustomerOrderApi, CustomerOrderPage, customerOrderStatus } from './cust
           <h2>
             <a [routerLink]="[order.id]">{{ order.number }}</a>
           </h2>
-          <p>{{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }} · {{ status(order.status) }}</p>
+          <p>
+            {{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }} · {{ status(order.status) }} ·
+            {{ paymentMethod(order.paymentMethod) }}
+          </p>
           @if (order.shippedAt) {
             <p>
               Verzonden op {{ order.shippedAt | date: 'dd-MM-yyyy HH:mm' }}.
@@ -114,6 +122,9 @@ export class CustomerOrderList {
   }
   next() {
     this.load(this.offset() + 20);
+  }
+  paymentMethod(method: CustomerOrderPaymentMethod) {
+    return method === 'online' ? 'Online betaald' : 'Later betalen';
   }
   amount(value: string) {
     return value.replace('.', ',');

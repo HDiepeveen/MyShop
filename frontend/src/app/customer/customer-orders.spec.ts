@@ -55,6 +55,7 @@ describe('Customer orders', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('MS-1');
     expect(fixture.nativeElement.textContent).toContain('Verzonden');
+    expect(fixture.nativeElement.textContent).toContain('Later betalen');
     expect(fixture.nativeElement.textContent).toContain('PostNL');
     expect(fixture.nativeElement.textContent).toContain('3S123');
     expect(fixture.nativeElement.textContent).toContain('EUR 25,00');
