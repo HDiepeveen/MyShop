@@ -56,6 +56,50 @@ describe('Customer management', () => {
       .flush({ items: [], offset: 0, limit: 20, totalCount: 0 });
     expect(fixture.componentInstance.searchText).toBe('');
   });
+  it('unblocks a customer after confirmation', () => {
+    TestBed.configureTestingModule({
+      imports: [CustomerManagementDetail],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: new BehaviorSubject(convertToParamMap({ id: 'user' })) },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(CustomerManagementDetail);
+    http.expectOne('/api/customers/user').flush({
+      id: 'user',
+      email: 'ada@example.com',
+      name: 'Ada',
+      isLocked: true,
+      lockedUntil: '9999-12-31T23:59:59Z',
+      orderCount: 2,
+      addressLine: 'Straat 1',
+      postalCode: '1234 AB',
+      city: 'Utrecht',
+      countryCode: 'NL',
+      lastOrderAt: '2026-10-01T10:00:00Z',
+      revision: 'old',
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Account deblokkeren');
+    expect(fixture.nativeElement.textContent).toContain('Straat 1');
+
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    fixture.componentInstance.setLocked(fixture.componentInstance.customer()!, false);
+    http.expectOne('/api/auth/csrf').flush(null);
+    const request = http.expectOne('/api/customers/user/access');
+    expect(request.request.body).toEqual({ locked: false, revision: 'old' });
+    request.flush({ locked: false, revision: 'new' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Het klantaccount is gedeblokkeerd.');
+    expect(fixture.nativeElement.textContent).toContain('Account blokkeren');
+  });
   it('blocks a customer after confirmation', () => {
     TestBed.configureTestingModule({
       imports: [CustomerManagementDetail],
