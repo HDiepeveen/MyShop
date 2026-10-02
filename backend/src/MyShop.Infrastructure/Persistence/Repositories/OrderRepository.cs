@@ -27,8 +27,26 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 Delivery(order)))
             .SingleOrDefaultAsync(cancellationToken);
 
-    public async Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
+    public Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
+        IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken) =>
+        AddAsync(order, checkoutToken, customerUserId, stock, null, null, cancellationToken);
+
+    public Task<OrderReceipt?> AddPaidAsync(Order order, Guid checkoutToken, string paymentReference,
         IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken)
+    {
+        if (order.PaymentMethod != OrderPaymentMethod.Online)
+            throw new ArgumentException("Paid orders must use online payment.", nameof(order));
+        ArgumentException.ThrowIfNullOrWhiteSpace(paymentReference);
+        paymentReference = paymentReference.Trim();
+        if (paymentReference.Length > 100)
+            throw new ArgumentException("Payment reference must contain at most 100 characters.", nameof(paymentReference));
+        return AddAsync(order, checkoutToken, null, stock, DateTimeOffset.UtcNow, paymentReference,
+            cancellationToken);
+    }
+
+    private async Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
+        IReadOnlyList<StockReservation> stock, DateTimeOffset? paidAt, string? paymentReference,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(order);
         ArgumentNullException.ThrowIfNull(stock);
@@ -89,7 +107,9 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             DeliveryCurrency = order.DeliveryMethod?.Fee.Currency,
             PaymentMethod = (int)order.PaymentMethod,
             PaymentInstructions = order.PaymentInstructions,
-            Status = (int)order.Status,
+            Status = (int)(paidAt is null ? order.Status : OrderStatus.Paid),
+            PaidAt = paidAt?.ToUniversalTime(),
+            PaymentReference = paymentReference,
             Version = Guid.NewGuid(),
             Lines = order.Lines.Select((line, index) => new OrderLinePersistence
             {

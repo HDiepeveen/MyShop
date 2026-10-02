@@ -139,6 +139,38 @@ public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
         Assert.Null(await repository.GetAsync(Guid.NewGuid(), CancellationToken.None));
     }
 
+    [SqlServerFact]
+    public async Task AddPaidAsyncCreatesPaidOnlineOrder()
+    {
+        var order = Order.Place(Guid.NewGuid(), DateTimeOffset.UtcNow,
+            OrderCustomer.Create("Online customer", "online@example.test"),
+            DeliveryAddress.Create("Betaalstraat 1", "1234 AB", "Utrecht", "NL"),
+            [(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Blauw", 2, Money.Create(10m, "EUR"))],
+            paymentMethod: OrderPaymentMethod.Online);
+        var checkoutToken = Guid.NewGuid();
+
+        await using (var writeContext = database.CreateContext())
+        {
+            var writer = new OrderRepository(writeContext);
+            var receipt = await writer.AddPaidAsync(order, checkoutToken, "MSP-123", [],
+                CancellationToken.None);
+            Assert.NotNull(receipt);
+        }
+
+        await using var readContext = database.CreateContext();
+        var repository = new OrderRepository(readContext);
+        var detail = await repository.GetAsync(order.Id, CancellationToken.None);
+        Assert.NotNull(detail);
+        Assert.Equal(OrderPaymentMethod.Online, detail.PaymentMethod);
+        Assert.Equal(OrderStatus.Paid, detail.Status);
+        Assert.NotNull(detail.PaidAt);
+        Assert.Equal("MSP-123", detail.PaymentReference);
+        Assert.Null(detail.PaymentInstructions);
+        Assert.Equal(20m, Assert.Single(detail.Totals).Amount);
+        Assert.Equal(order.Id, (await repository.GetByCheckoutTokenAsync(checkoutToken,
+            CancellationToken.None))!.Id);
+    }
+
     private static Order CreateOrder(DateTimeOffset placedAt, string customerName,
         string? paymentInstructions = null) => Order.Place(
         Guid.NewGuid(),
