@@ -53,7 +53,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
           <h3>Betaalinstructies</h3>
           <p class="preserve-lines">{{ receipt.paymentInstructions }}</p>
         } @else {
-          <p>Bewaar dit nummer voor de verdere afhandeling van je betaling.</p>
+          <p>Je betaling is verwerkt. Bewaar dit nummer voor je administratie.</p>
         }
         @if (auth.session()?.customer) {
           <a [routerLink]="['/winkel/account/bestellingen', receipt.id]">Bestelling bekijken</a>
