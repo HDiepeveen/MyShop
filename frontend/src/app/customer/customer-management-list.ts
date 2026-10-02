@@ -17,6 +17,9 @@ import { CustomerManagementApi, ManagedCustomerPage } from './customer-managemen
           [(ngModel)]="searchText"
           placeholder="E-mailadres of naam" /></label
       ><button>Zoeken</button>
+      @if (search) {
+        <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
+      }
     </form>
     @if (loading()) {
       <p role="status">Klanten ophalen…</p>
@@ -67,7 +70,7 @@ export class CustomerManagementList {
   readonly failure = signal('');
   readonly offset = signal(0);
   searchText = '';
-  private search = '';
+  search = '';
   constructor() {
     this.load();
   }
@@ -93,6 +96,10 @@ export class CustomerManagementList {
     this.search = this.searchText.trim();
     this.offset.set(0);
     this.load();
+  }
+  clearSearch() {
+    this.searchText = '';
+    this.applySearch();
   }
   previous() {
     this.offset.set(Math.max(0, this.offset() - 20));

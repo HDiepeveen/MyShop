@@ -43,6 +43,18 @@ describe('Customer management', () => {
       });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('ada@example.com');
+    expect(fixture.nativeElement.textContent).toContain('Zoekterm wissen');
+
+    fixture.componentInstance.clearSearch();
+    http
+      .expectOne(
+        (r) =>
+          r.url === '/api/customers' &&
+          r.params.get('offset') === '0' &&
+          !r.params.has('search'),
+      )
+      .flush({ items: [], offset: 0, limit: 20, totalCount: 0 });
+    expect(fixture.componentInstance.searchText).toBe('');
   });
   it('blocks a customer after confirmation', () => {
     TestBed.configureTestingModule({
