@@ -51,6 +51,7 @@ describe('Order management', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Ada Lovelace');
     expect(fixture.nativeElement.textContent).toContain('Wacht op betaling');
+    expect(fixture.nativeElement.textContent).toContain('Later betalen');
 
     vi.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(async (_commands, options) => {
       const next: Record<string, string> = {};

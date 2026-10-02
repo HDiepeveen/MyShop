@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { loadState } from '../catalog/load-state';
-import { OrderManagementApi, OrderStatus } from './order-management.api';
+import { OrderManagementApi, OrderPaymentMethod, OrderStatus } from './order-management.api';
 
 @Component({
   imports: [RouterLink, DatePipe, CurrencyPipe, FormsModule],
@@ -65,6 +65,7 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
                   <th>Geplaatst</th>
                   <th>Klant</th>
                   <th>Status</th>
+                  <th>Betaling</th>
                   <th>Totaal</th>
                   <th>Bekijken</th>
                 </tr>
@@ -84,6 +85,7 @@ import { OrderManagementApi, OrderStatus } from './order-management.api';
                     <td>
                       <span class="badge">{{ statusLabel(order.status) }}</span>
                     </td>
+                    <td>{{ paymentMethodLabel(order.paymentMethod) }}</td>
                     <td>
                       @for (total of order.totals; track total.currency) {
                         <div class="nowrap">{{ total.amount | currency: total.currency }}</div>
@@ -215,6 +217,9 @@ export class OrderList {
   }
   exportUrl() {
     return this.api.exportUrl(this.status(), this.listQuery().search);
+  }
+  paymentMethodLabel(method: OrderPaymentMethod) {
+    return method === 'online' ? 'Online' : 'Later betalen';
   }
   statusLabel(status: string) {
     return status === 'awaitingPayment'
