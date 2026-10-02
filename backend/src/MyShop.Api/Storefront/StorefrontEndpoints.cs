@@ -16,6 +16,7 @@ public static class StorefrontEndpoints
         endpoints.MapCartQuote();
         endpoints.MapPlaceOrder();
         endpoints.MapStartOnlinePayment();
+        endpoints.MapCompleteOnlinePayment();
         endpoints.MapGet("/api/shop/categories", async (
             [FromServices] ListStorefrontCategories useCase, CancellationToken cancellationToken) =>
             Results.Ok(await useCase.ExecuteAsync(cancellationToken))).AllowAnonymous();

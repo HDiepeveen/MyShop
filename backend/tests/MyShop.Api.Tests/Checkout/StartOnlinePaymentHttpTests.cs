@@ -128,5 +128,33 @@ public sealed class StartOnlinePaymentHttpTests
             repeatedPayment.GetProperty("providerPaymentId").GetString());
         Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
             "SELECT COUNT(*) AS [Value] FROM [OnlinePaymentStarts]").SingleAsync());
+
+        var mismatch = await visitor.GetAsync(
+            $"/api/shop/online-payments/{checkoutToken}/complete?providerPaymentId=different");
+        Assert.Equal(HttpStatusCode.Conflict, mismatch.StatusCode);
+        Assert.Equal(0, await database.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS [Value] FROM [Orders]").SingleAsync());
+
+        var complete = await visitor.GetAsync(
+            $"/api/shop/online-payments/{checkoutToken}/complete?providerPaymentId=test_{checkoutToken:N}");
+        Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
+        var receipt = await complete.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("29.95", receipt.GetProperty("totals")[0].GetProperty("amount").GetString());
+        Assert.Equal("Pakketdienst", receipt.GetProperty("deliveryMethod").GetProperty("name").GetString());
+        Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS [Value] FROM [Orders]").SingleAsync());
+        Assert.Equal(2, await database.Database.SqlQueryRaw<int>(
+            "SELECT [Status] AS [Value] FROM [Orders]").SingleAsync());
+        Assert.Equal(2, await database.Database.SqlQueryRaw<int>(
+            "SELECT [PaymentMethod] AS [Value] FROM [Orders]").SingleAsync());
+        Assert.Equal($"OP-{checkoutToken:N}".ToUpperInvariant(), await database.Database.SqlQueryRaw<string>(
+            "SELECT [PaymentReference] AS [Value] FROM [Orders]").SingleAsync());
+
+        var completedAgain = await visitor.GetAsync(
+            $"/api/shop/online-payments/{checkoutToken}/complete?providerPaymentId=test_{checkoutToken:N}");
+        Assert.Equal(HttpStatusCode.OK, completedAgain.StatusCode);
+        Assert.Equal(1, await database.Database.SqlQueryRaw<int>(
+            "SELECT COUNT(*) AS [Value] FROM [Orders]").SingleAsync());
+
     }
 }
