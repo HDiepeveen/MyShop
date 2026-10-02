@@ -85,4 +85,12 @@ export class OrderApi {
       .prepare()
       .pipe(switchMap(() => this.http.post<OnlinePaymentStart>('/api/shop/online-payments', request)));
   }
+
+  completeOnlinePayment(checkoutToken: string, providerPaymentId: string) {
+    const token = encodeURIComponent(checkoutToken);
+    const provider = encodeURIComponent(providerPaymentId);
+    return this.auth
+      .prepare()
+      .pipe(switchMap(() => this.http.get<OrderReceipt>(`/api/shop/online-payments/${token}/complete?providerPaymentId=${provider}`)));
+  }
 }

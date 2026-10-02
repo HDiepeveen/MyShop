@@ -100,6 +100,8 @@ describe('Shop checkout', () => {
     fixture.componentRef.setInput('paymentMethod', 'online');
     fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
     const page = fixture.componentInstance;
+    const placed = vi.fn();
+    page.placed.subscribe(placed);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Online betaling voorbereiden');
 
@@ -145,5 +147,31 @@ describe('Shop checkout', () => {
     expect(link.getAttribute('href')).toBe('https://payments.example.test/test_123');
     expect(content).toContain('Bezorging: Pakketdienst');
     expect(content).toContain('Totaal EUR 29,95');
+
+    const buttons = fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
+    const button = Array.from(buttons).find((item) =>
+      item.textContent?.includes('Testbetaling afronden'),
+    )!;
+    button.click();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const complete = http.expectOne(
+      `/api/shop/online-payments/${request.request.body.checkoutToken}/complete?providerPaymentId=test_123`,
+    );
+    expect(complete.request.method).toBe('GET');
+    complete.flush({
+      id: '30000000-0000-0000-0000-000000000001',
+      number: 'MS-3000',
+      placedAt: '2026-09-30T12:00:00Z',
+      paymentInstructions: null,
+      totals: [{ currency: 'EUR', amount: '29.95' }],
+      deliveryMethod: {
+        id: '40000000-0000-0000-0000-000000000001',
+        name: 'Pakketdienst',
+        description: null,
+        amount: '4.95',
+        currency: 'EUR',
+      },
+    });
+    expect(placed).toHaveBeenCalledWith(expect.objectContaining({ number: 'MS-3000' }));
   });
 });

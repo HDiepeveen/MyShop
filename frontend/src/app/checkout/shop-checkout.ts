@@ -79,6 +79,9 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
             <p>Betalingskenmerk: {{ payment.paymentReference }}</p>
             <p>Providerbetaling: {{ payment.providerPaymentId }}</p>
             <p><a [href]="payment.checkoutUrl">Testbetaling openen</a></p>
+            <button type="button" [disabled]="busy()" (click)="completeOnlinePayment(payment)">
+              {{ busy() ? 'Betaling afronden…' : 'Testbetaling afronden' }}
+            </button>
             <p>Bezorging: {{ payment.deliveryMethod.name }}</p>
             <ul>
               @for (total of payment.totals; track total.currency) {
@@ -174,6 +177,23 @@ export class ShopCheckout implements OnInit {
     }
     this.api
       .place(request)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (receipt) => {
+          this.busy.set(false);
+          this.placed.emit(receipt);
+        },
+        error: (error) => this.showFailure(error),
+      });
+  }
+
+  completeOnlinePayment(payment: OnlinePaymentStart) {
+    if (this.busy()) return;
+    this.failure.set('');
+    this.notice.set('');
+    this.busy.set(true);
+    this.api
+      .completeOnlinePayment(payment.checkoutToken, payment.providerPaymentId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (receipt) => {
