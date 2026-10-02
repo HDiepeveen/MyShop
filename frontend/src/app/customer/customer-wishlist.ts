@@ -10,6 +10,7 @@ import { ShopImage } from '../shop/shop-image';
     <a class="back" routerLink="/winkel/account">← Mijn account</a>
     <h1>Mijn verlanglijst</h1>
     @if (loading()) { <p role="status">Verlanglijst ophalen…</p> }
+    @if (notice()) { <p role="status">{{ notice() }}</p> }
     @if (error()) {
       <div class="panel" role="alert"><p>{{ error() }}</p><button (click)="load()">Opnieuw proberen</button></div>
     }
@@ -50,20 +51,21 @@ export class CustomerWishlist {
   readonly page = signal<WishlistPage | null>(null);
   readonly loading = signal(false);
   readonly error = signal('');
+  readonly notice = signal('');
   readonly removing = signal('');
   readonly Math = Math;
   constructor() { this.load(0); }
   load(offset = 0) {
-    this.loading.set(true); this.error.set('');
+    this.loading.set(true); this.error.set(''); this.notice.set('');
     this.api.list(offset).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (page) => { this.page.set(page); this.items.set(page.items); this.loading.set(false); },
       error: () => { this.error.set('Je verlanglijst kon niet worden opgehaald.'); this.loading.set(false); },
     });
   }
   remove(item: WishlistItem) {
-    this.removing.set(item.productId);
+    this.removing.set(item.productId); this.notice.set('');
     this.api.remove(item.productId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.items.update((items) => items.filter((value) => value.productId !== item.productId)); this.page.update((page) => page ? { ...page, items: page.items.filter((value) => value.productId !== item.productId), totalCount: page.totalCount - 1 } : page); this.removing.set(''); },
+      next: () => { this.items.update((items) => items.filter((value) => value.productId !== item.productId)); this.page.update((page) => page ? { ...page, items: page.items.filter((value) => value.productId !== item.productId), totalCount: page.totalCount - 1 } : page); this.notice.set('Verwijderd van je verlanglijst.'); this.removing.set(''); },
       error: () => { this.error.set('Het product kon niet worden verwijderd.'); this.removing.set(''); },
     });
   }

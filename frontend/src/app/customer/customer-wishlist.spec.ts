@@ -32,7 +32,9 @@ describe('Customer wishlist', () => {
     const removal = http.expectOne('/api/customer/wishlist/' + product.productId);
     expect(removal.request.method).toBe('DELETE');
     removal.flush(null);
+    fixture.detectChanges();
     expect(fixture.componentInstance.items()).toEqual([]);
+    expect(fixture.nativeElement.textContent).toContain('Verwijderd van je verlanglijst.');
   });
 
   it('shows an unavailable saved product without a product link', () => {
