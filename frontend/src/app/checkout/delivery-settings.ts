@@ -6,33 +6,114 @@ import { DeliveryMethod, DeliveryMethodsApi } from './delivery-methods.api';
 
 @Component({
   imports: [FormsModule],
-  template: `<div class="eyebrow">Checkout</div><h1>Bezorgopties</h1>
+  template: `<div class="eyebrow">Checkout</div>
+    <h1>Bezorgopties</h1>
     <p>Alle ingeschakelde opties worden bij het afrekenen aangeboden.</p>
-    @if (failure()) { <p class="error" role="alert">{{ failure() }}</p> }
-    @if (notice()) { <p class="success" role="status">{{ notice() }}</p> }
-    @if (loading()) { <p role="status">Bezorgopties ophalen…</p> }
-    @if (loadFailed()) { <button type="button" [disabled]="busy()" (click)="load()">Opnieuw proberen</button> }
+    @if (failure()) {
+      <p class="error" role="alert">{{ failure() }}</p>
+    }
+    @if (notice()) {
+      <p class="success" role="status">{{ notice() }}</p>
+    }
+    @if (loading()) {
+      <p role="status">Bezorgopties ophalen…</p>
+    }
+    @if (loadFailed()) {
+      <button type="button" [disabled]="busy()" (click)="load()">Opnieuw proberen</button>
+    }
     @for (method of methods(); track method.id) {
       <section class="panel">
-        <h2>{{ method.name }} <span class="badge">{{ method.enabled ? 'Beschikbaar' : 'Uitgeschakeld' }}</span></h2>
+        <h2>
+          {{ method.name }}
+          <span class="badge">{{ method.enabled ? 'Beschikbaar' : 'Uitgeschakeld' }}</span>
+        </h2>
         <p>{{ method.currency }} {{ amount(method.amount) }}</p>
-        @if (method.description) { <p class="preserve-lines">{{ method.description }}</p> }
-        <button class="secondary" type="button" [disabled]="busy() || loading()" (click)="edit(method)">Bewerken</button>
-        <button class="secondary" type="button" [disabled]="busy() || loading()" (click)="remove(method)">Verwijderen</button>
+        @if (method.description) {
+          <p class="preserve-lines">{{ method.description }}</p>
+        }
+        <button
+          class="secondary"
+          type="button"
+          [disabled]="busy() || loading()"
+          (click)="edit(method)"
+        >
+          Bewerken
+        </button>
+        <button
+          class="secondary"
+          type="button"
+          [disabled]="busy() || loading()"
+          (click)="remove(method)"
+        >
+          Verwijderen
+        </button>
       </section>
     }
     <section class="panel form-width">
       <h2>{{ editingId ? 'Bezorgoptie bewerken' : 'Bezorgoptie toevoegen' }}</h2>
-      <form (ngSubmit)="save()">
-        <label>Naam<input name="name" [disabled]="busy() || loading()" [(ngModel)]="name" maxlength="100" required /></label>
-        <label>Toelichting<textarea name="description" [disabled]="busy() || loading()" [(ngModel)]="description" maxlength="500" rows="3"></textarea></label>
+      <form #form="ngForm" (ngSubmit)="save()">
+        @if (!loading() && form.dirty && validationError()) {
+          <p class="form-errors" role="alert">{{ validationError() }}</p>
+        }
+        <label
+          >Naam<input
+            name="name"
+            [disabled]="busy() || loading()"
+            [(ngModel)]="name"
+            maxlength="100"
+            required
+        /></label>
+        <label
+          >Toelichting<textarea
+            name="description"
+            [disabled]="busy() || loading()"
+            [(ngModel)]="description"
+            maxlength="500"
+            rows="3"
+          ></textarea>
+        </label>
         <div class="grid">
-          <label>Bedrag<input name="amount" [disabled]="busy() || loading()" [(ngModel)]="price" inputmode="decimal" pattern="[0-9]+([.,][0-9]{1,2})?" required /></label>
-          <label>Valuta<input name="currency" [disabled]="busy() || loading()" [(ngModel)]="currency" minlength="3" maxlength="3" required /></label>
+          <label
+            >Bedrag<input
+              name="amount"
+              [disabled]="busy() || loading()"
+              [(ngModel)]="price"
+              inputmode="decimal"
+              pattern="[0-9]+([.,][0-9]{1,2})?"
+              required
+          /></label>
+          <label
+            >Valuta<input
+              name="currency"
+              [disabled]="busy() || loading()"
+              [(ngModel)]="currency"
+              minlength="3"
+              maxlength="3"
+              required
+          /></label>
         </div>
-        <label class="check-field"><input type="checkbox" name="enabled" [disabled]="busy() || loading()" [(ngModel)]="enabled" />Beschikbaar voor klanten</label>
-        <div class="actions"><button [disabled]="busy() || loading()">{{ busy() ? 'Opslaan…' : 'Opslaan' }}</button>
-          @if (editingId) { <button class="secondary" type="button" [disabled]="busy() || loading()" (click)="clear()">Annuleren</button> }
+        <label class="check-field"
+          ><input
+            type="checkbox"
+            name="enabled"
+            [disabled]="busy() || loading()"
+            [(ngModel)]="enabled"
+          />Beschikbaar voor klanten</label
+        >
+        <div class="actions">
+          <button [disabled]="busy() || loading() || !!validationError()">
+            {{ busy() ? 'Opslaan…' : 'Opslaan' }}
+          </button>
+          @if (editingId) {
+            <button
+              class="secondary"
+              type="button"
+              [disabled]="busy() || loading()"
+              (click)="clear()"
+            >
+              Annuleren
+            </button>
+          }
         </div>
       </form>
     </section>`,
@@ -53,46 +134,136 @@ export class DeliverySettings {
   price = '0.00';
   currency = 'EUR';
   enabled = true;
-  constructor() { this.load(); }
+  constructor() {
+    this.load();
+  }
   load() {
     if (this.loading() || this.busy()) return;
     this.loadFailed.set(false);
-    this.loading.set(true); this.failure.set('');
-    this.api.adminMethods().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (methods) => { this.methods.set(methods); this.loading.set(false); },
-      error: (error) => { this.loadFailed.set(true); this.failure.set(errorMessage(error)); this.loading.set(false); },
-    });
+    this.loading.set(true);
+    this.failure.set('');
+    this.api
+      .adminMethods()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (methods) => {
+          this.methods.set(methods);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.loadFailed.set(true);
+          this.failure.set(errorMessage(error));
+          this.loading.set(false);
+        },
+      });
   }
   edit(method: DeliveryMethod) {
-    if (this.busy() || this.loading()) return;
-    this.editingId = method.id; this.revision = method.revision; this.name = method.name;
-    this.description = method.description ?? ''; this.price = method.amount;
-    this.currency = method.currency; this.enabled = method.enabled; this.notice.set('');
+    if (this.busy() || this.loading() || !this.methods().includes(method)) return;
+    this.editingId = method.id;
+    this.revision = method.revision;
+    this.name = method.name;
+    this.description = method.description ?? '';
+    this.price = method.amount;
+    this.currency = method.currency;
+    this.enabled = method.enabled;
+    this.notice.set('');
   }
   clear() {
     if (this.busy() || this.loading()) return;
-    this.editingId = ''; this.revision = ''; this.name = ''; this.description = '';
-    this.price = '0.00'; this.currency = 'EUR'; this.enabled = true;
+    this.editingId = '';
+    this.revision = '';
+    this.name = '';
+    this.description = '';
+    this.price = '0.00';
+    this.currency = 'EUR';
+    this.enabled = true;
+  }
+  validationError() {
+    if (!this.name.trim() || this.name.trim().length > 100)
+      return 'Gebruik een naam van 1 tot en met 100 tekens.';
+    if (this.description.trim().length > 500)
+      return 'De toelichting mag maximaal 500 tekens bevatten.';
+    const amount = this.price.trim().replace(',', '.');
+    if (!/^\d+(\.\d{1,2})?$/.test(amount))
+      return 'Gebruik een bedrag vanaf 0 met maximaal twee decimalen.';
+    const [whole, fraction = ''] = amount.split('.');
+    if (BigInt(whole + fraction.padEnd(2, '0')) > 999999999999999999n)
+      return 'Het bedrag valt buiten het ondersteunde bereik.';
+    if (!/^[a-zA-Z]{3}$/.test(this.currency.trim()))
+      return 'Gebruik een valutacode van drie letters.';
+    return '';
   }
   save() {
     if (this.busy() || this.loading()) return;
-    this.busy.set(true); this.failure.set(''); this.notice.set('');
-    const request = { name: this.name, description: this.description.trim() || null,
-      amount: this.price.replace(',', '.'), currency: this.currency.toUpperCase(),
-      enabled: this.enabled, ...(this.revision ? { revision: this.revision } : {}) };
-    const operation = this.editingId ? this.api.update(this.editingId, request) : this.api.create(request);
+    const validation = this.validationError();
+    if (validation) {
+      this.failure.set(validation);
+      return;
+    }
+    if (
+      this.editingId &&
+      !this.methods().some(
+        (method) => method.id === this.editingId && method.revision === this.revision,
+      )
+    ) {
+      this.failure.set('Deze bezorgoptie is gewijzigd. Selecteer de actuele optie opnieuw.');
+      return;
+    }
+    this.busy.set(true);
+    this.failure.set('');
+    this.notice.set('');
+    const request = {
+      name: this.name.trim(),
+      description: this.description.trim() || null,
+      amount: this.price.trim().replace(',', '.'),
+      currency: this.currency.trim().toUpperCase(),
+      enabled: this.enabled,
+      ...(this.revision ? { revision: this.revision } : {}),
+    };
+    const operation = this.editingId
+      ? this.api.update(this.editingId, request)
+      : this.api.create(request);
     operation.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.busy.set(false); this.clear(); this.notice.set('De bezorgoptie is opgeslagen.'); this.load(); },
-      error: (error) => { this.busy.set(false); this.failure.set(errorMessage(error)); },
+      next: () => {
+        this.busy.set(false);
+        this.clear();
+        this.notice.set('De bezorgoptie is opgeslagen.');
+        this.load();
+      },
+      error: (error) => {
+        this.busy.set(false);
+        this.failure.set(errorMessage(error));
+      },
     });
   }
   remove(method: DeliveryMethod) {
-    if (this.busy() || this.loading() || !window.confirm(`Wil je ${method.name} verwijderen?`)) return;
-    this.busy.set(true); this.failure.set(''); this.notice.set('');
-    this.api.delete(method.id, method.revision).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.busy.set(false); if (this.editingId === method.id) this.clear(); this.notice.set('De bezorgoptie is verwijderd.'); this.load(); },
-      error: (error) => { this.busy.set(false); this.failure.set(errorMessage(error)); },
-    });
+    if (
+      this.busy() ||
+      this.loading() ||
+      !this.methods().includes(method) ||
+      !window.confirm(`Wil je ${method.name} verwijderen?`)
+    )
+      return;
+    this.busy.set(true);
+    this.failure.set('');
+    this.notice.set('');
+    this.api
+      .delete(method.id, method.revision)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          if (this.editingId === method.id) this.clear();
+          this.notice.set('De bezorgoptie is verwijderd.');
+          this.load();
+        },
+        error: (error) => {
+          this.busy.set(false);
+          this.failure.set(errorMessage(error));
+        },
+      });
   }
-  amount(value: string) { return value.replace('.', ','); }
+  amount(value: string) {
+    return value.replace('.', ',');
+  }
 }

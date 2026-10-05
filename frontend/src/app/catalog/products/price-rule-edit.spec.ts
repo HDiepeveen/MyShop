@@ -28,6 +28,41 @@ describe('PriceRuleEdit', () => {
     fixture.detectChanges();
     return fixture.componentInstance;
   }
+  it.each([0, 3, NaN])('rejects unknown adjustment type %s', (type) => {
+    const editor = setup();
+    editor.name = 'Sale';
+    editor.value = '10';
+    editor.adjustmentType = type;
+    editor.save();
+    expect(editor.valid()).toBe(false);
+    http.expectNone(() => true);
+  });
+  it.each(['2147483648', '9999999999999999999999'])(
+    'rejects out of range priority %s',
+    (priority) => {
+      const editor = setup();
+      editor.name = 'Sale';
+      editor.value = '10';
+      editor.priority = priority;
+      editor.save();
+      expect(editor.valid()).toBe(false);
+      http.expectNone(() => true);
+    },
+  );
+  it('accepts the maximum priority and detects rounded cents', () => {
+    const editor = setup();
+    editor.name = 'Sale';
+    editor.adjustmentType = 2;
+    editor.priority = '2147483647';
+    editor.value = '10';
+    expect(editor.valid()).toBe(true);
+    editor.value = '70368744177664.01';
+    expect(editor.parseValue()).toBeNull();
+    editor.save();
+    http.expectNone(() => true);
+    editor.value = '0012,50';
+    expect(editor.parseValue()).toBe(12.5);
+  });
   it('validates percentages, dates and priority before sending', () => {
     const editor = setup();
     editor.name = 'Sale';

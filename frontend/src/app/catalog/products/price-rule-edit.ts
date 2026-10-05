@@ -162,14 +162,20 @@ export class PriceRuleEdit {
   }
   validationError() {
     const value = this.parseValue();
+    if (this.adjustmentType !== 1 && this.adjustmentType !== 2)
+      return 'Kies een geldig kortingstype.';
     if (!this.name.trim()) return 'Geef de kortingsregel een naam.';
     if (this.name.trim().length > 200) return 'De naam mag maximaal 200 tekens bevatten.';
     if (value === null || value <= 0)
       return 'Gebruik een positieve waarde met maximaal twee decimalen.';
     if (this.adjustmentType === 1 && value > 100)
       return 'Een percentagekorting mag maximaal 100 zijn.';
-    if (!/^\d+$/.test(this.priority.trim()) || Number(this.priority) < 0)
-      return 'Prioriteit moet een geheel getal vanaf 0 zijn.';
+    if (
+      !/^\d+$/.test(this.priority.trim()) ||
+      Number(this.priority) < 0 ||
+      Number(this.priority) > 2147483647
+    )
+      return 'Prioriteit moet een geheel getal van 0 tot en met 2147483647 zijn.';
     if (this.startsAt && Number.isNaN(Date.parse(this.startsAt)))
       return 'De startdatum is ongeldig.';
     if (this.endsAt && Number.isNaN(Date.parse(this.endsAt))) return 'De einddatum is ongeldig.';
@@ -184,7 +190,12 @@ export class PriceRuleEdit {
     const text = this.value.trim().replace(',', '.');
     if (!/^\d+(\.\d{1,2})?$/.test(text)) return null;
     const value = Number(text);
-    return Number.isFinite(value) && Number.isSafeInteger(Math.round(value * 100)) && value > 0
+    const [whole, fraction = ''] = text.split('.');
+    const canonical = whole.replace(/^0+(?=\d)/, '') + '.' + fraction.padEnd(2, '0');
+    return Number.isFinite(value) &&
+      Number.isSafeInteger(Math.round(value * 100)) &&
+      value.toFixed(2) === canonical &&
+      value > 0
       ? value
       : null;
   }

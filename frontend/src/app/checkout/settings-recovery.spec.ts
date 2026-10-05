@@ -6,12 +6,21 @@ import { DeliverySettings } from './delivery-settings';
 import { DeliveryMethod, DeliveryMethodsApi } from './delivery-methods.api';
 
 const options: AdminPaymentOptions = {
-  payLaterEnabled: true, onlinePaymentEnabled: false, payLaterInstructions: null,
-  onlinePaymentConfigured: false, onlinePaymentProvider: null, revision: 'revision-1',
+  payLaterEnabled: true,
+  onlinePaymentEnabled: false,
+  payLaterInstructions: null,
+  onlinePaymentConfigured: false,
+  onlinePaymentProvider: null,
+  revision: 'revision-1',
 };
 const method: DeliveryMethod = {
-  id: 'delivery-1', name: 'PostNL', description: null, amount: '4.95',
-  currency: 'EUR', enabled: true, revision: 'revision-1',
+  id: 'delivery-1',
+  name: 'PostNL',
+  description: null,
+  amount: '4.95',
+  currency: 'EUR',
+  enabled: true,
+  revision: 'revision-1',
 };
 
 describe('Checkout settings recovery', () => {
@@ -21,7 +30,10 @@ describe('Checkout settings recovery', () => {
     const response = new Subject<AdminPaymentOptions>();
     const update = new Subject<void>();
     const api = { adminOptions: vi.fn(() => response), update: vi.fn(() => update) };
-    TestBed.configureTestingModule({ imports: [PaymentSettings], providers: [{ provide: PaymentOptionsApi, useValue: api }] });
+    TestBed.configureTestingModule({
+      imports: [PaymentSettings],
+      providers: [{ provide: PaymentOptionsApi, useValue: api }],
+    });
     const fixture = TestBed.createComponent(PaymentSettings);
     response.next(options);
     fixture.detectChanges();
@@ -68,10 +80,15 @@ describe('Checkout settings recovery', () => {
     const response = new Subject<readonly DeliveryMethod[]>();
     const operation = new Subject<DeliveryMethod>();
     const api = {
-      adminMethods: vi.fn(() => response), create: vi.fn(() => operation),
-      update: vi.fn(() => operation), delete: vi.fn(() => operation),
+      adminMethods: vi.fn(() => response),
+      create: vi.fn(() => operation),
+      update: vi.fn(() => operation),
+      delete: vi.fn(() => operation),
     };
-    TestBed.configureTestingModule({ imports: [DeliverySettings], providers: [{ provide: DeliveryMethodsApi, useValue: api }] });
+    TestBed.configureTestingModule({
+      imports: [DeliverySettings],
+      providers: [{ provide: DeliveryMethodsApi, useValue: api }],
+    });
     return { fixture: TestBed.createComponent(DeliverySettings), response, operation, api };
   }
 
@@ -80,6 +97,7 @@ describe('Checkout settings recovery', () => {
     fixture.componentInstance.load();
     expect(api.adminMethods).toHaveBeenCalledTimes(1);
     response.next([method]);
+    fixture.componentInstance.name = 'New delivery';
     fixture.componentInstance.save();
     fixture.componentInstance.load();
     expect(api.adminMethods).toHaveBeenCalledTimes(1);
@@ -91,7 +109,9 @@ describe('Checkout settings recovery', () => {
     const retry = new Subject<readonly DeliveryMethod[]>();
     api.adminMethods.mockReturnValue(retry);
     fixture.detectChanges();
-    const buttons = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    const buttons = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
     buttons.find((button) => button.textContent?.includes('Opnieuw proberen'))!.click();
     retry.next([method]);
     fixture.detectChanges();
@@ -120,7 +140,9 @@ describe('Checkout settings recovery', () => {
     expect(fixture.componentInstance.name).toBe(method.name);
     expect(api.update).toHaveBeenCalledTimes(1);
     operation.error(new Error('Offline'));
-    fixture.componentInstance.edit({ ...method, id: 'delivery-2', name: 'DHL' });
+    const nextMethod = { ...method, id: 'delivery-2', name: 'DHL' };
+    response.next([method, nextMethod]);
+    fixture.componentInstance.edit(nextMethod);
     expect(fixture.componentInstance.editingId).toBe('delivery-2');
   });
 
@@ -147,7 +169,9 @@ describe('Checkout settings recovery', () => {
     fixture.componentInstance.save();
     fixture.detectChanges();
     await fixture.whenStable();
-    const fields = Array.from(fixture.nativeElement.querySelectorAll('input, textarea')) as (HTMLInputElement | HTMLTextAreaElement)[];
+    const fields = Array.from(fixture.nativeElement.querySelectorAll('input, textarea')) as (
+      HTMLInputElement | HTMLTextAreaElement
+    )[];
     expect(fields.length).toBe(5);
     expect(fields.every((field) => field.disabled)).toBe(true);
     operation.error(new Error('Offline'));
