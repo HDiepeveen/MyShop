@@ -27,6 +27,15 @@ describe('VariantEdit', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it('rejects the Unicode next-line whitespace inside an article number', () => {
+    const editor = setup().componentInstance;
+    editor.sku = 'SHIRT' + String.fromCharCode(0x85) + '1';
+    expect(editor.validSku()).toBe(false);
+    editor.saveSku();
+    http.expectNone(() => true);
+    editor.sku = 'SHIRT-1';
+    expect(editor.validSku()).toBe(true);
+  });
   it('blocks empty and unchanged names and duplicate writes, reports success after persistence', () => {
     const fixture = setup();
     const editor = fixture.componentInstance;

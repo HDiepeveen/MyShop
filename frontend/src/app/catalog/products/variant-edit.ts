@@ -165,7 +165,9 @@ export class VariantEdit {
   currency = 'EUR';
   stock = '';
   constructor() {
-    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
     effect(() => {
       this.productId();
       this.error.set('');
@@ -186,7 +188,7 @@ export class VariantEdit {
   }
 
   validSku() {
-    return !!this.sku.trim() && this.sku.trim().length <= 64 && !/\s/.test(this.sku.trim());
+    return !!this.sku.trim() && this.sku.trim().length <= 64 && !/[\s\u0085]/.test(this.sku.trim());
   }
   saveSku() {
     if (this.busy() || !this.validSku() || this.sku.trim().toUpperCase() === this.variant().sku)

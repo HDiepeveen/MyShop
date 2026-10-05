@@ -60,7 +60,7 @@ import { loadState } from '../load-state';
                       class="secondary"
                       [attr.aria-pressed]="selected()?.id === type.id"
                       [disabled]="saving()"
-                      (click)="selected.set(type)"
+                      (click)="selectType(type)"
                     >
                       {{ selected()?.id === type.id ? 'Gekozen' : 'Kiezen'
                       }}<span class="sr-only">: {{ type.name }}</span>
@@ -140,9 +140,16 @@ export class ProductCreate {
     this.offset.set(0);
     this.query.next({ offset: 0, search: this.searchText });
   }
+  selectType(type: TypeSummary) {
+    if (this.saving() || this.types()?.loading || !this.types()?.data?.includes(type)) return;
+    this.selected.set(type);
+  }
   changePage(delta: number) {
-    if (this.saving()) return;
-    this.offset.update((value) => Math.max(0, value + delta));
+    if (this.saving() || this.types()?.loading || !Number.isSafeInteger(delta) || delta % 20 !== 0)
+      return;
+    const offset = Math.max(0, this.offset() + delta);
+    if (!Number.isSafeInteger(offset) || offset === this.offset()) return;
+    this.offset.set(offset);
     this.query.next({ ...this.query.value, offset: this.offset() });
   }
   retry() {

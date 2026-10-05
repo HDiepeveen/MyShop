@@ -72,6 +72,25 @@ describe('ProductList', () => {
     filters.next(convertToParamMap({ categoryId: 'new', unrelated: 'value' }));
     http.expectNone((r) => r.url === '/api/products');
   });
+  it.each(['success', 'error'])(
+    'ignores late SKU lookup %s after changing the applied query',
+    (result) => {
+      const fixture = TestBed.createComponent(ProductList);
+      const page = fixture.componentInstance;
+      http.expectOne((r) => r.url === '/api/products').flush({ items: [], totalCount: 0 });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      page.skuText = 'SHIRT-1';
+      page.lookupSku();
+      const sku = http.expectOne((r) => r.url.includes('/by-sku/'));
+      filters.next(convertToParamMap({ search: 'new' }));
+      http.expectOne((r) => r.url === '/api/products').flush({ items: [], totalCount: 0 });
+      if (result === 'success') sku.flush({ productId: 'p', variantId: 'v' });
+      else sku.flush({}, { status: 404, statusText: 'Missing' });
+      expect(navigate).not.toHaveBeenCalled();
+      expect(page.skuError()).toBe('');
+      expect(page.skuBusy()).toBe(false);
+    },
+  );
   it('renders filter context and removes only the requested filter', () => {
     filters.next(convertToParamMap({ categoryId: 'c', productTypeId: 't' }));
     const fixture = TestBed.createComponent(ProductList);

@@ -244,6 +244,7 @@ export class ProductList {
       this.skuError.set('Gebruik een artikelnummer van maximaal 64 tekens zonder spaties.');
       return;
     }
+    const query = this.listQuery();
     this.skuBusy.set(true);
     this.skuError.set('');
     this.api
@@ -252,12 +253,14 @@ export class ProductList {
       .subscribe({
         next: (owner) => {
           this.skuBusy.set(false);
+          if (this.listQuery() !== query) return;
           void this.router.navigate(['/producten', owner.productId], {
-            queryParams: this.listQuery(),
+            queryParams: query,
           });
         },
         error: (error) => {
           this.skuBusy.set(false);
+          if (this.listQuery() !== query) return;
           this.skuError.set(
             error instanceof HttpErrorResponse && error.status === 404
               ? 'Geen product gevonden met dit artikelnummer. Controleer het artikelnummer en probeer opnieuw.'

@@ -84,7 +84,11 @@ import { CategoryEditState } from './category-edit-state';
               }
             </select>
           </label>
-          <button [disabled]="busy() || categories()?.loading || parentId === category().parentCategoryId">Opslaan</button>
+          <button
+            [disabled]="busy() || categories()?.loading || parentId === category().parentCategoryId"
+          >
+            Opslaan
+          </button>
           <button
             type="button"
             class="secondary"
@@ -183,7 +187,9 @@ export class CategoryManagement {
   selectedParentName = '';
   categorySearch = '';
   constructor() {
-    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
     effect(() => {
       this.parentId = this.category().parentCategoryId;
       this.selectedParentName = '';
@@ -214,12 +220,21 @@ export class CategoryManagement {
     this.categoryQuery.next({ offset: 0, search: this.categorySearch });
   }
   changeCategoryPage(delta: number) {
-    if (this.busy()) return;
-    this.categoryOffset.update((value) => Math.max(0, value + delta));
+    if (
+      this.busy() ||
+      this.categories()?.loading ||
+      !Number.isSafeInteger(delta) ||
+      delta % 20 !== 0
+    )
+      return;
+    const offset = Math.max(0, this.categoryOffset() + delta);
+    if (!Number.isSafeInteger(offset) || offset === this.categoryOffset()) return;
+    this.categoryOffset.set(offset);
     this.categoryQuery.next({ ...this.categoryQuery.value, offset: this.categoryOffset() });
   }
   retryCategories() {
-    if (!this.busy() && !this.categories()?.loading) this.categoryQuery.next(this.categoryQuery.value);
+    if (!this.busy() && !this.categories()?.loading)
+      this.categoryQuery.next(this.categoryQuery.value);
   }
   canDelete() {
     const information = this.usage()?.data;
@@ -237,7 +252,12 @@ export class CategoryManagement {
     this.usageRefresh.next(this.usageRefresh.value + 1);
   }
   move() {
-    if (this.busy() || this.categories()?.loading || this.parentId === this.category().parentCategoryId) return;
+    if (
+      this.busy() ||
+      this.categories()?.loading ||
+      this.parentId === this.category().parentCategoryId
+    )
+      return;
     if (this.parentId === this.category().id) {
       this.error.set('Een categorie kan niet onder zichzelf worden geplaatst.');
       return;
