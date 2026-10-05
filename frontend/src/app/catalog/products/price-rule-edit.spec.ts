@@ -77,6 +77,7 @@ describe('PriceRuleEdit', () => {
       startsAt: null,
       endsAt: null,
     };
+    editor.variant().priceRules!.push(rule);
     editor.edit(rule);
     editor.name = 'Sale nieuw';
     editor.save();

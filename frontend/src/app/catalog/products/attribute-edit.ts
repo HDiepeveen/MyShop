@@ -121,8 +121,17 @@ export class AttributeEdit {
   private readonly destroyRef = inject(DestroyRef);
   text = '';
   choices: string[] = [''];
+  private writing = false;
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
     effect(() => {
+      this.productId();
+      this.variantId();
+      this.definition();
+      this.error.set('');
+      this.validationError.set('');
       this.text = this.current() ? String(this.current()!.value) : '';
       this.choices = Array.isArray(this.current()?.value)
         ? [...(this.current()!.value as string[])]
@@ -137,6 +146,11 @@ export class AttributeEdit {
   }
   clear() {
     if (this.busy() || !this.current()) return;
+    const productId = this.productId(),
+      variantId = this.variantId(),
+      definition = this.definition(),
+      current = this.current();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     this.validationError.set('');
@@ -145,11 +159,27 @@ export class AttributeEdit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (
+            this.productId() !== productId ||
+            this.variantId() !== variantId ||
+            this.definition() !== definition ||
+            this.current() !== current
+          )
+            return;
           this.saved.emit('De kenmerkwaarde is gewist.');
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (
+            this.productId() !== productId ||
+            this.variantId() !== variantId ||
+            this.definition() !== definition ||
+            this.current() !== current
+          )
+            return;
           this.error.set(errorMessage(error));
         },
       });
@@ -166,6 +196,11 @@ export class AttributeEdit {
     );
     this.validationError.set(parsed.error);
     if (parsed.body === null) return;
+    const productId = this.productId(),
+      variantId = this.variantId(),
+      definition = this.definition(),
+      current = this.current();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     this.api
@@ -173,11 +208,27 @@ export class AttributeEdit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (
+            this.productId() !== productId ||
+            this.variantId() !== variantId ||
+            this.definition() !== definition ||
+            this.current() !== current
+          )
+            return;
           this.saved.emit('Het kenmerk is opgeslagen.');
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (
+            this.productId() !== productId ||
+            this.variantId() !== variantId ||
+            this.definition() !== definition ||
+            this.current() !== current
+          )
+            return;
           this.error.set(errorMessage(error));
         },
       });

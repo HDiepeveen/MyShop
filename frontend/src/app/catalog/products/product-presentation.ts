@@ -123,8 +123,13 @@ export class ProductPresentationEdit {
   description = '';
   imageUrl = '';
   imageAlt = '';
+  private writing = false;
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
     effect(() => {
+      this.error.set('');
       const presentation = this.product().presentation;
       this.description = presentation?.description ?? '';
       this.imageUrl = presentation?.imageUrl ?? '';
@@ -167,6 +172,8 @@ export class ProductPresentationEdit {
         return;
       }
     }
+    const product = this.product();
+    this.writing = true;
     this.busy.set(true);
     this.api
       .setPresentation(this.product().id, {
@@ -179,7 +186,9 @@ export class ProductPresentationEdit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.saved.emit(
             isPublished
               ? 'De productpresentatie is gepubliceerd.'
@@ -187,7 +196,9 @@ export class ProductPresentationEdit {
           );
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.error.set(errorMessage(error));
         },
       });

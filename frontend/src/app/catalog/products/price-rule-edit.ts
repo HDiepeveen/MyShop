@@ -143,10 +143,15 @@ export class PriceRuleEdit {
   startsAt = '';
   endsAt = '';
   editingId: string | null = null;
+  private writing = false;
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
     effect(() => {
-      this.variant().id;
-      if (!this.editingId) this.reset();
+      this.productId();
+      this.variant();
+      this.resetDraft();
     });
   }
   rules() {
@@ -184,6 +189,7 @@ export class PriceRuleEdit {
       : null;
   }
   edit(rule: PriceRule) {
+    if (this.busy() || !this.rules().includes(rule)) return;
     this.editingId = rule.id;
     this.name = rule.name;
     this.adjustmentType = rule.adjustmentType;
@@ -202,6 +208,10 @@ export class PriceRuleEdit {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
   reset() {
+    if (this.busy()) return;
+    this.resetDraft();
+  }
+  private resetDraft() {
     this.editingId = null;
     this.name = '';
     this.adjustmentType = 1;
@@ -213,7 +223,12 @@ export class PriceRuleEdit {
     this.confirming.set(null);
   }
   save() {
-    if (this.busy() || !this.valid()) return;
+    if (
+      this.busy() ||
+      !this.valid() ||
+      (this.editingId !== null && !this.rules().some((rule) => rule.id === this.editingId))
+    )
+      return;
     const rule = {
       name: this.name.trim(),
       adjustmentType: this.adjustmentType,
@@ -234,23 +249,30 @@ export class PriceRuleEdit {
     );
   }
   remove(rule: PriceRule) {
-    if (this.busy() || this.confirming() !== rule.id) return;
+    if (this.busy() || this.confirming() !== rule.id || !this.rules().includes(rule)) return;
     this.write(
       this.api.removePriceRule(this.productId(), this.variant().id, rule.id),
       'De kortingsregel is gewist.',
     );
   }
   private write(request: Observable<unknown>, message: string) {
+    const productId = this.productId(),
+      variant = this.variant();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.productId() !== productId || this.variant() !== variant) return;
         this.reset();
         this.saved.emit(message);
       },
       error: (error) => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.productId() !== productId || this.variant() !== variant) return;
         this.error.set(errorMessage(error));
       },
     });
