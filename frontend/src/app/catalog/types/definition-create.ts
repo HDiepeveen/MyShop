@@ -1,5 +1,5 @@
 import { TypeEditState } from './type-edit-state';
-import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi } from '../catalog.api';
@@ -74,12 +74,23 @@ export class DefinitionCreate {
   readonly types = attributeTypes;
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
   displayName = '';
   code = '';
   dataType = 0;
   scope = 0;
   required = false;
   filterable = false;
+  constructor() {
+    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
+    effect(() => {
+      this.typeId();
+      this.displayName = this.code = '';
+      this.dataType = this.scope = 0;
+      this.required = this.filterable = false;
+      this.error.set('');
+    });
+  }
   valid() {
     return (
       !!this.displayName.trim() &&
@@ -92,6 +103,8 @@ export class DefinitionCreate {
     if (this.busy() || !this.valid()) return;
     this.started.emit();
     this.busy.set(true);
+    this.writing = true;
+    const typeId = this.typeId();
     this.error.set('');
     this.api
       .addDefinition(this.typeId(), {
@@ -105,11 +118,15 @@ export class DefinitionCreate {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.typeId() !== typeId) return;
           this.saved.emit();
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.typeId() !== typeId) return;
           this.error.set(errorMessage(error));
         },
       });

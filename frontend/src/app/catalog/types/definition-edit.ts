@@ -82,11 +82,16 @@ export class DefinitionEdit {
   readonly confirming = signal(false);
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
   displayName = '';
   required = false;
   filterable = false;
   constructor() {
+    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
     effect(() => {
+      this.typeId();
+      this.error.set('');
+      this.confirming.set(false);
       this.displayName = this.definition().displayName;
       this.required = this.definition().isRequired;
       this.filterable = this.definition().isFilterable;
@@ -130,15 +135,22 @@ export class DefinitionEdit {
     );
   }
   private write(request: Observable<void>, message: string) {
+    const typeId = this.typeId();
+    const definition = this.definition();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.typeId() !== typeId || this.definition() !== definition) return;
         this.saved.emit(message);
       },
       error: (error) => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.typeId() !== typeId || this.definition() !== definition) return;
         this.error.set(errorMessage(error));
       },
     });

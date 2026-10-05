@@ -136,14 +136,17 @@ export class ProductCreate {
   variantName = '';
   searchText = '';
   search() {
+    if (this.saving()) return;
     this.offset.set(0);
     this.query.next({ offset: 0, search: this.searchText });
   }
   changePage(delta: number) {
+    if (this.saving()) return;
     this.offset.update((value) => Math.max(0, value + delta));
     this.query.next({ ...this.query.value, offset: this.offset() });
   }
   retry() {
+    if (this.saving() || this.types()?.loading) return;
     this.query.next(this.query.value);
   }
   create() {
