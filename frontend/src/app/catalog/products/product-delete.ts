@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi } from '../catalog.api';
 import { errorMessage } from '../error-message';
@@ -40,20 +40,36 @@ export class ProductDelete {
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
+  constructor() {
+    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
+    effect(() => {
+      this.productId();
+      this.productName();
+      this.confirming.set(false);
+      this.error.set('');
+    });
+  }
   remove() {
     if (this.busy() || !this.confirming()) return;
     this.busy.set(true);
+    this.writing = true;
+    const productId = this.productId();
     this.error.set('');
     this.api
       .deleteProduct(this.productId())
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.productId() !== productId) return;
           this.removed.emit();
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.productId() !== productId) return;
           this.error.set(errorMessage(error));
         },
       });

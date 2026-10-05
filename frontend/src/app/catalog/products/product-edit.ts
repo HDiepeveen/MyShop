@@ -50,27 +50,37 @@ export class ProductEdit {
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
   name = '';
   variantName = '';
   constructor() {
+    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
     effect(() => {
       this.name = this.product().name;
+      this.variantName = '';
+      this.error.set('');
     });
   }
   rename() {
     if (this.busy() || !this.name.trim() || this.name.trim() === this.product().name) return;
     this.busy.set(true);
+    this.writing = true;
+    const product = this.product();
     this.error.set('');
     this.api
       .renameProduct(this.product().id, this.name)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.saved.emit('De productnaam is bijgewerkt.');
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.error.set(errorMessage(error));
         },
       });
@@ -78,18 +88,24 @@ export class ProductEdit {
   addVariant() {
     if (this.busy() || !this.variantName.trim()) return;
     this.busy.set(true);
+    this.writing = true;
+    const product = this.product();
     this.error.set('');
     this.api
       .addVariant(this.product().id, this.variantName)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.variantName = '';
           this.saved.emit('De variant is toegevoegd.');
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.error.set(errorMessage(error));
         },
       });

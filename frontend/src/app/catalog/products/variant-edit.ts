@@ -158,13 +158,18 @@ export class VariantEdit {
   readonly confirmingRemove = signal(false);
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
   name = '';
   sku = '';
   amount = '';
   currency = 'EUR';
   stock = '';
   constructor() {
+    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
     effect(() => {
+      this.productId();
+      this.error.set('');
+      this.confirmingRemove.set(false);
       this.name = this.variant().name;
       this.sku = this.variant().sku ?? '';
       this.amount = this.variant().price?.amount.toString() ?? '';
@@ -267,16 +272,23 @@ export class VariantEdit {
     );
   }
   private save(request: Observable<void>, message: string, conflictMessage?: string) {
+    const productId = this.productId();
+    const variant = this.variant();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.productId() !== productId || this.variant() !== variant) return;
         this.confirmingRemove.set(false);
         this.saved.emit(message);
       },
       error: (error) => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.productId() !== productId || this.variant() !== variant) return;
         this.error.set(
           error instanceof HttpErrorResponse && error.status === 409 && conflictMessage
             ? conflictMessage
