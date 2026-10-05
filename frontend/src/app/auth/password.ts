@@ -44,7 +44,7 @@ import { Auth } from './auth';
           maxlength="128"
           [disabled]="busy()"
       /></label>
-      <button [disabled]="busy() || !current || password.length < 12 || password !== confirm">
+      <button [disabled]="busy() || !current || current.length > 128 || password.length < 12 || password.length > 128 || password !== confirm">
         {{ busy() ? 'Opslaan…' : 'Wachtwoord wijzigen' }}
       </button>
       @if (error()) {
@@ -66,6 +66,7 @@ export class Password {
     if (
       this.busy() ||
       !this.current ||
+      this.current.length > 128 ||
       this.password.length < 12 ||
       this.password.length > 128 ||
       this.password !== this.confirm
