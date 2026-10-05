@@ -86,10 +86,13 @@ export class PaymentSettings {
     });
   }
   reload() {
+    if (this.busy() || this.state()?.loading) return;
+    this.validation.set('');
     this.message.set('');
     this.refresh.next(this.refresh.value + 1);
   }
   save(options: AdminPaymentOptions) {
+    if (this.busy() || this.state()?.data !== options) return;
     this.validation.set('');
     this.message.set('');
     if (!this.payLater && !this.online) {
