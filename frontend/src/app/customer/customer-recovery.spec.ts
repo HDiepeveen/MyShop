@@ -9,12 +9,21 @@ import { CustomerOrderDetail } from './customer-order-detail';
 import { CustomerOrderApi, CustomerOrderDetail as Detail } from './customer-order.api';
 
 const profile: Profile = {
-  email: 'ada@example.test', name: 'Ada', addressLine: 'Straat 1',
-  postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL', revision: null,
+  email: 'ada@example.test',
+  name: 'Ada',
+  addressLine: 'Straat 1',
+  postalCode: '1234 AB',
+  city: 'Utrecht',
+  countryCode: 'NL',
+  revision: null,
 };
 const product = {
-  productId: 'product-1', name: 'Shirt', imageUrl: null, imageAlt: '',
-  isAvailable: true, addedAt: '2026-10-01T08:00:00Z',
+  productId: 'product-1',
+  name: 'Shirt',
+  imageUrl: null,
+  imageAlt: '',
+  isAvailable: true,
+  addedAt: '2026-10-01T08:00:00Z',
 };
 
 describe('Customer page recovery', () => {
@@ -63,12 +72,18 @@ describe('Customer page recovery', () => {
     page.save();
     fixture.detectChanges();
     await fixture.whenStable();
-    const inputs = Array.from(fixture.nativeElement.querySelectorAll('input')) as HTMLInputElement[];
+    const inputs = Array.from(
+      fixture.nativeElement.querySelectorAll('input'),
+    ) as HTMLInputElement[];
     expect(inputs.length).toBe(6);
     expect(inputs.every((input) => input.disabled)).toBe(true);
     expect(api.update).toHaveBeenCalledWith({
-      name: 'Ada Byron', addressLine: profile.addressLine, postalCode: profile.postalCode,
-      city: profile.city, countryCode: profile.countryCode, revision: profile.revision,
+      name: 'Ada Byron',
+      addressLine: profile.addressLine,
+      postalCode: profile.postalCode,
+      city: profile.city,
+      countryCode: profile.countryCode,
+      revision: profile.revision,
     });
     saved.error(new Error('Offline'));
     fixture.detectChanges();
@@ -171,32 +186,110 @@ describe('Customer page recovery', () => {
     removal.next();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Je verlanglijst is nog leeg.');
-    const previous = Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[];
+    const previous = Array.from(
+      fixture.nativeElement.querySelectorAll('button'),
+    ) as HTMLButtonElement[];
     previous.find((button) => button.textContent?.includes('Vorige pagina'))!.click();
     expect(api.list).toHaveBeenLastCalledWith(0);
   });
 
-  it.each(['order-2', 'order-1'])('does not replace a newly loaded %s with a late cancellation response', (nextId) => {
+  it('retries a failed order read once using the current route', () => {
     const params = new BehaviorSubject(convertToParamMap({ id: 'order-1' }));
     const first = new Subject<Detail>();
     const second = new Subject<Detail>();
-    const cancellation = new Subject<{ status: 'cancelled'; cancelledAt: string; revision: string }>();
-    const api = { get: vi.fn((id: string) => id === 'order-1' ? first : second), cancel: vi.fn(() => cancellation) };
+    const api = { get: vi.fn().mockReturnValueOnce(first).mockReturnValue(second) };
     TestBed.configureTestingModule({
       imports: [CustomerOrderDetail],
-      providers: [provideRouter([]), { provide: ActivatedRoute, useValue: { paramMap: params } }, { provide: CustomerOrderApi, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: CustomerOrderApi, useValue: api },
+      ],
     });
     const fixture = TestBed.createComponent(CustomerOrderDetail);
-    const order = { id: 'order-1', status: 'awaitingPayment', revision: 'revision-1' } as Detail;
-    first.next(order);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    fixture.componentInstance.cancel(order);
-    params.next(convertToParamMap({ id: nextId }));
-    const other = { ...order, id: nextId, revision: 'new-revision' };
-    (nextId === 'order-1' ? first : second).next(other);
-    cancellation.next({ status: 'cancelled', cancelledAt: '2026-10-01T09:00:00Z', revision: 'revision-2' });
-    expect(fixture.componentInstance.order()).toEqual(other);
-    expect(fixture.componentInstance.notice()).toBe('');
-    expect(fixture.componentInstance.cancelling()).toBe(false);
+    const page = fixture.componentInstance;
+    page.retry();
+    expect(api.get).toHaveBeenCalledTimes(1);
+    first.error(new Error('Offline'));
+    fixture.detectChanges();
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+    expect(button.textContent).toContain('Opnieuw');
+    button.click();
+    page.retry();
+    expect(api.get).toHaveBeenCalledTimes(2);
+    expect(api.get).toHaveBeenLastCalledWith('order-1');
+    expect(page.failure()).toBe('');
+    second.error(new Error('Offline'));
+    page.cancelling.set(true);
+    page.retry();
+    expect(api.get).toHaveBeenCalledTimes(2);
+    page.cancelling.set(false);
+    const next = new Subject<Detail>();
+    api.get.mockReturnValue(next);
+    params.next(convertToParamMap({ id: 'order-2' }));
+    expect(api.get).toHaveBeenLastCalledWith('order-2');
   });
+  it('keeps current order state when the same route identifier is emitted again', () => {
+    const params = new BehaviorSubject(convertToParamMap({ id: 'order-1' }));
+    const response = new Subject<Detail>();
+    const api = { get: vi.fn(() => response) };
+    TestBed.configureTestingModule({
+      imports: [CustomerOrderDetail],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: CustomerOrderApi, useValue: api },
+      ],
+    });
+    const page = TestBed.createComponent(CustomerOrderDetail).componentInstance;
+    const order = { id: 'order-1' } as Detail;
+    response.next(order);
+    page.notice.set('Saved');
+    params.next(convertToParamMap({ id: 'order-1', extra: 'value' }));
+    expect(api.get).toHaveBeenCalledTimes(1);
+    expect(page.order()).toBe(order);
+    expect(page.notice()).toBe('Saved');
+    expect(page.loading()).toBe(false);
+  });
+  it.each(['order-2', 'order-1'])(
+    'does not replace a newly loaded %s with a late cancellation response',
+    (nextId) => {
+      const params = new BehaviorSubject(convertToParamMap({ id: 'order-1' }));
+      const first = new Subject<Detail>();
+      const second = new Subject<Detail>();
+      const cancellation = new Subject<{
+        status: 'cancelled';
+        cancelledAt: string;
+        revision: string;
+      }>();
+      const api = {
+        get: vi.fn((id: string) => (id === 'order-1' ? first : second)),
+        cancel: vi.fn(() => cancellation),
+      };
+      TestBed.configureTestingModule({
+        imports: [CustomerOrderDetail],
+        providers: [
+          provideRouter([]),
+          { provide: ActivatedRoute, useValue: { paramMap: params } },
+          { provide: CustomerOrderApi, useValue: api },
+        ],
+      });
+      const fixture = TestBed.createComponent(CustomerOrderDetail);
+      const order = { id: 'order-1', status: 'awaitingPayment', revision: 'revision-1' } as Detail;
+      first.next(order);
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      fixture.componentInstance.cancel(order);
+      params.next(convertToParamMap({ id: nextId }));
+      const other = { ...order, id: nextId, revision: 'new-revision' };
+      (nextId === 'order-1' ? first : second).next(other);
+      cancellation.next({
+        status: 'cancelled',
+        cancelledAt: '2026-10-01T09:00:00Z',
+        revision: 'revision-2',
+      });
+      expect(fixture.componentInstance.order()).toEqual(other);
+      expect(fixture.componentInstance.notice()).toBe('');
+      expect(fixture.componentInstance.cancelling()).toBe(false);
+    },
+  );
 });

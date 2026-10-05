@@ -112,6 +112,26 @@ describe('Checkout validation', () => {
     page.completeOnlinePayment(payment);
     expect(api.completeOnlinePayment).toHaveBeenCalledExactlyOnceWith('t', 'provider');
   });
+  it('locks checkout fields while placing an order and restores them after failure', async () => {
+    const { fixture, page, api } = setup();
+    const operation = new Subject();
+    api.place.mockReturnValue(operation);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    page.submit();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const inputs = Array.from(
+      fixture.nativeElement.querySelectorAll('input'),
+    ) as HTMLInputElement[];
+    expect(inputs).toHaveLength(6);
+    expect(inputs.every((input) => input.disabled)).toBe(true);
+    operation.error(new Error('Offline'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(inputs.every((input) => !input.disabled)).toBe(true);
+    expect(page.customerName).toBe('Ada');
+  });
   it('permits valid customer details and an online payment choice', () => {
     const { fixture, page, api } = setup();
     fixture.componentRef.setInput('paymentMethod', 'online');

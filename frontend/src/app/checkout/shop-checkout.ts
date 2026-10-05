@@ -20,6 +20,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
             [(ngModel)]="customerName"
             autocomplete="name"
             maxlength="200"
+            [disabled]="busy()"
             required
         /></label>
         <label
@@ -29,6 +30,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
             type="email"
             autocomplete="email"
             maxlength="320"
+            [disabled]="busy()"
             required
         /></label>
         <label
@@ -37,6 +39,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
             [(ngModel)]="addressLine"
             autocomplete="street-address"
             maxlength="200"
+            [disabled]="busy()"
             required
         /></label>
         <label
@@ -45,6 +48,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
             [(ngModel)]="postalCode"
             autocomplete="postal-code"
             maxlength="32"
+            [disabled]="busy()"
             required
         /></label>
         <label
@@ -53,6 +57,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
             [(ngModel)]="city"
             autocomplete="address-level2"
             maxlength="100"
+            [disabled]="busy()"
             required
         /></label>
         <label
@@ -62,6 +67,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
             autocomplete="country"
             minlength="2"
             maxlength="2"
+            [disabled]="busy()"
             required
         /></label>
         @if (failure()) {

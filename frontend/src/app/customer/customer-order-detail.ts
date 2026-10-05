@@ -2,7 +2,14 @@ import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { EMPTY, catchError, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  BehaviorSubject,
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  switchMap,
+} from 'rxjs';
 import { errorMessage } from '../catalog/error-message';
 import {
   CustomerOrderApi,
@@ -18,6 +25,9 @@ import {
     }
     @if (failure()) {
       <p class="error" role="alert">{{ failure() }}</p>
+      <button type="button" [disabled]="loading() || cancelling()" (click)="retry()">
+        Opnieuw proberen
+      </button>
     }
     @if (order(); as item) {
       <div class="eyebrow">{{ status(item.status) }}</div>
@@ -41,7 +51,9 @@ import {
             <li>
               <strong>{{ event.label }}</strong>
               <span>{{ event.at | date: 'dd-MM-yyyy HH:mm' }}</span>
-              @if (event.note) { <p>{{ event.note }}</p> }
+              @if (event.note) {
+                <p>{{ event.note }}</p>
+              }
             </li>
           }
         </ol>
@@ -62,9 +74,15 @@ import {
         }
       </section>
       @if (item.deliveryMethod; as delivery) {
-        <section class="panel"><h2>Bezorgoptie</h2>
-          <p><strong>{{ delivery.name }}</strong> · {{ delivery.currency }} {{ delivery.amount.replace('.', ',') }}</p>
-          @if (delivery.description) { <p class="preserve-lines">{{ delivery.description }}</p> }
+        <section class="panel">
+          <h2>Bezorgoptie</h2>
+          <p>
+            <strong>{{ delivery.name }}</strong> · {{ delivery.currency }}
+            {{ delivery.amount.replace('.', ',') }}
+          </p>
+          @if (delivery.description) {
+            <p class="preserve-lines">{{ delivery.description }}</p>
+          }
         </section>
       }
       <section class="panel">
@@ -118,10 +136,18 @@ export class CustomerOrderDetail {
   paymentMethod(method: Detail['paymentMethod']) {
     return method === 'online' ? 'direct online betalen' : 'later betalen';
   }
+  private readonly refresh = new BehaviorSubject(0);
+  retry() {
+    if (this.loading() || this.cancelling()) return;
+    this.refresh.next(this.refresh.value + 1);
+  }
   constructor() {
-    this.route.paramMap
+    combineLatest([
+      this.route.paramMap.pipe(distinctUntilChanged((a, b) => a.get('id') === b.get('id'))),
+      this.refresh,
+    ])
       .pipe(
-        switchMap((params) => {
+        switchMap(([params]) => {
           this.order.set(null);
           this.loading.set(true);
           this.failure.set('');
@@ -156,17 +182,24 @@ export class CustomerOrderDetail {
       { label: 'Bestelling geplaatst', at: order.placedAt },
     ];
     if (order.paidAt) events.push({ label: 'Betaling ontvangen', at: order.paidAt });
-    if (order.shippedAt) events.push({
-      label: 'Bestelling verzonden',
-      at: order.shippedAt,
-      note: [order.shippingCarrier, order.trackingCode].filter(Boolean).join(' · ') || undefined,
-    });
+    if (order.shippedAt)
+      events.push({
+        label: 'Bestelling verzonden',
+        at: order.shippedAt,
+        note: [order.shippingCarrier, order.trackingCode].filter(Boolean).join(' · ') || undefined,
+      });
     if (order.cancelledAt) events.push({ label: 'Bestelling geannuleerd', at: order.cancelledAt });
-    if (order.refundedAt) events.push({ label: 'Terugbetaling geregistreerd', at: order.refundedAt });
+    if (order.refundedAt)
+      events.push({ label: 'Terugbetaling geregistreerd', at: order.refundedAt });
     return events;
   }
   cancel(order: Detail) {
-    if (this.order() !== order || order.status !== 'awaitingPayment' || this.cancelling() || !window.confirm('Wil je deze bestelling definitief annuleren?'))
+    if (
+      this.order() !== order ||
+      order.status !== 'awaitingPayment' ||
+      this.cancelling() ||
+      !window.confirm('Wil je deze bestelling definitief annuleren?')
+    )
       return;
     this.cancelling.set(true);
     this.actionFailure.set('');

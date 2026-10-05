@@ -5,20 +5,63 @@ import { OrderDetailComponent } from './order-detail';
 import { OrderDetail, OrderManagementApi } from './order-management.api';
 
 const order: OrderDetail = {
-  id: 'order-1', number: 'MS-1', placedAt: '2026-10-01T08:00:00Z',
+  id: 'order-1',
+  number: 'MS-1',
+  placedAt: '2026-10-01T08:00:00Z',
   customer: { name: 'Ada', email: 'ada@example.test' },
-  deliveryAddress: { addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL' },
-  paymentMethod: 'payLater', paymentInstructions: null, status: 'awaitingPayment',
-  paidAt: null, paymentReference: null, shippedAt: null, shippingCarrier: null,
-  trackingCode: null, cancelledAt: null, cancellationReason: null, refundedAt: null,
-  refundReference: null, refundReason: null, revision: 'revision-1', lines: [], totals: [],
+  deliveryAddress: {
+    addressLine: 'Straat 1',
+    postalCode: '1234 AB',
+    city: 'Utrecht',
+    countryCode: 'NL',
+  },
+  paymentMethod: 'payLater',
+  paymentInstructions: null,
+  status: 'awaitingPayment',
+  paidAt: null,
+  paymentReference: null,
+  shippedAt: null,
+  shippingCarrier: null,
+  trackingCode: null,
+  cancelledAt: null,
+  cancellationReason: null,
+  refundedAt: null,
+  refundReference: null,
+  refundReason: null,
+  revision: 'revision-1',
+  lines: [],
+  totals: [],
 };
 
 const actions = [
-  { name: 'payment', method: 'markPaid', status: 'awaitingPayment', run: (component: OrderDetailComponent, value: OrderDetail) => component.markPaid(value, 'bank-1') },
-  { name: 'shipping', method: 'markShipped', status: 'paid', run: (component: OrderDetailComponent, value: OrderDetail) => component.markShipped(value, 'PostNL', '3S123') },
-  { name: 'cancellation', method: 'cancel', status: 'awaitingPayment', run: (component: OrderDetailComponent, value: OrderDetail) => component.cancelOrder(value, 'Klant ziet af') },
-  { name: 'refund', method: 'refund', status: 'paid', run: (component: OrderDetailComponent, value: OrderDetail) => component.refundOrder(value, 'refund-1', 'Dubbele betaling') },
+  {
+    name: 'payment',
+    method: 'markPaid',
+    status: 'awaitingPayment',
+    run: (component: OrderDetailComponent, value: OrderDetail) =>
+      component.markPaid(value, 'bank-1'),
+  },
+  {
+    name: 'shipping',
+    method: 'markShipped',
+    status: 'paid',
+    run: (component: OrderDetailComponent, value: OrderDetail) =>
+      component.markShipped(value, 'PostNL', '3S123'),
+  },
+  {
+    name: 'cancellation',
+    method: 'cancel',
+    status: 'awaitingPayment',
+    run: (component: OrderDetailComponent, value: OrderDetail) =>
+      component.cancelOrder(value, 'Klant ziet af'),
+  },
+  {
+    name: 'refund',
+    method: 'refund',
+    status: 'paid',
+    run: (component: OrderDetailComponent, value: OrderDetail) =>
+      component.refundOrder(value, 'refund-1', 'Dubbele betaling'),
+  },
 ] as const;
 
 describe('Order management recovery', () => {
@@ -27,12 +70,19 @@ describe('Order management recovery', () => {
     const response = new Subject<OrderDetail>();
     const action = new Subject<void>();
     const api = {
-      get: vi.fn(() => response), markPaid: vi.fn(() => action),
-      markShipped: vi.fn(() => action), cancel: vi.fn(() => action), refund: vi.fn(() => action),
+      get: vi.fn(() => response),
+      markPaid: vi.fn(() => action),
+      markShipped: vi.fn(() => action),
+      cancel: vi.fn(() => action),
+      refund: vi.fn(() => action),
     };
     TestBed.configureTestingModule({
       imports: [OrderDetailComponent],
-      providers: [provideRouter([]), { provide: ActivatedRoute, useValue: { paramMap: params } }, { provide: OrderManagementApi, useValue: api }],
+      providers: [
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: OrderManagementApi, useValue: api },
+      ],
     });
     const fixture = TestBed.createComponent(OrderDetailComponent);
     const current = { ...order, status };
@@ -40,7 +90,75 @@ describe('Order management recovery', () => {
     return { fixture, params, response, action, api, current };
   }
 
+  const invalidInputs = [
+    {
+      name: 'payment reference',
+      status: 'awaitingPayment',
+      run: (page: OrderDetailComponent, order: OrderDetail) =>
+        page.markPaid(order, 'x'.repeat(101)),
+    },
+    {
+      name: 'carrier',
+      status: 'paid',
+      run: (page: OrderDetailComponent, order: OrderDetail) =>
+        page.markShipped(order, 'x'.repeat(101), 'tracking'),
+    },
+    {
+      name: 'tracking code',
+      status: 'paid',
+      run: (page: OrderDetailComponent, order: OrderDetail) =>
+        page.markShipped(order, 'carrier', 'x'.repeat(101)),
+    },
+    {
+      name: 'cancellation reason',
+      status: 'awaitingPayment',
+      run: (page: OrderDetailComponent, order: OrderDetail) =>
+        page.cancelOrder(order, 'x'.repeat(501)),
+    },
+    {
+      name: 'refund reference',
+      status: 'paid',
+      run: (page: OrderDetailComponent, order: OrderDetail) =>
+        page.refundOrder(order, 'x'.repeat(101), 'reason'),
+    },
+    {
+      name: 'refund reason',
+      status: 'paid',
+      run: (page: OrderDetailComponent, order: OrderDetail) =>
+        page.refundOrder(order, 'reference', 'x'.repeat(501)),
+    },
+  ] as const;
+  for (const input of invalidInputs) {
+    it('rejects oversized ' + input.name + ' before sending', () => {
+      const { fixture, current, api } = setup(input.status);
+      input.run(fixture.componentInstance, current);
+      expect(fixture.componentInstance.actionError()).toContain('maximaal');
+      expect(fixture.componentInstance.saving()).toBe(false);
+      expect(api.markPaid).not.toHaveBeenCalled();
+      expect(api.markShipped).not.toHaveBeenCalled();
+      expect(api.cancel).not.toHaveBeenCalled();
+      expect(api.refund).not.toHaveBeenCalled();
+    });
+  }
   for (const operation of actions) {
+    it(
+      'protects input fields during ' + operation.name + ' and restores them after failure',
+      () => {
+        const { fixture, current, action } = setup(operation.status);
+        fixture.detectChanges();
+        operation.run(fixture.componentInstance, current);
+        fixture.detectChanges();
+        const inputs = Array.from(fixture.nativeElement.querySelectorAll('input, textarea')) as (
+          HTMLInputElement | HTMLTextAreaElement
+        )[];
+        expect(inputs.length).toBeGreaterThan(0);
+        expect(inputs.every((input) => input.disabled)).toBe(true);
+        action.error(new Error('Offline'));
+        fixture.detectChanges();
+        expect(inputs.every((input) => !input.disabled)).toBe(true);
+      },
+    );
+
     it(`ignores late ${operation.name} success after navigating`, () => {
       const { fixture, params, action, api, current } = setup(operation.status);
       operation.run(fixture.componentInstance, current);

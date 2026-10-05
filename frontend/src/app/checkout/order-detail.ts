@@ -48,9 +48,15 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           </dl>
         </section>
         @if (order.deliveryMethod; as delivery) {
-          <section class="panel"><h2>Bezorgoptie</h2>
-            <p><strong>{{ delivery.name }}</strong> · {{ delivery.currency }} {{ delivery.amount.replace('.', ',') }}</p>
-            @if (delivery.description) { <p class="preserve-lines">{{ delivery.description }}</p> }
+          <section class="panel">
+            <h2>Bezorgoptie</h2>
+            <p>
+              <strong>{{ delivery.name }}</strong> · {{ delivery.currency }}
+              {{ delivery.amount.replace('.', ',') }}
+            </p>
+            @if (delivery.description) {
+              <p class="preserve-lines">{{ delivery.description }}</p>
+            }
           </section>
         }
         <section class="panel">
@@ -68,7 +74,9 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <li>
               <strong>{{ event.label }}</strong>
               <span>{{ event.at | date: 'dd-MM-yyyy HH:mm' }}</span>
-              @if (event.note) { <p>{{ event.note }}</p> }
+              @if (event.note) {
+                <p>{{ event.note }}</p>
+              }
             </li>
           }
         </ol>
@@ -162,13 +170,18 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               >Betalingskenmerk
               <input
                 #paymentReference
+                [disabled]="saving()"
                 maxlength="100"
                 required
                 placeholder="Bijvoorbeeld: bankafschrift 12345"
             /></label>
             <button
               type="button"
-              [disabled]="saving() || !paymentReference.value.trim()"
+              [disabled]="
+                saving() ||
+                !paymentReference.value.trim() ||
+                paymentReference.value.trim().length > 100
+              "
               (click)="markPaid(order, paymentReference.value)"
             >
               {{ saving() ? 'Opslaan…' : 'Bevestigen als betaald' }}
@@ -184,11 +197,11 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <summary>Onbetaalde bestelling annuleren</summary>
             <label>
               Reden voor annulering
-              <textarea #reason rows="3" maxlength="500" required></textarea>
+              <textarea #reason [disabled]="saving()" rows="3" maxlength="500" required></textarea>
             </label>
             <button
               type="button"
-              [disabled]="saving() || !reason.value.trim()"
+              [disabled]="saving() || !reason.value.trim() || reason.value.trim().length > 500"
               (click)="cancelOrder(order, reason.value)"
             >
               {{ saving() ? 'Opslaan…' : 'Bestelling annuleren' }}
@@ -207,15 +220,31 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <p>De verzendstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
             <label
               >Vervoerder
-              <input #carrier maxlength="100" required placeholder="Bijvoorbeeld: PostNL"
+              <input
+                #carrier
+                [disabled]="saving()"
+                maxlength="100"
+                required
+                placeholder="Bijvoorbeeld: PostNL"
             /></label>
             <label
               >Trackingcode
-              <input #trackingCode maxlength="100" required placeholder="Bijvoorbeeld: 3S…"
+              <input
+                #trackingCode
+                [disabled]="saving()"
+                maxlength="100"
+                required
+                placeholder="Bijvoorbeeld: 3S…"
             /></label>
             <button
               type="button"
-              [disabled]="saving() || !carrier.value.trim() || !trackingCode.value.trim()"
+              [disabled]="
+                saving() ||
+                !carrier.value.trim() ||
+                carrier.value.trim().length > 100 ||
+                !trackingCode.value.trim() ||
+                trackingCode.value.trim().length > 100
+              "
               (click)="markShipped(order, carrier.value, trackingCode.value)"
             >
               {{ saving() ? 'Opslaan…' : 'Bevestigen als verzonden' }}
@@ -233,17 +262,30 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               >Terugbetalingskenmerk
               <input
                 #refundReference
+                [disabled]="saving()"
                 maxlength="100"
                 required
                 placeholder="Bijvoorbeeld: bankafschrift 67890"
             /></label>
             <label>
               Reden voor terugbetaling
-              <textarea #refundReason rows="3" maxlength="500" required></textarea>
+              <textarea
+                #refundReason
+                [disabled]="saving()"
+                rows="3"
+                maxlength="500"
+                required
+              ></textarea>
             </label>
             <button
               type="button"
-              [disabled]="saving() || !refundReference.value.trim() || !refundReason.value.trim()"
+              [disabled]="
+                saving() ||
+                !refundReference.value.trim() ||
+                refundReference.value.trim().length > 100 ||
+                !refundReason.value.trim() ||
+                refundReason.value.trim().length > 500
+              "
               (click)="refundOrder(order, refundReference.value, refundReason.value)"
             >
               {{ saving() ? 'Opslaan…' : 'Terugbetaling bevestigen' }}
@@ -295,31 +337,45 @@ export class OrderDetailComponent {
     const events: { label: string; at: string; note?: string }[] = [
       { label: 'Bestelling geplaatst', at: order.placedAt },
     ];
-    if (order.paidAt) events.push({
-      label: 'Betaling ontvangen',
-      at: order.paidAt,
-      note: order.paymentReference ? `Kenmerk: ${order.paymentReference}` : undefined,
-    });
-    if (order.shippedAt) events.push({
-      label: 'Bestelling verzonden',
-      at: order.shippedAt,
-      note: [order.shippingCarrier, order.trackingCode].filter(Boolean).join(' · ') || undefined,
-    });
-    if (order.cancelledAt) events.push({
-      label: 'Bestelling geannuleerd',
-      at: order.cancelledAt,
-      note: order.cancellationReason ?? undefined,
-    });
-    if (order.refundedAt) events.push({
-      label: 'Terugbetaling geregistreerd',
-      at: order.refundedAt,
-      note: order.refundReference ? `Kenmerk: ${order.refundReference}` : undefined,
-    });
+    if (order.paidAt)
+      events.push({
+        label: 'Betaling ontvangen',
+        at: order.paidAt,
+        note: order.paymentReference ? `Kenmerk: ${order.paymentReference}` : undefined,
+      });
+    if (order.shippedAt)
+      events.push({
+        label: 'Bestelling verzonden',
+        at: order.shippedAt,
+        note: [order.shippingCarrier, order.trackingCode].filter(Boolean).join(' · ') || undefined,
+      });
+    if (order.cancelledAt)
+      events.push({
+        label: 'Bestelling geannuleerd',
+        at: order.cancelledAt,
+        note: order.cancellationReason ?? undefined,
+      });
+    if (order.refundedAt)
+      events.push({
+        label: 'Terugbetaling geregistreerd',
+        at: order.refundedAt,
+        note: order.refundReference ? `Kenmerk: ${order.refundReference}` : undefined,
+      });
     return events;
   }
   markPaid(order: OrderDetail, paymentReference: string) {
     paymentReference = paymentReference.trim();
-    if (this.state()?.data !== order || order.status !== 'awaitingPayment' || this.saving() || !paymentReference) return;
+    if (
+      this.state()?.data !== order ||
+      order.status !== 'awaitingPayment' ||
+      this.saving() ||
+      !paymentReference
+    )
+      return;
+    if (paymentReference.length > 100) {
+      this.actionError.set('Het betalingskenmerk mag maximaal 100 tekens bevatten.');
+      return;
+    }
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
@@ -343,7 +399,18 @@ export class OrderDetailComponent {
   markShipped(order: OrderDetail, carrier: string, trackingCode: string) {
     carrier = carrier.trim();
     trackingCode = trackingCode.trim();
-    if (this.state()?.data !== order || order.status !== 'paid' || this.saving() || !carrier || !trackingCode) return;
+    if (
+      this.state()?.data !== order ||
+      order.status !== 'paid' ||
+      this.saving() ||
+      !carrier ||
+      !trackingCode
+    )
+      return;
+    if (carrier.length > 100 || trackingCode.length > 100) {
+      this.actionError.set('Vervoerder en trackingcode mogen elk maximaal 100 tekens bevatten.');
+      return;
+    }
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
@@ -366,7 +433,17 @@ export class OrderDetailComponent {
   }
   cancelOrder(order: OrderDetail, reason: string) {
     reason = reason.trim();
-    if (this.state()?.data !== order || order.status !== 'awaitingPayment' || this.saving() || !reason) return;
+    if (
+      this.state()?.data !== order ||
+      order.status !== 'awaitingPayment' ||
+      this.saving() ||
+      !reason
+    )
+      return;
+    if (reason.length > 500) {
+      this.actionError.set('De reden mag maximaal 500 tekens bevatten.');
+      return;
+    }
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
@@ -390,7 +467,20 @@ export class OrderDetailComponent {
   refundOrder(order: OrderDetail, refundReference: string, reason: string) {
     refundReference = refundReference.trim();
     reason = reason.trim();
-    if (this.state()?.data !== order || order.status !== 'paid' || this.saving() || !refundReference || !reason) return;
+    if (
+      this.state()?.data !== order ||
+      order.status !== 'paid' ||
+      this.saving() ||
+      !refundReference ||
+      !reason
+    )
+      return;
+    if (refundReference.length > 100 || reason.length > 500) {
+      this.actionError.set(
+        'Gebruik maximaal 100 tekens voor het terugbetalingskenmerk en 500 voor de reden.',
+      );
+      return;
+    }
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
