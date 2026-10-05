@@ -46,7 +46,7 @@ describe('Customer profile', () => {
       addressLine: 'Second street 2',
       postalCode: '5678 CD',
       city: 'Amsterdam',
-      countryCode: 'be',
+      countryCode: 'BE',
       revision: '11111111-1111-1111-1111-111111111111',
     });
     request.flush({
@@ -78,4 +78,3 @@ describe('Customer profile', () => {
     expect(fixture.nativeElement.textContent).toContain('Er ging iets mis. Probeer het opnieuw.');
   });
 });
-

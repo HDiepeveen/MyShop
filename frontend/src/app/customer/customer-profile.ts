@@ -21,18 +21,33 @@ import { errorMessage } from '../catalog/error-message';
     @if (loaded()) {
       <form class="panel" (ngSubmit)="save()">
         <label>E-mailadres<input [value]="email" disabled /></label>
-        <label>Naam<input name="name" [disabled]="busy()" [(ngModel)]="name" maxlength="200" required /></label>
         <label
-          >Adres<input name="address" [disabled]="busy()" [(ngModel)]="addressLine" maxlength="200" required
+          >Naam<input name="name" [disabled]="busy()" [(ngModel)]="name" maxlength="200" required
         /></label>
         <label
-          >Postcode<input name="postal" [disabled]="busy()" [(ngModel)]="postalCode" maxlength="32" required
+          >Adres<input
+            name="address"
+            [disabled]="busy()"
+            [(ngModel)]="addressLine"
+            maxlength="200"
+            required
         /></label>
-        <label>Plaats<input name="city" [disabled]="busy()" [(ngModel)]="city" maxlength="100" required /></label>
+        <label
+          >Postcode<input
+            name="postal"
+            [disabled]="busy()"
+            [(ngModel)]="postalCode"
+            maxlength="32"
+            required
+        /></label>
+        <label
+          >Plaats<input name="city" [disabled]="busy()" [(ngModel)]="city" maxlength="100" required
+        /></label>
         <label
           >Landcode<input
             name="country"
-            [disabled]="busy()" [(ngModel)]="countryCode"
+            [disabled]="busy()"
+            [(ngModel)]="countryCode"
             minlength="2"
             maxlength="2"
             required
@@ -78,30 +93,52 @@ export class CustomerProfile {
     if (this.loaded() || this.loading()) return;
     this.loading.set(true);
     this.failure.set('');
-    this.api.profile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (profile) => {
-        this.assign(profile);
-        this.loaded.set(true);
-        this.loading.set(false);
-      },
-      error: (error) => {
-        this.failure.set(errorMessage(error));
-        this.loading.set(false);
-      },
-    });
+    this.api
+      .profile()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (profile) => {
+          this.assign(profile);
+          this.loaded.set(true);
+          this.loading.set(false);
+        },
+        error: (error) => {
+          this.failure.set(errorMessage(error));
+          this.loading.set(false);
+        },
+      });
+  }
+  validationError() {
+    if (!this.name.trim() || this.name.trim().length > 200)
+      return 'Vul een naam van maximaal 200 tekens in.';
+    if (!this.addressLine.trim() || this.addressLine.trim().length > 200)
+      return 'Vul een adres van maximaal 200 tekens in.';
+    if (!this.postalCode.trim() || this.postalCode.trim().length > 32)
+      return 'Vul een postcode van maximaal 32 tekens in.';
+    if (!this.city.trim() || this.city.trim().length > 100)
+      return 'Vul een plaats van maximaal 100 tekens in.';
+    if (!/^[a-zA-Z]{2}$/.test(this.countryCode.trim()))
+      return 'Gebruik een landcode van twee letters.';
+    return '';
   }
   save() {
     if (this.busy() || !this.loaded()) return;
+    const validation = this.validationError();
+    if (validation) {
+      this.message.set('');
+      this.failure.set(validation);
+      return;
+    }
     this.busy.set(true);
     this.failure.set('');
     this.message.set('');
     this.api
       .update({
-        name: this.name,
-        addressLine: this.addressLine,
-        postalCode: this.postalCode,
-        city: this.city,
-        countryCode: this.countryCode,
+        name: this.name.trim(),
+        addressLine: this.addressLine.trim(),
+        postalCode: this.postalCode.trim(),
+        city: this.city.trim(),
+        countryCode: this.countryCode.trim().toUpperCase(),
         revision: this.revision,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))

@@ -61,12 +61,15 @@ export class Cart {
     return '';
   }
   setQuantity(line: CartLine, quantity: number): string {
+    if (!this.lines().some((item) => this.same(item, line)))
+      return 'Dit artikel staat niet meer in je winkelmand.';
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99)
       return 'Kies een heel aantal van 1 tot en met 99.';
     this.save(this.lines().map((item) => (this.same(item, line) ? { ...item, quantity } : item)));
     return '';
   }
   remove(line: CartLine) {
+    if (!this.lines().some((item) => this.same(item, line))) return;
     this.save(this.lines().filter((item) => !this.same(item, line)));
   }
   clear() {

@@ -18,7 +18,9 @@ import { CustomerManagementApi, ManagedCustomerPage } from './customer-managemen
           placeholder="E-mailadres of naam" /></label
       ><button [disabled]="loading()">Zoeken</button>
       @if (search) {
-        <button type="button" class="secondary" [disabled]="loading()" (click)="clearSearch()">Zoekterm wissen</button>
+        <button type="button" class="secondary" [disabled]="loading()" (click)="clearSearch()">
+          Zoekterm wissen
+        </button>
       }
     </form>
     @if (loading()) {
@@ -47,7 +49,10 @@ import { CustomerManagementApi, ManagedCustomerPage } from './customer-managemen
           </p>
         </article>
       }
-      @if (result.items.length && (result.offset > 0 || result.offset + result.items.length < result.totalCount)) {
+      @if (
+        result.items.length &&
+        (result.offset > 0 || result.offset + result.items.length < result.totalCount)
+      ) {
         <nav class="toolbar" aria-label="Paginering">
           <button class="secondary" [disabled]="result.offset === 0" (click)="previous()">
             Vorige</button
@@ -109,12 +114,19 @@ export class CustomerManagementList {
     this.applySearch();
   }
   previous() {
-    if (this.loading()) return;
+    if (this.loading() || this.offset() === 0) return;
     this.offset.set(Math.max(0, this.offset() - 20));
     this.load();
   }
   next() {
-    if (this.loading()) return;
+    const page = this.page();
+    if (
+      this.loading() ||
+      !page ||
+      !page.items.length ||
+      page.offset + page.items.length >= page.totalCount
+    )
+      return;
     this.offset.set(this.offset() + 20);
     this.load();
   }

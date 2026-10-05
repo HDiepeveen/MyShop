@@ -33,6 +33,23 @@ afterEach(() => {
 });
 
 describe('Cart storage', () => {
+  it('does not persist actions on missing cart lines or clear a storage warning', () => {
+    const cart = new Cart();
+    cart.add(productId, variantId);
+    const stored = cart.lines();
+    cart.warning.set('Storage unavailable');
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    const missing = { ...line, variantId: secondId };
+    expect(cart.setQuantity(missing, 2)).toContain('niet meer');
+    cart.remove(missing);
+    expect(cart.lines()).toBe(stored);
+    expect(cart.warning()).toBe('Storage unavailable');
+    expect(setItem).not.toHaveBeenCalled();
+    cart.setQuantity(line, 2);
+    expect(cart.count()).toBe(2);
+    cart.remove(line);
+    expect(cart.count()).toBe(0);
+  });
   it('merges variants, preserves only identifiers and quantities, and restores after reload', () => {
     const cart = new Cart();
     expect(cart.add(productId, variantId)).toBe('');
