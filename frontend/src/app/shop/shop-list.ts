@@ -6,7 +6,7 @@ import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ShopApi } from './shop.api';
 import { ShopImage } from './shop-image';
 import { loadState } from '../catalog/load-state';
-import { readListQuery } from '../catalog/list-query';
+import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
 
 @Component({
   imports: [FormsModule, RouterLink, ShopImage],
@@ -59,6 +59,20 @@ import { readListQuery } from '../catalog/list-query';
             <option [value]="category.id">{{ category.name }}</option>
           }
         </select></label
+      >
+      <label
+        >Sorteren<select name="sort" [ngModel]="query().sort" (ngModelChange)="changeSort($event)">
+          <option value="nameAsc">Naam: A–Z</option>
+          <option value="nameDesc">Naam: Z–A</option>
+        </select></label
+      >
+      <label class="check-field"
+        ><input
+          type="checkbox"
+          name="availableOnly"
+          [ngModel]="query().availableOnly"
+          (ngModelChange)="filterAvailability($event)"
+        />Alleen op voorraad</label
       >
       <label
         >Zoek producten<input
@@ -160,7 +174,13 @@ export class ShopList {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly refresh = new BehaviorSubject(0);
-  readonly query = signal({ search: '', offset: 0, categoryId: '' });
+  readonly query = signal({
+    search: '',
+    offset: 0,
+    categoryId: '',
+    sort: 'nameAsc' as ShopSort,
+    availableOnly: false,
+  });
   searchText = '';
   private readonly categoryRefresh = new BehaviorSubject(0);
   readonly categories = toSignal(
@@ -168,19 +188,29 @@ export class ShopList {
   );
   readonly state = toSignal(
     this.route.queryParamMap.pipe(
-      map((parameters) => ({
-        ...readListQuery(parameters),
-        categoryId: parameters.get('categoryId') ?? '',
-      })),
+      map(readShopQuery),
       distinctUntilChanged(
-        (a, b) => a.offset === b.offset && a.search === b.search && a.categoryId === b.categoryId,
+        (a, b) =>
+          a.offset === b.offset &&
+          a.search === b.search &&
+          a.categoryId === b.categoryId &&
+          a.sort === b.sort &&
+          a.availableOnly === b.availableOnly,
       ),
       switchMap((query) => {
         if (query.search !== this.query().search) this.searchText = query.search;
         this.query.set(query);
         return this.refresh.pipe(
           switchMap(() =>
-            loadState(this.api.products(query.offset, query.search, query.categoryId)),
+            loadState(
+              this.api.products(
+                query.offset,
+                query.search,
+                query.categoryId,
+                query.sort,
+                query.availableOnly,
+              ),
+            ),
           ),
         );
       }),
@@ -194,6 +224,7 @@ export class ShopList {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
+        ...this.contextQuery(),
         search: this.searchText.trim() || null,
         categoryId: this.query().categoryId || null,
         offset: null,
@@ -208,6 +239,7 @@ export class ShopList {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
+        ...this.contextQuery(),
         search: this.query().search || null,
         categoryId: this.query().categoryId || null,
         offset: Math.max(0, offset) || null,
@@ -218,6 +250,7 @@ export class ShopList {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
+        ...this.contextQuery(),
         search: this.query().search || null,
         categoryId: categoryId || null,
         offset: null,
@@ -225,11 +258,24 @@ export class ShopList {
     });
   }
   contextQuery() {
-    return {
-      search: this.query().search || null,
-      categoryId: this.query().categoryId || null,
-      offset: this.query().offset || null,
-    };
+    return shopContextQuery(this.query());
+  }
+  changeSort(sort: ShopSort) {
+    if (sort !== 'nameAsc' && sort !== 'nameDesc') return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...this.contextQuery(), sort: sort === 'nameAsc' ? null : sort, offset: null },
+    });
+  }
+  filterAvailability(availableOnly: boolean) {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        ...this.contextQuery(),
+        availableOnly: availableOnly ? true : null,
+        offset: null,
+      },
+    });
   }
   retryCategories() {
     if (this.categories()?.loading) return;

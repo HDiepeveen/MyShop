@@ -8,15 +8,21 @@ namespace MyShop.Infrastructure.Persistence.Repositories;
 internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCatalog
 {
     public async Task<StorefrontPage> ListAsync(int offset, int limit, string? search, CategoryId? categoryId,
-        DateTimeOffset at, CancellationToken cancellationToken)
+        DateTimeOffset at, CancellationToken cancellationToken,
+        StorefrontSort sort = StorefrontSort.NameAscending, bool availableOnly = false)
     {
         var query = context.Products.AsNoTracking().Where(product => product.IsPublished);
         if (search is not null) query = query.Where(product => product.Name.Contains(search));
         if (categoryId is not null)
             query = query.Where(product => product.Categories.Any(category =>
                 category.CategoryId == categoryId.Value.Value));
+        if (availableOnly) query = query.Where(product => product.Variants.Any(variant =>
+            variant.StockQuantity == null || variant.StockQuantity > 0));
+        var ordered = sort == StorefrontSort.NameDescending
+            ? query.OrderByDescending(product => product.Name).ThenBy(product => product.Id)
+            : query.OrderBy(product => product.Name).ThenBy(product => product.Id);
         var count = await query.CountAsync(cancellationToken);
-        var rows = await query.OrderBy(product => product.Name).ThenBy(product => product.Id)
+        var rows = await ordered
             .Skip(offset).Take(limit)
             .Select(product => new { product.Id, product.Name, product.ImageUrl, product.ImageAlt })
             .ToListAsync(cancellationToken);

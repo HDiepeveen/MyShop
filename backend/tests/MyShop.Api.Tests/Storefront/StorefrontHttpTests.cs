@@ -11,6 +11,61 @@ namespace MyShop.Api.Tests.Storefront;
 public sealed class StorefrontHttpTests
 {
     [SecuritySqlFact]
+    public async Task BrowsingSortsAndFiltersStockBeforeCountingAndPaging()
+    {
+        await using var host = await SecurityHost.Create();
+        using var visitor = new HttpClient { BaseAddress = host.Client.BaseAddress };
+        await host.Csrf(); Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode); await host.Csrf();
+        var type = await (await host.Client.PostAsJsonAsync("/api/product-types", new { name = "Stock browsing" })).Content.ReadFromJsonAsync<JsonElement>();
+        var category = await (await host.Client.PostAsJsonAsync("/api/categories", new { name = "Stock category" })).Content.ReadFromJsonAsync<JsonElement>();
+        var categoryId = category.GetProperty("id").GetGuid();
+        async Task<Guid> Create(string name, int? stock, bool published = true)
+        {
+            var created = await (await host.Client.PostAsJsonAsync("/api/products", new { productTypeId = type.GetProperty("id").GetGuid(), name, initialVariantName = "Standard" })).Content.ReadFromJsonAsync<JsonElement>();
+            var id = created.GetProperty("id").GetGuid();
+            if (stock is not null)
+            {
+                var detail = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{id}");
+                var variant = detail.GetProperty("variants")[0].GetProperty("id").GetGuid();
+                Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{id}/variants/{variant}/stock", new { quantity = stock.Value })).StatusCode);
+            }
+            var current = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{id}");
+            if (published) Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{id}/presentation", new { description = "Stock test", imageUrl = "https://example.com/stock.jpg", imageAlt = "Stock", isPublished = true, revision = current.GetProperty("revision").GetGuid() })).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsync($"/api/products/{id}/categories/{categoryId}", null)).StatusCode);
+            return id;
+        }
+        var unavailable = await Create("Alpha", 0);
+        var tracked = await Create("Beta", 1);
+        var unlimited = await Create("Gamma", null);
+        await Create("Zeta draft", null, false);
+        var descending = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?sort=nameDesc");
+        Assert.Equal(new[] { unlimited, tracked, unavailable }, descending.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray());
+        var first = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products?availableOnly=true&sort=nameDesc&categoryId={categoryId}&limit=1");
+        Assert.Equal(2, first.GetProperty("totalCount").GetInt32());
+        Assert.Equal(unlimited, Assert.Single(first.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        var second = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products?availableOnly=true&sort=nameDesc&categoryId={categoryId}&limit=1&offset=1");
+        Assert.Equal(tracked, Assert.Single(second.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        var missing = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?availableOnly=true&search=Alpha");
+        Assert.Equal(0, missing.GetProperty("totalCount").GetInt32());
+        var defaultPage = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?availableOnly=false&sort=nameAsc");
+        Assert.Equal(3, defaultPage.GetProperty("totalCount").GetInt32());
+        Assert.Equal(unavailable, defaultPage.GetProperty("items")[0].GetProperty("id").GetGuid());
+        Assert.Equal(HttpStatusCode.Created, (await host.Client.PostAsJsonAsync($"/api/products/{unavailable}/variants", new { name = "Unlimited variant" })).StatusCode);
+        var mixed = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?availableOnly=true&search=Alpha");
+        Assert.Equal(1, mixed.GetProperty("totalCount").GetInt32());
+        var sameName = await Create("Beta", null);
+        var betaPage = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?sort=nameDesc&search=Beta");
+        var betaIds = betaPage.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray();
+        Assert.Equal(2, betaIds.Length); Assert.Contains(tracked, betaIds); Assert.Contains(sameName, betaIds);
+        for (var offset = 0; offset < 2; offset++)
+        {
+            var tied = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products?sort=nameDesc&search=Beta&limit=1&offset={offset}");
+            Assert.Equal(betaIds[offset], Assert.Single(tied.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        }
+        foreach (var query in new[] { "sort=price", "sort=NAMEASC", "availableOnly=invalid" })
+            Assert.Equal(HttpStatusCode.BadRequest, (await visitor.GetAsync("/api/shop/products?" + query)).StatusCode);
+    }
+    [SecuritySqlFact]
     public async Task PublicReadsExposeOnlyPublishedProductsAndRespectWithdrawal()
     {
         await using var host = await SecurityHost.Create();

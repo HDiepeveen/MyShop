@@ -4,7 +4,8 @@ using MyShop.Domain.Catalog;
 namespace MyShop.Application.Catalog.BrowseStorefront;
 
 public sealed record BrowseStorefrontQuery(int Offset = 0, int Limit = 20, string? Search = null,
-    CategoryId? CategoryId = null, DateTimeOffset? At = null);
+    CategoryId? CategoryId = null, DateTimeOffset? At = null,
+    StorefrontSort Sort = StorefrontSort.NameAscending, bool AvailableOnly = false);
 
 public sealed class BrowseStorefront(IStorefrontCatalog catalog)
 {
@@ -18,9 +19,10 @@ public sealed class BrowseStorefront(IStorefrontCatalog catalog)
             throw new ArgumentException("Category ID is required.", nameof(query));
         if (query.At is null || query.At == default)
             throw new ArgumentException("Pricing instant is required.", nameof(query));
+        if (!Enum.IsDefined(query.Sort)) throw new ArgumentOutOfRangeException(nameof(query));
         var search = query.Search?.Trim();
         if (search?.Length > 200) throw new ArgumentException("Search must not exceed 200 characters.", nameof(query));
         return catalog.ListAsync(query.Offset, query.Limit, string.IsNullOrEmpty(search) ? null : search,
-            query.CategoryId, query.At.Value.ToUniversalTime(), cancellationToken);
+            query.CategoryId, query.At.Value.ToUniversalTime(), cancellationToken, query.Sort, query.AvailableOnly);
     }
 }

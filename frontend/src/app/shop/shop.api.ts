@@ -1,3 +1,4 @@
+import { ShopSort } from './shop-query';
 import { CartLine } from './cart';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
@@ -58,10 +59,18 @@ export class ShopApi {
   categories() {
     return this.http.get<ShopCategory[]>('/api/shop/categories');
   }
-  products(offset = 0, search = '', categoryId = '') {
+  products(
+    offset = 0,
+    search = '',
+    categoryId = '',
+    sort: ShopSort = 'nameAsc',
+    availableOnly = false,
+  ) {
     let params = new HttpParams().set('offset', offset).set('limit', 20);
     if (search.trim()) params = params.set('search', search.trim());
     if (categoryId) params = params.set('categoryId', categoryId);
+    if (sort !== 'nameAsc') params = params.set('sort', sort);
+    if (availableOnly) params = params.set('availableOnly', true);
     return this.http.get<ShopPage>('/api/shop/products', { params });
   }
   prices(id: string) {

@@ -5,10 +5,13 @@ namespace MyShop.Application.Catalog.Abstractions;
 public interface IStorefrontCatalog
 {
     Task<StorefrontPage> ListAsync(int offset, int limit, string? search, CategoryId? categoryId,
-        DateTimeOffset at, CancellationToken cancellationToken);
+        DateTimeOffset at, CancellationToken cancellationToken,
+        StorefrontSort sort = StorefrontSort.NameAscending, bool availableOnly = false);
     Task<IReadOnlyList<StorefrontCategory>> ListCategoriesAsync(CancellationToken cancellationToken);
     Task<StorefrontProduct?> GetAsync(ProductId id, CancellationToken cancellationToken);
 }
+
+public enum StorefrontSort { NameAscending, NameDescending }
 
 public sealed record StorefrontPriceRange(string Currency, decimal MinimumAmount, decimal MaximumAmount);
 public sealed record StorefrontItem(Guid Id, string Name, string? ImageUrl, string ImageAlt,

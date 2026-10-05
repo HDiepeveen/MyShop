@@ -8,7 +8,7 @@ import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ShopApi } from './shop.api';
 import { ShopImage } from './shop-image';
 import { loadState } from '../catalog/load-state';
-import { readListQuery } from '../catalog/list-query';
+import { readShopQuery, shopContextQuery } from './shop-query';
 import { Auth } from '../auth/auth';
 import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
 @Component({
@@ -47,7 +47,7 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
           @if (product.categories.length) {
             <nav aria-label="Productcategorieën" class="actions">
               @for (category of product.categories; track category.id) {
-                <a routerLink="/winkel" [queryParams]="{ categoryId: category.id }">{{
+                <a routerLink="/winkel" [queryParams]="categoryQuery(category.id)">{{
                   category.name
                 }}</a>
               }
@@ -83,9 +83,7 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
               <p role="alert">Prijs niet beschikbaar. Probeer de prijs opnieuw op te halen.</p>
             } @else if (selectedPrice(); as price) {
               @if (price.amount !== null && price.currency) {
-                <p class="price">
-                  {{ price.currency }} {{ amount(price.amount) }}
-                </p>
+                <p class="price">{{ price.currency }} {{ amount(price.amount) }}</p>
               } @else {
                 <p>Voor deze variant is nog geen prijs beschikbaar.</p>
               }
@@ -108,8 +106,11 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
           <button
             type="button"
             [disabled]="
-              !selected() || prices()?.loading || prices()?.error || selectedPrice()?.amount == null
-              || selected()?.isAvailable === false
+              !selected() ||
+              prices()?.loading ||
+              prices()?.error ||
+              selectedPrice()?.amount == null ||
+              selected()?.isAvailable === false
             "
             (click)="addToCart()"
           >
@@ -124,10 +125,17 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
             <p role="status">{{ cart.warning() }}</p>
           }
           @if (auth.session()?.customer) {
-            <button type="button" class="secondary" [disabled]="wishlistBusy() || wishlistLoading()" (click)="toggleWishlist(product.id)">
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="wishlistBusy() || wishlistLoading()"
+              (click)="toggleWishlist(product.id)"
+            >
               {{ wishlistSaved() ? 'Van verlanglijst verwijderen' : 'Op verlanglijst zetten' }}
             </button>
-            @if (wishlistMessage()) { <p role="status">{{ wishlistMessage() }}</p> }
+            @if (wishlistMessage()) {
+              <p role="status">{{ wishlistMessage() }}</p>
+            }
           }
         </section>
       </div>
@@ -161,14 +169,7 @@ export class ShopDetail {
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
-  readonly query = toSignal(
-    this.route.queryParamMap.pipe(
-      map((parameters) => ({
-        ...readListQuery(parameters),
-        categoryId: parameters.get('categoryId') ?? '',
-      })),
-    ),
-  );
+  readonly query = toSignal(this.route.queryParamMap.pipe(map(readShopQuery)));
   private readonly priceRefresh = new BehaviorSubject(0);
   readonly prices = toSignal(
     this.route.paramMap.pipe(
@@ -218,37 +219,59 @@ export class ShopDetail {
   private loadWishlistState(productId: string) {
     const version = this.wishlistVersion;
     this.wishlistLoading.set(true);
-    this.wishlistApi.state(productId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (state) => {
+    this.wishlistApi
+      .state(productId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (state) => {
+          if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return;
+          this.wishlistLoading.set(false);
+          this.wishlistSaved.set(state.saved);
+        },
+        error: () => {
+          if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return;
+          this.wishlistLoading.set(false);
+          this.wishlistMessage.set('De verlanglijststatus kon niet worden opgehaald.');
+        },
+      });
+  }
+  toggleWishlist(productId: string) {
+    if (
+      this.wishlistBusy() ||
+      this.wishlistLoading() ||
+      !this.auth.session()?.customer ||
+      this.state()?.data?.id !== productId
+    )
+      return;
+    const version = this.wishlistVersion;
+    const saved = !this.wishlistSaved();
+    this.wishlistBusy.set(true);
+    this.wishlistMessage.set('');
+    const request = this.wishlistSaved()
+      ? this.wishlistApi.remove(productId)
+      : this.wishlistApi.add(productId);
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
         if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return;
-        this.wishlistLoading.set(false);
-        this.wishlistSaved.set(state.saved);
+        this.wishlistSaved.set(saved);
+        this.wishlistBusy.set(false);
+        this.wishlistMessage.set(
+          saved ? 'Toegevoegd aan je verlanglijst.' : 'Verwijderd van je verlanglijst.',
+        );
       },
       error: () => {
         if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return;
-        this.wishlistLoading.set(false);
-        this.wishlistMessage.set('De verlanglijststatus kon niet worden opgehaald.');
+        this.wishlistBusy.set(false);
+        this.wishlistMessage.set('Je verlanglijst kon niet worden bijgewerkt.');
       },
     });
   }
-  toggleWishlist(productId: string) {
-    if (this.wishlistBusy() || this.wishlistLoading() || !this.auth.session()?.customer || this.state()?.data?.id !== productId) return;
-    const version = this.wishlistVersion;
-    const saved = !this.wishlistSaved();
-    this.wishlistBusy.set(true); this.wishlistMessage.set('');
-    const request = this.wishlistSaved() ? this.wishlistApi.remove(productId) : this.wishlistApi.add(productId);
-    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return; this.wishlistSaved.set(saved); this.wishlistBusy.set(false); this.wishlistMessage.set(saved ? 'Toegevoegd aan je verlanglijst.' : 'Verwijderd van je verlanglijst.'); },
-      error: () => { if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return; this.wishlistBusy.set(false); this.wishlistMessage.set('Je verlanglijst kon niet worden bijgewerkt.'); },
-    });
+  categoryQuery(categoryId: string) {
+    return { ...this.contextQuery(), categoryId, offset: null };
   }
   contextQuery() {
     const query = this.query();
-    return {
-      search: query?.search || null,
-      categoryId: query?.categoryId || null,
-      offset: query?.offset || null,
-    };
+    return query ? shopContextQuery(query) : {};
   }
   retry() {
     if (this.state()?.loading) return;

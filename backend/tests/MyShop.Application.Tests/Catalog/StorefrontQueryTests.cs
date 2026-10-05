@@ -34,6 +34,17 @@ public sealed class StorefrontQueryTests
         Assert.Equal(0, catalog.Calls);
     }
     [Fact]
+    public async Task ForwardsBrowsingOptionsAndRejectsUnknownSort()
+    {
+        var catalog = new Catalog(); var useCase = new BrowseStorefront(catalog);
+        await useCase.ExecuteAsync(new(At: At, Sort: StorefrontSort.NameDescending, AvailableOnly: true), CancellationToken.None);
+        Assert.Equal(StorefrontSort.NameDescending, catalog.Sort); Assert.True(catalog.AvailableOnly);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => useCase.ExecuteAsync(new(At: At, Sort: (StorefrontSort)99), CancellationToken.None));
+        Assert.Equal(1, catalog.Calls);
+        await useCase.ExecuteAsync(new(At: At), CancellationToken.None);
+        Assert.Equal(StorefrontSort.NameAscending, catalog.Sort); Assert.False(catalog.AvailableOnly);
+    }
+    [Fact]
     public async Task ListsPublicCategoriesAndForwardsCancellation()
     {
         var catalog = new Catalog();
@@ -71,6 +82,8 @@ public sealed class StorefrontQueryTests
     }
     private sealed class Catalog : IStorefrontCatalog
     {
+        internal StorefrontSort Sort;
+        internal bool AvailableOnly;
         internal int Calls;
         internal (int Offset, int Limit, string? Search, CategoryId? CategoryId, DateTimeOffset At) Request;
         internal CancellationToken Cancellation;
@@ -78,8 +91,9 @@ public sealed class StorefrontQueryTests
         internal IReadOnlyList<StorefrontCategory> Categories { get; } =
             [new(Guid.NewGuid(), "Clothing")];
         public Task<StorefrontPage> ListAsync(int offset, int limit, string? search,
-            CategoryId? categoryId, DateTimeOffset at, CancellationToken cancellationToken)
-        { Calls++; Request = (offset, limit, search, categoryId, at); Cancellation = cancellationToken; return Task.FromResult(new StorefrontPage(at, [], 0, offset, limit)); }
+            CategoryId? categoryId, DateTimeOffset at, CancellationToken cancellationToken,
+            StorefrontSort sort = StorefrontSort.NameAscending, bool availableOnly = false)
+        { Sort = sort; AvailableOnly = availableOnly; Calls++; Request = (offset, limit, search, categoryId, at); Cancellation = cancellationToken; return Task.FromResult(new StorefrontPage(at, [], 0, offset, limit)); }
         public Task<IReadOnlyList<StorefrontCategory>> ListCategoriesAsync(CancellationToken cancellationToken)
         { Calls++; Cancellation = cancellationToken; return Task.FromResult(Categories); }
         public Task<StorefrontProduct?> GetAsync(ProductId id, CancellationToken cancellationToken)

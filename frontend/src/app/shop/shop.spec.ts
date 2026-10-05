@@ -62,7 +62,7 @@ describe('Public storefront', () => {
     expect(link.getAttribute('href')).toContain('offset=20');
     expect(link.getAttribute('href')).toContain('categoryId=c1');
     const list = harness.routeDebugElement!.componentInstance as ShopList;
-    const input = harness.routeNativeElement!.querySelector('input')!;
+    const input = harness.routeNativeElement!.querySelector<HTMLInputElement>('input[name="search"]')!;
     input.value = 'coat';
     input.dispatchEvent(new Event('input'));
     await harness.fixture.whenStable();

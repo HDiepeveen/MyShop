@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using MyShop.Application.Catalog.GetStorefrontPrices;
 using MyShop.Application.Catalog.BrowseStorefront;
+using MyShop.Application.Catalog.Abstractions;
 using MyShop.Application.Catalog.GetStorefrontProduct;
 using MyShop.Application.Catalog.ListStorefrontCategories;
 using MyShop.Domain.Catalog;
@@ -30,13 +31,16 @@ public static class StorefrontEndpoints
                     price.Amount?.ToString("F2", CultureInfo.InvariantCulture), price.Currency)).ToList()));
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/products", async (int? offset, int? limit, string? search, Guid? categoryId,
+            string? sort, bool? availableOnly,
             [FromServices] BrowseStorefront useCase, CancellationToken cancellationToken) =>
         {
             try
             {
+                var ordering = sort switch { null or "" or "nameAsc" => StorefrontSort.NameAscending,
+                    "nameDesc" => StorefrontSort.NameDescending, _ => throw new ArgumentException("Unknown sort order.") };
                 CategoryId? category = categoryId is null ? null : CategoryId.From(categoryId.Value);
                 var page = await useCase.ExecuteAsync(
-                    new(offset ?? 0, limit ?? 20, search, category, DateTimeOffset.UtcNow),
+                    new(offset ?? 0, limit ?? 20, search, category, DateTimeOffset.UtcNow, ordering, availableOnly ?? false),
                     cancellationToken);
                 return Results.Ok(new StorefrontPageResponse(page.At,
                     page.Items.Select(item => new StorefrontItemResponse(item.Id, item.Name,
