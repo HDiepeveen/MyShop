@@ -6,9 +6,10 @@ import { CustomerWishlist } from './customer-wishlist';
 
 describe('Customer wishlist', () => {
   let http: HttpTestingController;
-  afterEach(() => http.verify());
+  afterEach(() => { http.verify(); vi.restoreAllMocks(); });
 
   it('lists, pages and removes saved products with CSRF protection', () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     TestBed.configureTestingModule({
       imports: [CustomerWishlist],
       providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],

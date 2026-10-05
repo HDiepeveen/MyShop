@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CustomerAccountApi, CustomerProfile as Profile } from './customer-account.api';
@@ -14,7 +15,10 @@ import { errorMessage } from '../catalog/error-message';
     @if (failure()) {
       <p class="error" role="alert">{{ failure() }}</p>
     }
-    @if (!loading()) {
+    @if (!loading() && !loaded()) {
+      <button type="button" (click)="load()">Opnieuw proberen</button>
+    }
+    @if (loaded()) {
       <form class="panel" (ngSubmit)="save()">
         <label>E-mailadres<input [value]="email" disabled /></label>
         <label>Naam<input name="name" [(ngModel)]="name" maxlength="200" required /></label>
@@ -45,7 +49,9 @@ import { errorMessage } from '../catalog/error-message';
 })
 export class CustomerProfile {
   private readonly api = inject(CustomerAccountApi);
-  readonly loading = signal(true);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly loaded = signal(false);
+  readonly loading = signal(false);
   readonly busy = signal(false);
   readonly failure = signal('');
   readonly message = signal('');
@@ -68,10 +74,14 @@ export class CustomerProfile {
     this.countryCode = profile.countryCode ?? 'NL';
     this.revision = profile.revision;
   }
-  private load() {
-    this.api.profile().subscribe({
+  load() {
+    if (this.loaded() || this.loading()) return;
+    this.loading.set(true);
+    this.failure.set('');
+    this.api.profile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (profile) => {
         this.assign(profile);
+        this.loaded.set(true);
         this.loading.set(false);
       },
       error: (error) => {
@@ -81,7 +91,7 @@ export class CustomerProfile {
     });
   }
   save() {
-    if (this.busy()) return;
+    if (this.busy() || !this.loaded()) return;
     this.busy.set(true);
     this.failure.set('');
     this.message.set('');
@@ -94,6 +104,7 @@ export class CustomerProfile {
         countryCode: this.countryCode,
         revision: this.revision,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (profile) => {
           this.assign(profile);

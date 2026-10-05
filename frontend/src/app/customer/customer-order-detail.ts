@@ -166,7 +166,7 @@ export class CustomerOrderDetail {
     return events;
   }
   cancel(order: Detail) {
-    if (this.cancelling() || !window.confirm('Wil je deze bestelling definitief annuleren?'))
+    if (this.order() !== order || order.status !== 'awaitingPayment' || this.cancelling() || !window.confirm('Wil je deze bestelling definitief annuleren?'))
       return;
     this.cancelling.set(true);
     this.actionFailure.set('');
@@ -176,14 +176,16 @@ export class CustomerOrderDetail {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
-          this.order.set({ ...order, ...result });
           this.cancelling.set(false);
+          if (this.order() !== order) return;
+          this.order.set({ ...order, ...result });
           this.notice.set(
             'De bestelling is geannuleerd. De gereserveerde voorraad is vrijgegeven.',
           );
         },
         error: (error) => {
           this.cancelling.set(false);
+          if (this.order() !== order) return;
           this.actionFailure.set(errorMessage(error));
         },
       });
