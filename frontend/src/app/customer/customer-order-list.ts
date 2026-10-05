@@ -50,6 +50,7 @@ import {
               <strong>{{ total.currency }} {{ amount(total.amount) }}</strong>
             </p>
           }
+          <p><a [routerLink]="[order.id]">Details bekijken</a></p>
         </article>
       }
       @if (!result.items.length && result.offset > 0) {

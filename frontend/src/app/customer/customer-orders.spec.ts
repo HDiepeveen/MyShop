@@ -59,6 +59,14 @@ describe('Customer orders', () => {
     expect(fixture.nativeElement.textContent).toContain('PostNL');
     expect(fixture.nativeElement.textContent).toContain('3S123');
     expect(fixture.nativeElement.textContent).toContain('EUR 25,00');
+    const detailLinks = Array.from(
+      fixture.nativeElement.querySelectorAll('a'),
+    ) as HTMLAnchorElement[];
+    expect(
+      detailLinks.some(
+        (link) => link.textContent?.includes('Details bekijken') && link.href.endsWith('/' + id),
+      ),
+    ).toBe(true);
     fixture.componentInstance.next();
     http
       .expectOne(
