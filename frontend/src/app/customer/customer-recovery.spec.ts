@@ -51,6 +51,35 @@ describe('Customer page recovery', () => {
     expect(api.update).not.toHaveBeenCalled();
   });
 
+  it('protects profile edits while saving and preserves them after a save failure', async () => {
+    const { fixture, response, api } = profileFixture();
+    response.next(profile);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.name = 'Ada Byron';
+    const saved = new Subject<Profile>();
+    api.update.mockReturnValue(saved);
+    page.save();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const inputs = Array.from(fixture.nativeElement.querySelectorAll('input')) as HTMLInputElement[];
+    expect(inputs.length).toBe(6);
+    expect(inputs.every((input) => input.disabled)).toBe(true);
+    expect(api.update).toHaveBeenCalledWith({
+      name: 'Ada Byron', addressLine: profile.addressLine, postalCode: profile.postalCode,
+      city: profile.city, countryCode: profile.countryCode, revision: profile.revision,
+    });
+    saved.error(new Error('Offline'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(inputs[0].disabled).toBe(true);
+    expect(inputs.slice(1).every((input) => !input.disabled)).toBe(true);
+    expect(page.name).toBe('Ada Byron');
+    expect(page.busy()).toBe(false);
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+  });
+
   it('unsubscribes profile loading and saving when leaving the page', () => {
     const { fixture, response, api } = profileFixture();
     response.next(profile);

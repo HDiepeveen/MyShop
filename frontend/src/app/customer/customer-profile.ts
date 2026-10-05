@@ -21,18 +21,18 @@ import { errorMessage } from '../catalog/error-message';
     @if (loaded()) {
       <form class="panel" (ngSubmit)="save()">
         <label>E-mailadres<input [value]="email" disabled /></label>
-        <label>Naam<input name="name" [(ngModel)]="name" maxlength="200" required /></label>
+        <label>Naam<input name="name" [disabled]="busy()" [(ngModel)]="name" maxlength="200" required /></label>
         <label
-          >Adres<input name="address" [(ngModel)]="addressLine" maxlength="200" required
+          >Adres<input name="address" [disabled]="busy()" [(ngModel)]="addressLine" maxlength="200" required
         /></label>
         <label
-          >Postcode<input name="postal" [(ngModel)]="postalCode" maxlength="32" required
+          >Postcode<input name="postal" [disabled]="busy()" [(ngModel)]="postalCode" maxlength="32" required
         /></label>
-        <label>Plaats<input name="city" [(ngModel)]="city" maxlength="100" required /></label>
+        <label>Plaats<input name="city" [disabled]="busy()" [(ngModel)]="city" maxlength="100" required /></label>
         <label
           >Landcode<input
             name="country"
-            [(ngModel)]="countryCode"
+            [disabled]="busy()" [(ngModel)]="countryCode"
             minlength="2"
             maxlength="2"
             required
