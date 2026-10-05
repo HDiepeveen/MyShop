@@ -7,27 +7,97 @@ import { errorMessage } from '../catalog/error-message';
 
 @Component({
   imports: [FormsModule, RouterLink],
-  template: `<div class="eyebrow">Mijn account</div><h1>Registreren</h1>
+  template: `<div class="eyebrow">Mijn account</div>
+    <h1>Registreren</h1>
     <form class="panel" (ngSubmit)="submit()">
-      <label>E-mailadres<input name="email" type="email" autocomplete="email" maxlength="320" [disabled]="busy()" [(ngModel)]="email" required /></label>
-      <label>Wachtwoord<input name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" [disabled]="busy()" [(ngModel)]="password" required /></label>
+      <label
+        >E-mailadres<input
+          name="email"
+          type="email"
+          autocomplete="email"
+          maxlength="320"
+          [disabled]="busy()"
+          [(ngModel)]="email"
+          required
+      /></label>
+      <label
+        >Wachtwoord<input
+          name="password"
+          type="password"
+          autocomplete="new-password"
+          minlength="12"
+          maxlength="128"
+          [disabled]="busy()"
+          [(ngModel)]="password"
+          required
+      /></label>
       <p class="muted">Minimaal 12 tekens met een hoofdletter, kleine letter, cijfer en symbool.</p>
-      <label>Herhaal wachtwoord<input name="confirm" type="password" autocomplete="new-password" maxlength="128" [disabled]="busy()" [(ngModel)]="confirmation" required /></label>
-      @if (failure()) { <p class="error" role="alert">{{ failure() }}</p> }
-      <button [disabled]="busy()">{{ busy() ? 'Account maken…' : 'Account maken' }}</button>
-    </form><p>Al een account? <a routerLink="/winkel/inloggen">Inloggen</a></p>`,
+      <label
+        >Herhaal wachtwoord<input
+          name="confirm"
+          type="password"
+          autocomplete="new-password"
+          maxlength="128"
+          [disabled]="busy()"
+          [(ngModel)]="confirmation"
+          required
+      /></label>
+      @if (failure()) {
+        <p class="error" role="alert">{{ failure() }}</p>
+      }
+      <button
+        [disabled]="
+          busy() ||
+          !email.trim() ||
+          email.trim().length > 320 ||
+          password.length < 12 ||
+          password.length > 128 ||
+          password !== confirmation
+        "
+      >
+        {{ busy() ? 'Account maken…' : 'Account maken' }}
+      </button>
+    </form>
+    <p>Al een account? <a routerLink="/winkel/inloggen">Inloggen</a></p>`,
 })
 export class CustomerRegister {
-  private readonly destroyRef = inject(DestroyRef); private readonly auth = inject(Auth); private readonly router = inject(Router);
-  readonly busy = signal(false); readonly failure = signal(''); email = ''; password = ''; confirmation = '';
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly auth = inject(Auth);
+  private readonly router = inject(Router);
+  readonly busy = signal(false);
+  readonly failure = signal('');
+  email = '';
+  password = '';
+  confirmation = '';
   submit() {
     if (this.busy()) return;
     this.failure.set('');
-    if (this.password !== this.confirmation) { this.failure.set('De wachtwoorden zijn niet gelijk.'); return; }
+    if (!this.email.trim() || this.email.trim().length > 320) {
+      this.failure.set('Vul een e-mailadres van maximaal 320 tekens in.');
+      return;
+    }
+    if (this.password !== this.confirmation) {
+      this.failure.set('De wachtwoorden zijn niet gelijk.');
+      return;
+    }
+    if (this.password.length < 12 || this.password.length > 128) {
+      this.failure.set('Gebruik een wachtwoord van 12 tot en met 128 tekens.');
+      return;
+    }
     this.busy.set(true);
-    this.auth.registerCustomer(this.email, this.password).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.password = this.confirmation = ''; this.busy.set(false); void this.router.navigate(['/winkel/account']); },
-      error: (error) => { this.busy.set(false); this.failure.set(errorMessage(error)); },
-    });
+    this.auth
+      .registerCustomer(this.email.trim(), this.password)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.password = this.confirmation = '';
+          this.busy.set(false);
+          void this.router.navigate(['/winkel/account']);
+        },
+        error: (error) => {
+          this.busy.set(false);
+          this.failure.set(errorMessage(error));
+        },
+      });
   }
 }

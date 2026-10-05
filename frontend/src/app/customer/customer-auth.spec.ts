@@ -71,8 +71,8 @@ describe('Customer authentication screens', () => {
     const page = TestBed.createComponent(CustomerRegister).componentInstance;
 
     page.email = 'customer@example.test';
-    page.password = 'Secret-123!';
-    page.confirmation = 'Secret-123!';
+    page.password = 'Secret-12345!';
+    page.confirmation = 'Secret-12345!';
     page.submit();
     page.submit();
 
@@ -80,7 +80,7 @@ describe('Customer authentication screens', () => {
     const registration = http.expectOne('/api/customer/auth/register');
     expect(registration.request.body).toEqual({
       email: 'customer@example.test',
-      password: 'Secret-123!',
+      password: 'Secret-12345!',
     });
     registration.flush(null);
     http.expectOne('/api/auth/csrf').flush(null);

@@ -98,7 +98,7 @@ export class CustomerOrderList {
     this.load(0);
   }
   load(offset: number) {
-    if (this.loading()) return;
+    if (this.loading() || !Number.isSafeInteger(offset) || offset < 0 || offset % 20 !== 0) return;
     this.offset.set(offset);
     this.page.set(null);
     this.loading.set(true);
@@ -119,9 +119,12 @@ export class CustomerOrderList {
       });
   }
   previous() {
+    if (this.offset() === 0) return;
     this.load(Math.max(0, this.offset() - 20));
   }
   next() {
+    const page = this.page();
+    if (!page || !page.items.length || page.offset + page.items.length >= page.totalCount) return;
     this.load(this.offset() + 20);
   }
   paymentMethod(method: CustomerOrderPaymentMethod) {
