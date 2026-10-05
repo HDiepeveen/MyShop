@@ -225,6 +225,7 @@ export class ProductDetail {
     });
   }
   reload() {
+    if (this.editState.busy() || this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
   attributeValue(id: string, values: AttributeValue[]) {

@@ -1,4 +1,13 @@
-import { Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi } from '../catalog.api';
 import { AttributeDefinition, AttributeValue } from '../catalog.models';
@@ -68,6 +77,20 @@ export class OrphanValues {
   );
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
+    effect(() => {
+      this.productId();
+      this.variantId();
+      this.values();
+      this.definitions();
+      this.error.set('');
+      this.confirming.set(null);
+    });
+  }
   display(value: AttributeValue) {
     return Array.isArray(value.value)
       ? value.value.join(', ')
@@ -84,6 +107,11 @@ export class OrphanValues {
       !this.orphans().some((v) => v.attributeDefinitionId === id)
     )
       return;
+    const productId = this.productId(),
+      variantId = this.variantId(),
+      values = this.values(),
+      definitions = this.definitions();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     this.api
@@ -91,12 +119,28 @@ export class OrphanValues {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (
+            this.productId() !== productId ||
+            this.variantId() !== variantId ||
+            this.values() !== values ||
+            this.definitions() !== definitions
+          )
+            return;
           this.confirming.set(null);
           this.saved.emit('De waarde van het verwijderde kenmerk is gewist.');
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (
+            this.productId() !== productId ||
+            this.variantId() !== variantId ||
+            this.values() !== values ||
+            this.definitions() !== definitions
+          )
+            return;
           this.error.set(errorMessage(error));
         },
       });

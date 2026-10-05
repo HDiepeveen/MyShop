@@ -37,6 +37,24 @@ describe('ProductDetail', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('does not reload while loading or saving and permits recovery after failure', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    const page = fixture.componentInstance;
+    const initial = http.expectOne('/api/products/first');
+    page.reload();
+    expect(initial.cancelled).toBe(false);
+    http.expectNone('/api/products/first');
+    initial.flush({}, { status: 500, statusText: 'Failure' });
+    page.editState.busy.set(true);
+    page.reload();
+    http.expectNone('/api/products/first');
+    page.editState.busy.set(false);
+    page.reload();
+    const retry = http.expectOne('/api/products/first');
+    page.reload();
+    expect(retry.cancelled).toBe(false);
+    retry.flush({}, { status: 404, statusText: 'Missing' });
+  });
   it('preserves list context in its back link and returns to page one after deletion', () => {
     const fixture = TestBed.createComponent(ProductDetail);
     http.expectOne('/api/products/first').flush({}, { status: 404, statusText: 'Missing' });

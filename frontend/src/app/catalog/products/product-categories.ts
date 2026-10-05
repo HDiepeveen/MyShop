@@ -1,5 +1,5 @@
 import { ProductEditState } from './product-edit-state';
-import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
@@ -29,7 +29,13 @@ import { loadState } from '../load-state';
                 <a [routerLink]="['/categorieen', item.id]">{{ item.name }}</a>
               } @else {
                 <span>{{ item.error }}</span>
-                <button class="secondary" (click)="retryAssigned()">Opnieuw ophalen</button>
+                <button
+                  class="secondary"
+                  [disabled]="busy() || assigned()?.loading"
+                  (click)="retryAssigned()"
+                >
+                  Opnieuw ophalen
+                </button>
               }
               <button class="secondary" [disabled]="busy() || !item.name" (click)="remove(item.id)">
                 Ontkoppelen<span class="sr-only"
@@ -66,7 +72,11 @@ import { loadState } from '../load-state';
         @if (options()?.error) {
           <p class="error" role="alert">
             {{ options()?.error }}
-            <button class="secondary" (click)="retryOptions()" [disabled]="busy()">
+            <button
+              class="secondary"
+              (click)="retryOptions()"
+              [disabled]="busy() || options()?.loading"
+            >
               Opnieuw proberen
             </button>
           </p>
@@ -98,14 +108,14 @@ import { loadState } from '../load-state';
             <div class="actions">
               <button
                 class="secondary"
-                [disabled]="busy() || offset() === 0"
+                [disabled]="busy() || options()?.loading || offset() === 0"
                 (click)="changePage(-20)"
               >
                 Vorige
               </button>
               <button
                 class="secondary"
-                [disabled]="busy() || items.length < 20"
+                [disabled]="busy() || options()?.loading || items.length < 20"
                 (click)="changePage(20)"
               >
                 Volgende
@@ -161,6 +171,20 @@ export class ProductCategories {
       switchMap((q) => (q ? loadState(this.api.categories(q.offset, q.search)) : of(null))),
     ),
   );
+  private writing = false;
+  constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
+    effect(() => {
+      this.product();
+      this.error.set('');
+      this.choosing.set(false);
+      this.offset.set(0);
+      this.searchText = '';
+      this.query.next(null);
+    });
+  }
   isAssigned(id: string) {
     return this.product().categoryIds.includes(id);
   }
@@ -176,18 +200,24 @@ export class ProductCategories {
     this.query.next({ offset: 0, search: this.searchText });
   }
   changePage(delta: number) {
-    if (this.busy() || !this.query.value) return;
+    const options = this.options();
+    if (this.busy() || options?.loading || !options?.data || !this.query.value) return;
+    if (delta > 0 && options.data.length < 20) return;
     this.offset.update((value) => Math.max(0, value + delta));
     this.query.next({ ...this.query.value, offset: this.offset() });
   }
   retryOptions() {
-    if (!this.busy()) this.query.next(this.query.value);
+    if (!this.busy() && !this.options()?.loading && this.query.value)
+      this.query.next(this.query.value);
   }
   retryAssigned() {
+    if (this.busy() || this.assigned()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
   remove(id: string) {
     if (this.busy() || !this.isAssigned(id)) return;
+    const product = this.product();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     this.api
@@ -195,17 +225,23 @@ export class ProductCategories {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.saved.emit('De categorie is ontkoppeld.');
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.error.set(errorMessage(error));
         },
       });
   }
   assign(id: string) {
     if (this.busy() || this.isAssigned(id)) return;
+    const product = this.product();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     this.api
@@ -213,11 +249,15 @@ export class ProductCategories {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.saved.emit('De categorie is gekoppeld.');
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.product() !== product) return;
           this.error.set(errorMessage(error));
         },
       });
