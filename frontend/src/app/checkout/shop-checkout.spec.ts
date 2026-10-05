@@ -35,6 +35,11 @@ describe('Shop checkout', () => {
     page.addressLine = 'Main street 1';
     page.postalCode = '1234 AB';
     page.city = 'Amsterdam';
+    page.customerName = 'Ada Lovelace';
+    page.email = 'ada@example.com';
+    page.addressLine = 'Main street 1';
+    page.postalCode = '1234 AB';
+    page.city = 'Amsterdam';
     const placed = vi.fn();
     page.placed.subscribe(placed);
 
@@ -71,6 +76,11 @@ describe('Shop checkout', () => {
     fixture.componentRef.setInput('paymentMethod', 'payLater');
     fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
     const page = fixture.componentInstance;
+    page.customerName = 'Ada Lovelace';
+    page.email = 'ada@example.com';
+    page.addressLine = 'Main street 1';
+    page.postalCode = '1234 AB';
+    page.city = 'Amsterdam';
 
     page.submit();
     http.expectOne('/api/auth/csrf').flush(null);
@@ -100,6 +110,11 @@ describe('Shop checkout', () => {
     fixture.componentRef.setInput('paymentMethod', 'online');
     fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
     const page = fixture.componentInstance;
+    page.customerName = 'Ada Lovelace';
+    page.email = 'ada@example.com';
+    page.addressLine = 'Main street 1';
+    page.postalCode = '1234 AB';
+    page.city = 'Amsterdam';
     const placed = vi.fn();
     page.placed.subscribe(placed);
     fixture.detectChanges();
@@ -112,11 +127,11 @@ describe('Shop checkout', () => {
     expect(request.request.body).toEqual({
       checkoutToken: expect.stringMatching(/^[0-9a-f-]{36}$/),
       deliveryMethodId: '40000000-0000-0000-0000-000000000001',
-      customerName: '',
-      email: '',
-      addressLine: '',
-      postalCode: '',
-      city: '',
+      customerName: 'Ada Lovelace',
+      email: 'ada@example.com',
+      addressLine: 'Main street 1',
+      postalCode: '1234 AB',
+      city: 'Amsterdam',
       countryCode: 'NL',
       lines: [line],
     });
@@ -148,7 +163,9 @@ describe('Shop checkout', () => {
     expect(content).toContain('Bezorging: Pakketdienst');
     expect(content).toContain('Totaal EUR 29,95');
 
-    const buttons = fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>;
+    const buttons = fixture.nativeElement.querySelectorAll(
+      'button',
+    ) as NodeListOf<HTMLButtonElement>;
     const button = Array.from(buttons).find((item) =>
       item.textContent?.includes('Testbetaling afronden'),
     )!;

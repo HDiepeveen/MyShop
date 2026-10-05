@@ -150,7 +150,7 @@ describe('Storefront recovery', () => {
       { provide: OrderApi, useValue: orders },
     ] });
     const fixture = TestBed.createComponent(ShopCheckout);
-    fixture.componentRef.setInput('lines', []);
+    fixture.componentRef.setInput('lines', [{ productId: 'p', variantId: 'v', quantity: 1, expectedAmount: '10.00', expectedCurrency: 'EUR' }]);
     fixture.componentRef.setInput('paymentMethod', 'payLater');
     fixture.componentRef.setInput('deliveryMethodId', 'delivery-1');
     fixture.detectChanges();
@@ -178,11 +178,13 @@ describe('Storefront recovery', () => {
 
   it.each(['success', 'error'])('ignores a late profile %s while an order is being placed', (result) => {
     const { fixture, response } = checkoutFixture();
+    fixture.componentInstance.customerName = 'Entered'; fixture.componentInstance.email = 'entered@example.test';
+    fixture.componentInstance.addressLine = 'Street 1'; fixture.componentInstance.postalCode = '1234 AB'; fixture.componentInstance.city = 'Utrecht';
     fixture.componentInstance.submit();
     if (result === 'success') response.next(profile);
     else response.error(new Error('Offline'));
-    expect(fixture.componentInstance.customerName).toBe('');
-    expect(fixture.componentInstance.email).toBe('');
+    expect(fixture.componentInstance.customerName).toBe('Entered');
+    expect(fixture.componentInstance.email).toBe('entered@example.test');
     expect(fixture.componentInstance.busy()).toBe(true);
     expect(fixture.componentInstance.notice()).toBe('');
   });
