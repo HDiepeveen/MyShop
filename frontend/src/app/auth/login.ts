@@ -40,7 +40,15 @@ import { safeReturnUrl } from './auth-routing';
           required
           [disabled]="busy()"
       /></label>
-      <button [disabled]="busy() || !userName.trim() || !password">
+      <button
+        [disabled]="
+          busy() ||
+          !userName.trim() ||
+          userName.trim().length > 256 ||
+          !password ||
+          password.length > 128
+        "
+      >
         {{ busy() ? 'Inloggen…' : 'Inloggen' }}
       </button>
       @if (error()) {
@@ -60,7 +68,14 @@ export class Login {
   userName = '';
   password = '';
   submit() {
-    if (this.busy() || !this.userName.trim() || !this.password) return;
+    if (
+      this.busy() ||
+      !this.userName.trim() ||
+      this.userName.trim().length > 256 ||
+      !this.password ||
+      this.password.length > 128
+    )
+      return;
     this.busy.set(true);
     this.error.set('');
     this.auth

@@ -35,7 +35,17 @@ import { readListQuery } from '../catalog/list-query';
       <p role="status">Categorieën ophalen…</p>
     }
     @if (categories()?.error) {
-      <p role="alert" class="error">Categorieën konden niet worden opgehaald.</p>
+      <p role="alert" class="error">
+        Categorieën konden niet worden opgehaald.
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="categories()?.loading"
+          (click)="retryCategories()"
+        >
+          Opnieuw proberen
+        </button>
+      </p>
     }
     <form class="toolbar" (ngSubmit)="search()">
       <label
@@ -152,7 +162,10 @@ export class ShopList {
   private readonly refresh = new BehaviorSubject(0);
   readonly query = signal({ search: '', offset: 0, categoryId: '' });
   searchText = '';
-  readonly categories = toSignal(loadState(this.api.categories()));
+  private readonly categoryRefresh = new BehaviorSubject(0);
+  readonly categories = toSignal(
+    this.categoryRefresh.pipe(switchMap(() => loadState(this.api.categories()))),
+  );
   readonly state = toSignal(
     this.route.queryParamMap.pipe(
       map((parameters) => ({
@@ -218,7 +231,12 @@ export class ShopList {
       offset: this.query().offset || null,
     };
   }
+  retryCategories() {
+    if (this.categories()?.loading) return;
+    this.categoryRefresh.next(this.categoryRefresh.value + 1);
+  }
   retry() {
+    if (this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
   amount(value: string) {

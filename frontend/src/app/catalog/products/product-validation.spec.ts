@@ -1,3 +1,4 @@
+import { ProductEditState } from './product-edit-state';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -8,7 +9,7 @@ describe('ProductValidation', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ProductValidation],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [ProductEditState, provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -26,16 +27,35 @@ describe('ProductValidation', () => {
     TestBed.tick();
     return fixture;
   }
+  it('keeps pending validation reads and blocks refresh during saving', () => {
+    const fixture = setup();
+    const page = fixture.componentInstance;
+    const initial = http.expectOne('/api/products/product/attribute-validation');
+    page.reload();
+    expect(initial.cancelled).toBe(false);
+    initial.flush({}, { status: 503, statusText: 'Unavailable' });
+    TestBed.inject(ProductEditState).busy.set(true);
+    page.reload();
+    http.expectNone('/api/products/product/attribute-validation');
+    fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('button') as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    TestBed.inject(ProductEditState).busy.set(false);
+    page.reload();
+    const retry = http.expectOne('/api/products/product/attribute-validation');
+    page.reload();
+    expect(retry.cancelled).toBe(false);
+    retry.flush({ isValid: true, issues: [] });
+  });
   it('translates issues with labels instead of raw identifiers', () => {
     const fixture = setup();
-    http
-      .expectOne('/api/products/product/attribute-validation')
-      .flush({
-        isValid: false,
-        issues: [
-          { attributeDefinitionId: 'attribute', variantId: 'variant', code: 'MissingRequired' },
-        ],
-      });
+    http.expectOne('/api/products/product/attribute-validation').flush({
+      isValid: false,
+      issues: [
+        { attributeDefinitionId: 'attribute', variantId: 'variant', code: 'MissingRequired' },
+      ],
+    });
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Materiaal');
     expect(fixture.nativeElement.textContent).toContain('Maat L');

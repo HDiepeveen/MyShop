@@ -45,7 +45,9 @@ import { OrderManagementApi, OrderPaymentMethod, OrderStatus } from './order-man
         <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
           Overzicht verversen
         </button>
-        <a class="button secondary" [href]="exportUrl()" download="myshop-orders.csv">CSV exporteren</a>
+        <a class="button secondary" [href]="exportUrl()" download="myshop-orders.csv"
+          >CSV exporteren</a
+        >
       </div>
       @if (state()?.loading) {
         <p class="loading" role="status">Bestellingen ophalen…</p>
@@ -197,6 +199,7 @@ export class OrderList {
     this.applySearch();
   }
   changePage(delta: number) {
+    if (this.state()?.loading) return;
     const offset = Math.max(0, this.offset() + delta);
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -213,6 +216,7 @@ export class OrderList {
     });
   }
   retry() {
+    if (this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
   exportUrl() {

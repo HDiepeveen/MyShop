@@ -44,7 +44,16 @@ import { Auth } from './auth';
           maxlength="128"
           [disabled]="busy()"
       /></label>
-      <button [disabled]="busy() || !current || current.length > 128 || password.length < 12 || password.length > 128 || password !== confirm">
+      <button
+        [disabled]="
+          busy() ||
+          !current ||
+          current.length > 128 ||
+          password.length < 12 ||
+          password.length > 128 ||
+          password !== confirm
+        "
+      >
         {{ busy() ? 'Opslaan…' : 'Wachtwoord wijzigen' }}
       </button>
       @if (error()) {
@@ -80,6 +89,7 @@ export class Password {
       .subscribe({
         next: () => {
           this.current = this.password = this.confirm = '';
+          this.busy.set(false);
           const login = this.router.url.startsWith('/winkel/') ? '/winkel/inloggen' : '/inloggen';
           void this.router.navigate([login], { queryParams: { reason: 'changed' } });
         },

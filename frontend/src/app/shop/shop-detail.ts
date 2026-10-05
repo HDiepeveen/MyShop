@@ -181,6 +181,7 @@ export class ShopDetail {
     this.prices()?.data?.variants.find((price) => price.variantId === this.selectedId()),
   );
   refreshPrices() {
+    if (this.prices()?.loading) return;
     this.priceRefresh.next(this.priceRefresh.value + 1);
   }
   amount(value: string) {
@@ -250,6 +251,7 @@ export class ShopDetail {
     };
   }
   retry() {
+    if (this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
 }

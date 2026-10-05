@@ -158,9 +158,25 @@ describe('Admin authentication', () => {
     });
     request.flush(null);
     expect(page.password).toBe('');
+    expect(page.busy()).toBe(false);
     expect(navigate).toHaveBeenCalledWith(['/inloggen'], { queryParams: { reason: 'changed' } });
   });
 
+  it.each(['userName', 'password'])('does not send oversized administrator %s', (field) => {
+    const fixture = TestBed.createComponent(Login);
+    const page = fixture.componentInstance;
+    page.userName = 'admin';
+    page.password = 'secret';
+    if (field === 'userName') page.userName = 'x'.repeat(257);
+    else page.password = 'x'.repeat(129);
+    fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('button') as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    page.submit();
+    http.expectNone('/api/auth/csrf');
+    expect(page.busy()).toBe(false);
+  });
   it('does not send mismatching new passwords', () => {
     const page = TestBed.createComponent(Password).componentInstance;
     page.current = 'old';

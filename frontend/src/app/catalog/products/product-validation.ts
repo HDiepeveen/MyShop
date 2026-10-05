@@ -1,3 +1,4 @@
+import { ProductEditState } from './product-edit-state';
 import { Component, inject, input } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, combineLatest, switchMap } from 'rxjs';
@@ -13,7 +14,7 @@ import { loadState } from '../load-state';
         <h2>Controle van kenmerken</h2>
         <p class="muted">Ontbrekende of niet-passende productgegevens.</p>
       </div>
-      <button class="secondary" [disabled]="state()?.loading" (click)="reload()">
+      <button class="secondary" [disabled]="state()?.loading || busy()" (click)="reload()">
         Opnieuw controleren
       </button>
     </div>
@@ -47,6 +48,7 @@ import { loadState } from '../load-state';
   </section>`,
 })
 export class ProductValidation {
+  readonly busy = inject(ProductEditState).busy;
   readonly product = input.required<Product>();
   readonly type = input.required<ProductType>();
   private readonly api = inject(CatalogApi);
@@ -57,6 +59,7 @@ export class ProductValidation {
     ),
   );
   reload() {
+    if (this.state()?.loading || this.busy()) return;
     this.refresh.next(this.refresh.value + 1);
   }
   attributeName(issue: AttributeIssue) {
