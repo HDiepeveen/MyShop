@@ -2,7 +2,7 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BehaviorSubject, combineLatest, distinctUntilChanged, switchMap } from 'rxjs';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { loadState } from '../catalog/load-state';
 import { errorMessage } from '../catalog/error-message';
 import { OrderDetail, OrderManagementApi } from './order-management.api';
@@ -263,11 +263,18 @@ export class OrderDetailComponent {
   readonly notice = signal('');
   readonly state = toSignal(
     combineLatest([
-      this.route.paramMap.pipe(distinctUntilChanged((a, b) => a.get('id') === b.get('id'))),
+      this.route.paramMap.pipe(
+        distinctUntilChanged((a, b) => a.get('id') === b.get('id')),
+        tap(() => {
+          this.notice.set('');
+          this.actionError.set('');
+        }),
+      ),
       this.refresh,
     ]).pipe(switchMap(([params]) => loadState(this.api.get(params.get('id')!)))),
   );
   retry() {
+    if (this.saving() || this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
   paymentMethodLabel(method: OrderDetail['paymentMethod']) {
@@ -312,7 +319,7 @@ export class OrderDetailComponent {
   }
   markPaid(order: OrderDetail, paymentReference: string) {
     paymentReference = paymentReference.trim();
-    if (this.saving() || !paymentReference) return;
+    if (this.state()?.data !== order || order.status !== 'awaitingPayment' || this.saving() || !paymentReference) return;
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
@@ -322,11 +329,13 @@ export class OrderDetailComponent {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.notice.set('De bestelling is als betaald gemarkeerd.');
           this.retry();
         },
         error: (error) => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.actionError.set(errorMessage(error));
         },
       });
@@ -334,7 +343,7 @@ export class OrderDetailComponent {
   markShipped(order: OrderDetail, carrier: string, trackingCode: string) {
     carrier = carrier.trim();
     trackingCode = trackingCode.trim();
-    if (this.saving() || !carrier || !trackingCode) return;
+    if (this.state()?.data !== order || order.status !== 'paid' || this.saving() || !carrier || !trackingCode) return;
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
@@ -344,18 +353,20 @@ export class OrderDetailComponent {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.notice.set('De bestelling is als verzonden gemarkeerd.');
           this.retry();
         },
         error: (error) => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.actionError.set(errorMessage(error));
         },
       });
   }
   cancelOrder(order: OrderDetail, reason: string) {
     reason = reason.trim();
-    if (this.saving() || !reason) return;
+    if (this.state()?.data !== order || order.status !== 'awaitingPayment' || this.saving() || !reason) return;
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
@@ -365,11 +376,13 @@ export class OrderDetailComponent {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.notice.set('De bestelling is geannuleerd.');
           this.retry();
         },
         error: (error) => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.actionError.set(errorMessage(error));
         },
       });
@@ -377,7 +390,7 @@ export class OrderDetailComponent {
   refundOrder(order: OrderDetail, refundReference: string, reason: string) {
     refundReference = refundReference.trim();
     reason = reason.trim();
-    if (this.saving() || !refundReference || !reason) return;
+    if (this.state()?.data !== order || order.status !== 'paid' || this.saving() || !refundReference || !reason) return;
     this.saving.set(true);
     this.actionError.set('');
     this.notice.set('');
@@ -387,11 +400,13 @@ export class OrderDetailComponent {
       .subscribe({
         next: () => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.notice.set('De terugbetaling is geregistreerd.');
           this.retry();
         },
         error: (error) => {
           this.saving.set(false);
+          if (this.state()?.data !== order) return;
           this.actionError.set(errorMessage(error));
         },
       });
