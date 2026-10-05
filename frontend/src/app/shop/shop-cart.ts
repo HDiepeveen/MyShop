@@ -114,7 +114,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
         <section class="panel">
           <h2>Hoe wil je je bestelling ontvangen?</h2>
           @if (deliveryMethods()?.loading) { <p role="status">Bezorgopties ophalen…</p> }
-          @if (deliveryMethods()?.error) { <p role="alert">Bezorgopties konden niet worden opgehaald.</p> }
+          @if (deliveryMethods()?.error) { <p role="alert">Bezorgopties konden niet worden opgehaald.</p><button type="button" (click)="retryDelivery()">Bezorgopties opnieuw proberen</button> }
           @for (method of deliveryMethods()?.data ?? []; track method.id) {
             <label><input type="radio" name="delivery" [value]="method.id"
               [ngModel]="selectedDelivery()" (ngModelChange)="selectedDelivery.set($event)" />
@@ -134,6 +134,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
           }
           @if (paymentOptions()?.error) {
             <p role="alert">Betaalopties konden niet worden opgehaald.</p>
+            <button type="button" (click)="retryPayment()">Betaalopties opnieuw proberen</button>
           }
           @for (option of paymentOptions()?.data?.items ?? []; track option.code) {
             <label
@@ -182,12 +183,14 @@ export class ShopCart {
   private readonly paymentApi = inject(PaymentOptionsApi);
   private readonly deliveryApi = inject(DeliveryMethodsApi);
   private readonly reload = new BehaviorSubject(0);
+  private readonly paymentRefresh = new BehaviorSubject(0);
+  private readonly deliveryRefresh = new BehaviorSubject(0);
   readonly error = signal('');
   readonly selectedPayment = signal('');
   readonly selectedDelivery = signal('');
   readonly orderReceipt = signal<OrderReceipt | null>(null);
-  readonly paymentOptions = toSignal(loadState(this.paymentApi.publicOptions()));
-  readonly deliveryMethods = toSignal(loadState(this.deliveryApi.publicMethods()));
+  readonly paymentOptions = toSignal(this.paymentRefresh.pipe(switchMap(() => loadState(this.paymentApi.publicOptions()))));
+  readonly deliveryMethods = toSignal(this.deliveryRefresh.pipe(switchMap(() => loadState(this.deliveryApi.publicMethods()))));
   readonly state = toSignal(
     combineLatest([toObservable(this.cart.lines), this.reload]).pipe(
       switchMap(([lines]) => {
@@ -258,7 +261,16 @@ export class ShopCart {
     this.cart.remove(line);
   }
   refresh() {
+    if (this.state()?.loading) return;
     this.reload.next(this.reload.value + 1);
+  }
+  retryPayment() {
+    if (this.paymentOptions()?.loading) return;
+    this.paymentRefresh.next(this.paymentRefresh.value + 1);
+  }
+  retryDelivery() {
+    if (this.deliveryMethods()?.loading) return;
+    this.deliveryRefresh.next(this.deliveryRefresh.value + 1);
   }
   orderPlaced(receipt: OrderReceipt) {
     this.orderReceipt.set(receipt);

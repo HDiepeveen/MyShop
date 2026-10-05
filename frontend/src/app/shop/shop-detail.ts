@@ -124,7 +124,7 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
             <p role="status">{{ cart.warning() }}</p>
           }
           @if (auth.session()?.customer) {
-            <button type="button" class="secondary" [disabled]="wishlistBusy()" (click)="toggleWishlist(product.id)">
+            <button type="button" class="secondary" [disabled]="wishlistBusy() || wishlistLoading()" (click)="toggleWishlist(product.id)">
               {{ wishlistSaved() ? 'Van verlanglijst verwijderen' : 'Op verlanglijst zetten' }}
             </button>
             @if (wishlistMessage()) { <p role="status">{{ wishlistMessage() }}</p> }
@@ -140,6 +140,8 @@ export class ShopDetail {
   private readonly destroyRef = inject(DestroyRef);
   readonly wishlistSaved = signal(false);
   readonly wishlistBusy = signal(false);
+  readonly wishlistLoading = signal(false);
+  private wishlistVersion = 0;
   readonly wishlistMessage = signal('');
   readonly cart = inject(Cart);
   readonly cartMessage = signal('');
@@ -198,6 +200,11 @@ export class ShopDetail {
   constructor() {
     effect(() => {
       const product = this.state()?.data;
+      this.wishlistVersion++;
+      this.wishlistSaved.set(false);
+      this.wishlistMessage.set('');
+      this.wishlistBusy.set(false);
+      this.wishlistLoading.set(false);
       this.cartMessage.set('');
       this.selectedId.set(
         product?.variants.find((variant) => variant.isAvailable !== false)?.id ??
@@ -208,17 +215,30 @@ export class ShopDetail {
     });
   }
   private loadWishlistState(productId: string) {
+    const version = this.wishlistVersion;
+    this.wishlistLoading.set(true);
     this.wishlistApi.state(productId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (state) => this.wishlistSaved.set(state.saved),
-      error: () => this.wishlistMessage.set('De verlanglijststatus kon niet worden opgehaald.'),
+      next: (state) => {
+        if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return;
+        this.wishlistLoading.set(false);
+        this.wishlistSaved.set(state.saved);
+      },
+      error: () => {
+        if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return;
+        this.wishlistLoading.set(false);
+        this.wishlistMessage.set('De verlanglijststatus kon niet worden opgehaald.');
+      },
     });
   }
   toggleWishlist(productId: string) {
+    if (this.wishlistBusy() || this.wishlistLoading() || !this.auth.session()?.customer || this.state()?.data?.id !== productId) return;
+    const version = this.wishlistVersion;
+    const saved = !this.wishlistSaved();
     this.wishlistBusy.set(true); this.wishlistMessage.set('');
     const request = this.wishlistSaved() ? this.wishlistApi.remove(productId) : this.wishlistApi.add(productId);
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { const saved = !this.wishlistSaved(); this.wishlistSaved.set(saved); this.wishlistBusy.set(false); this.wishlistMessage.set(saved ? 'Toegevoegd aan je verlanglijst.' : 'Verwijderd van je verlanglijst.'); },
-      error: () => { this.wishlistBusy.set(false); this.wishlistMessage.set('Je verlanglijst kon niet worden bijgewerkt.'); },
+      next: () => { if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return; this.wishlistSaved.set(saved); this.wishlistBusy.set(false); this.wishlistMessage.set(saved ? 'Toegevoegd aan je verlanglijst.' : 'Verwijderd van je verlanglijst.'); },
+      error: () => { if (version !== this.wishlistVersion || this.state()?.data?.id !== productId) return; this.wishlistBusy.set(false); this.wishlistMessage.set('Je verlanglijst kon niet worden bijgewerkt.'); },
     });
   }
   contextQuery() {

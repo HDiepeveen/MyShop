@@ -122,13 +122,17 @@ export class ShopCheckout implements OnInit {
     if (!this.auth.session()?.customer) return;
     this.account.profile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (profile) => {
-        if (this.customerName || this.addressLine || this.postalCode || this.city) return;
+        if (this.busy() || this.customerName || this.email || this.addressLine || this.postalCode || this.city || this.countryCode !== 'NL') return;
         this.customerName = profile.name ?? '';
         this.email = profile.email;
         this.addressLine = profile.addressLine ?? '';
         this.postalCode = profile.postalCode ?? '';
         this.city = profile.city ?? '';
         this.countryCode = profile.countryCode ?? 'NL';
+      },
+      error: () => {
+        if (!this.busy() && !this.onlinePayment())
+          this.notice.set('Je profiel kon niet worden opgehaald. Vul je gegevens zelf in.');
       },
     });
   }
