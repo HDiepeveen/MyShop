@@ -84,7 +84,7 @@ import { CategoryEditState } from './category-edit-state';
               }
             </select>
           </label>
-          <button [disabled]="busy() || parentId === category().parentCategoryId">Opslaan</button>
+          <button [disabled]="busy() || categories()?.loading || parentId === category().parentCategoryId">Opslaan</button>
           <button
             type="button"
             class="secondary"
@@ -165,6 +165,7 @@ export class CategoryManagement {
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
   private readonly categoryQuery = new BehaviorSubject({ offset: 0, search: '' });
   private readonly usageRefresh = new BehaviorSubject(0);
   readonly usage = toSignal(
@@ -182,8 +183,10 @@ export class CategoryManagement {
   selectedParentName = '';
   categorySearch = '';
   constructor() {
+    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
     effect(() => {
-      this.resetParent();
+      this.parentId = this.category().parentCategoryId;
+      this.selectedParentName = '';
       this.confirming.set(false);
       this.error.set('');
     });
@@ -201,6 +204,7 @@ export class CategoryManagement {
       this.options().find((option) => option.id === this.parentId)?.name ?? '';
   }
   resetParent() {
+    if (this.busy()) return;
     this.parentId = this.category().parentCategoryId;
     this.selectedParentName = '';
   }
@@ -215,7 +219,7 @@ export class CategoryManagement {
     this.categoryQuery.next({ ...this.categoryQuery.value, offset: this.categoryOffset() });
   }
   retryCategories() {
-    if (!this.busy()) this.categoryQuery.next(this.categoryQuery.value);
+    if (!this.busy() && !this.categories()?.loading) this.categoryQuery.next(this.categoryQuery.value);
   }
   canDelete() {
     const information = this.usage()?.data;
@@ -228,12 +232,12 @@ export class CategoryManagement {
     );
   }
   reloadUsage() {
-    if (this.busy()) return;
+    if (this.busy() || this.usage()?.loading) return;
     this.confirming.set(false);
     this.usageRefresh.next(this.usageRefresh.value + 1);
   }
   move() {
-    if (this.busy() || this.parentId === this.category().parentCategoryId) return;
+    if (this.busy() || this.categories()?.loading || this.parentId === this.category().parentCategoryId) return;
     if (this.parentId === this.category().id) {
       this.error.set('Een categorie kan niet onder zichzelf worden geplaatst.');
       return;
@@ -248,17 +252,23 @@ export class CategoryManagement {
     this.write(this.api.deleteCategory(this.category().id), '');
   }
   private write(request: import('rxjs').Observable<unknown>, message: string) {
+    const category = this.category();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.category() !== category) return;
         this.confirming.set(false);
         if (message) this.saved.emit(message);
         else this.removed.emit();
       },
       error: (error) => {
+        this.writing = false;
         this.busy.set(false);
+        if (this.category() !== category) return;
         this.error.set(
           !message && error.status === 409
             ? 'Deze categorie is inmiddels in gebruik en kan niet worden verwijderd.'

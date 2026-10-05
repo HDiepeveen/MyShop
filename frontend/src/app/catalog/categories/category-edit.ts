@@ -33,8 +33,10 @@ export class CategoryEdit {
   readonly error = signal('');
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
+  private writing = false;
   name = '';
   constructor() {
+    this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
     effect(() => {
       this.name = this.category().name;
       this.error.set('');
@@ -43,17 +45,23 @@ export class CategoryEdit {
   rename() {
     if (this.busy() || !this.name.trim() || this.name.trim() === this.category().name) return;
     this.busy.set(true);
+    this.writing = true;
+    const category = this.category();
     this.error.set('');
     this.api
       .renameCategory(this.category().id, this.name)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.category() !== category) return;
           this.saved.emit();
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.category() !== category) return;
           this.error.set(errorMessage(error));
         },
       });

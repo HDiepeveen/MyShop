@@ -119,7 +119,7 @@ export class CategoryDetail {
     ),
   );
   retryParent() {
-    if (!this.editState.busy()) this.parentRefresh.next(this.parentRefresh.value + 1);
+    if (!this.editState.busy() && !this.parentState()?.loading) this.parentRefresh.next(this.parentRefresh.value + 1);
   }
   onSaved() {
     this.notice.set('De categorienaam is bijgewerkt.');
@@ -135,6 +135,7 @@ export class CategoryDetail {
     });
   }
   reload() {
+    if (this.editState.busy() || this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
 }
