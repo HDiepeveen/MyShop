@@ -77,6 +77,24 @@ describe('Customer orders', () => {
     expect(fixture.componentInstance.offset()).toBe(20);
   });
 
+  it('does not mark an unpaid online order as paid', () => {
+    TestBed.configureTestingModule({
+      imports: [CustomerOrderList],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(CustomerOrderList);
+    http.expectOne((request) => request.url === '/api/customer/orders').flush({
+      items: [{ ...summary, paymentMethod: 'online' }],
+      offset: 0,
+      limit: 20,
+      totalCount: 1,
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Wacht op betaling');
+    expect(fixture.nativeElement.textContent).toContain('Online betalen');
+    expect(fixture.nativeElement.textContent).not.toContain('Online betaald');
+  });
   it('shows the immutable customer order snapshot and fulfilment data', () => {
     const params = new BehaviorSubject(convertToParamMap({ id }));
     TestBed.configureTestingModule({

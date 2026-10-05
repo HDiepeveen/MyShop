@@ -125,7 +125,7 @@ export class CustomerOrderList {
     this.load(this.offset() + 20);
   }
   paymentMethod(method: CustomerOrderPaymentMethod) {
-    return method === 'online' ? 'Online betaald' : 'Later betalen';
+    return method === 'online' ? 'Online betalen' : 'Later betalen';
   }
   amount(value: string) {
     return value.replace('.', ',');
