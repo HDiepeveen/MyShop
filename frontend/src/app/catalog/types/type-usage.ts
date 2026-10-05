@@ -76,7 +76,11 @@ export class TypeUsage {
   readonly error = signal('');
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private writing = false;
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      if (this.writing) this.busy.set(false);
+    });
     effect(() => {
       this.typeId();
       this.confirming.set(false);
@@ -102,6 +106,9 @@ export class TypeUsage {
   }
   remove() {
     if (this.busy() || !this.confirming() || !this.canRemove()) return;
+    const typeId = this.typeId();
+    const listSearch = this.listSearch();
+    this.writing = true;
     this.busy.set(true);
     this.error.set('');
     this.api
@@ -109,13 +116,17 @@ export class TypeUsage {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.typeId() !== typeId) return;
           void this.router.navigate(['/producttypen'], {
-            queryParams: { search: this.listSearch() || null },
+            queryParams: { search: listSearch || null },
           });
         },
         error: (error) => {
+          this.writing = false;
           this.busy.set(false);
+          if (this.typeId() !== typeId) return;
           this.error.set(
             error.status === 409
               ? 'Dit producttype is inmiddels in gebruik en kan niet worden verwijderd.'
@@ -126,6 +137,7 @@ export class TypeUsage {
       });
   }
   reload() {
+    if (this.busy() || this.state()?.loading) return;
     this.confirming.set(false);
     this.refresh.next(this.refresh.value + 1);
   }

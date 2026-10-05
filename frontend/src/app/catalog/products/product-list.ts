@@ -225,6 +225,7 @@ export class ProductList {
     this.search();
   }
   changePage(delta: number) {
+    if (this.state()?.loading) return;
     const offset = Math.max(0, this.offset() + delta);
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -233,6 +234,7 @@ export class ProductList {
     });
   }
   retry() {
+    if (this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
   lookupSku() {

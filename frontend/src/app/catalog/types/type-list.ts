@@ -160,6 +160,7 @@ export class TypeList {
     this.search();
   }
   changePage(delta: number) {
+    if (this.state()?.loading) return;
     const offset = Math.max(0, this.offset() + delta);
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -168,6 +169,7 @@ export class TypeList {
     });
   }
   retry() {
+    if (this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
   create() {
@@ -185,7 +187,11 @@ export class TypeList {
           this.name = '';
           this.saved.set('Producttype “' + name + '” is aangemaakt.');
           this.searchText = '';
-          this.search();
+          if (!this.listQuery().search && this.offset() === 0) {
+            this.refresh.next(this.refresh.value + 1);
+          } else {
+            this.search();
+          }
         },
         error: (error) => {
           this.saving.set(false);

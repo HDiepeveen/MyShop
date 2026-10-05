@@ -33,6 +33,23 @@ describe('TypeDetail', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('keeps pending reads and blocks reload during an editor write', () => {
+    const fixture = TestBed.createComponent(TypeDetail);
+    const page = fixture.componentInstance;
+    const initial = http.expectOne('/api/product-types/t');
+    page.reload();
+    expect(initial.cancelled).toBe(false);
+    initial.flush({}, { status: 503, statusText: 'Unavailable' });
+    page.editState.busy.set(true);
+    page.reload();
+    http.expectNone('/api/product-types/t');
+    page.editState.busy.set(false);
+    page.reload();
+    const retry = http.expectOne('/api/product-types/t');
+    page.reload();
+    expect(retry.cancelled).toBe(false);
+    retry.flush({}, { status: 404, statusText: 'Missing' });
+  });
   it('preserves list search and page in the back link', () => {
     const fixture = TestBed.createComponent(TypeDetail);
     http.expectOne('/api/product-types/t').flush({}, { status: 404, statusText: 'Missing' });

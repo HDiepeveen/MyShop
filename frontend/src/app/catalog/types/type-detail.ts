@@ -113,6 +113,7 @@ export class TypeDetail {
     ]).pipe(switchMap(([params]) => loadState(this.api.type(params.get('id')!)))),
   );
   reload() {
+    if (this.editState.busy() || this.state()?.loading) return;
     this.refresh.next(this.refresh.value + 1);
   }
 }

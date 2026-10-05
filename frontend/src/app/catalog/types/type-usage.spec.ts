@@ -26,6 +26,68 @@ describe('TypeUsage', () => {
     TestBed.tick();
     return f;
   }
+  it('keeps pending usage reads and confirmations intact during saving', () => {
+    const fixture = setup();
+    const page = fixture.componentInstance;
+    const initial = http.expectOne('/api/product-types/t/usage');
+    page.reload();
+    expect(initial.cancelled).toBe(false);
+    initial.flush({ productTypeId: 't', productCount: 0, isInUse: false });
+    page.confirming.set(true);
+    page.remove();
+    const removal = http.expectOne('/api/product-types/t');
+    page.reload();
+    expect(page.confirming()).toBe(true);
+    http.expectNone('/api/product-types/t/usage');
+    removal.flush({}, { status: 409, statusText: 'Conflict' });
+    const recovery = http.expectOne('/api/product-types/t/usage');
+    page.reload();
+    expect(recovery.cancelled).toBe(false);
+    recovery.flush({ productTypeId: 't', productCount: 1, isInUse: true });
+  });
+  it.each(['success', 'error'])('ignores late removal %s after a type change', (result) => {
+    const fixture = setup();
+    const page = fixture.componentInstance;
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    http
+      .expectOne('/api/product-types/t/usage')
+      .flush({ productTypeId: 't', productCount: 0, isInUse: false });
+    page.confirming.set(true);
+    page.remove();
+    const removal = http.expectOne('/api/product-types/t');
+    fixture.componentRef.setInput('typeId', 'new');
+    fixture.detectChanges();
+    TestBed.tick();
+    const current = http.expectOne('/api/product-types/new/usage');
+    if (result === 'success') removal.flush(null);
+    else removal.flush({}, { status: 409, statusText: 'Conflict' });
+    expect(navigate).not.toHaveBeenCalled();
+    expect(page.error()).toBe('');
+    expect(page.busy()).toBe(false);
+    expect(current.cancelled).toBe(false);
+    current.flush({ productTypeId: 'new', productCount: 0, isInUse: false });
+  });
+  it('releases its own removal lock when destroyed', () => {
+    const fixture = setup();
+    http
+      .expectOne('/api/product-types/t/usage')
+      .flush({ productTypeId: 't', productCount: 0, isInUse: false });
+    fixture.componentInstance.confirming.set(true);
+    fixture.componentInstance.remove();
+    const removal = http.expectOne('/api/product-types/t');
+    expect(TestBed.inject(TypeEditState).busy()).toBe(true);
+    fixture.destroy();
+    expect(removal.cancelled).toBe(true);
+    expect(TestBed.inject(TypeEditState).busy()).toBe(false);
+  });
+  it('preserves another editor lock when destroyed while idle', () => {
+    const fixture = setup();
+    const initial = http.expectOne('/api/product-types/t/usage');
+    TestBed.inject(TypeEditState).busy.set(true);
+    fixture.destroy();
+    expect(initial.cancelled).toBe(true);
+    expect(TestBed.inject(TypeEditState).busy()).toBe(true);
+  });
   it('shows usage and retries a read failure without implying zero usage', () => {
     const f = setup();
     http.expectOne('/api/product-types/t/usage').flush({}, { status: 500, statusText: 'Failure' });
