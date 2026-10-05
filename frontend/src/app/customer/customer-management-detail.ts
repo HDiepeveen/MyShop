@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, combineLatest, startWith, switchMap } from 'rxjs';
 import { errorMessage } from '../catalog/error-message';
 import { CustomerManagementApi, ManagedCustomerDetail } from './customer-management.api';
 
@@ -14,6 +14,7 @@ import { CustomerManagementApi, ManagedCustomerDetail } from './customer-managem
     }
     @if (failure()) {
       <p class="error" role="alert">{{ failure() }}</p>
+      <button type="button" [disabled]="saving()" (click)="reload()">Opnieuw proberen</button>
     }
     @if (customer(); as item) {
       <div class="eyebrow">{{ item.isLocked ? 'Geblokkeerd' : 'Actief' }}</div>
@@ -55,6 +56,7 @@ export class CustomerManagementDetail {
   private readonly api = inject(CustomerManagementApi);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly retry = new Subject<void>();
   readonly customer = signal<ManagedCustomerDetail | null>(null);
   readonly loading = signal(true);
   readonly failure = signal('');
@@ -62,9 +64,22 @@ export class CustomerManagementDetail {
   readonly actionFailure = signal('');
   readonly notice = signal('');
   constructor() {
-    this.route.paramMap
+    combineLatest([this.route.paramMap, this.retry.pipe(startWith(undefined))])
       .pipe(
-        switchMap((params) => this.api.get(params.get('id') ?? '')),
+        switchMap(([params]) => {
+          this.customer.set(null);
+          this.loading.set(true);
+          this.failure.set('');
+          this.actionFailure.set('');
+          this.notice.set('');
+          return this.api.get(params.get('id') ?? '').pipe(
+            catchError((error) => {
+              this.failure.set(errorMessage(error));
+              this.loading.set(false);
+              return EMPTY;
+            }),
+          );
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
@@ -72,14 +87,16 @@ export class CustomerManagementDetail {
           this.customer.set(customer);
           this.loading.set(false);
         },
-        error: (error) => {
-          this.failure.set(errorMessage(error));
-          this.loading.set(false);
-        },
       });
+  }
+  reload() {
+    if (this.loading() || this.saving()) return;
+    this.retry.next();
   }
   setLocked(customer: ManagedCustomerDetail, locked: boolean) {
     if (
+      this.customer() !== customer ||
+      customer.isLocked === locked ||
       this.saving() ||
       !window.confirm(
         locked ? 'Wil je dit klantaccount blokkeren?' : 'Wil je dit klantaccount deblokkeren?',
@@ -94,13 +111,14 @@ export class CustomerManagementDetail {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
+          this.saving.set(false);
+          if (this.customer() !== customer) return;
           this.customer.set({
             ...customer,
             isLocked: result.locked,
             lockedUntil: result.locked ? '9999-12-31T23:59:59Z' : null,
             revision: result.revision,
           });
-          this.saving.set(false);
           this.notice.set(
             result.locked
               ? 'Het klantaccount is geblokkeerd.'
@@ -109,6 +127,7 @@ export class CustomerManagementDetail {
         },
         error: (error) => {
           this.saving.set(false);
+          if (this.customer() !== customer) return;
           this.actionFailure.set(errorMessage(error));
         },
       });

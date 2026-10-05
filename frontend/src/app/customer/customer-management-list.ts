@@ -16,9 +16,9 @@ import { CustomerManagementApi, ManagedCustomerPage } from './customer-managemen
           name="search"
           [(ngModel)]="searchText"
           placeholder="E-mailadres of naam" /></label
-      ><button>Zoeken</button>
+      ><button [disabled]="loading()">Zoeken</button>
       @if (search) {
-        <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
+        <button type="button" class="secondary" [disabled]="loading()" (click)="clearSearch()">Zoekterm wissen</button>
       }
     </form>
     @if (loading()) {
@@ -29,7 +29,10 @@ import { CustomerManagementApi, ManagedCustomerPage } from './customer-managemen
       <button (click)="load()">Opnieuw proberen</button>
     }
     @if (page(); as result) {
-      @if (!result.items.length) {
+      @if (!result.items.length && result.offset > 0) {
+        <p>Deze pagina bevat geen klanten meer.</p>
+        <button type="button" class="secondary" (click)="previous()">Vorige pagina</button>
+      } @else if (!result.items.length) {
         <p>Geen klanten gevonden.</p>
       }
       @for (customer of result.items; track customer.id) {
@@ -44,7 +47,7 @@ import { CustomerManagementApi, ManagedCustomerPage } from './customer-managemen
           </p>
         </article>
       }
-      @if (result.offset > 0 || result.offset + result.items.length < result.totalCount) {
+      @if (result.items.length && (result.offset > 0 || result.offset + result.items.length < result.totalCount)) {
         <nav class="toolbar" aria-label="Paginering">
           <button class="secondary" [disabled]="result.offset === 0" (click)="previous()">
             Vorige</button
@@ -76,6 +79,7 @@ export class CustomerManagementList {
   }
   load() {
     if (this.loading()) return;
+    this.page.set(null);
     this.loading.set(true);
     this.failure.set('');
     this.api
@@ -84,6 +88,7 @@ export class CustomerManagementList {
       .subscribe({
         next: (page) => {
           this.page.set(page);
+          this.offset.set(page.offset);
           this.loading.set(false);
         },
         error: (error) => {
@@ -93,19 +98,23 @@ export class CustomerManagementList {
       });
   }
   applySearch() {
+    if (this.loading()) return;
     this.search = this.searchText.trim();
     this.offset.set(0);
     this.load();
   }
   clearSearch() {
+    if (this.loading()) return;
     this.searchText = '';
     this.applySearch();
   }
   previous() {
+    if (this.loading()) return;
     this.offset.set(Math.max(0, this.offset() - 20));
     this.load();
   }
   next() {
+    if (this.loading()) return;
     this.offset.set(this.offset() + 20);
     this.load();
   }
