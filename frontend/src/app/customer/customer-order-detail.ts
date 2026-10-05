@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { EMPTY, catchError, switchMap } from 'rxjs';
 import { errorMessage } from '../catalog/error-message';
 import {
   CustomerOrderApi,
@@ -121,7 +121,20 @@ export class CustomerOrderDetail {
   constructor() {
     this.route.paramMap
       .pipe(
-        switchMap((params) => this.api.get(params.get('id') ?? '')),
+        switchMap((params) => {
+          this.order.set(null);
+          this.loading.set(true);
+          this.failure.set('');
+          this.actionFailure.set('');
+          this.notice.set('');
+          return this.api.get(params.get('id') ?? '').pipe(
+            catchError((error) => {
+              this.failure.set(errorMessage(error));
+              this.loading.set(false);
+              return EMPTY;
+            }),
+          );
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({

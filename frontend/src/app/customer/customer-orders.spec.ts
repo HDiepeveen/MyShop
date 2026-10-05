@@ -151,6 +151,49 @@ describe('Customer orders', () => {
     expect(fixture.nativeElement.textContent).toContain('3S123');
   });
 
+  it('recovers from a load failure when navigating to another order', () => {
+    const params = new BehaviorSubject(convertToParamMap({ id }));
+    TestBed.configureTestingModule({
+      imports: [CustomerOrderDetail],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { paramMap: params } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(CustomerOrderDetail);
+    http.expectOne('/api/customer/orders/' + id).flush(null, {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+    const nextId = '22222222-2222-2222-2222-222222222222';
+    params.next(convertToParamMap({ id: nextId }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Bestelling ophalen');
+    http.expectOne('/api/customer/orders/' + nextId).flush({
+      ...summary,
+      id: nextId,
+      number: 'MS-2',
+      customer: { name: 'Ada', email: 'ada@example.test' },
+      deliveryAddress: { addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL' },
+      lines: [],
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Bestelling MS-2');
+    params.next(convertToParamMap({ id }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Bestelling MS-2');
+    expect(fixture.nativeElement.textContent).toContain('Bestelling ophalen');
+    http.expectOne('/api/customer/orders/' + id).flush(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  });
   it('confirms and cancels an awaiting order with CSRF protection', () => {
     const params = new BehaviorSubject(convertToParamMap({ id }));
     TestBed.configureTestingModule({
