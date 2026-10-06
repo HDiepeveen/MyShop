@@ -60,6 +60,37 @@ export class Cart {
     this.save([...this.lines(), { productId, variantId, quantity: 1 }]);
     return '';
   }
+  addLines(lines: readonly CartLine[]): string {
+    if (!lines.length || lines.length > 20)
+      return 'Voeg 1 tot en met 20 verschillende varianten toe.';
+    const merged = this.lines().map((line) => ({ ...line }));
+    for (const line of lines) {
+      if (
+        !validId(line.productId) ||
+        !validId(line.variantId) ||
+        !Number.isInteger(line.quantity) ||
+        line.quantity < 1 ||
+        line.quantity > 99
+      )
+        return 'Deze bestelling bevat een artikel of aantal dat niet kan worden toegevoegd.';
+      const productId = line.productId.toLowerCase(),
+        variantId = line.variantId.toLowerCase();
+      const existing = merged.find(
+        (item) => item.productId === productId && item.variantId === variantId,
+      );
+      if (existing) {
+        if (existing.quantity + line.quantity > 99)
+          return 'Samenvoegen zou meer dan 99 stuks van een variant opleveren. Pas eerst je winkelmand aan.';
+        existing.quantity += line.quantity;
+      } else {
+        if (merged.length >= 20)
+          return 'Je kunt maximaal 20 verschillende varianten toevoegen. Pas eerst je winkelmand aan.';
+        merged.push({ productId, variantId, quantity: line.quantity });
+      }
+    }
+    this.save(merged);
+    return '';
+  }
   setQuantity(line: CartLine, quantity: number): string {
     if (!this.lines().some((item) => this.same(item, line)))
       return 'Dit artikel staat niet meer in je winkelmand.';

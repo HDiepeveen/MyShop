@@ -1,7 +1,8 @@
+import { Cart } from '../shop/cart';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   EMPTY,
   BehaviorSubject,
@@ -64,6 +65,23 @@ import {
       </section>
       <section class="panel">
         <h2>Artikelen</h2>
+        @if (item.lines.length) {
+          <p class="muted">
+            Opnieuw bestellen zet deze artikelen in je winkelmand. Je controleert daarna de actuele
+            prijzen, voorraad en bezorgoptie.
+          </p>
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="cancelling() || reordered()"
+            (click)="reorder(item)"
+          >
+            Artikelen opnieuw bestellen
+          </button>
+          @if (reordered()) {
+            <p><a routerLink="/winkel/winkelmand">Winkelmand openen</a></p>
+          }
+        }
         @for (line of item.lines; track line.productId + line.variantId) {
           <h3>{{ line.productName }} · {{ line.variantName }}</h3>
           <p>
@@ -128,6 +146,8 @@ import {
 })
 export class CustomerOrderDetail {
   private readonly api = inject(CustomerOrderApi);
+  private readonly cart = inject(Cart);
+  private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   readonly listQuery = toSignal(this.route.queryParamMap.pipe(map(readCustomerOrderQuery)));
   private readonly destroyRef = inject(DestroyRef);
@@ -137,6 +157,7 @@ export class CustomerOrderDetail {
   readonly actionFailure = signal('');
   readonly notice = signal('');
   readonly cancelling = signal(false);
+  readonly reordered = signal(false);
   readonly status = customerOrderStatus;
   paymentMethod(method: Detail['paymentMethod']) {
     return method === 'online' ? 'direct online betalen' : 'later betalen';
@@ -154,6 +175,7 @@ export class CustomerOrderDetail {
       .pipe(
         switchMap(([params]) => {
           this.order.set(null);
+          this.reordered.set(false);
           this.loading.set(true);
           this.failure.set('');
           this.actionFailure.set('');
@@ -197,6 +219,42 @@ export class CustomerOrderDetail {
     if (order.refundedAt)
       events.push({ label: 'Terugbetaling geregistreerd', at: order.refundedAt });
     return events;
+  }
+  reorder(order: Detail) {
+    if (this.order() !== order || this.loading() || this.cancelling() || this.reordered()) return;
+    if (
+      this.cart.lines().length &&
+      !window.confirm(
+        'De artikelen worden samengevoegd met je bestaande winkelmand. Wil je doorgaan?',
+      )
+    )
+      return;
+    const error = this.cart.addLines(
+      order.lines.map((line) => ({
+        productId: line.productId,
+        variantId: line.variantId,
+        quantity: line.quantity,
+      })),
+    );
+    if (error) {
+      this.actionFailure.set(error);
+      return;
+    }
+    this.actionFailure.set('');
+    this.reordered.set(true);
+    this.notice.set(
+      'De artikelen staan in je winkelmand. Controleer de actuele prijzen en voorraad voordat je bestelt.',
+    );
+    void this.router
+      .navigate(['/winkel/winkelmand'])
+      .then((opened) => {
+        if (!opened && this.order() === order)
+          this.actionFailure.set('Je winkelmand is bijgewerkt. Open de winkelmand via de link.');
+      })
+      .catch(() => {
+        if (this.order() === order)
+          this.actionFailure.set('Je winkelmand is bijgewerkt. Open de winkelmand via de link.');
+      });
   }
   cancel(order: Detail) {
     if (

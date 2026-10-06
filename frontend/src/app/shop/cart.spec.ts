@@ -151,6 +151,43 @@ describe('Cart page', () => {
       totals: [{ currency: 'EUR', amount: total }],
     };
   }
+  it.each(['current', 'unavailable'])(
+    'rechecks repeated order articles with %s server data before checkout',
+    async (result) => {
+      const historical = {
+        ...line,
+        quantity: 2,
+        unitAmount: '1.00',
+        productName: 'Old product name',
+      };
+      expect(TestBed.inject(Cart).addLines([historical])).toBe('');
+      const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+      paymentReply();
+      const pending = request();
+      expect(pending.request.params.getAll('lines')).toEqual([productId + ':' + variantId + ':2']);
+      const response = quote('20.00', 2, '40.00');
+      if (result === 'current') pending.flush(response);
+      else
+        pending.flush({
+          ...response,
+          lines: response.lines.map((line) => ({
+            ...line,
+            amount: null,
+            currency: null,
+            total: null,
+            failure: 'unavailable',
+          })),
+          totals: [],
+        });
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      const text = harness.routeNativeElement!.textContent;
+      expect(text).not.toContain('Old product name');
+      if (result === 'current') expect(text).toContain('EUR 40,00');
+      else expect(text).toContain('niet meer beschikbaar');
+      http.expectNone((request) => request.method === 'POST');
+    },
+  );
   it('opens an empty public cart and loads the available payment methods', async () => {
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
     paymentReply();

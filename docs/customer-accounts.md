@@ -53,3 +53,11 @@ Klanten kunnen zoeken op een deel van het bestelnummer (maximaal 200 tekens na t
 De klant-API accepteert aanvullend search en status met de codes awaitingPayment, paid, shipped, cancelled en refunded. Onbekende codes of een te lange zoekterm geven 400. Filteren gebeurt vóór tellen en pagineren, met behoud van de accountcontrole. Gastbestellingen of bestellingen van andere accounts worden ook bij een exact bestelnummer nooit getoond. De bestaande snapshotgegevens en sortering op nieuwste bestelling blijven behouden.
 
 Bestellingslinks bewaren zoekterm, status en pagina als queryparameters. De teruglink vanuit een bestelling herstelt die keuzes in Mijn bestellingen. Er is geen migratie of nieuwe opslag.
+
+## Artikelen opnieuw bestellen
+
+Op een eigen bestellingsdetail kan de klant de historische artikelen en aantallen opnieuw in de winkelmand zetten. Er wordt nog geen nieuwe bestelling geplaatst. De winkelmand haalt actuele prijzen, namen en voorraad op; historische bedragen, betaalwijze, bezorgkosten en adres worden niet gekopieerd. Een verdwenen of ingetrokken variant verschijnt als niet beschikbaar en kan uit de winkelmand worden verwijderd.
+
+Een bestaande winkelmand wordt na expliciete bevestiging samengevoegd. Gelijke product/variant-combinaties krijgen opgetelde aantallen. De limieten van twintig varianten en 99 stuks per variant blijven gelden. Bij ongeldige regels of overschrijding verandert geen enkel deel van de winkelmand. Dubbel klikken op dezelfde geopende bestelling voegt niet nogmaals toe.
+
+Na toevoegen opent de winkelmand. Als navigatie niet lukt, toont de detailpagina een link om die alsnog te openen; de artikelen worden daardoor niet opnieuw toegevoegd. Browseropslag bewaart uitsluitend identifiers en aantallen. Als bewaren niet lukt, blijft de winkelmand in de huidige sessie werken met de bestaande opslagmelding.
