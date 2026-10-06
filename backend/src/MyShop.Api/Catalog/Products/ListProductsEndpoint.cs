@@ -1,3 +1,4 @@
+using MyShop.Application.Catalog.Abstractions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Catalog.ListProducts;
@@ -27,6 +28,7 @@ public static class ListProductsEndpoint
         [FromQuery] Guid? categoryId,
         [FromQuery] string? search,
         [FromQuery] bool? published,
+        [FromQuery] string? stock,
         [FromServices] UseCase useCase,
         CancellationToken cancellationToken)
     {
@@ -37,13 +39,16 @@ public static class ListProductsEndpoint
 
         try
         {
+            ProductStockFilter? stockFilter = stock switch { null or "" => null,
+                "low" => ProductStockFilter.Low, "out" => ProductStockFilter.OutOfStock,
+                "untracked" => ProductStockFilter.Untracked, _ => throw new ArgumentException("Unknown stock filter.", nameof(stock)) };
             var page = await useCase.ExecuteAsync(
                 new ListProductsQuery(
                     effectiveOffset,
                     effectiveLimit,
                     productTypeId is null ? null : ProductTypeId.From(productTypeId.Value),
                     categoryId is null ? null : CategoryId.From(categoryId.Value),
-                    search, published),
+                    search, published, stockFilter),
                 cancellationToken);
             var items = page.Items.Select(item => new ProductSummaryResponse(
                 item.Id,

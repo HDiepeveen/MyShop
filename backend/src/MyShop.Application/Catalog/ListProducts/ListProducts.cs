@@ -33,12 +33,13 @@ public sealed class ListProducts
         if (query.SearchTerm is not null && string.IsNullOrWhiteSpace(query.SearchTerm))
             throw new ArgumentException("Search term must not be empty or whitespace.", nameof(query.SearchTerm));
 
+        if (query.Stock is { } stock && !Enum.IsDefined(stock)) throw new ArgumentOutOfRangeException(nameof(query.Stock));
         return await _products.ListAsync(
             query.Offset,
             query.Limit,
             query.ProductTypeId,
             query.CategoryId,
             query.SearchTerm?.Trim(),
-            cancellationToken, query.IsPublished);
+            cancellationToken, query.IsPublished, query.Stock);
     }
 }

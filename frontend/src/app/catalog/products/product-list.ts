@@ -58,6 +58,23 @@ import { readProductListQuery } from './product-list-query';
           <option value="draft">Concept</option>
         </select></label
       >
+      <label
+        >Voorraad<select
+          name="stock"
+          [ngModel]="listQuery().stock ?? 'all'"
+          (ngModelChange)="filterStock($event)"
+        >
+          <option value="all">Alle voorraadstanden</option>
+          <option value="low">Lage voorraad (0–5)</option>
+          <option value="out">Met uitverkochte variant</option>
+          <option value="untracked">Voorraad niet gevolgd</option>
+        </select></label
+      >
+      @if (listQuery().stock) {
+        <p class="muted">
+          Een product verschijnt zodra minstens één variant aan het voorraadfilter voldoet.
+        </p>
+      }
       <form class="toolbar" (ngSubmit)="search()">
         <label
           >Zoek op productnaam<input
@@ -204,7 +221,8 @@ export class ProductList {
           a.productTypeId === b.productTypeId &&
           a.search === b.search &&
           a.offset === b.offset &&
-          a.published === b.published,
+          a.published === b.published &&
+          a.stock === b.stock,
       ),
       switchMap((query) => {
         if (query.search !== this.listQuery().search) this.searchText = query.search;
@@ -220,6 +238,14 @@ export class ProductList {
   readonly skuBusy = signal(false);
   readonly skuError = signal('');
   skuText = '';
+  filterStock(value: string) {
+    if (!['all', 'low', 'out', 'untracked'].includes(value)) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { stock: value === 'all' ? null : value, offset: null },
+      queryParamsHandling: 'merge',
+    });
+  }
   filterPublication(value: string) {
     if (!['all', 'published', 'draft'].includes(value)) return;
     void this.router.navigate([], {

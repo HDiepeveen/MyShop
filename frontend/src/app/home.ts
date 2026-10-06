@@ -43,6 +43,7 @@ import { loadState } from './catalog/load-state';
           @empty { <p>Nog geen betaalde omzet.</p> }
         </section>
         <section class="panel"><h2>Lage voorraad</h2><p class="muted">Gepubliceerde varianten met maximaal vijf stuks.</p>
+          <p><a routerLink="/producten" [queryParams]="{ published: true, stock: 'low' }">Alle producten met lage voorraad</a></p>
           @for (item of data.lowStock; track item.variantId) {
             <p><a [routerLink]="['/producten', item.productId]">{{ item.productName }} · {{ item.variantName }}</a><br />
             <strong>{{ item.quantity }} op voorraad</strong>@if (item.sku) { <span class="muted"> · {{ item.sku }}</span> }</p>

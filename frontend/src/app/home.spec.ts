@@ -31,27 +31,43 @@ describe('Home', () => {
         { status: 'shipped', count: 5 },
       ],
       activeRevenue: [{ currency: 'EUR', amount: '42.50' }],
-      lowStock: [{
-        productId: 'product-1',
-        variantId: 'variant-1',
-        productName: 'Linnen shirt',
-        variantName: 'Blauw',
-        sku: 'SKU-1',
-        quantity: 2,
-      }],
-      recentOrders: [{
-        id: 'order-1',
-        number: 'MS-ORDER',
-        placedAt: '2026-10-01T10:30:00Z',
-        customerName: 'Ada Lovelace',
-        status: 'paid',
-        totals: [{ currency: 'EUR', amount: '42.50' }],
-      }],
+      lowStock: [
+        {
+          productId: 'product-1',
+          variantId: 'variant-1',
+          productName: 'Linnen shirt',
+          variantName: 'Blauw',
+          sku: 'SKU-1',
+          quantity: 2,
+        },
+      ],
+      recentOrders: [
+        {
+          id: 'order-1',
+          number: 'MS-ORDER',
+          placedAt: '2026-10-01T10:30:00Z',
+          customerName: 'Ada Lovelace',
+          status: 'paid',
+          totals: [{ currency: 'EUR', amount: '42.50' }],
+        },
+      ],
     });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('a[href="/producten?published=true"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('a[href="/producten?published=false"]')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('a[href="/producten?published=true"]'),
+    ).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('a[href="/producten?published=false"]'),
+    ).not.toBeNull();
+
+    const lowStockLink = (
+      Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[]
+    ).find((link) => link.textContent?.includes('Alle producten met lage voorraad'))!;
+    const lowStockUrl = new URL(lowStockLink.getAttribute('href')!, 'http://localhost');
+    expect(lowStockUrl.pathname).toBe('/producten');
+    expect(lowStockUrl.searchParams.get('published')).toBe('true');
+    expect(lowStockUrl.searchParams.get('stock')).toBe('low');
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('8 producten');
     expect(text).toContain('6 gepubliceerd · 2 concept');

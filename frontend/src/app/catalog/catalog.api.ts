@@ -23,12 +23,14 @@ export class CatalogApi {
       categoryId?: string | null;
       productTypeId?: string | null;
       published?: boolean;
+      stock?: 'low' | 'out' | 'untracked';
     } = {},
   ) {
     let params = this.paging(offset, search);
     if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.productTypeId) params = params.set('productTypeId', filters.productTypeId);
     if (filters.published !== undefined) params = params.set('published', filters.published);
+    if (filters.stock) params = params.set('stock', filters.stock);
     return this.http.get<ProductPage>('/api/products', { params });
   }
   setPresentation(

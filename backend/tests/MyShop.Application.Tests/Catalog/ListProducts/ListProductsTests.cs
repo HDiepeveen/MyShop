@@ -140,12 +140,23 @@ public sealed class ListProductsTests
         await new UseCase(repository).ExecuteAsync(new(20, 10, SearchTerm: " shirt ", IsPublished: published), default);
         Assert.Equal(published, repository.IsPublished); Assert.Equal("shirt", repository.SearchTerm); Assert.Equal(20, repository.Offset);
     }
+    [Theory]
+    [InlineData(ProductStockFilter.Low)]
+    [InlineData(ProductStockFilter.OutOfStock)]
+    [InlineData(ProductStockFilter.Untracked)]
+    public async Task ForwardsStockFilterAndRejectsUnknownValues(ProductStockFilter stock)
+    {
+        var repository = new ProductListRepositoryFake(); var useCase = new UseCase(repository);
+        await useCase.ExecuteAsync(new(0, 20, IsPublished: true, Stock: stock), default); Assert.Equal(stock, repository.Stock); Assert.True(repository.IsPublished);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => useCase.ExecuteAsync(new(0, 20, Stock: (ProductStockFilter)99), default)); Assert.Equal(1, repository.ListCalls);
+    }
     [Fact]
     public void Constructor_RejectsNullRepository() =>
         Assert.Throws<ArgumentNullException>(() => new UseCase(null!));
 
     private sealed class ProductListRepositoryFake : IProductListRepository
     {
+        public ProductStockFilter? Stock;
         public bool? IsPublished { get; private set; }
         public ProductListPage Page { get; set; } = new([], 0);
         public Exception? Exception { get; set; }
@@ -163,9 +174,9 @@ public sealed class ListProductsTests
             ProductTypeId? productTypeId,
             CategoryId? categoryId,
             string? searchTerm,
-            CancellationToken cancellationToken, bool? isPublished = null)
+            CancellationToken cancellationToken, bool? isPublished = null, ProductStockFilter? stock = null)
         {
-            IsPublished = isPublished;
+            Stock = stock; IsPublished = isPublished;
             ListCalls++;
             Offset = offset;
             Limit = limit;

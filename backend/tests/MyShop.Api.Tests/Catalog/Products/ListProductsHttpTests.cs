@@ -11,6 +11,15 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class ListProductsHttpTests
 {
     [Theory]
+    [InlineData("low", ProductStockFilter.Low)]
+    [InlineData("out", ProductStockFilter.OutOfStock)]
+    [InlineData("untracked", ProductStockFilter.Untracked)]
+    public async Task BoundEndpointCombinesStockAndPublication(string stock, ProductStockFilter expected)
+    {
+        var repository = new RepositoryFake(); await using var app = CreateApp(repository);
+        var response = await CatalogListHttp.Execute(app, "?published=true&stock=" + stock, default); Assert.Equal(200, response.Response.StatusCode); Assert.Equal(expected, repository.Stock); Assert.True(repository.Published);
+    }
+    [Theory]
     [InlineData("", null)]
     [InlineData("?published=true", true)]
     [InlineData("?published=false", false)]
@@ -48,6 +57,8 @@ public sealed class ListProductsHttpTests
     }
 
     [Theory]
+    [InlineData("?stock=invalid")]
+    [InlineData("?stock=1")]
     [InlineData("?published=invalid")]
     [InlineData("?published=1")]
     [InlineData("?offset=-1")]
@@ -108,6 +119,7 @@ public sealed class ListProductsHttpTests
     private sealed class RepositoryFake : IProductListRepository
     {
         public ProductListItem Item { get; } = new(Guid.NewGuid(), Guid.NewGuid(), "Product", 3);
+        public ProductStockFilter? Stock;
         public bool? Published;
         public bool Empty { get; init; }
         public int Calls { get; private set; }
@@ -118,10 +130,10 @@ public sealed class ListProductsHttpTests
         public CategoryId? Category { get; private set; }
         public CancellationToken Cancellation { get; private set; }
         public Task<ProductListPage> ListAsync(int offset, int limit, ProductTypeId? productTypeId,
-            CategoryId? categoryId, string? searchTerm, CancellationToken cancellationToken, bool? isPublished = null)
+            CategoryId? categoryId, string? searchTerm, CancellationToken cancellationToken, bool? isPublished = null, ProductStockFilter? stock = null)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            Published = isPublished;
+            Stock = stock; Published = isPublished;
             Calls++;
             Offset = offset;
             Limit = limit;

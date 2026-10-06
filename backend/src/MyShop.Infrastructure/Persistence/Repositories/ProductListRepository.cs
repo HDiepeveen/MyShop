@@ -19,10 +19,10 @@ internal sealed class ProductListRepository
         ProductTypeId? productTypeId,
         CategoryId? categoryId,
         string? searchTerm,
-        CancellationToken cancellationToken, bool? isPublished = null)
+        CancellationToken cancellationToken, bool? isPublished = null, ProductStockFilter? stock = null)
     {
         var products = FilterQuery(
-            _dbContext.Products.AsNoTracking(), productTypeId, categoryId, searchTerm, isPublished);
+            _dbContext.Products.AsNoTracking(), productTypeId, categoryId, searchTerm, isPublished, stock);
         var totalCount = await products.CountAsync(cancellationToken);
         var items = await ItemsQuery(products, offset, limit).ToListAsync(cancellationToken);
         return new ProductListPage(items, totalCount);
@@ -49,8 +49,11 @@ internal sealed class ProductListRepository
         IQueryable<ProductPersistence> products,
         ProductTypeId? productTypeId,
         CategoryId? categoryId,
-        string? searchTerm, bool? isPublished = null)
+        string? searchTerm, bool? isPublished = null, ProductStockFilter? stock = null)
     {
+        if (stock == ProductStockFilter.Low) products = products.Where(product => product.Variants.Any(variant => variant.StockQuantity >= 0 && variant.StockQuantity <= 5));
+        else if (stock == ProductStockFilter.OutOfStock) products = products.Where(product => product.Variants.Any(variant => variant.StockQuantity == 0));
+        else if (stock == ProductStockFilter.Untracked) products = products.Where(product => product.Variants.Any(variant => variant.StockQuantity == null));
         if (isPublished is not null) products = products.Where(product => product.IsPublished == isPublished.Value);
         if (productTypeId is not null)
             products = products.Where(product => product.ProductTypeId == productTypeId.Value.Value);
