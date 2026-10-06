@@ -53,3 +53,9 @@ Bezoekers kunnen Naam: A–Z, Naam: Z–A en Alleen op voorraad kiezen. Het voor
 De productlijst accepteert aanvullend sort=nameAsc|nameDesc en availableOnly=true|false. Onbekende sorteerwaarden en ongeldige booleans geven 400. Sorteren en voorraadfilteren gebeuren in SQL vóór tellen en pagineren en combineren met zoekterm en directe categorie. Er is geen migratie of nieuwe opslag.
 
 Wijzigen van sortering of voorraadfilter gaat naar pagina één. Zoekterm, categorie, sortering en voorraadfilter blijven behouden tijdens bladeren en via productlinks en de teruglink. Categorielinks op de productpagina behouden overige keuzes en gaan naar pagina één. De URL bewaart de keuzes voor herladen en delen. Standaardkeuzes voegen geen extra URL-parameters toe.
+
+## Winkelmand leegmaken en verwijderen herstellen
+
+Winkelmand leegmaken vraagt eerst bevestiging. Verwijdering ongedaan maken herstelt de laatst verwijderde regel of de hele leeggemaakte winkelmand met de oorspronkelijke aantallen. Een nieuwere verwijderactie vervangt de vorige herstelmogelijkheid. Herstel geldt alleen zolang deze winkelmandpagina geopend blijft en alleen voor artikelen en aantallen. Actuele prijzen en voorraad worden opnieuw opgehaald; bezorg- en checkoutgegevens worden niet als historische snapshot teruggezet.
+
+Andere winkelmandwijzigingen worden bij herstel behouden. Als samenvoegen de limieten van twintig varianten of 99 stuks overschrijdt, verandert niets en blijft herstel beschikbaar na aanpassen van de winkelmand. Na een geplaatste bestelling vervalt de herstelmogelijkheid. Tijdens plaatsen, voorbereiden of afronden van een betaling zijn winkelmandbewerkingen, verversen en betaal- en bezorgkeuzes vergrendeld, zodat de ingezonden winkelmand niet ondertussen kan worden gewijzigd. Er is geen nieuwe serveropslag of migratie.

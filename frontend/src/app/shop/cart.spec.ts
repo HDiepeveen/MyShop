@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { ShopCheckout } from '../checkout/shop-checkout';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -188,6 +190,53 @@ describe('Cart page', () => {
       http.expectNone((request) => request.method === 'POST');
     },
   );
+  it('locks cart controls during the actual checkout request and restores them after failure', async () => {
+    TestBed.inject(Cart).add(productId, variantId);
+    const harness = await RouterTestingHarness.create('/winkel/winkelmand');
+    paymentReply();
+    http
+      .expectOne('/api/shop/delivery-methods')
+      .flush([
+        {
+          id: '40000000-0000-0000-0000-000000000001',
+          name: 'Post',
+          amount: '0.00',
+          currency: 'EUR',
+          description: null,
+        },
+      ]);
+    request().flush(quote());
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+    const page = harness.routeDebugElement!.componentInstance as ShopCart;
+    const checkout = harness.routeDebugElement!.query(By.directive(ShopCheckout))
+      .componentInstance as ShopCheckout;
+    checkout.customerName = 'Ada';
+    checkout.email = 'ada@example.test';
+    checkout.addressLine = 'Street 1';
+    checkout.postalCode = '1234 AB';
+    checkout.city = 'Utrecht';
+    checkout.submit();
+    expect(page.checkoutBusy()).toBe(true);
+    const before = TestBed.inject(Cart).lines();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    page.clearCart();
+    page.remove(line);
+    page.update(line, '4');
+    page.undoRemoval();
+    page.refresh();
+    expect(TestBed.inject(Cart).lines()).toBe(before);
+    expect(confirm).not.toHaveBeenCalled();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const order = http.expectOne('/api/shop/orders');
+    expect(order.request.body.lines[0].quantity).toBe(1);
+    order.flush({ message: 'Retry checkout' }, { status: 409, statusText: 'Conflict' });
+    expect(page.checkoutBusy()).toBe(false);
+    page.remove(line);
+    await harness.fixture.whenStable();
+    expect(TestBed.inject(Cart).lines()).toEqual([]);
+    expect(page.undoItems()).toEqual([line]);
+  });
   it('opens an empty public cart and loads the available payment methods', async () => {
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
     paymentReply();

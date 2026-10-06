@@ -112,6 +112,25 @@ describe('Checkout validation', () => {
     page.completeOnlinePayment(payment);
     expect(api.completeOnlinePayment).toHaveBeenCalledExactlyOnceWith('t', 'provider');
   });
+  it('announces checkout activity synchronously and releases it after failure or success', () => {
+    const { page, api } = setup();
+    const events: boolean[] = [];
+    page.busyChanged.subscribe((value) => events.push(value));
+    const first = new Subject();
+    api.place.mockReturnValue(first);
+    page.submit();
+    expect(events).toEqual([true]);
+    first.error(new Error('Offline'));
+    expect(events).toEqual([true, false]);
+    const second = new Subject();
+    api.place.mockReturnValue(second);
+    page.submit();
+    second.next({ id: 'o', number: 'MS-1', totals: [] });
+    expect(events).toEqual([true, false, true, false]);
+    page.city = '';
+    page.submit();
+    expect(events).toEqual([true, false, true, false]);
+  });
   it('locks checkout fields while placing an order and restores them after failure', async () => {
     const { fixture, page, api } = setup();
     const operation = new Subject();

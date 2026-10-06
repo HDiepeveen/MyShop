@@ -25,6 +25,14 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
     @if (error()) {
       <p role="alert">{{ error() }}</p>
     }
+    @if (notice()) {
+      <p role="status">{{ notice() }}</p>
+    }
+    @if (undoItems().length && !orderReceipt()) {
+      <button type="button" class="secondary" [disabled]="checkoutBusy()" (click)="undoRemoval()">
+        Verwijdering ongedaan maken
+      </button>
+    }
     @if (orderReceipt(); as receipt) {
       <section class="panel" role="status">
         <h2>Bedankt voor je bestelling</h2>
@@ -64,6 +72,9 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
     } @else if (!cart.lines().length) {
       <p>Je winkelmand is leeg.</p>
     } @else {
+      <button type="button" class="secondary" [disabled]="checkoutBusy()" (click)="clearCart()">
+        Winkelmand leegmaken
+      </button>
       @if (state()?.loading) {
         <p role="status">Producten en prijzen controleren…</p>
       }
@@ -93,6 +104,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
             <label
               >Aantal<input
                 #quantity
+                [disabled]="checkoutBusy()"
                 type="number"
                 min="1"
                 max="99"
@@ -100,8 +112,15 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
                 required
                 [value]="line.quantity"
             /></label>
-            <button type="submit">Aantal bijwerken</button>
-            <button type="button" class="secondary" (click)="remove(line)">Verwijderen</button>
+            <button type="submit" [disabled]="checkoutBusy()">Aantal bijwerken</button>
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="checkoutBusy()"
+              (click)="remove(line)"
+            >
+              Verwijderen
+            </button>
           </form>
         </section>
       }
@@ -113,12 +132,25 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
         }
         <section class="panel">
           <h2>Hoe wil je je bestelling ontvangen?</h2>
-          @if (deliveryMethods()?.loading) { <p role="status">Bezorgopties ophalen…</p> }
-          @if (deliveryMethods()?.error) { <p role="alert">Bezorgopties konden niet worden opgehaald.</p><button type="button" (click)="retryDelivery()">Bezorgopties opnieuw proberen</button> }
+          @if (deliveryMethods()?.loading) {
+            <p role="status">Bezorgopties ophalen…</p>
+          }
+          @if (deliveryMethods()?.error) {
+            <p role="alert">Bezorgopties konden niet worden opgehaald.</p>
+            <button type="button" (click)="retryDelivery()">Bezorgopties opnieuw proberen</button>
+          }
           @for (method of deliveryMethods()?.data ?? []; track method.id) {
-            <label><input type="radio" name="delivery" [value]="method.id"
-              [ngModel]="selectedDelivery()" (ngModelChange)="selectedDelivery.set($event)" />
-              {{ method.name }} · {{ method.currency }} {{ amount(method.amount) }}</label>
+            <label
+              ><input
+                type="radio"
+                name="delivery"
+                [value]="method.id"
+                [disabled]="checkoutBusy()"
+                [ngModel]="selectedDelivery()"
+                (ngModelChange)="!checkoutBusy() && selectedDelivery.set($event)"
+              />
+              {{ method.name }} · {{ method.currency }} {{ amount(method.amount) }}</label
+            >
             @if (method.id === selectedDelivery() && method.description) {
               <p class="muted preserve-lines">{{ method.description }}</p>
             }
@@ -141,9 +173,10 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
               ><input
                 type="radio"
                 name="payment"
+                [disabled]="checkoutBusy()"
                 [value]="option.code"
                 [ngModel]="selectedPayment()"
-                (ngModelChange)="selectedPayment.set($event)"
+                (ngModelChange)="!checkoutBusy() && selectedPayment.set($event)"
               />
               {{ option.name }}</label
             >
@@ -161,6 +194,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
             [paymentMethod]="selectedPayment()"
             [deliveryMethodId]="selectedDelivery()"
             (placed)="orderPlaced($event)"
+            (busyChanged)="checkoutBusy.set($event)"
           />
         }
       } @else if (state()?.data) {
@@ -169,7 +203,12 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
       @if (quote()?.at; as at) {
         <p class="muted">Gecontroleerd op {{ at | date: 'dd-MM-yyyy HH:mm:ss' }}.</p>
       }
-      <button type="button" class="secondary" [disabled]="state()?.loading" (click)="refresh()">
+      <button
+        type="button"
+        class="secondary"
+        [disabled]="state()?.loading || checkoutBusy()"
+        (click)="refresh()"
+      >
         Winkelmand vernieuwen
       </button>
       <p class="muted">Er wordt nog geen voorraad gereserveerd.</p>
@@ -186,11 +225,18 @@ export class ShopCart {
   private readonly paymentRefresh = new BehaviorSubject(0);
   private readonly deliveryRefresh = new BehaviorSubject(0);
   readonly error = signal('');
+  readonly notice = signal('');
+  readonly undoItems = signal<readonly CartLine[]>([]);
+  readonly checkoutBusy = signal(false);
   readonly selectedPayment = signal('');
   readonly selectedDelivery = signal('');
   readonly orderReceipt = signal<OrderReceipt | null>(null);
-  readonly paymentOptions = toSignal(this.paymentRefresh.pipe(switchMap(() => loadState(this.paymentApi.publicOptions()))));
-  readonly deliveryMethods = toSignal(this.deliveryRefresh.pipe(switchMap(() => loadState(this.deliveryApi.publicMethods()))));
+  readonly paymentOptions = toSignal(
+    this.paymentRefresh.pipe(switchMap(() => loadState(this.paymentApi.publicOptions()))),
+  );
+  readonly deliveryMethods = toSignal(
+    this.deliveryRefresh.pipe(switchMap(() => loadState(this.deliveryApi.publicMethods()))),
+  );
   readonly state = toSignal(
     combineLatest([toObservable(this.cart.lines), this.reload]).pipe(
       switchMap(([lines]) => {
@@ -254,25 +300,60 @@ export class ShopCart {
     return value?.replace('.', ',') ?? '';
   }
   update(line: CartLine, value: string) {
+    if (this.checkoutBusy()) return;
     this.error.set(this.cart.setQuantity(line, value.trim() ? Number(value) : NaN));
   }
   remove(line: CartLine) {
+    if (this.checkoutBusy()) return;
+    const current = this.cart
+      .lines()
+      .find((item) => item.productId === line.productId && item.variantId === line.variantId);
+    if (!current) return;
     this.error.set('');
-    this.cart.remove(line);
+    this.undoItems.set([{ ...current }]);
+    this.cart.remove(current);
+    this.notice.set('Artikel verwijderd.');
+  }
+  clearCart() {
+    if (
+      this.checkoutBusy() ||
+      this.orderReceipt() ||
+      !this.cart.lines().length ||
+      !window.confirm('Wil je de hele winkelmand leegmaken?')
+    )
+      return;
+    this.undoItems.set(this.cart.lines().map((line) => ({ ...line })));
+    this.cart.clear();
+    this.error.set('');
+    this.notice.set('De winkelmand is leeggemaakt.');
+  }
+  undoRemoval() {
+    if (this.checkoutBusy() || this.orderReceipt() || !this.undoItems().length) return;
+    const error = this.cart.addLines(this.undoItems());
+    this.error.set(error);
+    if (error) return;
+    this.undoItems.set([]);
+    this.notice.set(
+      'De verwijderde artikelen zijn teruggezet. Prijzen en voorraad worden opnieuw gecontroleerd.',
+    );
   }
   refresh() {
-    if (this.state()?.loading) return;
+    if (this.checkoutBusy() || this.state()?.loading) return;
     this.reload.next(this.reload.value + 1);
   }
   retryPayment() {
-    if (this.paymentOptions()?.loading) return;
+    if (this.checkoutBusy() || this.paymentOptions()?.loading) return;
     this.paymentRefresh.next(this.paymentRefresh.value + 1);
   }
   retryDelivery() {
-    if (this.deliveryMethods()?.loading) return;
+    if (this.checkoutBusy() || this.deliveryMethods()?.loading) return;
     this.deliveryRefresh.next(this.deliveryRefresh.value + 1);
   }
   orderPlaced(receipt: OrderReceipt) {
+    this.undoItems.set([]);
+    this.checkoutBusy.set(false);
+    this.notice.set('');
+    this.error.set('');
     this.orderReceipt.set(receipt);
     this.cart.clear();
   }

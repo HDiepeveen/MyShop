@@ -114,6 +114,7 @@ export class ShopCheckout implements OnInit {
   readonly paymentMethod = input.required<string>();
   readonly deliveryMethodId = input.required<string>();
   readonly placed = output<OrderReceipt>();
+  readonly busyChanged = output<boolean>();
   readonly busy = signal(false);
   readonly failure = signal('');
   readonly notice = signal('');
@@ -200,6 +201,7 @@ export class ShopCheckout implements OnInit {
     this.notice.set('');
     this.onlinePayment.set(null);
     this.busy.set(true);
+    this.busyChanged.emit(true);
     const request = {
       checkoutToken: this.checkoutToken,
       paymentMethod: this.paymentMethod(),
@@ -229,6 +231,7 @@ export class ShopCheckout implements OnInit {
         .subscribe({
           next: (payment) => {
             this.busy.set(false);
+            this.busyChanged.emit(false);
             this.notice.set(payment.message);
             this.onlinePayment.set(payment);
           },
@@ -242,6 +245,7 @@ export class ShopCheckout implements OnInit {
       .subscribe({
         next: (receipt) => {
           this.busy.set(false);
+          this.busyChanged.emit(false);
           this.placed.emit(receipt);
         },
         error: (error) => this.showFailure(error),
@@ -253,12 +257,14 @@ export class ShopCheckout implements OnInit {
     this.failure.set('');
     this.notice.set('');
     this.busy.set(true);
+    this.busyChanged.emit(true);
     this.api
       .completeOnlinePayment(payment.checkoutToken, payment.providerPaymentId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (receipt) => {
           this.busy.set(false);
+          this.busyChanged.emit(false);
           this.placed.emit(receipt);
         },
         error: (error) => this.showFailure(error),
@@ -267,6 +273,7 @@ export class ShopCheckout implements OnInit {
 
   private showFailure(error: unknown) {
     this.busy.set(false);
+    this.busyChanged.emit(false);
     this.failure.set(
       error instanceof HttpErrorResponse && typeof error.error?.message === 'string'
         ? error.error.message
