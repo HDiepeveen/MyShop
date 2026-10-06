@@ -70,6 +70,18 @@ describe('Ordering previous articles again', () => {
       params,
     };
   }
+  it('offers customer copy controls only for the order number and available tracking code', () => {
+    const { fixture, page } = setup();
+    page.order.set({ ...order, trackingCode: '3S-CURRENT' });
+    fixture.detectChanges();
+    const controls = fixture.nativeElement.querySelectorAll('app-copy-text');
+    expect(controls).toHaveLength(2);
+    expect(controls[0].textContent).toContain('Bestelnummer');
+    expect(controls[1].textContent).toContain('Trackingcode');
+    page.order.set(order);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('app-copy-text')).toHaveLength(1);
+  });
   it('prints the current snapshot only after loading and outside cancellation', () => {
     const { fixture, page } = setup();
     const print = vi.spyOn(window, 'print').mockImplementation(() => {});

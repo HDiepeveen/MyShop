@@ -90,6 +90,28 @@ describe('Order management recovery', () => {
     return { fixture, params, response, action, api, current };
   }
 
+  it('offers copy controls for the stored administrator references', () => {
+    const { fixture, current, response } = setup();
+    response.next({
+      ...current,
+      status: 'refunded',
+      paidAt: current.placedAt,
+      paymentReference: 'BANK-1',
+      shippedAt: current.placedAt,
+      trackingCode: '3S-1',
+      refundedAt: current.placedAt,
+      refundReference: 'REFUND-1',
+    });
+    fixture.detectChanges();
+    const controls = Array.from(
+      fixture.nativeElement.querySelectorAll('app-copy-text'),
+    ) as HTMLElement[];
+    expect(controls).toHaveLength(4);
+    expect(controls.map((control) => control.textContent).join(' ')).toContain(
+      'Terugbetalingskenmerk',
+    );
+    expect(controls.every((control) => control.classList.contains('print-hide'))).toBe(true);
+  });
   it('prints the loaded admin order and blocks stale snapshots or pending writes', () => {
     const { fixture, current } = setup();
     const print = vi.spyOn(window, 'print').mockImplementation(() => {});

@@ -1,3 +1,4 @@
+import { CopyText } from '../copy-text';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -8,7 +9,7 @@ import { errorMessage } from '../catalog/error-message';
 import { OrderDetail, OrderManagementApi } from './order-management.api';
 
 @Component({
-  imports: [RouterLink, DatePipe, CurrencyPipe],
+  imports: [RouterLink, DatePipe, CurrencyPipe, CopyText],
   host: { class: 'printable-order' },
   template: ` <p class="print-only">MyShop · Besteloverzicht</p>
     <a class="back print-hide" routerLink="/bestellingen" queryParamsHandling="preserve"
@@ -36,6 +37,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
       <div class="page-head">
         <div>
           <h1>{{ order.number }}</h1>
+          <app-copy-text [text]="order.number" label="Bestelnummer kopiëren" />
           <p class="muted">Geplaatst op {{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }}</p>
         </div>
         <span class="badge">{{ statusLabel(order.status) }}</span>
@@ -129,7 +131,10 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dd>{{ order.paidAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
             @if (order.paymentReference) {
               <dt>Betalingskenmerk</dt>
-              <dd>{{ order.paymentReference }}</dd>
+              <dd>
+                {{ order.paymentReference }}
+                <app-copy-text [text]="order.paymentReference" label="Betalingskenmerk kopiëren" />
+              </dd>
             }
           }
           @if (order.shippedAt) {
@@ -141,7 +146,10 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             }
             @if (order.trackingCode) {
               <dt>Trackingcode</dt>
-              <dd>{{ order.trackingCode }}</dd>
+              <dd>
+                {{ order.trackingCode }}
+                <app-copy-text [text]="order.trackingCode" label="Trackingcode kopiëren" />
+              </dd>
             }
           }
           @if (order.cancelledAt) {
@@ -154,7 +162,15 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dt>Terugbetaald op</dt>
             <dd>{{ order.refundedAt | date: 'dd-MM-yyyy HH:mm' }}</dd>
             <dt>Terugbetalingskenmerk</dt>
-            <dd>{{ order.refundReference }}</dd>
+            <dd>
+              {{ order.refundReference }}
+              @if (order.refundReference) {
+                <app-copy-text
+                  [text]="order.refundReference"
+                  label="Terugbetalingskenmerk kopiëren"
+                />
+              }
+            </dd>
             <dt>Reden</dt>
             <dd class="preserve-lines">{{ order.refundReason }}</dd>
           }

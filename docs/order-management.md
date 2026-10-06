@@ -29,3 +29,7 @@ A paid order that has not been shipped can be marked as refunded after the full 
 ## Afdrukken
 
 Het beveiligde bestellingsdetail biedt Besteloverzicht afdrukken / PDF. De browser verzorgt afdrukken of opslaan als PDF op basis van de opgeslagen bestelgegevens. Navigatie, bewerkingssecties en tijdelijke actiemeldingen worden verborgen in de afdruk. Tijdens opslaan is afdrukken geblokkeerd. Er worden geen prijzen herberekend of bestelgegevens gewijzigd. De functie maakt een besteloverzicht, geen fiscale factuur.
+
+## Kenmerken kopiëren
+
+Bestelnummers en aanwezige trackingcodes kunnen via een knop worden gekopieerd. Het beheer biedt daarnaast kopiëren voor aanwezige betalings- en terugbetalingskenmerken. De originele tekst blijft zichtbaar. De browser vraagt zo nodig om toegang tot het klembord. Bij ontbrekende toegang verschijnt een melding om de tekst handmatig te selecteren en kopiëren. Tijdens een lopende kopieeractie wordt dubbel klikken geblokkeerd. Kopieerknoppen en feedback worden niet afgedrukt; er zijn geen serverwijzigingen.

@@ -65,3 +65,7 @@ Na toevoegen opent de winkelmand. Als navigatie niet lukt, toont de detailpagina
 ## Besteloverzicht afdrukken
 
 Een geladen bestelling kan worden afgedrukt met Besteloverzicht afdrukken / PDF. De browser biedt afdrukken of opslaan als PDF. Het overzicht gebruikt de bestaande bestelsnapshot met bestelnummer, datum, artikelen, bedragen per valuta, klantgegevens, bezorging en beschikbare statusmomenten. Navigatie, actieknoppen en tijdelijke actiemeldingen worden bij afdrukken verborgen. Afdrukken is geblokkeerd tijdens annuleren en doet geen serverwijzigingen. Dit is een besteloverzicht; er wordt geen factuurnummer of btw-berekening toegevoegd.
+
+## Kenmerken kopiëren
+
+Bestelnummers en aanwezige trackingcodes kunnen via een knop worden gekopieerd. Het beheer biedt daarnaast kopiëren voor aanwezige betalings- en terugbetalingskenmerken. De originele tekst blijft zichtbaar. De browser vraagt zo nodig om toegang tot het klembord. Bij ontbrekende toegang verschijnt een melding om de tekst handmatig te selecteren en kopiëren. Tijdens een lopende kopieeractie wordt dubbel klikken geblokkeerd. Kopieerknoppen en feedback worden niet afgedrukt; er zijn geen serverwijzigingen.

@@ -1,3 +1,4 @@
+import { CopyText } from '../copy-text';
 import { Cart } from '../shop/cart';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
@@ -21,7 +22,7 @@ import {
 } from './customer-order.api';
 
 @Component({
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, CopyText],
   host: { class: 'printable-order' },
   template: `<p class="print-only">MyShop · Besteloverzicht</p>
     <a class="print-hide" routerLink="/winkel/account/bestellingen" [queryParams]="listQuery()"
@@ -39,6 +40,7 @@ import {
     @if (order(); as item) {
       <div class="eyebrow">{{ status(item.status) }}</div>
       <h1>Bestelling {{ item.number }}</h1>
+      <app-copy-text [text]="item.number" label="Bestelnummer kopiëren" />
       <button type="button" class="secondary" [disabled]="cancelling()" (click)="printOrder(item)">
         Besteloverzicht afdrukken / PDF
       </button>
@@ -139,6 +141,9 @@ import {
             Vervoerder: {{ item.shippingCarrier ?? 'Onbekend' }}<br />Track-en-trace:
             {{ item.trackingCode ?? 'Niet beschikbaar' }}
           </p>
+          @if (item.trackingCode) {
+            <app-copy-text [text]="item.trackingCode" label="Trackingcode kopiëren" />
+          }
         }
         @if (item.cancelledAt) {
           <p>Geannuleerd op {{ item.cancelledAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
