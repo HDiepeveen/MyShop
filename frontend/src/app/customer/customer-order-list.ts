@@ -1,20 +1,52 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { customerOrderStatuses, readCustomerOrderQuery } from './customer-order-query';
 import { errorMessage } from '../catalog/error-message';
 import {
   CustomerOrderApi,
   CustomerOrderPage,
+  CustomerOrderStatus,
   CustomerOrderPaymentMethod,
   customerOrderStatus,
 } from './customer-order.api';
 
 @Component({
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, FormsModule],
   template: `<a routerLink="/winkel/account">← Mijn account</a>
     <div class="eyebrow">Mijn account</div>
     <h1>Mijn bestellingen</h1>
+    <form class="toolbar" (ngSubmit)="applySearch()">
+      <label
+        >Zoek op bestelnummer<input
+          name="search"
+          type="search"
+          maxlength="200"
+          [(ngModel)]="searchText"
+          [disabled]="loading()"
+      /></label>
+      <button type="submit" [disabled]="loading()">Zoeken</button>
+      <label
+        >Status<select
+          name="status"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="filterStatus($event)"
+          [disabled]="loading()"
+        >
+          <option [ngValue]="null">Alle statussen</option>
+          @for (value of statuses; track value) {
+            <option [ngValue]="value">{{ status(value) }}</option>
+          }
+        </select></label
+      >
+      @if (search || statusFilter()) {
+        <button type="button" class="secondary" [disabled]="loading()" (click)="clearFilters()">
+          Filters wissen
+        </button>
+      }
+    </form>
     @if (loading()) {
       <p role="status">Bestellingen ophalen…</p>
     }
@@ -24,13 +56,17 @@ import {
     }
     @if (!loading() && page(); as result) {
       @if (!result.items.length && result.offset === 0) {
-        <p>Je hebt met dit account nog geen bestellingen geplaatst.</p>
+        @if (search || statusFilter()) {
+          <p>Geen bestellingen gevonden met deze filters.</p>
+        } @else {
+          <p>Je hebt met dit account nog geen bestellingen geplaatst.</p>
+        }
         <a routerLink="/winkel">Bekijk het assortiment</a>
       }
       @for (order of result.items; track order.id) {
         <article class="panel">
           <h2>
-            <a [routerLink]="[order.id]">{{ order.number }}</a>
+            <a [routerLink]="[order.id]" [queryParams]="contextQuery()">{{ order.number }}</a>
           </h2>
           <p>
             {{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }} · {{ status(order.status) }} ·
@@ -50,7 +86,7 @@ import {
               <strong>{{ total.currency }} {{ amount(total.amount) }}</strong>
             </p>
           }
-          <p><a [routerLink]="[order.id]">Details bekijken</a></p>
+          <p><a [routerLink]="[order.id]" [queryParams]="contextQuery()">Details bekijken</a></p>
         </article>
       }
       @if (!result.items.length && result.offset > 0) {
@@ -87,6 +123,7 @@ import {
     }`,
 })
 export class CustomerOrderList {
+  private readonly route = inject(ActivatedRoute);
   private readonly api = inject(CustomerOrderApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly page = signal<CustomerOrderPage | null>(null);
@@ -94,8 +131,43 @@ export class CustomerOrderList {
   readonly failure = signal('');
   readonly offset = signal(0);
   readonly status = customerOrderStatus;
+  readonly statuses = customerOrderStatuses;
+  readonly statusFilter = signal<CustomerOrderStatus | null>(null);
+  searchText = '';
+  search = '';
   constructor() {
+    const query = readCustomerOrderQuery(this.route.snapshot.queryParamMap);
+    this.statusFilter.set(query.status);
+    this.search = this.searchText = query.search;
+    this.load(query.offset);
+  }
+  applySearch() {
+    if (this.loading()) return;
+    const search = this.searchText.trim();
+    if (search.length > 200) {
+      this.failure.set('Gebruik maximaal 200 tekens voor het bestelnummer.');
+      return;
+    }
+    this.search = search;
     this.load(0);
+  }
+  filterStatus(status: CustomerOrderStatus | null) {
+    if (this.loading() || (status !== null && !this.statuses.includes(status))) return;
+    this.statusFilter.set(status);
+    this.load(0);
+  }
+  clearFilters() {
+    if (this.loading()) return;
+    this.search = this.searchText = '';
+    this.statusFilter.set(null);
+    this.load(0);
+  }
+  contextQuery() {
+    return {
+      search: this.search || null,
+      status: this.statusFilter(),
+      offset: this.offset() || null,
+    };
   }
   load(offset: number) {
     if (this.loading() || !Number.isSafeInteger(offset) || offset < 0 || offset % 20 !== 0) return;
@@ -103,8 +175,10 @@ export class CustomerOrderList {
     this.page.set(null);
     this.loading.set(true);
     this.failure.set('');
-    this.api
-      .list(offset)
+    (this.search || this.statusFilter()
+      ? this.api.list(offset, this.statusFilter(), this.search)
+      : this.api.list(offset)
+    )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (page) => {

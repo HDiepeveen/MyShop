@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   EMPTY,
@@ -9,7 +9,9 @@ import {
   combineLatest,
   distinctUntilChanged,
   switchMap,
+  map,
 } from 'rxjs';
+import { readCustomerOrderQuery } from './customer-order-query';
 import { errorMessage } from '../catalog/error-message';
 import {
   CustomerOrderApi,
@@ -19,7 +21,9 @@ import {
 
 @Component({
   imports: [DatePipe, RouterLink],
-  template: `<a routerLink="/winkel/account/bestellingen">← Mijn bestellingen</a>
+  template: `<a routerLink="/winkel/account/bestellingen" [queryParams]="listQuery()"
+      >← Mijn bestellingen</a
+    >
     @if (loading()) {
       <p role="status">Bestelling ophalen…</p>
     }
@@ -125,6 +129,7 @@ import {
 export class CustomerOrderDetail {
   private readonly api = inject(CustomerOrderApi);
   private readonly route = inject(ActivatedRoute);
+  readonly listQuery = toSignal(this.route.queryParamMap.pipe(map(readCustomerOrderQuery)));
   private readonly destroyRef = inject(DestroyRef);
   readonly order = signal<Detail | null>(null);
   readonly loading = signal(true);

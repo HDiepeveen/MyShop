@@ -256,10 +256,12 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
     }
 
     public async Task<CustomerOrderPage> ListAsync(string customerUserId, int offset, int limit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, OrderStatus? status = null, string? search = null)
     {
         var query = context.Orders.AsNoTracking()
             .Where(order => order.CustomerUserId == customerUserId);
+        if (status is not null) query = query.Where(order => order.Status == (int)status.Value);
+        if (search is not null) query = query.Where(order => order.Number.Contains(search));
         var totalCount = await query.CountAsync(cancellationToken);
         var rows = await query.OrderByDescending(order => order.PlacedAt)
             .ThenByDescending(order => order.Id)

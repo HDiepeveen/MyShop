@@ -29,7 +29,13 @@ export interface CustomerOrderPage {
 export interface CustomerOrderDetail extends CustomerOrderSummary {
   customer: { name: string; email: string };
   deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
-  deliveryMethod?: { id: string; name: string; description: string | null; amount: string; currency: string } | null;
+  deliveryMethod?: {
+    id: string;
+    name: string;
+    description: string | null;
+    amount: string;
+    currency: string;
+  } | null;
   paymentInstructions: string | null;
   paidAt: string | null;
   shippedAt: string | null;
@@ -54,9 +60,12 @@ export interface CustomerOrderDetail extends CustomerOrderSummary {
 export class CustomerOrderApi {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(Auth);
-  list(offset: number) {
+  list(offset: number, status: CustomerOrderStatus | null = null, search = '') {
+    let params = new HttpParams().set('offset', offset).set('limit', 20);
+    if (status) params = params.set('status', status);
+    if (search.trim()) params = params.set('search', search.trim());
     return this.http.get<CustomerOrderPage>('/api/customer/orders', {
-      params: new HttpParams().set('offset', offset).set('limit', 20),
+      params,
     });
   }
   get(id: string) {

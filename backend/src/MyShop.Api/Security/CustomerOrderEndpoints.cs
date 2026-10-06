@@ -57,7 +57,7 @@ public static class CustomerOrderEndpoints
         }
     }
 
-    private static async Task<IResult> ListAsync(int? offset, int? limit, HttpContext context,
+    private static async Task<IResult> ListAsync(int? offset, int? limit, string? status, string? search, HttpContext context,
         UserManager<IdentityUser> users, [FromServices] ListCustomerOrders useCase,
         CancellationToken cancellationToken)
     {
@@ -67,14 +67,21 @@ public static class CustomerOrderEndpoints
         var effectiveLimit = limit ?? ListCustomerOrders.DefaultLimit;
         try
         {
-            var page = await useCase.ExecuteAsync(new(userId, effectiveOffset, effectiveLimit),
+            OrderStatus? statusFilter = status switch
+            {
+                null or "" => null, "awaitingPayment" => OrderStatus.AwaitingPayment,
+                "paid" => OrderStatus.Paid, "shipped" => OrderStatus.Shipped,
+                "cancelled" => OrderStatus.Cancelled, "refunded" => OrderStatus.Refunded,
+                _ => throw new ArgumentException("Status is not supported.", nameof(status))
+            };
+            var page = await useCase.ExecuteAsync(new(userId, effectiveOffset, effectiveLimit, statusFilter, search),
                 cancellationToken);
             return Results.Ok(new CustomerOrderListResponse(page.Items.Select(MapSummary).ToArray(),
                 effectiveOffset, effectiveLimit, page.TotalCount));
         }
-        catch (ArgumentOutOfRangeException exception)
+        catch (ArgumentException exception)
         {
-            return Results.BadRequest(new ProblemDetails { Title = "Invalid paging", Detail = exception.Message });
+            return Results.BadRequest(new ProblemDetails { Title = "Invalid order query", Detail = exception.Message });
         }
     }
 

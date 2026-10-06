@@ -45,3 +45,11 @@ Alle profiel- en bestelroutes vereisen de rol `Customer`.
 Klanten kunnen bovendien gepubliceerde producten op een persoonlijke verlanglijst bewaren; zie
 [Verlanglijst](customer-wishlist.md).
 E-mailbevestiging en wachtwoordherstel per e-mail volgen in afzonderlijke onderdelen.
+
+## Zoeken en filteren in Mijn bestellingen
+
+Klanten kunnen zoeken op een deel van het bestelnummer (maximaal 200 tekens na trimmen) en filteren op Wacht op betaling, Betaald, Verzonden, Geannuleerd of Terugbetaald. Filters combineren met elkaar. Zoeken en status wijzigen gaan naar pagina één; bladeren en opnieuw proberen behouden de toegepaste filters. Filters wissen toont weer alle eigen bestellingen. Een leeg gefilterd overzicht wordt onderscheiden van een account zonder bestellingen.
+
+De klant-API accepteert aanvullend search en status met de codes awaitingPayment, paid, shipped, cancelled en refunded. Onbekende codes of een te lange zoekterm geven 400. Filteren gebeurt vóór tellen en pagineren, met behoud van de accountcontrole. Gastbestellingen of bestellingen van andere accounts worden ook bij een exact bestelnummer nooit getoond. De bestaande snapshotgegevens en sortering op nieuwste bestelling blijven behouden.
+
+Bestellingslinks bewaren zoekterm, status en pagina als queryparameters. De teruglink vanuit een bestelling herstelt die keuzes in Mijn bestellingen. Er is geen migratie of nieuwe opslag.

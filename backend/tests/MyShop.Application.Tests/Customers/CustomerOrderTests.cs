@@ -1,3 +1,4 @@
+using MyShop.Domain.Checkout;
 using MyShop.Application.Checkout.Abstractions;
 using MyShop.Application.Customers.Abstractions;
 using MyShop.Application.Customers.GetCustomerOrder;
@@ -23,6 +24,17 @@ public sealed class CustomerOrderTests
     }
 
     [Fact]
+    public async Task ListNormalizesFiltersAndRejectsInvalidQueriesBeforeReading()
+    {
+        var repository = new Repository(); var useCase = new ListCustomerOrders(repository);
+        await useCase.ExecuteAsync(new("customer", Status: OrderStatus.Shipped, Search: " MS-1 "), default);
+        Assert.Equal(OrderStatus.Shipped, repository.Status); Assert.Equal("MS-1", repository.Search);
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(new("customer", Search: new string('x', 201)), default));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => useCase.ExecuteAsync(new("customer", Status: (OrderStatus)99), default));
+        Assert.Equal(1, repository.Calls);
+        await useCase.ExecuteAsync(new("customer", Search: "  "), default); Assert.Null(repository.Status); Assert.Null(repository.Search);
+    }
+    [Fact]
     public async Task DetailForwardsBothOwnerAndOrderIdentity()
     {
         var repository = new Repository();
@@ -35,14 +47,18 @@ public sealed class CustomerOrderTests
 
     private sealed class Repository : ICustomerOrderReadRepository
     {
+        public OrderStatus? Status;
+        public string? Search;
+        public int Calls;
         public CustomerOrderPage Page { get; } = new([], 0);
         public string? CustomerUserId { get; private set; }
         public int Offset { get; private set; }
         public int Limit { get; private set; }
         public Guid OrderId { get; private set; }
         public Task<CustomerOrderPage> ListAsync(string customerUserId, int offset, int limit,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken, OrderStatus? status = null, string? search = null)
         {
+            Calls++; Status = status; Search = search;
             CustomerUserId = customerUserId; Offset = offset; Limit = limit;
             return Task.FromResult(Page);
         }

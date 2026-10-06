@@ -202,7 +202,7 @@ describe('Customer page recovery', () => {
       imports: [CustomerOrderDetail],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
         { provide: CustomerOrderApi, useValue: api },
       ],
     });
@@ -237,7 +237,7 @@ describe('Customer page recovery', () => {
       imports: [CustomerOrderDetail],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
         { provide: CustomerOrderApi, useValue: api },
       ],
     });
@@ -270,7 +270,7 @@ describe('Customer page recovery', () => {
         imports: [CustomerOrderDetail],
         providers: [
           provideRouter([]),
-          { provide: ActivatedRoute, useValue: { paramMap: params } },
+          { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
           { provide: CustomerOrderApi, useValue: api },
         ],
       });

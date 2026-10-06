@@ -73,7 +73,7 @@ public sealed class CancelCustomerOrderTests
                     null, null, CurrentRevision, [], []));
 
         public Task<CustomerOrderPage> ListAsync(string customerUserId, int offset, int limit,
-            CancellationToken cancellationToken) => throw new NotSupportedException();
+            CancellationToken cancellationToken, OrderStatus? status = null, string? search = null) => throw new NotSupportedException();
 
         public Task<Guid?> CancelAsync(string customerUserId, Guid orderId, Guid expectedRevision,
             DateTimeOffset cancelledAt, string reason, CancellationToken cancellationToken)

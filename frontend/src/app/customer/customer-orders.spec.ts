@@ -103,7 +103,7 @@ describe('Customer orders', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -159,7 +159,7 @@ describe('Customer orders', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -202,7 +202,7 @@ describe('Customer orders', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params } },
+        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
       ],
     });
     http = TestBed.inject(HttpTestingController);

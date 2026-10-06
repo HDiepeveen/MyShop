@@ -159,6 +159,18 @@ public sealed class PlaceOrderHttpTests
         var cancelledHistory = await customer.GetFromJsonAsync<JsonElement>(
             $"/api/customer/orders/{customerOrder.GetProperty("id").GetGuid()}");
         Assert.Equal("cancelled", cancelledHistory.GetProperty("status").GetString());
+        var customerNumber = customerOrder.GetProperty("number").GetString()!;
+        var filteredHistory = await customer.GetFromJsonAsync<JsonElement>($"/api/customer/orders?status=cancelled&search={Uri.EscapeDataString(customerNumber)}&limit=1");
+        Assert.Equal(1, filteredHistory.GetProperty("totalCount").GetInt32());
+        Assert.Equal(customerOrder.GetProperty("id").GetGuid(), Assert.Single(filteredHistory.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        var emptyFilteredPage = await customer.GetFromJsonAsync<JsonElement>($"/api/customer/orders?status=cancelled&search={Uri.EscapeDataString(customerNumber)}&limit=1&offset=1");
+        Assert.Equal(1, emptyFilteredPage.GetProperty("totalCount").GetInt32()); Assert.Empty(emptyFilteredPage.GetProperty("items").EnumerateArray());
+        var guestSearch = await customer.GetFromJsonAsync<JsonElement>($"/api/customer/orders?search={Uri.EscapeDataString(first.GetProperty("number").GetString()!)}");
+        Assert.Equal(0, guestSearch.GetProperty("totalCount").GetInt32());
+        foreach (var status in new[] { "awaitingPayment", "paid", "shipped", "refunded" })
+            Assert.Equal(0, (await customer.GetFromJsonAsync<JsonElement>($"/api/customer/orders?status={status}")).GetProperty("totalCount").GetInt32());
+        foreach (var query in new[] { "status=unknown", "status=2", "search=" + new string('x', 201) })
+            Assert.Equal(HttpStatusCode.BadRequest, (await customer.GetAsync("/api/customer/orders?" + query)).StatusCode);
         Assert.Equal(2, (await host.Client.GetFromJsonAsync<JsonElement>(
             $"/api/products/{productId}")).GetProperty("variants")[0]
             .GetProperty("stockQuantity").GetInt32());

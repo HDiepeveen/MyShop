@@ -6,7 +6,7 @@ namespace MyShop.Application.Customers.Abstractions;
 public interface ICustomerOrderReadRepository
 {
     Task<CustomerOrderPage> ListAsync(string customerUserId, int offset, int limit,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken, OrderStatus? status = null, string? search = null);
     Task<CustomerOrderDetail?> GetAsync(string customerUserId, Guid orderId,
         CancellationToken cancellationToken);
 }
