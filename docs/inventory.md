@@ -26,3 +26,9 @@ Het beveiligde productoverzicht kan filteren op Lage voorraad (0–5), Met uitve
 De API gebruikt stock=low|out|untracked; weglaten toont alle voorraadstanden. Onbekende codes geven 400. Voorraadselecties combineren met published, search, categoryId en productTypeId. Filteren gebeurt vóór tellen en pagineren in SQL. Lage voorraad omvat ook nul; onbeperkte voorraad hoort daar niet bij. Er is geen migratie of nieuwe opslag.
 
 De gekozen voorraadstand blijft in de URL behouden bij zoeken, bladeren en het openen van productdetails. Een andere selectie gaat naar pagina één; Alle voorraadstanden verwijdert alleen dit filter. De dashboardlink opent alle gepubliceerde producten met lage voorraad, zonder de beperking van twintig dashboardvarianten.
+
+## Varianten vinden binnen een product
+
+Het productdetail biedt zoeken op variantnaam of artikelnummer en dezelfde voorraadselecties als het productoverzicht. Naam en artikelnummer worden zonder onderscheid tussen hoofdletters en kleine letters doorzocht; de zoekterm mag maximaal 200 tekens bevatten. Zoeken en voorraadselectie combineren. De pagina toont hoeveel van het totale aantal varianten zichtbaar zijn en biedt Alle varianten tonen om de selectie te wissen.
+
+De voorraadselectie uit het productoverzicht wordt aanvankelijk overgenomen. De lokale variantselectie verandert het opgeslagen product en het oorspronkelijke overzichtsfilter niet. Na opslaan en herladen van hetzelfde product blijft de variantselectie behouden. Een ander product begint met een lege zoekterm en de voorraadcontext uit het overzicht. Tijdens een bewerking zijn de filteracties geblokkeerd. De controle voor het verwijderen van de laatste variant gebruikt altijd het totale aantal varianten, niet het zichtbare aantal. Er is geen nieuwe API, opslag of migratie.
