@@ -10,7 +10,7 @@ public interface IProductListRepository
         ProductTypeId? productTypeId,
         CategoryId? categoryId,
         string? searchTerm,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken, bool? isPublished = null);
 }
 
 public sealed record ProductListItem(

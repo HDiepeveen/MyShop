@@ -50,6 +50,8 @@ describe('Home', () => {
     });
     fixture.detectChanges();
 
+    expect(fixture.nativeElement.querySelector('a[href="/producten?published=true"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href="/producten?published=false"]')).not.toBeNull();
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('8 producten');
     expect(text).toContain('6 gepubliceerd · 2 concept');

@@ -19,11 +19,16 @@ export class CatalogApi {
   products(
     offset = 0,
     search = '',
-    filters: { categoryId?: string | null; productTypeId?: string | null } = {},
+    filters: {
+      categoryId?: string | null;
+      productTypeId?: string | null;
+      published?: boolean;
+    } = {},
   ) {
     let params = this.paging(offset, search);
     if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.productTypeId) params = params.set('productTypeId', filters.productTypeId);
+    if (filters.published !== undefined) params = params.set('published', filters.published);
     return this.http.get<ProductPage>('/api/products', { params });
   }
   setPresentation(

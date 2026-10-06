@@ -6,5 +6,8 @@ export function readProductListQuery(params: ParamMap) {
     categoryId: params.get('categoryId') || null,
     productTypeId: params.get('productTypeId') || null,
     ...readListQuery(params),
+    ...(params.get('published') === 'true' || params.get('published') === 'false'
+      ? { published: params.get('published') === 'true' }
+      : {}),
   };
 }

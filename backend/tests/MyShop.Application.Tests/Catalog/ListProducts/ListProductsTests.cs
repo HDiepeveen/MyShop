@@ -130,12 +130,23 @@ public sealed class ListProductsTests
         Assert.Same(expected, exception);
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ForwardsPublicationFilterWithoutChangingOtherCriteria(bool? published)
+    {
+        var repository = new ProductListRepositoryFake();
+        await new UseCase(repository).ExecuteAsync(new(20, 10, SearchTerm: " shirt ", IsPublished: published), default);
+        Assert.Equal(published, repository.IsPublished); Assert.Equal("shirt", repository.SearchTerm); Assert.Equal(20, repository.Offset);
+    }
     [Fact]
     public void Constructor_RejectsNullRepository() =>
         Assert.Throws<ArgumentNullException>(() => new UseCase(null!));
 
     private sealed class ProductListRepositoryFake : IProductListRepository
     {
+        public bool? IsPublished { get; private set; }
         public ProductListPage Page { get; set; } = new([], 0);
         public Exception? Exception { get; set; }
         public int ListCalls { get; private set; }
@@ -152,8 +163,9 @@ public sealed class ListProductsTests
             ProductTypeId? productTypeId,
             CategoryId? categoryId,
             string? searchTerm,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken, bool? isPublished = null)
         {
+            IsPublished = isPublished;
             ListCalls++;
             Offset = offset;
             Limit = limit;

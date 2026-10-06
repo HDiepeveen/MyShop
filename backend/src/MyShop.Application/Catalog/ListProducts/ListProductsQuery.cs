@@ -7,4 +7,4 @@ public sealed record ListProductsQuery(
     int Limit,
     ProductTypeId? ProductTypeId = null,
     CategoryId? CategoryId = null,
-    string? SearchTerm = null);
+    string? SearchTerm = null, bool? IsPublished = null);

@@ -76,6 +76,17 @@ public sealed class ProductListRepositoryTests
         Assert.Contains("LIKE", sql);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void PublicationFilterCombinesWithCategoryTypeAndSearchInSql(bool published)
+    {
+        using var context = CreateContext();
+        var query = ProductListRepository.FilterQuery(context.Set<ProductPersistence>(), ProductTypeId.New(), CategoryId.New(), "shirt", published);
+        var sql = ProductListRepository.ItemsQuery(query, 20, 10).ToQueryString();
+        Assert.Contains("[p].[IsPublished]", sql); Assert.Contains("[p].[ProductTypeId]", sql);
+        Assert.Contains("[ProductCategories]", sql); Assert.Contains("LIKE", sql); Assert.Contains("OFFSET", sql);
+    }
     private static MyShopDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<MyShopDbContext>()

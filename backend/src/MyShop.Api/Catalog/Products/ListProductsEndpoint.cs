@@ -26,6 +26,7 @@ public static class ListProductsEndpoint
         [FromQuery] Guid? productTypeId,
         [FromQuery] Guid? categoryId,
         [FromQuery] string? search,
+        [FromQuery] bool? published,
         [FromServices] UseCase useCase,
         CancellationToken cancellationToken)
     {
@@ -42,7 +43,7 @@ public static class ListProductsEndpoint
                     effectiveLimit,
                     productTypeId is null ? null : ProductTypeId.From(productTypeId.Value),
                     categoryId is null ? null : CategoryId.From(categoryId.Value),
-                    search),
+                    search, published),
                 cancellationToken);
             var items = page.Items.Select(item => new ProductSummaryResponse(
                 item.Id,

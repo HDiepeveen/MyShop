@@ -32,6 +32,10 @@ import { loadState } from './catalog/load-state';
           <p>Bekijk klantgegevens en toegang.</p><span class="arrow">↗</span>
         </a>
       </div>
+      <div class="actions">
+        <a class="button secondary" routerLink="/producten" [queryParams]="{ published: true }">Gepubliceerde producten bekijken</a>
+        <a class="button secondary" routerLink="/producten" [queryParams]="{ published: false }">Conceptproducten bekijken</a>
+      </div>
       <div class="grid">
         <section class="panel"><h2>Actieve omzet</h2>
           <p class="muted">Betaalde en verzonden bestellingen, exclusief terugbetalingen.</p>

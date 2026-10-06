@@ -11,6 +11,16 @@ namespace MyShop.Api.Tests.Catalog.Products;
 public sealed class ListProductsHttpTests
 {
     [Theory]
+    [InlineData("", null)]
+    [InlineData("?published=true", true)]
+    [InlineData("?published=false", false)]
+    public async Task BoundEndpointForwardsPublicationFilter(string query, bool? expected)
+    {
+        var repository = new RepositoryFake(); await using var app = CreateApp(repository);
+        var response = await CatalogListHttp.Execute(app, query, default);
+        Assert.Equal(200, response.Response.StatusCode); Assert.Equal(expected, repository.Published);
+    }
+    [Theory]
     [InlineData("", 0, 50)]
     [InlineData("?offset=2&limit=1", 2, 1)]
     [InlineData("?limit=100", 0, 100)]
@@ -38,6 +48,8 @@ public sealed class ListProductsHttpTests
     }
 
     [Theory]
+    [InlineData("?published=invalid")]
+    [InlineData("?published=1")]
     [InlineData("?offset=-1")]
     [InlineData("?limit=0")]
     [InlineData("?limit=101")]
@@ -96,6 +108,7 @@ public sealed class ListProductsHttpTests
     private sealed class RepositoryFake : IProductListRepository
     {
         public ProductListItem Item { get; } = new(Guid.NewGuid(), Guid.NewGuid(), "Product", 3);
+        public bool? Published;
         public bool Empty { get; init; }
         public int Calls { get; private set; }
         public int Offset { get; private set; }
@@ -105,9 +118,10 @@ public sealed class ListProductsHttpTests
         public CategoryId? Category { get; private set; }
         public CancellationToken Cancellation { get; private set; }
         public Task<ProductListPage> ListAsync(int offset, int limit, ProductTypeId? productTypeId,
-            CategoryId? categoryId, string? searchTerm, CancellationToken cancellationToken)
+            CategoryId? categoryId, string? searchTerm, CancellationToken cancellationToken, bool? isPublished = null)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Published = isPublished;
             Calls++;
             Offset = offset;
             Limit = limit;

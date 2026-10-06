@@ -39,6 +39,6 @@ public sealed class ListProducts
             query.ProductTypeId,
             query.CategoryId,
             query.SearchTerm?.Trim(),
-            cancellationToken);
+            cancellationToken, query.IsPublished);
     }
 }

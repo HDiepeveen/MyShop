@@ -41,6 +41,23 @@ import { readProductListQuery } from './product-list-query';
           </button>
         </p>
       }
+      <label
+        >Publicatiestatus<select
+          name="publication"
+          [ngModel]="
+            listQuery().published === undefined
+              ? 'all'
+              : listQuery().published
+                ? 'published'
+                : 'draft'
+          "
+          (ngModelChange)="filterPublication($event)"
+        >
+          <option value="all">Alle producten</option>
+          <option value="published">Gepubliceerd</option>
+          <option value="draft">Concept</option>
+        </select></label
+      >
       <form class="toolbar" (ngSubmit)="search()">
         <label
           >Zoek op productnaam<input
@@ -167,7 +184,7 @@ export class ProductList {
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
   searchText = '';
-  readonly listQuery = signal({
+  readonly listQuery = signal<ReturnType<typeof readProductListQuery>>({
     categoryId: null as string | null,
     productTypeId: null as string | null,
     search: '',
@@ -186,7 +203,8 @@ export class ProductList {
           a.categoryId === b.categoryId &&
           a.productTypeId === b.productTypeId &&
           a.search === b.search &&
-          a.offset === b.offset,
+          a.offset === b.offset &&
+          a.published === b.published,
       ),
       switchMap((query) => {
         if (query.search !== this.listQuery().search) this.searchText = query.search;
@@ -202,6 +220,14 @@ export class ProductList {
   readonly skuBusy = signal(false);
   readonly skuError = signal('');
   skuText = '';
+  filterPublication(value: string) {
+    if (!['all', 'published', 'draft'].includes(value)) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { published: value === 'all' ? null : value === 'published', offset: null },
+      queryParamsHandling: 'merge',
+    });
+  }
   clearFilter(key: 'categoryId' | 'productTypeId') {
     void this.router.navigate([], {
       relativeTo: this.route,

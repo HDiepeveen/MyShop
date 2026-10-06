@@ -68,3 +68,9 @@ De gebruiksendpoints helpen om vóór een verwijderpoging te tonen welke afhanke
 De bestaande opslagqueries worden hergebruikt. Het bestaan van een object en de verschillende aantallen worden afzonderlijk gelezen; deze aanvragen vormen geen transactionele momentopname. Gegevens kunnen tijdens of na het lezen veranderen.
 
 Alle drie endpoints zijn uitsluitend leesacties. Ze wijzigen geen gegevens of revisies. Ze vereisen geldige, niet-lege GUID's. Een lege GUID geeft HTTP 400; een tekstwaarde die niet aan de guid-routeconstraint voldoet, matcht deze route niet.
+
+## Producten per publicatiestatus
+
+Het beveiligde productoverzicht kan worden beperkt tot Gepubliceerd of Concept. Alle producten blijft de standaard. De API accepteert published=true of published=false; weglaten selecteert beide. Ongeldige booleanwaarden geven 400. Dit combineert met zoekterm, producttype en directe categorie en wordt vóór tellen en pagineren in SQL toegepast. De openbare winkel blijft uitsluitend gepubliceerde producten tonen.
+
+Wijzigen van de publicatiestatus gaat naar pagina één. Zoeken, bladeren, productdetails en het nieuwe-productscherm behouden het filter in de URL. Alle producten wist uitsluitend dit filter. Het beheerdersdashboard biedt afzonderlijke links naar gepubliceerde producten en concepten. Er is geen migratie of nieuwe opslag.

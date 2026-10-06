@@ -37,7 +37,15 @@ public sealed class StorefrontHttpTests
         var unavailable = await Create("Alpha", 0);
         var tracked = await Create("Beta", 1);
         var unlimited = await Create("Gamma", null);
-        await Create("Zeta draft", null, false);
+        var draft = await Create("Zeta draft", null, false);
+        var managedPublished = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products?published=true&categoryId={categoryId}&productTypeId={type.GetProperty("id").GetGuid()}&limit=1&offset=1");
+        Assert.Equal(3, managedPublished.GetProperty("totalCount").GetInt32());
+        Assert.Equal(tracked, Assert.Single(managedPublished.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        var managedDrafts = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products?published=false&search=Zeta&categoryId={categoryId}");
+        Assert.Equal(1, managedDrafts.GetProperty("totalCount").GetInt32());
+        Assert.Equal(draft, Assert.Single(managedDrafts.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        var draftPage = await host.Client.GetFromJsonAsync<JsonElement>("/api/products?published=false&offset=1&limit=1");
+        Assert.Equal(1, draftPage.GetProperty("totalCount").GetInt32()); Assert.Empty(draftPage.GetProperty("items").EnumerateArray());
         var descending = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products?sort=nameDesc");
         Assert.Equal(new[] { unlimited, tracked, unavailable }, descending.GetProperty("items").EnumerateArray().Select(item => item.GetProperty("id").GetGuid()).ToArray());
         var first = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products?availableOnly=true&sort=nameDesc&categoryId={categoryId}&limit=1");

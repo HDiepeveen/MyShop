@@ -19,10 +19,10 @@ internal sealed class ProductListRepository
         ProductTypeId? productTypeId,
         CategoryId? categoryId,
         string? searchTerm,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, bool? isPublished = null)
     {
         var products = FilterQuery(
-            _dbContext.Products.AsNoTracking(), productTypeId, categoryId, searchTerm);
+            _dbContext.Products.AsNoTracking(), productTypeId, categoryId, searchTerm, isPublished);
         var totalCount = await products.CountAsync(cancellationToken);
         var items = await ItemsQuery(products, offset, limit).ToListAsync(cancellationToken);
         return new ProductListPage(items, totalCount);
@@ -49,8 +49,9 @@ internal sealed class ProductListRepository
         IQueryable<ProductPersistence> products,
         ProductTypeId? productTypeId,
         CategoryId? categoryId,
-        string? searchTerm)
+        string? searchTerm, bool? isPublished = null)
     {
+        if (isPublished is not null) products = products.Where(product => product.IsPublished == isPublished.Value);
         if (productTypeId is not null)
             products = products.Where(product => product.ProductTypeId == productTypeId.Value.Value);
         if (categoryId is not null)
