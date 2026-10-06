@@ -22,7 +22,9 @@ import {
 
 @Component({
   imports: [DatePipe, RouterLink],
-  template: `<a routerLink="/winkel/account/bestellingen" [queryParams]="listQuery()"
+  host: { class: 'printable-order' },
+  template: `<p class="print-only">MyShop · Besteloverzicht</p>
+    <a class="print-hide" routerLink="/winkel/account/bestellingen" [queryParams]="listQuery()"
       >← Mijn bestellingen</a
     >
     @if (loading()) {
@@ -37,12 +39,15 @@ import {
     @if (order(); as item) {
       <div class="eyebrow">{{ status(item.status) }}</div>
       <h1>Bestelling {{ item.number }}</h1>
+      <button type="button" class="secondary" [disabled]="cancelling()" (click)="printOrder(item)">
+        Besteloverzicht afdrukken / PDF
+      </button>
       <p>Geplaatst op {{ item.placedAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
       @if (notice()) {
-        <p role="status">{{ notice() }}</p>
+        <p class="print-hide" role="status">{{ notice() }}</p>
       }
       @if (actionFailure()) {
-        <p class="error" role="alert">{{ actionFailure() }}</p>
+        <p class="error print-hide" role="alert">{{ actionFailure() }}</p>
       }
       @if (item.status === 'awaitingPayment') {
         <button type="button" class="secondary" [disabled]="cancelling()" (click)="cancel(item)">
@@ -66,7 +71,7 @@ import {
       <section class="panel">
         <h2>Artikelen</h2>
         @if (item.lines.length) {
-          <p class="muted">
+          <p class="muted print-hide">
             Opnieuw bestellen zet deze artikelen in je winkelmand. Je controleert daarna de actuele
             prijzen, voorraad en bezorgoptie.
           </p>
@@ -79,7 +84,7 @@ import {
             Artikelen opnieuw bestellen
           </button>
           @if (reordered()) {
-            <p><a routerLink="/winkel/winkelmand">Winkelmand openen</a></p>
+            <p class="print-hide"><a routerLink="/winkel/winkelmand">Winkelmand openen</a></p>
           }
         }
         @for (line of item.lines; track line.productId + line.variantId) {
@@ -219,6 +224,10 @@ export class CustomerOrderDetail {
     if (order.refundedAt)
       events.push({ label: 'Terugbetaling geregistreerd', at: order.refundedAt });
     return events;
+  }
+  printOrder(order: Detail) {
+    if (this.order() !== order || this.loading() || this.cancelling()) return;
+    window.print();
   }
   reorder(order: Detail) {
     if (this.order() !== order || this.loading() || this.cancelling() || this.reordered()) return;

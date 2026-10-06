@@ -474,3 +474,24 @@ textarea:disabled {
 .editor summary {
   overflow-wrap: anywhere;
 }
+
+.print-only { display: none; }
+@media print {
+  body:has(.printable-order) { background: white; color: black; }
+  body:has(.printable-order) .sidebar,
+  body:has(.printable-order) .topbar,
+  body:has(.printable-order) .skip,
+  body:has(.printable-order) footer,
+  .printable-order .print-hide,
+  .printable-order button { display: none !important; }
+  body:has(.printable-order) .workspace,
+  body:has(.printable-order) .body { display: block; min-height: 0; }
+  body:has(.printable-order) main { padding: 0; max-width: none; min-height: 0; }
+  .printable-order .print-only { display: block; font-weight: bold; }
+  .printable-order .panel { box-shadow: none; border: 1px solid #bbb; background: white; padding: 12px; margin: 12px 0; }
+  .printable-order h1, .printable-order h2, .printable-order h3 { break-after: avoid; color: black; }
+  .printable-order p, .printable-order li, .printable-order tr { break-inside: avoid; }
+  .printable-order .table-wrap { overflow: visible; }
+  .printable-order a { color: black; text-decoration: none; }
+  .printable-order .grid { display: block; }
+}

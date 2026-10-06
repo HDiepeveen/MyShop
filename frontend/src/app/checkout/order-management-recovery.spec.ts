@@ -90,6 +90,26 @@ describe('Order management recovery', () => {
     return { fixture, params, response, action, api, current };
   }
 
+  it('prints the loaded admin order and blocks stale snapshots or pending writes', () => {
+    const { fixture, current } = setup();
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    const page = fixture.componentInstance;
+    page.printOrder({ ...current });
+    page.saving.set(true);
+    page.printOrder(current);
+    expect(print).not.toHaveBeenCalled();
+    page.saving.set(false);
+    fixture.detectChanges();
+    const button = (
+      Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]
+    ).find((button) => button.textContent?.includes('afdrukken'))!;
+    button.click();
+    expect(print).toHaveBeenCalledOnce();
+    expect(fixture.nativeElement.textContent).toContain('MS-1');
+    expect(fixture.nativeElement.textContent).toContain('Ada');
+    expect(fixture.nativeElement.classList.contains('printable-order')).toBe(true);
+    print.mockRestore();
+  });
   const invalidInputs = [
     {
       name: 'payment reference',

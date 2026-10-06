@@ -61,3 +61,7 @@ Op een eigen bestellingsdetail kan de klant de historische artikelen en aantalle
 Een bestaande winkelmand wordt na expliciete bevestiging samengevoegd. Gelijke product/variant-combinaties krijgen opgetelde aantallen. De limieten van twintig varianten en 99 stuks per variant blijven gelden. Bij ongeldige regels of overschrijding verandert geen enkel deel van de winkelmand. Dubbel klikken op dezelfde geopende bestelling voegt niet nogmaals toe.
 
 Na toevoegen opent de winkelmand. Als navigatie niet lukt, toont de detailpagina een link om die alsnog te openen; de artikelen worden daardoor niet opnieuw toegevoegd. Browseropslag bewaart uitsluitend identifiers en aantallen. Als bewaren niet lukt, blijft de winkelmand in de huidige sessie werken met de bestaande opslagmelding.
+
+## Besteloverzicht afdrukken
+
+Een geladen bestelling kan worden afgedrukt met Besteloverzicht afdrukken / PDF. De browser biedt afdrukken of opslaan als PDF. Het overzicht gebruikt de bestaande bestelsnapshot met bestelnummer, datum, artikelen, bedragen per valuta, klantgegevens, bezorging en beschikbare statusmomenten. Navigatie, actieknoppen en tijdelijke actiemeldingen worden bij afdrukken verborgen. Afdrukken is geblokkeerd tijdens annuleren en doet geen serverwijzigingen. Dit is een besteloverzicht; er wordt geen factuurnummer of btw-berekening toegevoegd.

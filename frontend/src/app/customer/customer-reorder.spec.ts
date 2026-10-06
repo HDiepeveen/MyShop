@@ -70,6 +70,28 @@ describe('Ordering previous articles again', () => {
       params,
     };
   }
+  it('prints the current snapshot only after loading and outside cancellation', () => {
+    const { fixture, page } = setup();
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    page.printOrder({ ...order });
+    page.cancelling.set(true);
+    page.printOrder(order);
+    page.cancelling.set(false);
+    page.loading.set(true);
+    page.printOrder(order);
+    expect(print).not.toHaveBeenCalled();
+    page.loading.set(false);
+    fixture.detectChanges();
+    const button = (
+      Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]
+    ).find((button) => button.textContent?.includes('afdrukken'))!;
+    button.click();
+    expect(print).toHaveBeenCalledOnce();
+    expect(fixture.nativeElement.textContent).toContain('MS-1');
+    expect(fixture.nativeElement.textContent).toContain('Old name');
+    expect(fixture.nativeElement.textContent).toContain('Street 1');
+    expect(fixture.nativeElement.classList.contains('printable-order')).toBe(true);
+  });
   it('adds original identifiers and quantities once and opens the cart', () => {
     const { page, cart, navigate } = setup();
     const confirm = vi.spyOn(window, 'confirm');
@@ -124,9 +146,11 @@ describe('Ordering previous articles again', () => {
       expect(navigate).toHaveBeenCalledOnce();
       expect(page.actionFailure()).toContain('via de link');
       expect(fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).not.toBeNull();
-      expect((fixture.nativeElement.querySelector('button') as HTMLButtonElement).disabled).toBe(
-        true,
-      );
+      expect(
+        (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[]).find(
+          (button) => button.textContent?.includes('Artikelen opnieuw'),
+        )!.disabled,
+      ).toBe(true);
     },
   );
   it('clears the added state when switching to another order', () => {

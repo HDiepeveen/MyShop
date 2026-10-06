@@ -9,7 +9,9 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
 
 @Component({
   imports: [RouterLink, DatePipe, CurrencyPipe],
-  template: ` <a class="back" routerLink="/bestellingen" queryParamsHandling="preserve"
+  host: { class: 'printable-order' },
+  template: ` <p class="print-only">MyShop · Besteloverzicht</p>
+    <a class="back print-hide" routerLink="/bestellingen" queryParamsHandling="preserve"
       >← Terug naar bestellingen</a
     >
     @if (state()?.loading) {
@@ -21,13 +23,16 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
       </div>
     }
     @if (notice()) {
-      <p class="success" role="status">{{ notice() }}</p>
+      <p class="success print-hide" role="status">{{ notice() }}</p>
     }
     @if (actionError()) {
-      <p class="error" role="alert">{{ actionError() }}</p>
+      <p class="error print-hide" role="alert">{{ actionError() }}</p>
     }
     @if (state()?.data; as order) {
       <div class="eyebrow">Bestelling</div>
+      <button type="button" class="secondary" [disabled]="saving()" (click)="printOrder(order)">
+        Besteloverzicht afdrukken / PDF
+      </button>
       <div class="page-head">
         <div>
           <h1>{{ order.number }}</h1>
@@ -160,7 +165,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
         </dl>
       </section>
       @if (order.status === 'awaitingPayment') {
-        <section class="panel">
+        <section class="panel print-hide">
           <h2>Betaling verwerken</h2>
           <p class="muted">Gebruik dit nadat je hebt gecontroleerd dat de betaling is ontvangen.</p>
           <details>
@@ -188,7 +193,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             </button>
           </details>
         </section>
-        <section class="panel">
+        <section class="panel print-hide">
           <h2>Bestelling annuleren</h2>
           <p class="muted">
             Annuleren is alleen mogelijk zolang er nog geen betaling is vastgelegd.
@@ -210,7 +215,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
         </section>
       }
       @if (order.status === 'paid') {
-        <section class="panel">
+        <section class="panel print-hide">
           <h2>Verzending verwerken</h2>
           <p class="muted">
             Gebruik dit nadat de volledige bestelling aan de vervoerder is overgedragen.
@@ -251,7 +256,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             </button>
           </details>
         </section>
-        <section class="panel">
+        <section class="panel print-hide">
           <h2>Terugbetaling registreren</h2>
           <p class="muted">
             Gebruik dit nadat het volledige bedrag buiten MyShop aan de klant is terugbetaald.
@@ -362,6 +367,10 @@ export class OrderDetailComponent {
         note: order.refundReference ? `Kenmerk: ${order.refundReference}` : undefined,
       });
     return events;
+  }
+  printOrder(order: OrderDetail) {
+    if (this.state()?.data !== order || this.state()?.loading || this.saving()) return;
+    window.print();
   }
   markPaid(order: OrderDetail, paymentReference: string) {
     paymentReference = paymentReference.trim();
