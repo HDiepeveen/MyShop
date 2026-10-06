@@ -2,7 +2,7 @@ using MyShop.Application.Customers.Abstractions;
 
 namespace MyShop.Application.Customers.ManageWishlist;
 
-public sealed record ListWishlistQuery(string UserId, int Offset = 0, int Limit = ListWishlist.DefaultLimit);
+public sealed record ListWishlistQuery(string UserId, int Offset = 0, int Limit = ListWishlist.DefaultLimit, string? Search = null, WishlistSort Sort = WishlistSort.Newest);
 
 public sealed class ListWishlist(IWishlistRepository repository)
 {
@@ -13,7 +13,11 @@ public sealed class ListWishlist(IWishlistRepository repository)
         ArgumentException.ThrowIfNullOrWhiteSpace(query.UserId);
         if (query.Offset < 0) throw new ArgumentOutOfRangeException(nameof(query.Offset));
         if (query.Limit is < 1 or > MaximumLimit) throw new ArgumentOutOfRangeException(nameof(query.Limit));
-        return repository.ListAsync(query.UserId, query.Offset, query.Limit, cancellationToken);
+        if (!Enum.IsDefined(query.Sort)) throw new ArgumentOutOfRangeException(nameof(query.Sort));
+        var search = query.Search?.Trim();
+        if (search?.Length > 200) throw new ArgumentException("Search must not exceed 200 characters.", nameof(query));
+        return repository.ListAsync(query.UserId, query.Offset, query.Limit, cancellationToken,
+            string.IsNullOrEmpty(search) ? null : search, query.Sort);
     }
 }
 

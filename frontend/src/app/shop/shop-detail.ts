@@ -8,6 +8,7 @@ import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ShopApi } from './shop.api';
 import { ShopImage } from './shop-image';
 import { loadState } from '../catalog/load-state';
+import { readWishlistReturn } from '../customer/wishlist-query';
 import { readShopQuery, shopContextQuery } from './shop-query';
 import { Auth } from '../auth/auth';
 import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
@@ -22,6 +23,11 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
     `,
   ],
   template: `
+    @if (wishlistReturn(); as query) {
+      <a class="back" routerLink="/winkel/account/verlanglijst" [queryParams]="query"
+        >← Terug naar mijn verlanglijst</a
+      >
+    }
     <a class="back" routerLink="/winkel" [queryParams]="contextQuery()"
       >← Terug naar het assortiment</a
     >
@@ -169,6 +175,7 @@ export class ShopDetail {
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
+  readonly wishlistReturn = toSignal(this.route.queryParamMap.pipe(map(readWishlistReturn)));
   readonly query = toSignal(this.route.queryParamMap.pipe(map(readShopQuery)));
   private readonly priceRefresh = new BehaviorSubject(0);
   readonly prices = toSignal(

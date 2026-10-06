@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Customers.ManageWishlist;
+using MyShop.Application.Customers.Abstractions;
 
 namespace MyShop.Api.Security;
 
@@ -17,7 +18,7 @@ public static class CustomerWishlistEndpoints
         return endpoints;
     }
 
-    private static async Task<IResult> ListAsync(int? offset, int? limit, HttpContext context,
+    private static async Task<IResult> ListAsync(int? offset, int? limit, string? search, string? sort, HttpContext context,
         UserManager<IdentityUser> users, [FromServices] ListWishlist useCase,
         CancellationToken cancellationToken)
     {
@@ -27,14 +28,16 @@ public static class CustomerWishlistEndpoints
         var effectiveLimit = limit ?? ListWishlist.DefaultLimit;
         try
         {
-            var page = await useCase.ExecuteAsync(new(userId, effectiveOffset, effectiveLimit), cancellationToken);
+            var ordering = sort switch { null or "" or "newest" => WishlistSort.Newest,
+                "name" => WishlistSort.Name, _ => throw new ArgumentException("Sort is not supported.", nameof(sort)) };
+            var page = await useCase.ExecuteAsync(new(userId, effectiveOffset, effectiveLimit, search, ordering), cancellationToken);
             return Results.Ok(new WishlistPageResponse(page.Items.Select(item => new WishlistItemResponse(
                 item.ProductId, item.Name, item.ImageUrl, item.ImageAlt, item.IsAvailable, item.AddedAt)).ToArray(),
                 effectiveOffset, effectiveLimit, page.TotalCount));
         }
-        catch (ArgumentOutOfRangeException exception)
+        catch (ArgumentException exception)
         {
-            return Results.BadRequest(new ProblemDetails { Title = "Invalid paging", Detail = exception.Message });
+            return Results.BadRequest(new ProblemDetails { Title = "Invalid wishlist query", Detail = exception.Message });
         }
     }
 

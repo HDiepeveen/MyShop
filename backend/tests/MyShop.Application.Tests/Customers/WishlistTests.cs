@@ -19,6 +19,16 @@ public sealed class WishlistTests
     }
 
     [Fact]
+    public async Task List_normalizes_search_and_sort_and_rejects_invalid_filters()
+    {
+        var repository = new Repository(); var useCase = new ListWishlist(repository);
+        await useCase.ExecuteAsync(new("customer", Search: " shirt ", Sort: WishlistSort.Name), default);
+        Assert.Equal("shirt", repository.Search); Assert.Equal(WishlistSort.Name, repository.Sort);
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(new("customer", Search: new string('x', 201)), default));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => useCase.ExecuteAsync(new("customer", Sort: (WishlistSort)99), default));
+        await useCase.ExecuteAsync(new("customer", Search: " "), default); Assert.Null(repository.Search); Assert.Equal(WishlistSort.Newest, repository.Sort);
+    }
+    [Fact]
     public async Task Add_uses_utc_time_and_reports_product_availability()
     {
         var repository = new Repository { AddResult = true };
@@ -47,12 +57,14 @@ public sealed class WishlistTests
     private sealed class Repository : IWishlistRepository
     {
         public (string, int, int)? ListRequest { get; private set; }
+        public string? Search;
+        public WishlistSort Sort;
         public bool AddResult { get; init; }
         public bool ContainsResult { get; init; }
         public DateTimeOffset? AddedAt { get; private set; }
         public (string, Guid)? Removed { get; private set; }
-        public Task<WishlistPage> ListAsync(string userId, int offset, int limit, CancellationToken cancellationToken)
-        { ListRequest = (userId, offset, limit); return Task.FromResult(new WishlistPage([], 0)); }
+        public Task<WishlistPage> ListAsync(string userId, int offset, int limit, CancellationToken cancellationToken, string? search = null, WishlistSort sort = WishlistSort.Newest)
+        { Search = search; Sort = sort; ListRequest = (userId, offset, limit); return Task.FromResult(new WishlistPage([], 0)); }
         public Task<bool> ContainsAsync(string userId, Guid productId, CancellationToken cancellationToken) => Task.FromResult(ContainsResult);
         public Task<bool> AddAsync(string userId, Guid productId, DateTimeOffset addedAt, CancellationToken cancellationToken)
         { AddedAt = addedAt; return Task.FromResult(AddResult); }

@@ -135,7 +135,7 @@ describe('Customer page recovery', () => {
     const retry = new Subject<WishlistPage>();
     api.list.mockReturnValue(retry);
     fixture.detectChanges();
-    (fixture.nativeElement.querySelector('button') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('[role="alert"] button') as HTMLButtonElement).click();
     expect(api.list).toHaveBeenLastCalledWith(20);
   });
 

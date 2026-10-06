@@ -7,11 +7,15 @@ namespace MyShop.Infrastructure.Persistence.Repositories;
 internal sealed class WishlistRepository(MyShopDbContext context) : IWishlistRepository
 {
     public async Task<WishlistPage> ListAsync(string userId, int offset, int limit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, string? search = null, WishlistSort sort = WishlistSort.Newest)
     {
         var query = context.WishlistItems.Where(item => item.UserId == userId);
+        if (search is not null) query = query.Where(item => item.Product.Name.Contains(search));
+        var ordered = sort == WishlistSort.Name
+            ? query.OrderBy(item => item.Product.Name).ThenBy(item => item.ProductId)
+            : query.OrderByDescending(item => item.AddedAt).ThenBy(item => item.ProductId);
         var total = await query.CountAsync(cancellationToken);
-        var items = await query.OrderByDescending(item => item.AddedAt).ThenBy(item => item.ProductId)
+        var items = await ordered
             .Skip(offset).Take(limit).Select(item => new WishlistItem(item.ProductId,
                 item.Product.Name, item.Product.ImageUrl, item.Product.ImageAlt,
                 item.Product.IsPublished, item.AddedAt)).ToArrayAsync(cancellationToken);
