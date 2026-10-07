@@ -70,7 +70,11 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<IDeliveryMethodRepository>(provider =>
             new DeliveryMethodRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability(configuration));
-        services.AddScoped<IOnlinePaymentProvider, TestOnlinePaymentProvider>();
+        services.AddHttpClient("Mollie", client => client.Timeout = TimeSpan.FromSeconds(20))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        services.AddScoped<OnlinePaymentProvider>(provider => new(provider.GetRequiredService<IHttpClientFactory>(), configuration));
+        services.AddScoped<IOnlinePaymentProvider>(provider => provider.GetRequiredService<OnlinePaymentProvider>());
+        services.AddScoped<IOnlinePaymentStatusReader>(provider => provider.GetRequiredService<OnlinePaymentProvider>());
         services.AddScoped<IOnlinePaymentStartRepository, OnlinePaymentStartRepository>();
         services.AddScoped<IOrderRepository>(provider =>
             new OrderRepository(provider.GetRequiredService<MyShopDbContext>()));

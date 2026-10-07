@@ -47,7 +47,11 @@ import { errorMessage } from '../catalog/error-message';
           Direct online betalen</label
         >
         @if (options.onlinePaymentConfigured) {
-          <p class="muted">Online betalen is voorbereid via {{ options.onlinePaymentProvider }}.</p>
+          @if (options.onlinePaymentProvider === 'Mollie') {
+            <p class="muted">Mollie is ingesteld in testmodus. Er wordt geen echt geld afgeschreven.</p>
+          } @else {
+            <p class="muted">Online betalen is voorbereid via {{ options.onlinePaymentProvider }}.</p>
+          }
         } @else {
           <p class="muted">
             Online betalen wordt beschikbaar nadat een betaalprovider is gekoppeld.

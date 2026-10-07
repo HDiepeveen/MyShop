@@ -13,5 +13,5 @@ public interface IOrderRepository
     Task<OrderReceipt?> AddAsync(Order order, Guid checkoutToken, string? customerUserId,
         IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken);
     Task<OrderReceipt?> AddPaidAsync(Order order, Guid checkoutToken, string paymentReference,
-        IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken);
+        IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken, string? customerUserId = null);
 }

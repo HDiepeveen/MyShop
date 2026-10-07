@@ -42,7 +42,11 @@ public sealed class AdminSecurityHttpTests
         var routes = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth")
                 && !e.RoutePattern.RawText.StartsWith("/api/customer/")
-                && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
+                && !e.RoutePattern.RawText.StartsWith("/api/shop/")
+                && e.Metadata.GetMetadata<PaymentWebhookMetadata>() is null);
+        var callbacks = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
+            .Where(e => e.Metadata.GetMetadata<PaymentWebhookMetadata>() is not null);
+        Assert.Equal("/api/payments/mollie/webhook", Assert.Single(callbacks).RoutePattern.RawText);
         foreach (var endpoint in routes)
         foreach (var method in endpoint.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods.Where(m => m != "GET"))
         {
@@ -60,7 +64,8 @@ public sealed class AdminSecurityHttpTests
         var routes = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => !e.RoutePattern.RawText!.StartsWith("/api/auth")
                 && !e.RoutePattern.RawText.StartsWith("/api/customer/")
-                && !e.RoutePattern.RawText.StartsWith("/api/shop/"));
+                && !e.RoutePattern.RawText.StartsWith("/api/shop/")
+                && e.Metadata.GetMetadata<PaymentWebhookMetadata>() is null);
         Assert.NotEmpty(routes);
         foreach (var endpoint in routes)
         foreach (var method in endpoint.Metadata.GetMetadata<HttpMethodMetadata>()!.HttpMethods)
@@ -268,13 +273,14 @@ internal sealed class SecurityHost : IAsyncDisposable
     private readonly string databaseName = "MyShopTests_" + Guid.NewGuid().ToString("N");
     private string connection = "";
     private readonly Dictionary<string, string?>? configuration;
+    private readonly Action<IServiceCollection>? configureServices;
 
-    private SecurityHost(Dictionary<string, string?>? configuration = null) =>
-        this.configuration = configuration;
+    private SecurityHost(Dictionary<string, string?>? configuration = null, Action<IServiceCollection>? configureServices = null)
+    { this.configuration = configuration; this.configureServices = configureServices; }
 
-    internal static async Task<SecurityHost> Create(Dictionary<string, string?>? configuration = null)
+    internal static async Task<SecurityHost> Create(Dictionary<string, string?>? configuration = null, Action<IServiceCollection>? configureServices = null)
     {
-        var host = new SecurityHost(configuration);
+        var host = new SecurityHost(configuration, configureServices);
         try { await host.Start(); return host; }
         catch { await host.DisposeAsync(); throw; }
     }
@@ -293,6 +299,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         builder.Services.AddMyShop(builder.Configuration);
         builder.Services.AddAdminSecurity(true);
         builder.Services.Configure<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme, options => options.TimeProvider = Clock);
+        configureServices?.Invoke(builder.Services);
         App = builder.Build();
         App.UseAdminSecurity();
         App.MapAdminEndpoints();

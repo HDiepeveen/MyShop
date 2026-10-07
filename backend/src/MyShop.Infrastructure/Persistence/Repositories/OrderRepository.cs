@@ -32,7 +32,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
         AddAsync(order, checkoutToken, customerUserId, stock, null, null, cancellationToken);
 
     public Task<OrderReceipt?> AddPaidAsync(Order order, Guid checkoutToken, string paymentReference,
-        IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken)
+        IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken, string? customerUserId = null)
     {
         if (order.PaymentMethod != OrderPaymentMethod.Online)
             throw new ArgumentException("Paid orders must use online payment.", nameof(order));
@@ -40,7 +40,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
         paymentReference = paymentReference.Trim();
         if (paymentReference.Length > 100)
             throw new ArgumentException("Payment reference must contain at most 100 characters.", nameof(paymentReference));
-        return AddAsync(order, checkoutToken, null, stock, DateTimeOffset.UtcNow, paymentReference,
+        return AddAsync(order, checkoutToken, customerUserId, stock, DateTimeOffset.UtcNow, paymentReference,
             cancellationToken);
     }
 
@@ -84,7 +84,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             if (!isUntracked)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return null;
+                return await GetByCheckoutTokenAsync(checkoutToken, cancellationToken);
             }
         }
         var persistence = new OrderPersistence

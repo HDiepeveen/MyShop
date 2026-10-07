@@ -9,7 +9,7 @@ public sealed record StartOnlinePaymentLine(Guid ProductId, Guid VariantId, int 
     decimal ExpectedAmount, string ExpectedCurrency);
 public sealed record StartOnlinePaymentCommand(Guid CheckoutToken, Guid DeliveryMethodId,
     string CustomerName, string Email, string AddressLine, string PostalCode, string City,
-    string CountryCode, IReadOnlyList<StartOnlinePaymentLine> Lines);
+    string CountryCode, IReadOnlyList<StartOnlinePaymentLine> Lines, string? CustomerUserId = null);
 public enum StartOnlinePaymentFailure { CartUnavailable, PaymentUnavailable, DeliveryUnavailable }
 public sealed record OnlinePaymentStart(Guid CheckoutToken, string ProviderName, string PaymentReference,
     string ProviderPaymentId, Uri CheckoutUrl, IReadOnlyList<OrderTotalSnapshot> Totals,
@@ -91,9 +91,10 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
             quote.Lines.Select(line => new OnlinePaymentStartLineSnapshot(line.ProductId,
                 line.VariantId, line.Name!, line.Variant!, line.Quantity, line.Amount!.Value,
                 line.Currency!, line.Total!.Value, line.VatRate, line.VatExempt)).ToArray(), totals, deliverySnapshot,
-            DateTimeOffset.UtcNow);
+            DateTimeOffset.UtcNow, command.CustomerUserId);
         await onlinePaymentStarts.SaveAsync(payment, cancellationToken);
-        return new(ToStart(payment), null);
+        var stored = await onlinePaymentStarts.GetByCheckoutTokenAsync(command.CheckoutToken, cancellationToken);
+        return new(ToStart(stored ?? payment), null);
     }
 
     private static OnlinePaymentStart ToStart(OnlinePaymentStartRecord payment) =>

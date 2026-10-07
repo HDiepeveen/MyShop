@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CheckoutOrderLine, OnlinePaymentStart, OrderApi, OrderReceipt } from './order.api';
 import { errorMessage } from '../catalog/error-message';
+import { PendingPayment } from './pending-payment';
 import { Auth } from '../auth/auth';
 import { CustomerAccountApi } from '../customer/customer-account.api';
 
@@ -85,10 +86,15 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
           <section class="notice" aria-label="Online betaalstart">
             <p>Betaalprovider: {{ payment.providerName }}</p>
             <p>Betalingskenmerk: {{ payment.paymentReference }}</p>
-            <p>Providerbetaling: {{ payment.providerPaymentId }}</p>
-            <p><a [href]="payment.checkoutUrl">Testbetaling openen</a></p>
+            @if (payment.providerName === 'TestPay') {
+              <p>Providerbetaling: {{ payment.providerPaymentId }}</p>
+            }
+            @if (payment.providerName === 'Mollie') {
+              <p>Testmodus: er wordt geen echt geld afgeschreven.</p>
+            }
+            <p><a [href]="payment.checkoutUrl">Betaalpagina openen</a></p>
             <button type="button" [disabled]="busy()" (click)="completeOnlinePayment(payment)">
-              {{ busy() ? 'Betaling afronden…' : 'Testbetaling afronden' }}
+              {{ busy() ? 'Betaalstatus controleren…' : 'Betaalstatus controleren' }}
             </button>
             <p>Bezorging: {{ payment.deliveryMethod.name }}</p>
             <ul>
@@ -107,6 +113,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
 })
 export class ShopCheckout implements OnInit {
   private readonly api = inject(OrderApi);
+  private readonly pending = inject(PendingPayment);
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(Auth);
   private readonly account = inject(CustomerAccountApi);
@@ -199,7 +206,10 @@ export class ShopCheckout implements OnInit {
     }
     this.failure.set('');
     this.notice.set('');
-    this.onlinePayment.set(null);
+    if (this.onlinePayment()) {
+      this.failure.set('Controleer eerst de bestaande betaalstatus voordat je opnieuw afrekent.');
+      return;
+    }
     this.busy.set(true);
     this.busyChanged.emit(true);
     const request = {
@@ -234,6 +244,7 @@ export class ShopCheckout implements OnInit {
             this.busyChanged.emit(false);
             this.notice.set(payment.message);
             this.onlinePayment.set(payment);
+            this.pending.save(payment.checkoutToken, request.lines);
           },
           error: (error) => this.showFailure(error),
         });
@@ -272,6 +283,15 @@ export class ShopCheckout implements OnInit {
   }
 
   private showFailure(error: unknown) {
+    if (
+      error instanceof HttpErrorResponse &&
+      ['paymentFailed', 'paymentCanceled', 'paymentExpired'].includes(error.error?.code)
+    ) {
+      const payment = this.onlinePayment();
+      if (payment) this.pending.clear(payment.checkoutToken);
+      this.onlinePayment.set(null);
+      this.checkoutToken = crypto.randomUUID();
+    }
     this.busy.set(false);
     this.busyChanged.emit(false);
     this.failure.set(

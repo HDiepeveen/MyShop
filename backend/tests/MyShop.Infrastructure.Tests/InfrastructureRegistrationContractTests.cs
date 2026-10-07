@@ -45,7 +45,13 @@ public sealed class InfrastructureRegistrationContractTests
 
     [Fact] public void Registration_HasExpectedServiceCount() => Assert.True(BuildServices().Length >= 15);
     [Fact] public void Registration_ContainsDbContext() => Assert.Single(BuildServices(), d => d.ServiceType == typeof(MyShopDbContext));
-    [Fact] public void Registration_HasUniqueServiceTypes() { var ds = BuildServices(); Assert.Equal(ds.Length, ds.Select(d => d.ServiceType).Distinct().Count()); }
+    // HttpClient's framework filters use multiple implementations; application registrations must remain unique.
+    [Fact] public void Registration_HasUniqueApplicationServiceTypes()
+    {
+        var ds = BuildServices().Where(d => d.ServiceType.Namespace?.StartsWith("MyShop.", StringComparison.Ordinal) == true).ToArray();
+        Assert.NotEmpty(ds);
+        Assert.Equal(ds.Length, ds.Select(d => d.ServiceType).Distinct().Count());
+    }
     [Fact] public void Registration_HasScopedApplicationLifetimes() => Assert.All(Services.Append(typeof(MyShopDbContext)), s => Assert.Equal(ServiceLifetime.Scoped, Assert.Single(Descriptors(s)).Lifetime));
     [Fact] public void Registration_HasFactoriesForRepositories() => Assert.All(Services, s => Assert.NotNull(Assert.Single(Descriptors(s)).ImplementationFactory));
     [Fact] public void Registration_HasNoNullDescriptors() => Assert.All(BuildServices(), Assert.NotNull);

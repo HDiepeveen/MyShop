@@ -15,6 +15,7 @@ internal sealed class OnlinePaymentStartPersistenceConfiguration : IEntityTypeCo
         builder.Property(payment => payment.PaymentReference).IsRequired().HasMaxLength(100);
         builder.Property(payment => payment.ProviderPaymentId).IsRequired().HasMaxLength(200);
         builder.Property(payment => payment.CheckoutUrl).IsRequired().HasMaxLength(2048);
+        builder.Property(payment => payment.CustomerUserId).HasMaxLength(450);
         builder.Property(payment => payment.CustomerName).IsRequired().HasMaxLength(200);
         builder.Property(payment => payment.Email).IsRequired().HasMaxLength(320);
         builder.Property(payment => payment.AddressLine).IsRequired().HasMaxLength(200);

@@ -103,6 +103,11 @@ export const routes: Routes = [
     path: 'winkel',
     children: [
       {
+        path: 'betaling',
+        loadComponent: () => import('./checkout/payment-return').then((m) => m.PaymentReturn),
+        title: 'Betaling · MyShop',
+      },
+      {
         path: '',
         pathMatch: 'full',
         loadComponent: () => import('./shop/shop-list').then((m) => m.ShopList),

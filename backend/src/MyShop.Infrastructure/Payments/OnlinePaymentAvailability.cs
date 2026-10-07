@@ -11,7 +11,9 @@ internal sealed class OnlinePaymentAvailability : IOnlinePaymentAvailability
     public OnlinePaymentAvailability(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
-        ProviderName = Normalize(configuration[ProviderKey]);
+        ProviderName = string.Equals(configuration[ProviderKey]?.Trim(), "Mollie", StringComparison.OrdinalIgnoreCase)
+            ? (new MolliePaymentConfiguration(configuration).IsConfigured ? "Mollie" : null)
+            : Normalize(configuration[ProviderKey]);
     }
 
     public bool IsConfigured => ProviderName is not null;

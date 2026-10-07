@@ -18,6 +18,7 @@ public static class StorefrontEndpoints
         endpoints.MapPlaceOrder();
         endpoints.MapStartOnlinePayment();
         endpoints.MapCompleteOnlinePayment();
+        endpoints.MapMollieWebhook();
         endpoints.MapGet("/api/shop/categories", async (
             [FromServices] ListStorefrontCategories useCase, CancellationToken cancellationToken) =>
             Results.Ok(await useCase.ExecuteAsync(cancellationToken))).AllowAnonymous();

@@ -15,7 +15,7 @@ public static class CompleteOnlinePaymentEndpoint
     private static async Task<IResult> ExecuteAsync(Guid checkoutToken, string? providerPaymentId,
         [FromServices] CompleteOnlinePayment useCase, CancellationToken cancellationToken)
     {
-        if (checkoutToken == Guid.Empty || string.IsNullOrWhiteSpace(providerPaymentId))
+        if (checkoutToken == Guid.Empty)
             return Results.BadRequest(new { code = "invalidPayment" });
         try
         {
@@ -32,6 +32,10 @@ public static class CompleteOnlinePaymentEndpoint
                     code = "paymentMismatch",
                     message = "De betaling hoort niet bij deze checkout. Start de online betaling opnieuw."
                 }),
+                CompleteOnlinePaymentFailure.PaymentPending => Results.Conflict(new { code = "paymentPending", message = "De betaling is nog niet bevestigd. Controleer de betaalstatus opnieuw." }),
+                CompleteOnlinePaymentFailure.PaymentFailed => Results.Conflict(new { code = "paymentFailed", message = "De betaling is mislukt. Je winkelmand is bewaard; je kunt opnieuw afrekenen." }),
+                CompleteOnlinePaymentFailure.PaymentCanceled => Results.Conflict(new { code = "paymentCanceled", message = "De betaling is geannuleerd. Je winkelmand is bewaard; je kunt opnieuw afrekenen." }),
+                CompleteOnlinePaymentFailure.PaymentExpired => Results.Conflict(new { code = "paymentExpired", message = "De betaling is verlopen. Je winkelmand is bewaard; je kunt opnieuw afrekenen." }),
                 CompleteOnlinePaymentFailure.CartUnavailable => Results.Conflict(new
                 {
                     code = "cartUnavailable",
@@ -42,6 +46,10 @@ public static class CompleteOnlinePaymentEndpoint
                     result.Receipt.DeliveryMethod is null ? null : MapDelivery(result.Receipt.DeliveryMethod))),
                 _ => throw new InvalidOperationException()
             };
+        }
+        catch (OnlinePaymentProviderException)
+        {
+            return Results.Json(new { code = "providerUnavailable", message = "De betaalstatus kon niet worden opgehaald. Controleer opnieuw; start nog geen nieuwe betaling." }, statusCode: 503);
         }
         catch (ArgumentException)
         {

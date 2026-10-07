@@ -7,6 +7,7 @@ internal sealed class OnlinePaymentStartPersistence
     public string PaymentReference { get; set; } = null!;
     public string ProviderPaymentId { get; set; } = null!;
     public string CheckoutUrl { get; set; } = null!;
+    public string? CustomerUserId { get; set; }
     public string CustomerName { get; set; } = null!;
     public string Email { get; set; } = null!;
     public string AddressLine { get; set; } = null!;

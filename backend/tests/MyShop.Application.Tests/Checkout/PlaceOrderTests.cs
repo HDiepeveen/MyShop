@@ -184,7 +184,7 @@ public sealed class PlaceOrderTests
                     order.DeliveryMethod.Fee.Currency)));
         }
         public Task<OrderReceipt?> AddPaidAsync(Order order, Guid checkoutToken, string paymentReference,
-            IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken) =>
+            IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken, string? customerUserId = null) =>
             throw new NotSupportedException();
     }
 }

@@ -12,7 +12,7 @@ public sealed record OnlinePaymentStartRecord(Guid CheckoutToken, string Provide
     OnlinePaymentStartCustomerSnapshot Customer, OnlinePaymentStartAddressSnapshot Address,
     IReadOnlyList<OnlinePaymentStartLineSnapshot> Lines,
     IReadOnlyList<OrderTotalSnapshot> Totals, OrderDeliveryMethodSnapshot DeliveryMethod,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt, string? CustomerUserId = null);
 
 public interface IOnlinePaymentStartRepository
 {

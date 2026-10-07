@@ -157,7 +157,8 @@ describe('Shop checkout', () => {
     expect(content).toContain('De online betaalprovider is klaar om gekoppeld te worden.');
     expect(content).toContain('Betaalprovider: Mollie');
     expect(content).toContain('Betalingskenmerk: OP-123');
-    expect(content).toContain('Providerbetaling: test_123');
+    expect(content).not.toContain('Providerbetaling:');
+    expect(content).toContain('Testmodus: er wordt geen echt geld afgeschreven.');
     const link = fixture.nativeElement.querySelector('a');
     expect(link.getAttribute('href')).toBe('https://payments.example.test/test_123');
     expect(content).toContain('Bezorging: Pakketdienst');
@@ -167,7 +168,7 @@ describe('Shop checkout', () => {
       'button',
     ) as NodeListOf<HTMLButtonElement>;
     const button = Array.from(buttons).find((item) =>
-      item.textContent?.includes('Testbetaling afronden'),
+      item.textContent?.includes('Betaalstatus controleren'),
     )!;
     button.click();
     http.expectOne('/api/auth/csrf').flush(null);

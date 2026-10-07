@@ -24,7 +24,7 @@ public sealed class CompleteOnlinePaymentTests
     }
 
     [Fact]
-    public async Task RepeatedCheckoutTokenReturnsExistingReceiptWithoutLoadingPaymentStart()
+    public async Task RepeatedCheckoutTokenReturnsExistingReceiptWithoutVerifyingAgain()
     {
         var scenario = new Scenario();
         scenario.Orders.Existing = new(Guid.NewGuid(), "MS-EXISTING", DateTimeOffset.UtcNow,
@@ -33,7 +33,8 @@ public sealed class CompleteOnlinePaymentTests
         var result = await scenario.Execute();
 
         Assert.Equal("MS-EXISTING", result.Receipt!.Number);
-        Assert.Equal(0, scenario.PaymentStarts.Calls);
+        Assert.Equal(1, scenario.PaymentStarts.Calls);
+        Assert.Equal(0, scenario.Status.Calls);
         Assert.Null(scenario.Orders.Saved);
     }
 
@@ -84,14 +85,47 @@ public sealed class CompleteOnlinePaymentTests
             DateTimeOffset.UtcNow);
         public PaymentStarts PaymentStarts { get; }
         public Orders Orders { get; } = new();
+        public StatusReader Status { get; } = new();
 
         public Scenario() => PaymentStarts = new(Payment);
 
         public Task<CompleteOnlinePaymentResult> Execute()
         {
-            var useCase = new CompleteOnlinePayment(PaymentStarts, Orders);
+            var useCase = new CompleteOnlinePayment(PaymentStarts, Orders, Status);
             return useCase.ExecuteAsync(new(Token, ProviderPaymentId), CancellationToken.None);
         }
+    }
+
+    [Theory]
+    [InlineData(OnlinePaymentStatus.Open, CompleteOnlinePaymentFailure.PaymentPending)]
+    [InlineData(OnlinePaymentStatus.Pending, CompleteOnlinePaymentFailure.PaymentPending)]
+    [InlineData(OnlinePaymentStatus.Authorized, CompleteOnlinePaymentFailure.PaymentPending)]
+    [InlineData(OnlinePaymentStatus.Failed, CompleteOnlinePaymentFailure.PaymentFailed)]
+    [InlineData(OnlinePaymentStatus.Canceled, CompleteOnlinePaymentFailure.PaymentCanceled)]
+    [InlineData(OnlinePaymentStatus.Expired, CompleteOnlinePaymentFailure.PaymentExpired)]
+    public async Task DoesNotPlaceOrderUntilProviderConfirmsPayment(OnlinePaymentStatus status, CompleteOnlinePaymentFailure failure)
+    {
+        var scenario = new Scenario();
+        scenario.Status.Result = new(status, true);
+        Assert.Equal(failure, (await scenario.Execute()).Failure);
+        Assert.Null(scenario.Orders.Saved);
+    }
+
+    [Fact]
+    public async Task RejectsPaidPaymentWithMismatchingAmountOrMetadata()
+    {
+        var scenario = new Scenario();
+        scenario.Status.Result = new(OnlinePaymentStatus.Paid, false);
+        Assert.Equal(CompleteOnlinePaymentFailure.PaymentMismatch, (await scenario.Execute()).Failure);
+        Assert.Null(scenario.Orders.Saved);
+    }
+
+    private sealed class StatusReader : IOnlinePaymentStatusReader
+    {
+        public OnlinePaymentVerification Result { get; set; } = new(OnlinePaymentStatus.Paid, true);
+        public int Calls { get; private set; }
+        public Task<OnlinePaymentVerification> VerifyAsync(OnlinePaymentStartRecord payment, CancellationToken cancellationToken)
+        { Calls++; return Task.FromResult(Result); }
     }
 
     private sealed class PaymentStarts(OnlinePaymentStartRecord? payment) : IOnlinePaymentStartRepository
@@ -121,7 +155,7 @@ public sealed class CompleteOnlinePaymentTests
             IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
         public Task<OrderReceipt?> AddPaidAsync(Order order, Guid checkoutToken, string paymentReference,
-            IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken)
+            IReadOnlyList<StockReservation> stock, CancellationToken cancellationToken, string? customerUserId = null)
         {
             if (RejectStock) return Task.FromResult<OrderReceipt?>(null);
             Saved = order; Token = checkoutToken; PaymentReference = paymentReference;

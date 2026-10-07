@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Claims;
+using MyShop.Api.Security;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Checkout.StartOnlinePayment;
 using MyShop.Application.Checkout.Abstractions;
@@ -11,7 +13,7 @@ public static class StartOnlinePaymentEndpoint
         endpoints.MapPost("/api/shop/online-payments", ExecuteAsync).AllowAnonymous()
             .RequireRateLimiting("storefront-order");
 
-    private static async Task<IResult> ExecuteAsync(StartOnlinePaymentRequest? request,
+    private static async Task<IResult> ExecuteAsync(StartOnlinePaymentRequest? request, HttpContext context,
         [FromServices] StartOnlinePayment useCase, CancellationToken cancellationToken)
     {
         if (request?.Lines is null || request.Lines.Count is < 1 or > 20)
@@ -29,7 +31,8 @@ public static class StartOnlinePaymentEndpoint
             }
             var result = await useCase.ExecuteAsync(new(request.CheckoutToken, request.DeliveryMethodId,
                 request.CustomerName, request.Email, request.AddressLine, request.PostalCode,
-                request.City, request.CountryCode, lines),
+                request.City, request.CountryCode, lines, context.User.IsInRole(AdminSecurity.CustomerRole)
+                    ? context.User.FindFirstValue(ClaimTypes.NameIdentifier) : null),
                 cancellationToken);
             return result.Failure switch
             {
@@ -51,10 +54,14 @@ public static class StartOnlinePaymentEndpoint
                 null => Results.Ok(new StartOnlinePaymentResponse(result.Payment!.CheckoutToken,
                     result.Payment.ProviderName, result.Payment.PaymentReference, result.Payment.ProviderPaymentId,
                     result.Payment.CheckoutUrl.ToString(),
-                    "De online betaalprovider is klaar om gekoppeld te worden.",
+                    "Open de betaalpagina om je bestelling af te rekenen.",
                     result.Payment.Totals.Select(MapTotal).ToArray(), MapDelivery(result.Payment.DeliveryMethod))),
                 _ => throw new InvalidOperationException()
             };
+        }
+        catch (OnlinePaymentProviderException)
+        {
+            return Results.Json(new { code = "providerUnavailable", message = "De betaalprovider is tijdelijk niet bereikbaar. Probeer opnieuw." }, statusCode: 503);
         }
         catch (ArgumentException)
         {

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Antiforgery;
+using MyShop.Api.Checkout;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -56,6 +57,9 @@ public static class AdminSecurity
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy("payment-webhook", context => RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
+                { PermitLimit = 100, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
             options.AddPolicy("admin-login", context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions
                 { PermitLimit = 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -83,7 +87,8 @@ public static class AdminSecurity
         {
             if (context.Request.Path.StartsWithSegments("/api"))
             {
-                if (!HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method) && !HttpMethods.IsOptions(context.Request.Method))
+                if (context.GetEndpoint()?.Metadata.GetMetadata<PaymentWebhookMetadata>() is null
+                    && !HttpMethods.IsGet(context.Request.Method) && !HttpMethods.IsHead(context.Request.Method) && !HttpMethods.IsOptions(context.Request.Method))
                 {
                     try { await context.RequestServices.GetRequiredService<IAntiforgery>().ValidateRequestAsync(context); }
                     catch (AntiforgeryValidationException)

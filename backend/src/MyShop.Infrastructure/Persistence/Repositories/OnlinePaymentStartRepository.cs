@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using MyShop.Application.Checkout.Abstractions;
 using MyShop.Infrastructure.Persistence.Models;
 
@@ -33,6 +34,7 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
             PaymentReference = payment.PaymentReference,
             ProviderPaymentId = payment.ProviderPaymentId,
             CheckoutUrl = payment.CheckoutUrl.ToString(),
+            CustomerUserId = payment.CustomerUserId,
             CustomerName = payment.Customer.Name,
             Email = payment.Customer.Email,
             AddressLine = payment.Address.AddressLine,
@@ -66,7 +68,14 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
                 Amount = total.Amount
             }).ToArray()
         });
-        await context.SaveChangesAsync(cancellationToken);
+        try { await context.SaveChangesAsync(cancellationToken); }
+        catch (DbUpdateException exception) when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            foreach (var entry in context.ChangeTracker.Entries().Where(entry => entry.State == EntityState.Added).ToArray())
+                entry.State = EntityState.Detached;
+            var existing = await GetByCheckoutTokenAsync(payment.CheckoutToken, cancellationToken);
+            if (existing?.ProviderPaymentId != payment.ProviderPaymentId) throw;
+        }
     }
 
     private static OnlinePaymentStartRecord Map(OnlinePaymentStartPersistence payment) =>
@@ -82,5 +91,5 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
                 .Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
             new OrderDeliveryMethodSnapshot(payment.DeliveryMethodId, payment.DeliveryMethodName,
                 payment.DeliveryDescription, payment.DeliveryAmount, payment.DeliveryCurrency),
-            payment.CreatedAt);
+            payment.CreatedAt, payment.CustomerUserId);
 }
