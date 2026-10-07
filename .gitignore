@@ -44,5 +44,6 @@ appsettings.Development.json
 appsettings.*.json
 !appsettings.json
 secrets.json
+.mail/
 *.pem
 *.key

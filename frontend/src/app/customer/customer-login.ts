@@ -47,6 +47,7 @@ import { errorMessage } from '../catalog/error-message';
         {{ busy() ? 'Inloggen…' : 'Inloggen' }}
       </button>
     </form>
+    <p><a routerLink="/winkel/wachtwoord-vergeten">Wachtwoord vergeten?</a></p>
     <p>Nog geen account? <a routerLink="/winkel/registreren">Registreren</a></p>`,
 })
 export class CustomerLogin {

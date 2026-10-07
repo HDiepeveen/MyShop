@@ -13,7 +13,7 @@ public sealed class MyShopDesignTimeDbContextFactoryTests
         Assert.Equal("Microsoft.EntityFrameworkCore.SqlServer", context.Database.ProviderName);
         Assert.Equal("MyShopDesignTime", context.Database.GetDbConnection().Database);
         Assert.Equal(ConnectionState.Closed, context.Database.GetDbConnection().State);
-        Assert.Equal(28, context.Model.GetEntityTypes().Count());
+        Assert.Equal(29, context.Model.GetEntityTypes().Count());
     }
 
     [Fact]

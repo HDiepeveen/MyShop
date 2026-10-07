@@ -9,6 +9,15 @@ import { errorMessage } from '../catalog/error-message';
   imports: [FormsModule, RouterLink],
   template: `<div class="eyebrow">Mijn account</div>
     <h1>Profiel en afleveradres</h1>
+    @if (loaded() && emailConfirmed === false) {
+      <p>
+        Je e-mailadres is nog niet bevestigd.
+        <a routerLink="/winkel/bevestiging-aanvragen">Bevestigingsmail aanvragen</a>
+      </p>
+    }
+    @if (loaded() && emailConfirmed === true) {
+      <p>E-mailadres bevestigd.</p>
+    }
     @if (loading()) {
       <p role="status">Profiel ophalen…</p>
     }
@@ -71,6 +80,7 @@ export class CustomerProfile {
   readonly failure = signal('');
   readonly message = signal('');
   email = '';
+  emailConfirmed: boolean | undefined;
   name = '';
   addressLine = '';
   postalCode = '';
@@ -82,6 +92,7 @@ export class CustomerProfile {
   }
   private assign(profile: Profile) {
     this.email = profile.email;
+    this.emailConfirmed = profile.emailConfirmed;
     this.name = profile.name ?? '';
     this.addressLine = profile.addressLine ?? '';
     this.postalCode = profile.postalCode ?? '';

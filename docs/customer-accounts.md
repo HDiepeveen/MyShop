@@ -44,7 +44,7 @@ Alle profiel- en bestelroutes vereisen de rol `Customer`.
 
 Klanten kunnen bovendien gepubliceerde producten op een persoonlijke verlanglijst bewaren; zie
 [Verlanglijst](customer-wishlist.md).
-E-mailbevestiging en wachtwoordherstel per e-mail volgen in afzonderlijke onderdelen.
+E-mailbevestiging en wachtwoordherstel voor klanten zijn beschikbaar; zie [Klantmail](email.md) voor de schermen, tokenregels en SMTP-configuratie.
 
 ## Zoeken en filteren in Mijn bestellingen
 

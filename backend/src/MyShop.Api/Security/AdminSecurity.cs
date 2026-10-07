@@ -22,6 +22,7 @@ public static class AdminSecurity
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         }).AddEntityFrameworkStores<MyShopDbContext>().AddDefaultTokenProviders();
         services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
+        services.Configure<DataProtectionTokenProviderOptions>(options => options.TokenLifespan = TimeSpan.FromHours(2));
         services.ConfigureApplicationCookie(options =>
         {
             options.Cookie.Name = "MyShop.Admin";

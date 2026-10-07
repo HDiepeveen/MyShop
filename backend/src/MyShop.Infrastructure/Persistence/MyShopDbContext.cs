@@ -28,6 +28,7 @@ public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) :
     internal DbSet<OnlinePaymentStartTotalPersistence> OnlinePaymentStartTotals => Set<OnlinePaymentStartTotalPersistence>();
     internal DbSet<CustomerProfilePersistence> CustomerProfiles => Set<CustomerProfilePersistence>();
     internal DbSet<WishlistItemPersistence> WishlistItems => Set<WishlistItemPersistence>();
+    internal DbSet<EmailMessagePersistence> EmailMessages => Set<EmailMessagePersistence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

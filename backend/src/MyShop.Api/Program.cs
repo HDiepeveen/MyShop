@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args.Where(arg => arg is not "--creat
 builder.Services.AddMyShop(builder.Configuration);
 
 builder.Services.AddAdminSecurity(builder.Environment.IsDevelopment());
+builder.Services.AddHostedService<MyShop.Infrastructure.Notifications.EmailDeliveryWorker>();
 
 var app = builder.Build();
 if (args.Contains("--create-admin") || args.Contains("--reset-admin"))
@@ -23,6 +24,7 @@ if (!app.Environment.IsDevelopment()) { app.UseHsts(); app.UseHttpsRedirection()
 app.UseAdminSecurity();
 app.MapAdminEndpoints();
 app.MapCustomerEndpoints();
+app.MapCustomerEmailEndpoints();
 app.MapCustomerOrderEndpoints();
 app.MapCustomerWishlistEndpoints();
 app.MapCustomerManagementEndpoints();

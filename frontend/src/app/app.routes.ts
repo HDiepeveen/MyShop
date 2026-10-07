@@ -98,6 +98,19 @@ export const routes: Routes = [
         loadComponent: () => import('./shop/shop-cart').then((m) => m.ShopCart),
         title: 'Winkelmand · MyShop',
       },
+      ...(
+        [
+          'wachtwoord-vergeten',
+          'wachtwoord-herstellen',
+          'e-mail-bevestigen',
+          'bevestiging-aanvragen',
+        ] as const
+      ).map((path, index) => ({
+        path,
+        loadComponent: () => import('./customer/customer-email').then((m) => m.CustomerEmail),
+        data: { emailMode: ['forgot', 'reset', 'confirm', 'resend'][index] },
+        title: 'Account herstellen · MyShop',
+      })),
       {
         path: 'inloggen',
         loadComponent: () => import('./customer/customer-login').then((m) => m.CustomerLogin),
@@ -117,8 +130,7 @@ export const routes: Routes = [
       {
         path: 'account/verlanglijst',
         canActivate: [customerGuard],
-        loadComponent: () =>
-          import('./customer/customer-wishlist').then((m) => m.CustomerWishlist),
+        loadComponent: () => import('./customer/customer-wishlist').then((m) => m.CustomerWishlist),
         title: 'Mijn verlanglijst · MyShop',
       },
       {

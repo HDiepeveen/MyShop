@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 
 export interface CustomerProfile {
   email: string;
+  emailConfirmed?: boolean;
   name: string | null;
   addressLine: string | null;
   postalCode: string | null;
@@ -14,7 +15,9 @@ export interface CustomerProfile {
 @Injectable({ providedIn: 'root' })
 export class CustomerAccountApi {
   private readonly http = inject(HttpClient);
-  profile() { return this.http.get<CustomerProfile>('/api/customer/profile'); }
+  profile() {
+    return this.http.get<CustomerProfile>('/api/customer/profile');
+  }
   update(profile: Omit<CustomerProfile, 'email'>) {
     return this.http.put<CustomerProfile>('/api/customer/profile', profile);
   }

@@ -53,3 +53,4 @@ See [Beheerdersdashboard](docs/admin-dashboard.md) for the protected management 
 See [Bezorgopties](docs/delivery-methods.md) for managed checkout choices and immutable order delivery snapshots.
 
 See [Verlanglijst](docs/customer-wishlist.md) for customer product saving and availability behavior.
+See [Klantmail](docs/email.md) for email confirmation, customer password recovery, order confirmations and SMTP configuration.

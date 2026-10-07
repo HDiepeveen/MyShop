@@ -25,7 +25,9 @@ public static class CustomerEndpoints
 
     private static async Task<IResult> RegisterAsync(CustomerRegistrationRequest request,
         UserManager<IdentityUser> users, RoleManager<IdentityRole> roles,
-        SignInManager<IdentityUser> signIn)
+        SignInManager<IdentityUser> signIn, MyShop.Application.Notifications.IEmailQueue emails,
+        IConfiguration configuration, IHostEnvironment environment,
+        MyShop.Infrastructure.Persistence.MyShopDbContext context, CancellationToken cancellationToken)
     {
         if (!ValidCredentials(request.Email, request.Password)) return InvalidRegistration();
         var email = request.Email.Trim();
@@ -35,6 +37,7 @@ public static class CustomerEndpoints
             if (!roleResult.Succeeded && !await roles.RoleExistsAsync(AdminSecurity.CustomerRole))
                 return Results.Problem(statusCode: 503);
         }
+        await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         var user = new IdentityUser { UserName = email, Email = email };
         var created = await users.CreateAsync(user, request.Password);
         if (!created.Succeeded)
@@ -47,6 +50,8 @@ public static class CustomerEndpoints
             await users.DeleteAsync(user);
             return Results.Problem(statusCode: 503);
         }
+        await CustomerEmailEndpoints.QueueConfirmationAsync(user, users, emails, configuration, environment, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         await signIn.SignInAsync(user, isPersistent: false);
         return Results.NoContent();
     }
@@ -77,7 +82,7 @@ public static class CustomerEndpoints
         var profile = await useCase.ExecuteAsync(user.Id, cancellationToken);
         return Results.Ok(new CustomerProfileResponse(user.Email!, profile?.Name,
             profile?.AddressLine, profile?.PostalCode, profile?.City, profile?.CountryCode,
-            profile?.Revision));
+            profile?.Revision, user.EmailConfirmed));
     }
 
     private static async Task<IResult> UpdateProfileAsync(CustomerProfileRequest request,
@@ -94,7 +99,7 @@ public static class CustomerEndpoints
                 ? Results.Conflict(new { code = "concurrency", message = "Je profiel is intussen gewijzigd. Vernieuw de pagina." })
                 : Results.Ok(new CustomerProfileResponse(user.Email!, result.Profile!.Name,
                     result.Profile.AddressLine, result.Profile.PostalCode, result.Profile.City,
-                    result.Profile.CountryCode, result.Profile.Revision));
+                    result.Profile.CountryCode, result.Profile.Revision, user.EmailConfirmed));
         }
         catch (ArgumentException exception)
         {
@@ -117,4 +122,4 @@ public sealed record CustomerLoginRequest(string Email, string Password);
 public sealed record CustomerProfileRequest(string Name, string AddressLine, string PostalCode,
     string City, string CountryCode, Guid? Revision);
 public sealed record CustomerProfileResponse(string Email, string? Name, string? AddressLine,
-    string? PostalCode, string? City, string? CountryCode, Guid? Revision);
+    string? PostalCode, string? City, string? CountryCode, Guid? Revision, bool EmailConfirmed = false);

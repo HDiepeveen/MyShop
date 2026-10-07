@@ -29,6 +29,7 @@ public static class InfrastructureServiceCollectionExtensions
 
         services.AddDbContext<MyShopDbContext>(options =>
             options.UseSqlServer(connectionString));
+        services.AddScoped<MyShop.Application.Notifications.IEmailQueue, MyShop.Infrastructure.Notifications.EmailQueue>();
         services.AddScoped<IProductRepository>(provider =>
             new ProductRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IProductDeleter>(provider =>
