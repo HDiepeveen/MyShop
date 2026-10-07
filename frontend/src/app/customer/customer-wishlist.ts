@@ -49,6 +49,19 @@ import { ShopImage } from '../shop/shop-image';
     @if (notice()) {
       <p role="status">{{ notice() }}</p>
     }
+    @if (removedItem(); as item) {
+      <div class="toolbar">
+        <span>{{ item.name }} verwijderd.</span>
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="loading() || !!removing()"
+          (click)="undoRemoval()"
+        >
+          Verwijderen ongedaan maken
+        </button>
+      </div>
+    }
     @if (error()) {
       <div class="panel" role="alert">
         <p>{{ error() }}</p>
@@ -137,6 +150,7 @@ export class CustomerWishlist {
   readonly notice = signal('');
   readonly removing = signal('');
   readonly removeError = signal('');
+  readonly removedItem = signal<WishlistItem | null>(null);
   readonly offset = signal(0);
   readonly Math = Math;
   readonly sort = signal<WishlistSort>('newest');
@@ -210,6 +224,30 @@ export class CustomerWishlist {
         },
       });
   }
+  undoRemoval() {
+    const item = this.removedItem();
+    if (!item || this.loading() || this.removing()) return;
+    this.removing.set(item.productId);
+    this.removeError.set('');
+    this.notice.set('');
+    this.api
+      .add(item.productId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.removedItem.set(null);
+          this.removing.set('');
+          this.load(this.offset());
+          this.notice.set('Teruggezet op je verlanglijst.');
+        },
+        error: () => {
+          this.removing.set('');
+          this.removeError.set(
+            'Terugzetten is niet gelukt. Het product is mogelijk niet meer beschikbaar. Je kunt het opnieuw proberen.',
+          );
+        },
+      });
+  }
   remove(item: WishlistItem) {
     if (
       this.loading() ||
@@ -236,6 +274,7 @@ export class CustomerWishlist {
                 }
               : page,
           );
+          this.removedItem.set(item.isAvailable ? item : null);
           this.notice.set('Verwijderd van je verlanglijst.');
           this.removing.set('');
         },

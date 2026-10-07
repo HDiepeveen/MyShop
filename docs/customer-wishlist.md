@@ -15,3 +15,7 @@ De klant kan zoeken op een deel van de productnaam en sorteren op Laatst toegevo
 GET /api/customer/wishlist accepteert search (maximaal 200 tekens na trimmen) en sort=newest|name. Filteren en sorteren gebeuren vóór tellen en pagineren, uitsluitend binnen het eigen account. Bij gelijke sorteerwaarden bepaalt het product-ID de vaste volgorde. Ingetrokken producten blijven op de eigen lijst vindbaar, zoals voorheen. Er is geen migratie of nieuwe opslag.
 
 Productlinks bewaren zoekterm, sortering en pagina als verlanglijstcontext. De productpagina biedt daarvoor een vaste teruglink naar Mijn verlanglijst; de bestaande link naar het assortiment blijft beschikbaar. Een ontbrekend of ingetrokken product kan via die teruglink nog steeds vanuit de lijst worden verwijderd.
+
+## Verwijderen herstellen
+
+Na het verwijderen van een beschikbaar product kan de klant het laatst verwijderde product op dezelfde geopende pagina terugzetten. Een volgende succesvolle verwijdering vervangt die herstelkeuze. Ingetrokken producten bieden geen herstelkeuze: deze kunnen niet opnieuw worden toegevoegd. Herstel gebruikt de bestaande beveiligde toevoegactie en controleert de actuele publicatie opnieuw. Bij een fout blijft opnieuw proberen mogelijk. Na succes wordt de huidige zoekselectie en pagina opnieuw opgehaald; de nieuwe toevoegdatum bepaalt de sortering. Een herladen of verlaten pagina bewaart geen herstelkeuze.
