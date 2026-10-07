@@ -65,8 +65,9 @@ export class ShopApi {
     categoryId = '',
     sort: ShopSort = 'nameAsc',
     availableOnly = false,
+    limit = 20,
   ) {
-    let params = new HttpParams().set('offset', offset).set('limit', 20);
+    let params = new HttpParams().set('offset', offset).set('limit', limit);
     if (search.trim()) params = params.set('search', search.trim());
     if (categoryId) params = params.set('categoryId', categoryId);
     if (sort !== 'nameAsc') params = params.set('sort', sort);

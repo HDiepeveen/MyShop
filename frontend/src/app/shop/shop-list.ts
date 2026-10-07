@@ -86,7 +86,70 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
       @if (query().search) {
         <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
       }
+      <label
+        >Producten per pagina<select
+          name="limit"
+          [ngModel]="query().limit"
+          (ngModelChange)="changePageSize($event)"
+        >
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+        </select></label
+      >
+      @if (hasFilters()) {
+        <button type="button" class="secondary" (click)="resetFilters()">
+          Alle filters herstellen
+        </button>
+      }
     </form>
+    @if (searchError()) {
+      <p role="alert">{{ searchError() }}</p>
+    }
+    @if (hasFilters()) {
+      <nav class="toolbar" aria-label="Actieve filters">
+        @if (query().search) {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Zoekfilter verwijderen"
+            (click)="clearSearch()"
+          >
+            Zoekterm: {{ query().search }} ×
+          </button>
+        }
+        @if (query().categoryId) {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Categoriefilter verwijderen"
+            (click)="filterCategory('')"
+          >
+            Categorie: {{ categoryName() }} ×
+          </button>
+        }
+        @if (query().availableOnly) {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Voorraadfilter verwijderen"
+            (click)="filterAvailability(false)"
+          >
+            Alleen op voorraad ×
+          </button>
+        }
+        @if (query().sort !== 'nameAsc') {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Standaardsortering herstellen"
+            (click)="changeSort('nameAsc')"
+          >
+            Naam: Z–A ×
+          </button>
+        }
+      </nav>
+    }
     @if (state()?.loading) {
       <p role="status">Producten ophalen…</p>
     }
@@ -136,16 +199,32 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
             {{
               query().search
                 ? 'Probeer een andere zoekterm.'
-                : 'Er zijn hier nog geen producten te bekijken.'
+                : hasFilters()
+                  ? 'Pas je filters aan om meer producten te bekijken.'
+                  : 'Er zijn hier nog geen producten te bekijken.'
             }}
           </p>
+          @if (query().offset) {
+            <button type="button" (click)="goToPage(0)">Terug naar de eerste pagina</button>
+          }
+          @if (hasFilters()) {
+            <button type="button" class="secondary" (click)="resetFilters()">
+              Alle filters herstellen
+            </button>
+          }
         </div>
       }
       <div class="pager">
         <span
           >{{ page.totalCount }} {{ page.totalCount === 1 ? 'product' : 'producten' }} · Pagina
-          {{ query().offset / 20 + 1 }}</span
-        >
+          {{ query().offset / query().limit + 1 }}
+          @if (query().offset / query().limit < pageCount()) {
+            van {{ pageCount() }}
+          }
+          @if (page.items.length) {
+            · {{ query().offset + 1 }}–{{ query().offset + page.items.length }}
+          }
+        </span>
         <div class="actions">
           @if (query().offset) {
             <button class="secondary" (click)="goToPage(0)">Eerste pagina</button>
@@ -153,19 +232,44 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
           <button
             class="secondary"
             [disabled]="query().offset === 0"
-            (click)="goToPage(query().offset - 20)"
+            (click)="goToPage(query().offset - query().limit)"
           >
             Vorige
           </button>
           <button
             class="secondary"
-            [disabled]="query().offset + 20 >= page.totalCount"
-            (click)="goToPage(query().offset + 20)"
+            [disabled]="query().offset + query().limit >= page.totalCount"
+            (click)="goToPage(query().offset + query().limit)"
           >
             Volgende
           </button>
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="query().offset >= lastOffset()"
+            (click)="goToPage(lastOffset())"
+          >
+            Laatste pagina
+          </button>
         </div>
       </div>
+      @if (pageCount() > 1) {
+        <form class="toolbar" (ngSubmit)="jumpToPage()">
+          <label
+            >Ga naar pagina<input
+              name="page"
+              type="number"
+              min="1"
+              [max]="pageCount()"
+              step="1"
+              [(ngModel)]="pageNumber"
+          /></label>
+          <button type="submit">Ga</button>
+        </form>
+      }
+      @if (pageError()) {
+        <p role="alert">{{ pageError() }}</p>
+      }
     }
   `,
 })
@@ -177,11 +281,15 @@ export class ShopList {
   readonly query = signal({
     search: '',
     offset: 0,
+    limit: 20,
     categoryId: '',
     sort: 'nameAsc' as ShopSort,
     availableOnly: false,
   });
   searchText = '';
+  pageNumber: number | null = 1;
+  readonly searchError = signal('');
+  readonly pageError = signal('');
   private readonly categoryRefresh = new BehaviorSubject(0);
   readonly categories = toSignal(
     this.categoryRefresh.pipe(switchMap(() => loadState(this.api.categories()))),
@@ -192,6 +300,7 @@ export class ShopList {
       distinctUntilChanged(
         (a, b) =>
           a.offset === b.offset &&
+          a.limit === b.limit &&
           a.search === b.search &&
           a.categoryId === b.categoryId &&
           a.sort === b.sort &&
@@ -200,6 +309,9 @@ export class ShopList {
       switchMap((query) => {
         if (query.search !== this.query().search) this.searchText = query.search;
         this.query.set(query);
+        this.pageNumber = query.offset / query.limit + 1;
+        this.pageError.set('');
+        this.searchError.set('');
         return this.refresh.pipe(
           switchMap(() =>
             loadState(
@@ -209,6 +321,7 @@ export class ShopList {
                 query.categoryId,
                 query.sort,
                 query.availableOnly,
+                query.limit,
               ),
             ),
           ),
@@ -217,6 +330,11 @@ export class ShopList {
     ),
   );
   search() {
+    if (this.searchText.trim().length > 200) {
+      this.searchError.set('Gebruik maximaal 200 tekens voor de zoekterm.');
+      return;
+    }
+    this.searchError.set('');
     if (this.query().offset === 0 && this.query().search === this.searchText.trim()) {
       this.retry();
       return;
@@ -236,6 +354,14 @@ export class ShopList {
     this.search();
   }
   goToPage(offset: number) {
+    if (
+      !Number.isSafeInteger(offset) ||
+      offset < 0 ||
+      offset > 2147483647 ||
+      offset % this.query().limit !== 0 ||
+      offset === this.query().offset
+    )
+      return;
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
@@ -255,6 +381,47 @@ export class ShopList {
         categoryId: categoryId || null,
         offset: null,
       },
+    });
+  }
+  pageCount() {
+    return Math.max(1, Math.ceil((this.state()?.data?.totalCount ?? 0) / this.query().limit));
+  }
+  lastOffset() {
+    return (this.pageCount() - 1) * this.query().limit;
+  }
+  jumpToPage() {
+    if (this.state()?.loading) return;
+    const page = this.pageNumber;
+    if (page === null || !Number.isSafeInteger(page) || page < 1 || page > this.pageCount()) {
+      this.pageError.set('Kies een heel paginanummer van 1 tot en met ' + this.pageCount() + '.');
+      return;
+    }
+    this.pageError.set('');
+    this.goToPage((page - 1) * this.query().limit);
+  }
+  changePageSize(limit: number) {
+    if (![20, 50, 100].includes(limit) || limit === this.query().limit) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...this.contextQuery(), limit: limit === 20 ? null : limit, offset: null },
+    });
+  }
+  hasFilters() {
+    const query = this.query();
+    return !!(query.search || query.categoryId || query.availableOnly || query.sort !== 'nameAsc');
+  }
+  categoryName() {
+    return (
+      this.categories()?.data?.find((category) => category.id === this.query().categoryId)?.name ??
+      'Geselecteerde categorie'
+    );
+  }
+  resetFilters() {
+    this.searchText = '';
+    this.searchError.set('');
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...(this.query().limit !== 20 ? { limit: this.query().limit } : {}) },
     });
   }
   contextQuery() {
