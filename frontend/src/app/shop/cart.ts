@@ -47,7 +47,8 @@ export class Cart {
       );
     }
   }
-  add(productId: string, variantId: string): string {
+  add(productId: string, variantId: string, quantity = 1): string {
+    if (quantity !== 1) return this.addLines([{ productId, variantId, quantity }]);
     if (!validId(productId) || !validId(variantId))
       return 'Deze variant kan niet worden toegevoegd.';
     productId = productId.toLowerCase();

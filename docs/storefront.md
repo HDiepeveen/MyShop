@@ -67,3 +67,11 @@ De bezoeker kiest 20 (standaard), 50 of 100 producten per pagina. De winkel gebr
 Het overzicht toont het aantal producten, het paginanummer en het bereik van de getoonde resultaten. Naast Eerste, Vorige en Volgende zijn Laatste pagina en Ga naar pagina beschikbaar. Direct springen accepteert alleen hele paginanummers binnen het huidige aantal pagina's. Lege pagina's bieden een terugweg naar pagina één; aantallen en resultaten kunnen tussen aanvragen veranderen.
 
 Actieve zoek-, categorie- en voorraadfilters en afwijkende sortering zijn afzonderlijk te verwijderen. Alle filters herstellen wist deze keuzes en de zoekinvoer, maar behoudt het paginaformaat. Een zoekterm boven 200 tekens wordt vóór verzenden afgewezen zonder de toegepaste selectie te wijzigen. Bladeren gebruikt steeds de toegepaste zoekterm, niet een ongestuurde wijziging in het zoekveld. Nieuwe navigatie annuleert verouderde leesaanvragen. Er is geen nieuwe serveropslag of migratie.
+
+## Aantal kiezen op de productpagina
+
+Bij de variantkeuze kan de bezoeker een heel aantal van 1 tot en met 99 invullen of het verhogen en verlagen met de knoppen. In winkelmand voegt dat aantal in één keer toe. Bestaande aantallen worden opgeteld; een overschrijding van 99 stuks of twintig verschillende varianten wijzigt de mand niet. Opslag blijft beperkt tot product-ID, variant-ID en hoeveelheid.
+
+De productpagina toont het bestaande aantal van de gekozen variant in de winkelmand. Succes toont een link naar de mand; validatie- en limietfouten worden afzonderlijk als fout getoond. Wijzigen van variant of aantal wist oude feedback. Uitverkochte varianten worden ook in de actie zelf geblokkeerd, evenals ontbrekende of nog niet opgehaalde prijzen.
+
+De gekozen variant en hoeveelheid blijven behouden wanneer hetzelfde product of de prijs wordt vernieuwd. Een verdwenen of uitverkochte variant valt terug op een beschikbare variant; wanneer alle varianten uitverkocht zijn blijft toevoegen geblokkeerd. Een ander product begint bij aantal één en de eerste beschikbare variant. Voorraad en actuele prijzen worden verder gecontroleerd in winkelmand en checkout; deze invoer reserveert geen voorraad. Er is geen nieuwe serveropslag of migratie.

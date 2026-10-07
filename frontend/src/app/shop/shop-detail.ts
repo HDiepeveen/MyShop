@@ -1,6 +1,6 @@
 import { Cart } from './cart';
 import { DatePipe } from '@angular/common';
-import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -64,7 +64,7 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
               >Kies je variant<select
                 name="variant"
                 [ngModel]="selectedId()"
-                (ngModelChange)="selectedId.set($event)"
+                (ngModelChange)="selectVariant($event)"
               >
                 @for (variant of product.variants; track variant.id) {
                   <option [value]="variant.id" [disabled]="variant.isAvailable === false">
@@ -109,6 +109,44 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
               Prijs vernieuwen
             </button>
           </section>
+          @if (selected()) {
+            <div class="toolbar">
+              <button
+                type="button"
+                class="secondary"
+                aria-label="Aantal verlagen"
+                [disabled]="!validQuantity() || (quantity ?? 0) <= 1"
+                (click)="changeQuantity(-1)"
+              >
+                −
+              </button>
+              <label
+                >Aantal<input
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  max="99"
+                  step="1"
+                  [(ngModel)]="quantity"
+                  (ngModelChange)="clearCartFeedback()"
+              /></label>
+              <button
+                type="button"
+                class="secondary"
+                aria-label="Aantal verhogen"
+                [disabled]="!validQuantity() || (quantity ?? 0) >= 99"
+                (click)="changeQuantity(1)"
+              >
+                +
+              </button>
+            </div>
+            @if (cartQuantity()) {
+              <p>
+                {{ cartQuantity() }} {{ cartQuantity() === 1 ? 'stuk' : 'stuks' }} van deze variant
+                in je winkelmand.
+              </p>
+            }
+          }
           <button
             type="button"
             [disabled]="
@@ -126,6 +164,9 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
             <p role="status">
               {{ cartMessage() }} <a routerLink="/winkel/winkelmand">Naar winkelmand</a>
             </p>
+          }
+          @if (cartError()) {
+            <p role="alert">{{ cartError() }}</p>
           }
           @if (cart.warning()) {
             <p role="status">{{ cart.warning() }}</p>
@@ -159,18 +200,72 @@ export class ShopDetail {
   readonly wishlistMessage = signal('');
   readonly cart = inject(Cart);
   readonly cartMessage = signal('');
+  readonly cartError = signal('');
+  quantity: number | null = 1;
+  private selectionProductId = '';
+  readonly cartQuantity = computed(() => {
+    const product = this.state()?.data;
+    const variant = this.selected();
+    if (!product || !variant) return 0;
+    return (
+      this.cart
+        .lines()
+        .find(
+          (line) =>
+            line.productId === product.id.toLowerCase() &&
+            line.variantId === variant.id.toLowerCase(),
+        )?.quantity ?? 0
+    );
+  });
+  validQuantity() {
+    return (
+      this.quantity !== null &&
+      Number.isInteger(this.quantity) &&
+      this.quantity >= 1 &&
+      this.quantity <= 99
+    );
+  }
+  clearCartFeedback() {
+    this.cartMessage.set('');
+    this.cartError.set('');
+  }
+  changeQuantity(delta: number) {
+    if (!this.validQuantity() || (delta !== -1 && delta !== 1)) return;
+    const quantity = this.quantity! + delta;
+    if (quantity < 1 || quantity > 99) return;
+    this.quantity = quantity;
+    this.clearCartFeedback();
+  }
+  selectVariant(id: string) {
+    if (
+      !this.state()?.data?.variants.some(
+        (variant) => variant.id === id && variant.isAvailable !== false,
+      )
+    )
+      return;
+    this.selectedId.set(id);
+    this.clearCartFeedback();
+  }
   addToCart() {
+    this.clearCartFeedback();
     const product = this.state()?.data;
     const variant = this.selected();
     if (
       !product ||
       !variant ||
+      variant.isAvailable === false ||
       this.prices()?.loading ||
       this.prices()?.error ||
       this.selectedPrice()?.amount == null
     )
       return;
-    this.cartMessage.set(this.cart.add(product.id, variant.id) || 'Toegevoegd aan je winkelmand.');
+    if (!this.validQuantity()) {
+      this.cartError.set('Kies een heel aantal van 1 tot en met 99.');
+      return;
+    }
+    const error = this.cart.add(product.id, variant.id, this.quantity!);
+    if (error) this.cartError.set(error);
+    else this.cartMessage.set('Toegevoegd aan je winkelmand.');
   }
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
@@ -214,12 +309,23 @@ export class ShopDetail {
       this.wishlistMessage.set('');
       this.wishlistBusy.set(false);
       this.wishlistLoading.set(false);
-      this.cartMessage.set('');
-      this.selectedId.set(
-        product?.variants.find((variant) => variant.isAvailable !== false)?.id ??
-          product?.variants[0]?.id ??
-          '',
-      );
+      this.clearCartFeedback();
+      if (product) {
+        const sameProduct = this.selectionProductId === product.id;
+        if (!sameProduct) this.quantity = 1;
+        const selected = untracked(() => this.selectedId());
+        this.selectedId.set(
+          (sameProduct
+            ? product.variants.find(
+                (variant) => variant.id === selected && variant.isAvailable !== false,
+              )?.id
+            : undefined) ??
+            product.variants.find((variant) => variant.isAvailable !== false)?.id ??
+            product.variants[0]?.id ??
+            '',
+        );
+        this.selectionProductId = product.id;
+      }
       if (product && this.auth.session()?.customer) this.loadWishlistState(product.id);
     });
   }
