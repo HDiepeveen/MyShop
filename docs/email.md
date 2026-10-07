@@ -4,11 +4,19 @@ MyShop ondersteunt e-mailbevestiging, wachtwoordherstel voor klanten en bestelbe
 
 ## Configuratie
 
-Pas eerst de migratie `EmailMessages` toe op de applicatiedatabase. De integratietests doen dit uitsluitend in hun eigen testdatabases. Stel daarna onderstaande waarden in via omgevingsvariabelen of .NET user-secrets. SMTP-wachtwoorden horen niet in Git.
+Pas eerst de migraties `EmailMessages` en `ManagedEmailSettings` toe op de applicatiedatabase. De integratietests doen dit uitsluitend in hun eigen testdatabases. Beheerders stellen SMTP vervolgens in via **E-mailinstellingen** op `/instellingen/email`. SMTP-wachtwoorden horen niet in Git.
+
+Het scherm biedt server, STARTTLS-poort, gebruikersnaam, afzenderadres, afzendernaam en winkel-URL. Een leeg wachtwoordveld behoudt het opgeslagen wachtwoord. Een nieuw wachtwoord vervangt het; Opgeslagen wachtwoord wissen is een afzonderlijke keuze. De API retourneert uitsluitend of een wachtwoord is ingesteld. ASP.NET Core Data Protection versleutelt het wachtwoord vóór opslag in de database. Bewaar de sleutels duurzaam en afgeschermd en deel dezelfde sleutelring bij meerdere instances. Na sleutelverlies moet de beheerder een nieuw SMTP-wachtwoord instellen.
+
+Opslaan gebruikt revisiecontrole; een oude revisie geeft een conflict zonder instellingen of wachtwoord te overschrijven. Het scherm houdt de invoer dan vast. Opgeslagen instellingen opnieuw ophalen vervangt de invoer door de actuele instellingen en maakt het wachtwoordveld leeg. Alleen beheerders mogen instellingen lezen, opslaan en een testmail klaarzetten; schrijfacties vereisen CSRF.
+
+Verzending aan- of uitzetten wordt zonder herstart door de verzendwerker opgepakt. Na inschakelen worden ook al klaargezette berichten verwerkt. De testmail gebruikt de laatst opgeslagen instellingen, vereist ingeschakelde verzending en een actuele revisie en is begrensd door de beheerlimiet. De melding Testmail klaargezet bevestigt de wachtrijopname; controleer ontvangst en spammap om aflevering te controleren. De routes zijn `GET/PUT /api/email-settings` en `POST /api/email-settings/test`.
+
+De onderstaande serverconfiguratie blijft als startconfiguratie ondersteund totdat een beheerder voor het eerst opslaat. Bij die eerste opslag wordt een eventueel bestaand SMTP-wachtwoord versleuteld overgenomen wanneer het veld leeg blijft. Daarna zijn de database-instellingen leidend, ook voor de URL in nieuwe accountmails. In Development kan de startconfiguratie nog Pickup gebruiken; opslaan via het beheerscherm kiest SMTP.
 
 | Instelling | Betekenis |
 |---|---|
-| `Email__Enabled` | `true` om de verzendwerker te starten |
+| `Email__Enabled` | `true` om verzending in de startconfiguratie in te schakelen |
 | `Email__Mode` | `Smtp` of `Pickup`; Pickup is uitsluitend voor Development |
 | `Email__PublicBaseUrl` | Publieke winkel-URL, bijvoorbeeld `https://shop.example.com`; geen query, fragment of gebruikersgegevens |
 | `Email__From` | Afzenderadres dat de mailprovider toestaat |

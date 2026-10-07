@@ -56,12 +56,12 @@ public sealed class EmailDeliveryTests(SqlServerDatabase database)
         var directory = Path.Combine(Path.GetTempPath(), "MyShopMailTests-" + Guid.NewGuid().ToString("N"));
         try
         {
-            var services = new ServiceCollection().AddScoped(_ => isolated.CreateContext());
-            using var provider = services.BuildServiceProvider();
+
             await using (var context = isolated.CreateContext())
                 await new EmailQueue(context).EnqueueAsync("customer@example.test", "MyShop confirmation", "Private link", CancellationToken.None);
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
-                ["Email:Mode"] = "Pickup", ["Email:PickupDirectory"] = directory, ["Email:From"] = "shop@example.test" }).Build();
+                ["Email:Enabled"] = "true", ["Email:Mode"] = "Pickup", ["Email:PickupDirectory"] = directory, ["Email:From"] = "shop@example.test" }).Build();
+            using var provider = MailServices(isolated, configuration);
             var worker = new EmailDeliveryWorker(provider.GetRequiredService<IServiceScopeFactory>(), configuration,
                 new MailEnvironment(), NullLogger<EmailDeliveryWorker>.Instance);
             await using (var locked = isolated.CreateContext())
@@ -98,10 +98,11 @@ public sealed class EmailDeliveryTests(SqlServerDatabase database)
         var isolated = new SqlServerDatabase(); await isolated.InitializeAsync();
         try
         {
-            using var provider = new ServiceCollection().AddScoped(_ => isolated.CreateContext()).BuildServiceProvider();
+
             await using (var context = isolated.CreateContext())
                 await new EmailQueue(context).EnqueueAsync("customer@example.test", "MyShop", "Keep me", CancellationToken.None);
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Email:Mode"] = "Smtp", ["Email:Smtp:Host"] = "unused.invalid", ["Email:Smtp:Port"] = "0" }).Build();
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> { ["Email:Enabled"] = "true", ["Email:Mode"] = "Smtp", ["Email:Smtp:Host"] = "unused.invalid", ["Email:Smtp:Port"] = "0" }).Build();
+            using var provider = MailServices(isolated, configuration);
             var worker = new EmailDeliveryWorker(provider.GetRequiredService<IServiceScopeFactory>(), configuration,
                 new MailEnvironment(), NullLogger<EmailDeliveryWorker>.Instance);
             await Assert.ThrowsAnyAsync<Exception>(() => worker.DeliverNextAsync(CancellationToken.None));
@@ -114,6 +115,12 @@ public sealed class EmailDeliveryTests(SqlServerDatabase database)
         }
         finally { await isolated.DisposeAsync(); }
     }
+
+    private static ServiceProvider MailServices(SqlServerDatabase database, IConfiguration configuration) =>
+        new ServiceCollection().AddScoped(_ => database.CreateContext()).AddScoped<EmailSettingsRepository>()
+            .AddSingleton(configuration).AddSingleton<IHostEnvironment>(new MailEnvironment())
+            .AddSingleton<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>(new Microsoft.AspNetCore.DataProtection.EphemeralDataProtectionProvider())
+            .BuildServiceProvider();
 
     private sealed class MailEnvironment : IHostEnvironment
     {

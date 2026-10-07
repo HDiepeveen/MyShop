@@ -3,6 +3,11 @@ import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
+    path: 'instellingen/email',
+    loadComponent: () => import('./settings/email-settings').then((m) => m.EmailSettings),
+    title: 'E-mailinstellingen · MyShop',
+  },
+  {
     path: 'klanten/:id',
     loadComponent: () =>
       import('./customer/customer-management-detail').then((m) => m.CustomerManagementDetail),

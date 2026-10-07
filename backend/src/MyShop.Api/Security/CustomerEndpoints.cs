@@ -26,7 +26,7 @@ public static class CustomerEndpoints
     private static async Task<IResult> RegisterAsync(CustomerRegistrationRequest request,
         UserManager<IdentityUser> users, RoleManager<IdentityRole> roles,
         SignInManager<IdentityUser> signIn, MyShop.Application.Notifications.IEmailQueue emails,
-        IConfiguration configuration, IHostEnvironment environment,
+        MyShop.Application.Notifications.IEmailSettingsRepository settings, IHostEnvironment environment,
         MyShop.Infrastructure.Persistence.MyShopDbContext context, CancellationToken cancellationToken)
     {
         if (!ValidCredentials(request.Email, request.Password)) return InvalidRegistration();
@@ -50,7 +50,7 @@ public static class CustomerEndpoints
             await users.DeleteAsync(user);
             return Results.Problem(statusCode: 503);
         }
-        await CustomerEmailEndpoints.QueueConfirmationAsync(user, users, emails, configuration, environment, cancellationToken);
+        await CustomerEmailEndpoints.QueueConfirmationAsync(user, users, emails, settings, environment, cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         await signIn.SignInAsync(user, isPersistent: false);
         return Results.NoContent();

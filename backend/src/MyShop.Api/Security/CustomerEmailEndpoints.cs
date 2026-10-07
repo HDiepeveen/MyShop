@@ -16,31 +16,31 @@ public static class CustomerEmailEndpoints
     }
 
     internal static async Task QueueConfirmationAsync(IdentityUser user, UserManager<IdentityUser> users,
-        IEmailQueue queue, IConfiguration configuration, IHostEnvironment environment, CancellationToken cancellationToken)
+        IEmailQueue queue, IEmailSettingsRepository settings, IHostEnvironment environment, CancellationToken cancellationToken)
     {
         var token = await users.GenerateEmailConfirmationTokenAsync(user);
-        var link = Link("e-mail-bevestigen", user.Id, token, configuration, environment);
+        var link = Link("e-mail-bevestigen", user.Id, token, (await settings.GetAsync(cancellationToken)).PublicBaseUrl, environment);
         await queue.EnqueueAsync(user.Email!, "Bevestig je MyShop e-mailadres",
             $"Bevestig je e-mailadres via deze link:\n\n{link}\n\nDe link is twee uur geldig. Heb je geen MyShop-account gemaakt? Dan kun je deze e-mail negeren.", cancellationToken);
     }
 
     private static async Task<IResult> RequestConfirmationAsync(CustomerEmailRequest request, UserManager<IdentityUser> users,
-        IEmailQueue queue, IConfiguration configuration, IHostEnvironment environment, CancellationToken cancellationToken)
+        IEmailQueue queue, IEmailSettingsRepository settings, IHostEnvironment environment, CancellationToken cancellationToken)
     {
         var user = await CustomerAsync(request.Email, users);
         if (user is not null && !user.EmailConfirmed)
-            await QueueConfirmationAsync(user, users, queue, configuration, environment, cancellationToken);
+            await QueueConfirmationAsync(user, users, queue, settings, environment, cancellationToken);
         return Results.NoContent();
     }
 
     private static async Task<IResult> RequestResetAsync(CustomerEmailRequest request, UserManager<IdentityUser> users,
-        IEmailQueue queue, IConfiguration configuration, IHostEnvironment environment, CancellationToken cancellationToken)
+        IEmailQueue queue, IEmailSettingsRepository settings, IHostEnvironment environment, CancellationToken cancellationToken)
     {
         var user = await CustomerAsync(request.Email, users);
         if (user is not null && !await users.IsLockedOutAsync(user))
         {
             var token = await users.GeneratePasswordResetTokenAsync(user);
-            var link = Link("wachtwoord-herstellen", user.Id, token, configuration, environment);
+            var link = Link("wachtwoord-herstellen", user.Id, token, (await settings.GetAsync(cancellationToken)).PublicBaseUrl, environment);
             await queue.EnqueueAsync(user.Email!, "Herstel je MyShop wachtwoord",
                 $"Kies een nieuw wachtwoord via deze link:\n\n{link}\n\nDe link is twee uur geldig. Heb je dit niet aangevraagd? Negeer deze e-mail; je wachtwoord blijft ongewijzigd.", cancellationToken);
         }
@@ -87,9 +87,8 @@ public static class CustomerEmailEndpoints
         catch (FormatException) { return null; }
     }
     private static IResult InvalidLink() => Results.BadRequest(new { code = "invalidLink", message = "De link of het wachtwoord is ongeldig. Vraag een nieuwe link aan en gebruik een sterk wachtwoord van 12 tot en met 128 tekens." });
-    private static string Link(string path, string userId, string token, IConfiguration configuration, IHostEnvironment environment)
+    private static string Link(string path, string userId, string token, string value, IHostEnvironment environment)
     {
-        var value = configuration["Email:PublicBaseUrl"] ?? (environment.IsDevelopment() ? "http://127.0.0.1:4200" : "");
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) || !string.IsNullOrEmpty(uri.UserInfo)
             || !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment)
             || (uri.Scheme != "https" && !(environment.IsDevelopment() && uri.Scheme == "http" && uri.IsLoopback)))

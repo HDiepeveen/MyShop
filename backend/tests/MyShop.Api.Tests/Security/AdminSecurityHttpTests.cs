@@ -304,6 +304,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.MapCatalog();
         App.MapStorefront();
         App.MapPaymentOptions();
+        App.MapEmailSettings();
         App.MapDeliveryMethods();
         App.MapOrderManagement();
         App.MapDashboard();

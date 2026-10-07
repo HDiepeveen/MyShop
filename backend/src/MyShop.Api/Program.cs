@@ -32,6 +32,7 @@ app.MapCustomerManagementEndpoints();
 app.MapCatalog();
 app.MapStorefront();
 app.MapPaymentOptions();
+app.MapEmailSettings();
 app.MapDeliveryMethods();
 app.MapOrderManagement();
 app.MapDashboard();

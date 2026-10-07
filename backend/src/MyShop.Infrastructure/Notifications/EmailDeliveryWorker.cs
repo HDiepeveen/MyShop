@@ -15,13 +15,6 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IConfigurat
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!configuration.GetValue<bool>("Email:Enabled")) return;
-        var mode = configuration["Email:Mode"] ?? "Pickup";
-        if (mode is not "Pickup" and not "Smtp" || (mode == "Pickup" && !environment.IsDevelopment()))
-            throw new InvalidOperationException("Email pickup is only allowed in Development; choose Smtp in production.");
-        if (mode == "Smtp" && (string.IsNullOrWhiteSpace(configuration["Email:Smtp:Host"])
-            || string.IsNullOrWhiteSpace(configuration["Email:From"])))
-            throw new InvalidOperationException("Configure Email:From and Email:Smtp:Host before enabling SMTP.");
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
         do
         {
@@ -35,6 +28,10 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IConfigurat
     {
         using var scope = scopes.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();
+        var settings = await scope.ServiceProvider.GetRequiredService<EmailSettingsRepository>().RuntimeAsync(cancellationToken);
+        if (!settings.Public.Enabled) return;
+        if (settings.Mode is not "Pickup" and not "Smtp" || (settings.Mode == "Pickup" && !environment.IsDevelopment()))
+            throw new InvalidOperationException("Invalid email delivery mode.");
         var now = DateTimeOffset.UtcNow;
         var id = await context.EmailMessages.AsNoTracking().Where(message => message.SentAt == null && message.NextAttemptAt <= now
             && (message.LeaseUntil == null || message.LeaseUntil < now)).OrderBy(message => message.CreatedAt)
@@ -50,11 +47,11 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IConfigurat
         var queued = await context.EmailMessages.AsNoTracking().SingleAsync(message => message.Id == id, cancellationToken);
         try
         {
-            using var message = new MailMessage(configuration["Email:From"] ?? "myshop@example.invalid", queued.Recipient)
+            using var message = new MailMessage(new MailAddress(string.IsNullOrEmpty(settings.Public.FromAddress) ? "myshop@example.invalid" : settings.Public.FromAddress, settings.Public.FromName), new MailAddress(queued.Recipient))
                 { Subject = queued.Subject, Body = queued.Body, BodyEncoding = Encoding.UTF8, SubjectEncoding = Encoding.UTF8 };
             message.Headers.Add("Message-ID", $"<{queued.Id:N}@myshop>");
             using var smtp = new SmtpClient();
-            if ((configuration["Email:Mode"] ?? "Pickup") == "Pickup")
+            if (settings.Mode == "Pickup")
             {
                 var directory = Path.GetFullPath(configuration["Email:PickupDirectory"] ?? Path.Combine(environment.ContentRootPath, ".mail"));
                 Directory.CreateDirectory(directory);
@@ -63,11 +60,11 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IConfigurat
             }
             else
             {
-                smtp.Host = configuration["Email:Smtp:Host"] ?? throw new InvalidOperationException("SMTP host is required.");
-                smtp.Port = configuration.GetValue("Email:Smtp:Port", 587);
+                smtp.Host = settings.Public.Host;
+                smtp.Port = settings.Public.Port;
                 smtp.EnableSsl = true;
-                if (!string.IsNullOrEmpty(configuration["Email:Smtp:User"]))
-                    smtp.Credentials = new NetworkCredential(configuration["Email:Smtp:User"], configuration["Email:Smtp:Password"]);
+                if (!string.IsNullOrEmpty(settings.Public.UserName))
+                    smtp.Credentials = new NetworkCredential(settings.Public.UserName, settings.Password);
             }
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromMinutes(2));
