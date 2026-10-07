@@ -19,3 +19,11 @@ Productlinks bewaren zoekterm, sortering en pagina als verlanglijstcontext. De p
 ## Verwijderen herstellen
 
 Na het verwijderen van een beschikbaar product kan de klant het laatst verwijderde product op dezelfde geopende pagina terugzetten. Een volgende succesvolle verwijdering vervangt die herstelkeuze. Ingetrokken producten bieden geen herstelkeuze: deze kunnen niet opnieuw worden toegevoegd. Herstel gebruikt de bestaande beveiligde toevoegactie en controleert de actuele publicatie opnieuw. Bij een fout blijft opnieuw proberen mogelijk. Na succes wordt de huidige zoekselectie en pagina opnieuw opgehaald; de nieuwe toevoegdatum bepaalt de sortering. Een herladen of verlaten pagina bewaart geen herstelkeuze.
+
+## Bladeren en keuzes herstellen
+
+Het overzicht toont het aantal producten in de huidige selectie en het paginanummer. Ieder item toont de vastgelegde toevoegdatum. Eerste pagina, Laatste pagina en Ga naar pagina vullen Vorige en Volgende aan, met twintig producten per pagina. Direct springen accepteert alleen hele paginanummers binnen de huidige paginatelling. Een lege latere pagina biedt een terugweg naar pagina één zonder de zoek- of sorteerkeuze te verliezen.
+
+De toegepaste zoekterm en afwijkende sortering zijn afzonderlijk te verwijderen. Keuzes herstellen wist de zoekinvoer en gaat terug naar Laatst toegevoegd op pagina één. Verlanglijst vernieuwen haalt de huidige selectie opnieuw op en past ongestuurde zoekinvoer niet toe. De bestaande productlinks blijven zoekterm, sortering en pagina bewaren.
+
+Tijdens ophalen, verwijderen of terugzetten zijn deze acties geblokkeerd. De herstelkeuze voor het laatst verwijderde product blijft bij bladeren en herstellen van zoekkeuzes beschikbaar. Na terugzetten wordt de huidige selectie opnieuw opgehaald. De nieuwe bediening gebruikt de bestaande klantgebonden routes en voegt geen opslag of migratie toe. Aantallen en pagina-indeling kunnen tussen aanvragen veranderen.

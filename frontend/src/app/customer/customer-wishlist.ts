@@ -2,15 +2,24 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { readWishlistQuery, WishlistSort } from './wishlist-query';
 import { CustomerWishlistApi, WishlistItem, WishlistPage } from './customer-wishlist.api';
 import { ShopImage } from '../shop/shop-image';
 
 @Component({
-  imports: [RouterLink, ShopImage, FormsModule],
+  imports: [RouterLink, ShopImage, FormsModule, DatePipe],
   template: `
     <a class="back" routerLink="/winkel/account">← Mijn account</a>
     <h1>Mijn verlanglijst</h1>
+    <button
+      type="button"
+      class="secondary"
+      [disabled]="loading() || !!removing()"
+      (click)="load(offset())"
+    >
+      Verlanglijst vernieuwen
+    </button>
     <form class="toolbar" (ngSubmit)="applySearch()">
       <label
         >Zoek producten<input
@@ -42,7 +51,52 @@ import { ShopImage } from '../shop/shop-image';
           Zoekterm wissen
         </button>
       }
+      @if (search || sort() !== 'newest') {
+        <button
+          type="button"
+          class="secondary"
+          [disabled]="loading() || !!removing()"
+          (click)="resetFilters()"
+        >
+          Keuzes herstellen
+        </button>
+      }
     </form>
+    @if (search || sort() !== 'newest') {
+      <nav class="toolbar" aria-label="Actieve verlanglijstkeuzes">
+        @if (search) {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Zoekfilter verwijderen"
+            [disabled]="loading() || !!removing()"
+            (click)="clearSearch()"
+          >
+            Zoekterm: {{ search }} ×
+          </button>
+        }
+        @if (sort() === 'name') {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Standaardsortering herstellen"
+            [disabled]="loading() || !!removing()"
+            (click)="changeSort('newest')"
+          >
+            Naam: A–Z ×
+          </button>
+        }
+      </nav>
+    }
+    @if (page(); as result) {
+      <p role="status">
+        {{ result.totalCount }} {{ result.totalCount === 1 ? 'product' : 'producten' }} gevonden ·
+        Pagina {{ result.offset / 20 + 1 }}
+        @if (result.offset / 20 < pageCount()) {
+          van {{ pageCount() }}
+        }
+      </p>
+    }
     @if (loading()) {
       <p role="status">Verlanglijst ophalen…</p>
     }
@@ -76,6 +130,9 @@ import { ShopImage } from '../shop/shop-image';
         <div class="panel">
           <p>Deze pagina bevat geen producten meer.</p>
           <button type="button" (click)="load(Math.max(0, offset() - 20))">Vorige pagina</button>
+          <button type="button" class="secondary" [disabled]="!!removing()" (click)="first()">
+            Terug naar de eerste pagina
+          </button>
         </div>
       } @else {
         <div class="panel">
@@ -93,6 +150,9 @@ import { ShopImage } from '../shop/shop-image';
         <article class="panel">
           <app-shop-image [url]="item.imageUrl" [alt]="item.imageAlt" />
           <h2>{{ item.name }}</h2>
+          @if (item.addedAt) {
+            <p class="muted">Toegevoegd op {{ item.addedAt | date: 'dd-MM-yyyy HH:mm' }}.</p>
+          }
           @if (item.isAvailable) {
             <p>
               <a [routerLink]="['/winkel', item.productId]" [queryParams]="productContext()"
@@ -115,6 +175,14 @@ import { ShopImage } from '../shop/shop-image';
       ) {
         <nav class="toolbar" aria-label="Paginering">
           <button
+            type="button"
+            class="secondary"
+            [disabled]="loading() || !!removing() || result.offset === 0"
+            (click)="first()"
+          >
+            Eerste pagina
+          </button>
+          <button
             class="secondary"
             [disabled]="loading() || !!removing() || result.offset === 0"
             (click)="load(Math.max(0, result.offset - 20))"
@@ -134,7 +202,33 @@ import { ShopImage } from '../shop/shop-image';
           >
             Volgende
           </button>
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="loading() || !!removing() || result.offset >= lastOffset()"
+            (click)="last()"
+          >
+            Laatste pagina
+          </button>
         </nav>
+      }
+      @if (pageCount() > 1) {
+        <form class="toolbar" (ngSubmit)="jumpToPage()">
+          <label
+            >Ga naar pagina<input
+              name="page"
+              type="number"
+              min="1"
+              [max]="pageCount()"
+              step="1"
+              [disabled]="loading() || !!removing()"
+              [(ngModel)]="pageNumber"
+          /></label>
+          <button type="submit" [disabled]="loading() || !!removing()">Ga</button>
+        </form>
+      }
+      @if (pageError()) {
+        <p role="alert">{{ pageError() }}</p>
       }
     }
   `,
@@ -155,6 +249,8 @@ export class CustomerWishlist {
   readonly Math = Math;
   readonly sort = signal<WishlistSort>('newest');
   searchText = '';
+  pageNumber: number | null = 1;
+  readonly pageError = signal('');
   search = '';
   constructor() {
     const query = readWishlistQuery(this.route.snapshot.queryParamMap);
@@ -190,16 +286,50 @@ export class CustomerWishlist {
       wishlistOffset: this.offset() || null,
     };
   }
+  resetFilters() {
+    if (this.loading() || this.removing()) return;
+    this.search = this.searchText = '';
+    this.sort.set('newest');
+    this.load(0);
+  }
+  pageCount() {
+    return Math.max(1, Math.ceil((this.page()?.totalCount ?? 0) / 20));
+  }
+  lastOffset() {
+    return (this.pageCount() - 1) * 20;
+  }
+  first() {
+    if (!this.offset()) return;
+    this.load(0);
+  }
+  last() {
+    if (!this.page() || this.offset() === this.lastOffset()) return;
+    this.load(this.lastOffset());
+  }
+  jumpToPage() {
+    if (this.loading() || this.removing() || !this.page()) return;
+    const page = this.pageNumber;
+    if (page === null || !Number.isSafeInteger(page) || page < 1 || page > this.pageCount()) {
+      this.pageError.set('Kies een heel paginanummer van 1 tot en met ' + this.pageCount() + '.');
+      return;
+    }
+    this.pageError.set('');
+    const offset = (page - 1) * 20;
+    if (offset !== this.offset()) this.load(offset);
+  }
   load(offset = 0) {
     if (
       this.loading() ||
       this.removing() ||
       !Number.isSafeInteger(offset) ||
       offset < 0 ||
+      offset > 2147483647 ||
       offset % 20 !== 0
     )
       return;
     this.offset.set(offset);
+    this.pageNumber = offset / 20 + 1;
+    this.pageError.set('');
     this.items.set([]);
     this.page.set(null);
     this.removeError.set('');
