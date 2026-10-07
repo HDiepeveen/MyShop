@@ -75,6 +75,17 @@ import { readProductListQuery } from './product-list-query';
           Een product verschijnt zodra minstens één variant aan het voorraadfilter voldoet.
         </p>
       }
+      <label
+        >Producten per pagina<select
+          name="pageSize"
+          [ngModel]="pageSize()"
+          (ngModelChange)="changePageSize($event)"
+        >
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+          <option [ngValue]="100">100</option>
+        </select></label
+      >
       <form class="toolbar" (ngSubmit)="search()">
         <label
           >Zoek op productnaam<input
@@ -172,7 +183,7 @@ import { readProductListQuery } from './product-list-query';
         <div class="pager">
           <span
             >{{ page.totalCount }} {{ page.totalCount === 1 ? 'product' : 'producten' }} · Pagina
-            {{ offset() / 20 + 1 }}</span
+            {{ offset() / pageSize() + 1 }}</span
           >
           <div class="actions">
             @if (offset() > 0) {
@@ -180,12 +191,12 @@ import { readProductListQuery } from './product-list-query';
                 Eerste pagina
               </button>
             }
-            <button class="secondary" [disabled]="offset() === 0" (click)="changePage(-20)">
+            <button class="secondary" [disabled]="offset() === 0" (click)="changePage(-pageSize())">
               Vorige</button
             ><button
               class="secondary"
-              [disabled]="offset() + 20 >= page.totalCount"
-              (click)="changePage(20)"
+              [disabled]="offset() + pageSize() >= page.totalCount"
+              (click)="changePage(pageSize())"
             >
               Volgende
             </button>
@@ -222,7 +233,8 @@ export class ProductList {
           a.search === b.search &&
           a.offset === b.offset &&
           a.published === b.published &&
-          a.stock === b.stock,
+          a.stock === b.stock &&
+          a.limit === b.limit,
       ),
       switchMap((query) => {
         if (query.search !== this.listQuery().search) this.searchText = query.search;
@@ -238,6 +250,17 @@ export class ProductList {
   readonly skuBusy = signal(false);
   readonly skuError = signal('');
   skuText = '';
+  pageSize() {
+    return this.listQuery().limit ?? 20;
+  }
+  changePageSize(limit: number) {
+    if (![20, 50, 100].includes(limit) || limit === this.pageSize()) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { limit: limit === 20 ? null : limit, offset: null },
+      queryParamsHandling: 'merge',
+    });
+  }
   filterStock(value: string) {
     if (!['all', 'low', 'out', 'untracked'].includes(value)) return;
     void this.router.navigate([], {
@@ -277,8 +300,10 @@ export class ProductList {
     this.search();
   }
   changePage(delta: number) {
-    if (this.state()?.loading) return;
+    if (this.state()?.loading || !Number.isSafeInteger(delta) || delta % this.pageSize() !== 0)
+      return;
     const offset = Math.max(0, this.offset() + delta);
+    if (offset > 2147483647 || offset === this.offset()) return;
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { offset: offset || null },

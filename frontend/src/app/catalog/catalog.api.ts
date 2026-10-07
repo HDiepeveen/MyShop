@@ -24,9 +24,10 @@ export class CatalogApi {
       productTypeId?: string | null;
       published?: boolean;
       stock?: 'low' | 'out' | 'untracked';
+      limit?: number;
     } = {},
   ) {
-    let params = this.paging(offset, search);
+    let params = this.paging(offset, search, filters.limit ?? 20);
     if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
     if (filters.productTypeId) params = params.set('productTypeId', filters.productTypeId);
     if (filters.published !== undefined) params = params.set('published', filters.published);
@@ -306,8 +307,8 @@ export class CatalogApi {
       encodeURIComponent(variantId)
     );
   }
-  private paging(offset: number, search: string) {
-    let params = new HttpParams().set('offset', offset).set('limit', 20);
+  private paging(offset: number, search: string, limit = 20) {
+    let params = new HttpParams().set('offset', offset).set('limit', limit);
     if (search.trim()) params = params.set('search', search.trim());
     return params;
   }

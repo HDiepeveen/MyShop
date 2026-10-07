@@ -74,3 +74,7 @@ Alle drie endpoints zijn uitsluitend leesacties. Ze wijzigen geen gegevens of re
 Het beveiligde productoverzicht kan worden beperkt tot Gepubliceerd of Concept. Alle producten blijft de standaard. De API accepteert published=true of published=false; weglaten selecteert beide. Ongeldige booleanwaarden geven 400. Dit combineert met zoekterm, producttype en directe categorie en wordt vóór tellen en pagineren in SQL toegepast. De openbare winkel blijft uitsluitend gepubliceerde producten tonen.
 
 Wijzigen van de publicatiestatus gaat naar pagina één. Zoeken, bladeren, productdetails en het nieuwe-productscherm behouden het filter in de URL. Alle producten wist uitsluitend dit filter. Het beheerdersdashboard biedt afzonderlijke links naar gepubliceerde producten en concepten. Er is geen migratie of nieuwe opslag.
+
+## Producten per pagina
+
+Het productbeheer biedt 20 (standaard), 50 of 100 producten per pagina. De bestaande serverpaginering wordt hiervoor gebruikt. De URL bewaart limit=50 of limit=100 en een bijbehorende offset. Een andere paginagrootte gaat naar pagina één en behoudt zoekterm, categorie, producttype, publicatiestatus en voorraadfilter. Bladeren, productdetails en het nieuw-productscherm bewaren deze overzichtscontext. Ongeldige paginagroottes vallen in de beheerinterface terug op twintig; offsets die niet op de gekozen pagina aansluiten vallen terug op nul. Andere overzichts- en kiezerschermen behouden hun bestaande paginagrootte.
