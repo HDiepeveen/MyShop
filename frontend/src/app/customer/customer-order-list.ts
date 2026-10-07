@@ -18,6 +18,9 @@ import {
   template: `<a routerLink="/winkel/account">← Mijn account</a>
     <div class="eyebrow">Mijn account</div>
     <h1>Mijn bestellingen</h1>
+    <button type="button" class="secondary" [disabled]="loading()" (click)="load(offset())">
+      Bestellingen vernieuwen
+    </button>
     <form class="toolbar" (ngSubmit)="applySearch()">
       <label
         >Zoek op bestelnummer<input
@@ -47,6 +50,32 @@ import {
         </button>
       }
     </form>
+    @if (search || statusFilter()) {
+      <nav class="toolbar" aria-label="Actieve bestelfilters">
+        @if (search) {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Zoekfilter verwijderen"
+            [disabled]="loading()"
+            (click)="clearSearch()"
+          >
+            Bestelnummer: {{ search }} ×
+          </button>
+        }
+        @if (statusFilter(); as value) {
+          <button
+            type="button"
+            class="secondary"
+            aria-label="Statusfilter verwijderen"
+            [disabled]="loading()"
+            (click)="filterStatus(null)"
+          >
+            Status: {{ status(value) }} ×
+          </button>
+        }
+      </nav>
+    }
     @if (loading()) {
       <p role="status">Bestellingen ophalen…</p>
     }
@@ -55,6 +84,14 @@ import {
       <button type="button" (click)="load(offset())">Opnieuw proberen</button>
     }
     @if (!loading() && page(); as result) {
+      <p role="status">
+        {{ result.totalCount }}
+        {{ result.totalCount === 1 ? 'bestelling' : 'bestellingen' }} gevonden · Pagina
+        {{ result.offset / 20 + 1 }}
+        @if (result.offset / 20 < pageCount()) {
+          van {{ pageCount() }}
+        }
+      </p>
       @if (!result.items.length && result.offset === 0) {
         @if (search || statusFilter()) {
           <p>Geen bestellingen gevonden met deze filters.</p>
@@ -92,12 +129,23 @@ import {
       @if (!result.items.length && result.offset > 0) {
         <p>Deze pagina bevat geen bestellingen meer.</p>
         <button type="button" class="secondary" (click)="previous()">Vorige pagina</button>
+        <button type="button" class="secondary" (click)="first()">
+          Terug naar de eerste pagina
+        </button>
       }
       @if (
         result.items.length &&
         (result.offset > 0 || result.offset + result.items.length < result.totalCount)
       ) {
         <nav class="toolbar" aria-label="Paginering">
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="loading() || result.offset === 0"
+            (click)="first()"
+          >
+            Eerste pagina
+          </button>
           <button
             type="button"
             class="secondary"
@@ -118,7 +166,32 @@ import {
           >
             Volgende
           </button>
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="loading() || result.offset >= lastOffset()"
+            (click)="last()"
+          >
+            Laatste pagina
+          </button>
         </nav>
+      }
+      @if (pageCount() > 1) {
+        <form class="toolbar" (ngSubmit)="jumpToPage()">
+          <label
+            >Ga naar pagina<input
+              name="page"
+              type="number"
+              min="1"
+              [max]="pageCount()"
+              step="1"
+              [(ngModel)]="pageNumber"
+          /></label>
+          <button type="submit">Ga</button>
+        </form>
+      }
+      @if (pageError()) {
+        <p role="alert">{{ pageError() }}</p>
       }
     }`,
 })
@@ -134,6 +207,8 @@ export class CustomerOrderList {
   readonly statuses = customerOrderStatuses;
   readonly statusFilter = signal<CustomerOrderStatus | null>(null);
   searchText = '';
+  pageNumber: number | null = 1;
+  readonly pageError = signal('');
   search = '';
   constructor() {
     const query = readCustomerOrderQuery(this.route.snapshot.queryParamMap);
@@ -162,6 +237,36 @@ export class CustomerOrderList {
     this.statusFilter.set(null);
     this.load(0);
   }
+  clearSearch() {
+    if (this.loading()) return;
+    this.searchText = '';
+    this.applySearch();
+  }
+  pageCount() {
+    return Math.max(1, Math.ceil((this.page()?.totalCount ?? 0) / 20));
+  }
+  lastOffset() {
+    return (this.pageCount() - 1) * 20;
+  }
+  first() {
+    if (!this.offset()) return;
+    this.load(0);
+  }
+  last() {
+    if (!this.page() || this.offset() === this.lastOffset()) return;
+    this.load(this.lastOffset());
+  }
+  jumpToPage() {
+    if (this.loading() || !this.page()) return;
+    const page = this.pageNumber;
+    if (page === null || !Number.isSafeInteger(page) || page < 1 || page > this.pageCount()) {
+      this.pageError.set('Kies een heel paginanummer van 1 tot en met ' + this.pageCount() + '.');
+      return;
+    }
+    this.pageError.set('');
+    const offset = (page - 1) * 20;
+    if (offset !== this.offset()) this.load(offset);
+  }
   contextQuery() {
     return {
       search: this.search || null,
@@ -170,7 +275,16 @@ export class CustomerOrderList {
     };
   }
   load(offset: number) {
-    if (this.loading() || !Number.isSafeInteger(offset) || offset < 0 || offset % 20 !== 0) return;
+    if (
+      this.loading() ||
+      !Number.isSafeInteger(offset) ||
+      offset < 0 ||
+      offset > 2147483647 ||
+      offset % 20 !== 0
+    )
+      return;
+    this.pageNumber = offset / 20 + 1;
+    this.pageError.set('');
     this.offset.set(offset);
     this.page.set(null);
     this.loading.set(true);

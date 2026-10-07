@@ -69,3 +69,11 @@ Een geladen bestelling kan worden afgedrukt met Besteloverzicht afdrukken / PDF.
 ## Kenmerken kopiëren
 
 Bestelnummers en aanwezige trackingcodes kunnen via een knop worden gekopieerd. Het beheer biedt daarnaast kopiëren voor aanwezige betalings- en terugbetalingskenmerken. De originele tekst blijft zichtbaar. De browser vraagt zo nodig om toegang tot het klembord. Bij ontbrekende toegang verschijnt een melding om de tekst handmatig te selecteren en kopiëren. Tijdens een lopende kopieeractie wordt dubbel klikken geblokkeerd. Kopieerknoppen en feedback worden niet afgedrukt; er zijn geen serverwijzigingen.
+
+## Bladeren in Mijn bestellingen
+
+Het eigen besteloverzicht toont het totale aantal binnen de toegepaste filters en het huidige paginanummer. Eerste pagina, Laatste pagina en Ga naar pagina vullen Vorige en Volgende aan. Direct springen accepteert alleen hele paginanummers binnen het huidige aantal pagina's; een lege latere pagina biedt een terugweg naar pagina één. Het overzicht blijft twintig bestellingen per pagina ophalen.
+
+De actieve zoekterm en status staan zichtbaar boven het resultaat en kunnen afzonderlijk worden gewist, met behoud van het andere filter. Beide acties gaan naar pagina één. Filters wissen verwijdert beide keuzes. Bestellingen vernieuwen haalt de huidige pagina met de toegepaste filters opnieuw op; ongestuurde zoekinvoer wordt niet toegepast. Tijdens ophalen zijn nieuwe leesacties geblokkeerd. Na een fout kan de klant opnieuw ophalen; verlaten van de pagina annuleert de aanvraag.
+
+Detail- en teruglinks bewaren de bestaande zoek-, status- en paginacontext. De nieuwe bediening gebruikt de bestaande klantgebonden leesroute, zonder nieuwe opslag of wijziging van bestellingen. Aantallen en pagina-indeling kunnen tussen aanvragen veranderen.
