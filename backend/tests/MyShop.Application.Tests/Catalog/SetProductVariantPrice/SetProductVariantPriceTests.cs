@@ -7,6 +7,37 @@ namespace MyShop.Application.Tests.Catalog.SetProductVariantPrice;
 
 public sealed class SetProductVariantPriceTests
 {
+
+    [Fact]
+    public async Task Net_input_sets_gross_price_and_vat_metadata()
+    {
+        var scenario = new Scenario(withPrice: false);
+        await scenario.UseCase.ExecuteAsync(scenario.Command with { Amount = 100, VatRate = 21, IsNet = true }, CancellationToken.None);
+        Assert.Equal(Money.Create(121, "EUR"), scenario.Variant.Price);
+        Assert.Equal(21m, scenario.Variant.VatRate);
+        Assert.Equal(1, scenario.Repository.SaveCalls);
+        await scenario.UseCase.ExecuteAsync(scenario.Command with { Amount = 121 }, CancellationToken.None);
+        Assert.Equal(21m, scenario.Variant.VatRate);
+        Assert.Equal(1, scenario.Repository.SaveCalls);
+    }
+    [Fact]
+    public async Task Vat_change_is_saved_even_when_the_customer_price_is_unchanged()
+    {
+        var scenario = new Scenario(withPrice: false);
+        await scenario.UseCase.ExecuteAsync(scenario.Command with { Amount = 121, VatRate = 0, IsNet = true }, CancellationToken.None);
+        await scenario.UseCase.ExecuteAsync(scenario.Command with { Amount = 100, VatRate = 21, IsNet = true }, CancellationToken.None);
+        Assert.Equal(Money.Create(121, "EUR"), scenario.Variant.Price);
+        Assert.Equal(21m, scenario.Variant.VatRate);
+        Assert.Equal(2, scenario.Repository.SaveCalls);
+    }
+    [Fact]
+    public async Task Invalid_tax_does_not_mutate_or_save_the_variant()
+    {
+        var scenario = new Scenario(withPrice: true);
+        await Assert.ThrowsAsync<ArgumentException>(() => scenario.UseCase.ExecuteAsync(scenario.Command with { VatRate = 21, VatExempt = true }, CancellationToken.None));
+        Assert.Equal(Money.Create(9.99m, "EUR"), scenario.Variant.Price);
+        Assert.Null(scenario.Variant.VatRate); Assert.Equal(0, scenario.Repository.SaveCalls);
+    }
     [Fact]
     public void Constructor_RejectsNullRepository() =>
         Assert.Throws<ArgumentNullException>(() => new UseCase(null!));

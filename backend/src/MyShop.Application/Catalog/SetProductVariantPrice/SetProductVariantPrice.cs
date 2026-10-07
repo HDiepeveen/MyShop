@@ -3,7 +3,7 @@ using MyShop.Domain.Catalog;
 
 namespace MyShop.Application.Catalog.SetProductVariantPrice;
 
-public sealed record SetProductVariantPriceCommand(ProductId ProductId, ProductVariantId ProductVariantId, decimal Amount, string Currency);
+public sealed record SetProductVariantPriceCommand(ProductId ProductId, ProductVariantId ProductVariantId, decimal Amount, string Currency, decimal? VatRate = null, bool VatExempt = false, bool IsNet = false);
 public enum SetProductVariantPriceFailure { ProductNotFound, VariantNotFound }
 public sealed record SetProductVariantPriceResult(SetProductVariantPriceFailure? Failure)
 {
@@ -28,8 +28,14 @@ public sealed class SetProductVariantPrice
         var variant = snapshot.Product.Variants.SingleOrDefault(candidate => candidate.Id == command.ProductVariantId);
         if (variant is null) return new(SetProductVariantPriceFailure.VariantNotFound);
         var price = Money.Create(command.Amount, command.Currency);
-        if (variant.Price == price) return new(null);
-        snapshot.Product.SetVariantPrice(command.ProductVariantId, price);
+        var netPriceAmount = command.IsNet ? price.Amount : (decimal?)null;
+        if (command.IsNet && command.VatRate is null) throw new ArgumentException("Net input requires a VAT treatment.");
+        if (command.IsNet && command.VatRate is { } rate) price = VatPrice.FromNet(price, rate, command.VatExempt).Gross;
+        else if (command.VatExempt && command.VatRate is null) throw new ArgumentException("VAT exemption requires a zero rate.");
+        var vatRate = command.VatRate ?? variant.VatRate;
+        var exempt = command.VatRate is null ? variant.VatExempt : command.VatExempt;
+        if (variant.Price == price && variant.VatRate == vatRate && variant.VatExempt == exempt && (!command.IsNet || variant.NetPriceAmount == netPriceAmount)) return new(null);
+        snapshot.Product.SetVariantPrice(command.ProductVariantId, price, vatRate, exempt, netPriceAmount);
         await _products.SaveAsync(snapshot.Product, snapshot.ConcurrencyToken, cancellationToken);
         return new(null);
     }

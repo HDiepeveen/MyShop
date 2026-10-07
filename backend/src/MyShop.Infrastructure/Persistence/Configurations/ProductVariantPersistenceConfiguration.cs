@@ -19,6 +19,8 @@ internal sealed class ProductVariantPersistenceConfiguration : IEntityTypeConfig
             .UseCollation("Latin1_General_100_BIN2");
         builder.Property(variant => variant.Ordinal).IsRequired();
         builder.Property(variant => variant.PriceAmount).IsRequired(false).HasPrecision(18, 2);
+        builder.Property(variant => variant.VatRate).HasPrecision(5, 2);
+        builder.Property(variant => variant.NetPriceAmount).HasPrecision(18, 2);
         builder.Property(variant => variant.PriceCurrency).IsRequired(false).HasMaxLength(3).HasColumnType("char(3)");
         builder.Property(variant => variant.StockQuantity).IsRequired(false);
         builder.ToTable(table => table.HasCheckConstraint("CK_ProductVariants_StockQuantity",

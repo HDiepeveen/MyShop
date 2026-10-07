@@ -143,7 +143,7 @@ public sealed class Product
         FindVariant(variantId).ClearSku();
     }
 
-    public void SetVariantPrice(ProductVariantId variantId, Money price) => FindVariant(variantId).SetPrice(price);
+    public void SetVariantPrice(ProductVariantId variantId, Money price, decimal? vatRate = null, bool vatExempt = false, decimal? netPriceAmount = null) => FindVariant(variantId).SetPrice(price, vatRate, vatExempt, netPriceAmount);
 
     public void ClearVariantPrice(ProductVariantId variantId) => FindVariant(variantId).ClearPrice();
 

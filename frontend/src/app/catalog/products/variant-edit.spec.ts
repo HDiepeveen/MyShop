@@ -125,7 +125,12 @@ describe('VariantEdit', () => {
       editor.currency = 'eur';
       editor.savePrice();
       const request = http.expectOne('/api/products/p/variants/v/price');
-      expect(request.request.body).toEqual({ amount, currency: 'EUR' });
+      expect(request.request.body).toEqual({
+        netAmount: amount,
+        currency: 'EUR',
+        vatRate: 21,
+        vatExempt: false,
+      });
       request.flush(null);
     }
   });

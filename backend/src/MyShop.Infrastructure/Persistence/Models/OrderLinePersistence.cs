@@ -12,5 +12,9 @@ internal sealed class OrderLinePersistence
     public decimal UnitAmount { get; set; }
     public string Currency { get; set; } = null!;
     public decimal TotalAmount { get; set; }
+    public decimal? VatRate { get; set; }
+    public bool VatExempt { get; set; }
+    public decimal? NetAmount { get; set; }
+    public decimal? VatAmount { get; set; }
     public OrderPersistence Order { get; set; } = null!;
 }

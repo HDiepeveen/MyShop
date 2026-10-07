@@ -64,7 +64,7 @@ public sealed record DeliveryAddress
 }
 
 public sealed record OrderLine(Guid ProductId, Guid VariantId, string ProductName, string VariantName,
-    int Quantity, Money UnitPrice, Money Total);
+    int Quantity, Money UnitPrice, Money Total, decimal? VatRate = null, bool VatExempt = false, decimal? NetAmount = null, decimal? VatAmount = null);
 public sealed record OrderTotal(string Currency, decimal Amount);
 public sealed record OrderDeliveryMethod(Guid Id, string Name, string? Description, Money Fee);
 
@@ -98,7 +98,8 @@ public sealed class Order
         DeliveryAddress address, IEnumerable<(Guid ProductId, Guid VariantId, string ProductName,
             string VariantName, int Quantity, Money UnitPrice)> lines, string? paymentInstructions = null,
         OrderDeliveryMethod? deliveryMethod = null,
-        OrderPaymentMethod paymentMethod = OrderPaymentMethod.PayLater)
+        OrderPaymentMethod paymentMethod = OrderPaymentMethod.PayLater,
+        IReadOnlyDictionary<(Guid ProductId, Guid VariantId), (decimal Rate, bool Exempt)>? vatRates = null)
     {
         if (id == Guid.Empty) throw new ArgumentException("Order ID is required.", nameof(id));
         ArgumentNullException.ThrowIfNull(customer);
@@ -111,11 +112,19 @@ public sealed class Order
                 throw new ArgumentException("Order line is invalid.", nameof(lines));
             var productName = Required(line.ProductName, nameof(lines));
             var variantName = Required(line.VariantName, nameof(lines));
-            return new OrderLine(line.ProductId, line.VariantId, productName, variantName, line.Quantity,
-                line.UnitPrice, Money.Create(line.UnitPrice.Amount * line.Quantity, line.UnitPrice.Currency));
+            var total = Money.Create(line.UnitPrice.Amount * line.Quantity, line.UnitPrice.Currency);
+            if (vatRates is not null && vatRates.TryGetValue((line.ProductId, line.VariantId), out var vat))
+            {
+                var split = VatPrice.FromGross(line.UnitPrice, vat.Rate, vat.Exempt);
+                return new OrderLine(line.ProductId, line.VariantId, productName, variantName, line.Quantity,
+                    line.UnitPrice, total, vat.Rate, vat.Exempt, split.Net.Amount * line.Quantity, split.Vat.Amount * line.Quantity);
+            }
+            return new OrderLine(line.ProductId, line.VariantId, productName, variantName, line.Quantity, line.UnitPrice, total);
         }).ToArray();
         if (snapshots.Length is < 1 or > 20 || snapshots.Select(line => (line.ProductId, line.VariantId)).Distinct().Count() != snapshots.Length)
             throw new ArgumentException("Order must contain 1 to 20 unique variants.", nameof(lines));
+        if (vatRates?.Keys.Any(key => !snapshots.Any(line => (line.ProductId, line.VariantId) == key)) == true)
+            throw new ArgumentException("VAT contains an unknown order line.", nameof(vatRates));
         var totals = snapshots.Select(line => line.Total)
             .Concat(deliveryMethod is null ? [] : [deliveryMethod.Fee])
             .GroupBy(total => total.Currency)

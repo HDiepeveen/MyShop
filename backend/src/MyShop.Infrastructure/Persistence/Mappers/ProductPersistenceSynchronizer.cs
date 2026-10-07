@@ -203,6 +203,9 @@ internal static class ProductPersistenceSynchronizer
             persistedVariant.Name = domainVariant.Name;
             persistedVariant.Sku = domainVariant.Sku?.Value;
             persistedVariant.PriceAmount = domainVariant.Price?.Amount;
+            persistedVariant.VatRate = domainVariant.VatRate;
+            persistedVariant.VatExempt = domainVariant.VatExempt;
+            persistedVariant.NetPriceAmount = domainVariant.NetPriceAmount;
             persistedVariant.PriceCurrency = domainVariant.Price?.Currency;
             persistedVariant.StockQuantity = domainVariant.StockQuantity;
             persistedVariant.Ordinal = ordinal++;

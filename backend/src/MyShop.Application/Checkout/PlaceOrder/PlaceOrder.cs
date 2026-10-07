@@ -71,7 +71,8 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
             quote.Lines.Select(line => (line.ProductId, line.VariantId, line.Name!, line.Variant!,
                 line.Quantity, Money.Create(line.Amount!.Value, line.Currency!))),
             settings.PayLaterInstructions, new OrderDeliveryMethod(delivery.Id, delivery.Name,
-                delivery.Description, Money.Create(delivery.Amount, delivery.Currency)));
+                delivery.Description, Money.Create(delivery.Amount, delivery.Currency)),
+            vatRates: quote.Lines.Where(line => line.VatRate is not null).ToDictionary(line => (line.ProductId, line.VariantId), line => (line.VatRate!.Value, line.VatExempt)));
         var receipt = await orders.AddAsync(order, command.CheckoutToken, command.CustomerUserId,
             quote.Lines.Select(line => new StockReservation(line.ProductId, line.VariantId,
                 line.Quantity)).ToArray(), cancellationToken);

@@ -43,7 +43,8 @@ public sealed class CompleteOnlinePayment(IOnlinePaymentStartRepository paymentS
         var order = Order.Place(Guid.NewGuid(), DateTimeOffset.UtcNow, customer, address,
             payment.Lines.Select(line => (line.ProductId, line.VariantId, line.ProductName,
                 line.VariantName, line.Quantity, Money.Create(line.UnitAmount, line.Currency))),
-            paymentInstructions: null, deliveryMethod: delivery, paymentMethod: OrderPaymentMethod.Online);
+            paymentInstructions: null, deliveryMethod: delivery, paymentMethod: OrderPaymentMethod.Online,
+            vatRates: payment.Lines.Where(line => line.VatRate is not null).ToDictionary(line => (line.ProductId, line.VariantId), line => (line.VatRate!.Value, line.VatExempt)));
         var receipt = await orders.AddPaidAsync(order, command.CheckoutToken, payment.PaymentReference,
             payment.Lines.Select(line => new StockReservation(line.ProductId, line.VariantId,
                 line.Quantity)).ToArray(), cancellationToken);

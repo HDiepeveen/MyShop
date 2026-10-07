@@ -6,7 +6,7 @@ namespace MyShop.Application.Catalog.QuoteStorefrontCart;
 public sealed record CartQuoteLine(Guid ProductId, Guid VariantId, int Quantity);
 public sealed record QuoteStorefrontCartQuery(IReadOnlyList<CartQuoteLine> Lines, DateTimeOffset At);
 public sealed record CartQuotedLine(Guid ProductId, Guid VariantId, int Quantity, string? Name, string? Variant,
-    decimal? Amount, string? Currency, decimal? Total, string? Failure);
+    decimal? Amount, string? Currency, decimal? Total, string? Failure, decimal? VatRate = null, bool VatExempt = false);
 public sealed record CartQuotedTotal(string Currency, decimal Amount);
 public sealed record StorefrontCartQuote(DateTimeOffset At, IReadOnlyList<CartQuotedLine> Lines, IReadOnlyList<CartQuotedTotal> Totals);
 
@@ -43,7 +43,7 @@ public sealed class QuoteStorefrontCart(IProductRepository products)
                 return new CartQuotedLine(line.ProductId, line.VariantId, line.Quantity, product!.Name, variant.Name, null, null, null, "priceMissing");
             var price = variant.CalculatePrice(query.At);
             return new CartQuotedLine(line.ProductId, line.VariantId, line.Quantity, product!.Name, variant.Name,
-                price.Amount, price.Currency, price.Amount * line.Quantity, null);
+                price.Amount, price.Currency, price.Amount * line.Quantity, null, variant.VatRate, variant.VatExempt);
         }).ToArray();
         var totals = quoted.Any(line => line.Failure is not null) ? [] : quoted.GroupBy(line => line.Currency!)
             .Select(group => new CartQuotedTotal(group.Key, group.Sum(line => line.Total!.Value))).ToArray();

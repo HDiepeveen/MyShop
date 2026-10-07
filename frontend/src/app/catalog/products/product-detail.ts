@@ -173,11 +173,31 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
               <dd>{{ variant.sku || 'Nog niet ingevuld' }}</dd>
               <dt>Basisprijs</dt>
               <dd>
-                {{
-                  variant.price
-                    ? (variant.price.amount | currency: variant.price.currency)
-                    : 'Nog niet ingesteld'
-                }}
+                @if (variant.price; as price) {
+                  @if (price.netAmount != null) {
+                    <p>
+                      Prijs exclusief btw: {{ price.netAmount.replace('.', ',') }}
+                      {{ price.currency }}
+                    </p>
+                    <p>
+                      Btw {{ price.vatExempt ? '(vrijgesteld)' : '(' + price.vatRate + '%)' }}:
+                      {{ price.vatAmount?.replace('.', ',') }} {{ price.currency }}
+                    </p>
+                    <p>
+                      Totaal klantprijs: {{ price.grossAmount?.replace('.', ',') }}
+                      {{ price.currency }}
+                    </p>
+                  } @else {
+                    @if (price.grossAmount) {
+                      {{ price.grossAmount.replace('.', ',') }} {{ price.currency }}
+                    } @else {
+                      {{ price.amount | currency: price.currency }}
+                    }
+                    <span class="muted"> · Btw nog niet vastgelegd</span>
+                  }
+                } @else {
+                  Nog niet ingesteld
+                }
               </dd>
               <dt>Voorraad</dt>
               <dd>

@@ -122,7 +122,8 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 Quantity = line.Quantity,
                 UnitAmount = line.UnitPrice.Amount,
                 Currency = line.UnitPrice.Currency,
-                TotalAmount = line.Total.Amount
+                TotalAmount = line.Total.Amount,
+                VatRate = line.VatRate, VatExempt = line.VatExempt, NetAmount = line.NetAmount, VatAmount = line.VatAmount
             }).ToArray(),
             Totals = order.Totals.Select(total => new OrderTotalPersistence
             {

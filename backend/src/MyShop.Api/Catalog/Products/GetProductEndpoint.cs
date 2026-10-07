@@ -98,7 +98,7 @@ public sealed record ProductVariantResponse(
         variant.Name,
         variant.Sku?.Value,
         variant.AttributeValues.Select(AttributeValueResponse.FromDomain).ToArray(),
-        variant.Price is { } price ? new MoneyResponse(price.Amount, price.Currency) : null,
+        variant.Price is { } price ? MoneyResponse.FromVariant(variant, price) : null,
         variant.PriceRules.OrderByDescending(rule => rule.Priority).ThenBy(rule => rule.Id)
             .Select(PriceRuleResponse.FromDomain).ToArray(),
         variant.StockQuantity);
@@ -127,4 +127,14 @@ public sealed record AttributeValueResponse(
             });
 }
 
-public sealed record MoneyResponse(decimal Amount, string Currency);
+public sealed record MoneyResponse(decimal Amount, string Currency, string? NetAmount = null,
+    string? VatAmount = null, string? GrossAmount = null, decimal? VatRate = null, bool VatExempt = false, bool IsNetPrice = false)
+{
+    internal static MoneyResponse FromVariant(ProductVariant variant, Money price)
+    {
+        var split = variant.VatRate is { } rate ? VatPrice.FromGross(price, rate, variant.VatExempt) : null;
+        return new(price.Amount, price.Currency, split?.Net.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+            split?.Vat.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+            price.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), variant.VatRate, variant.VatExempt, variant.NetPriceAmount is not null);
+    }
+}

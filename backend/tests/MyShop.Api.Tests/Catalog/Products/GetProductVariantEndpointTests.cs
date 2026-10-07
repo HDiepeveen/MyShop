@@ -30,7 +30,7 @@ public sealed class GetProductVariantEndpointTests
         Assert.NotEqual(first.Id.Value, response.Variant.Id);
         Assert.Equal("Second", response.Variant.Name);
         Assert.Equal("SECOND", response.Variant.Sku);
-        Assert.Equal(new MoneyResponse(20m, "EUR"), response.Variant.Price);
+        Assert.Equal(new MoneyResponse(20m, "EUR", GrossAmount: "20.00"), response.Variant.Price);
         var attribute = Assert.Single(response.Variant.AttributeValues);
         Assert.Equal(attributeId.Value, attribute.AttributeDefinitionId);
         Assert.Equal("Red", attribute.Value);

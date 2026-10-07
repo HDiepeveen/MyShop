@@ -5,7 +5,7 @@ public sealed record OnlinePaymentStartAddressSnapshot(string AddressLine, strin
     string City, string CountryCode);
 public sealed record OnlinePaymentStartLineSnapshot(Guid ProductId, Guid VariantId,
     string ProductName, string VariantName, int Quantity, decimal UnitAmount, string Currency,
-    decimal TotalAmount);
+    decimal TotalAmount, decimal? VatRate = null, bool VatExempt = false);
 
 public sealed record OnlinePaymentStartRecord(Guid CheckoutToken, string ProviderName,
     string PaymentReference, string ProviderPaymentId, Uri CheckoutUrl,

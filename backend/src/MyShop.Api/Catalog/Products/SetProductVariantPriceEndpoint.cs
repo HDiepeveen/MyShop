@@ -37,12 +37,14 @@ public static class SetProductVariantPriceEndpoint
 
         try
         {
+            if (request.NetAmount is not null && request.Amount != 0)
+                throw new ArgumentException("Specify netAmount or the legacy amount, not both.");
             var result = await useCase.ExecuteAsync(
                 new SetProductVariantPriceCommand(
                     ProductId.From(productId),
                     ProductVariantId.From(variantId),
-                    request.Amount,
-                    request.Currency),
+                    request.NetAmount ?? request.Amount,
+                    request.Currency, request.VatRate, request.VatExempt, request.NetAmount is not null),
                 cancellationToken);
 
             return result.Failure switch
@@ -83,4 +85,4 @@ public static class SetProductVariantPriceEndpoint
     }
 }
 
-public sealed record SetProductVariantPriceRequest(decimal Amount, string Currency);
+public sealed record SetProductVariantPriceRequest(decimal Amount, string Currency, decimal? VatRate = null, bool VatExempt = false, decimal? NetAmount = null);

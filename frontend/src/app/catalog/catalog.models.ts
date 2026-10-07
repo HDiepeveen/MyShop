@@ -76,7 +76,16 @@ export interface Variant {
   id: string;
   name: string;
   sku: string | null;
-  price: { amount: number; currency: string } | null;
+  price: {
+    amount: number;
+    currency: string;
+    netAmount?: string | null;
+    vatAmount?: string | null;
+    grossAmount?: string | null;
+    vatRate?: number | null;
+    vatExempt?: boolean;
+    isNetPrice?: boolean;
+  } | null;
   priceRules: PriceRule[];
   attributeValues: AttributeValue[];
   stockQuantity?: number | null;

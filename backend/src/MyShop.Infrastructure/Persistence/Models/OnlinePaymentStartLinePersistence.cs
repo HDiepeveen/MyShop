@@ -12,5 +12,7 @@ internal sealed class OnlinePaymentStartLinePersistence
     public decimal UnitAmount { get; set; }
     public string Currency { get; set; } = null!;
     public decimal TotalAmount { get; set; }
+    public decimal? VatRate { get; set; }
+    public bool VatExempt { get; set; }
     public OnlinePaymentStartPersistence PaymentStart { get; set; } = null!;
 }

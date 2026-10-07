@@ -300,10 +300,18 @@ export class CatalogApi {
   clearVariantSku(productId: string, variantId: string) {
     return this.http.delete<void>(this.variantUrl(productId, variantId) + '/sku');
   }
-  setVariantPrice(productId: string, variantId: string, amount: number, currency: string) {
+  setVariantPrice(
+    productId: string,
+    variantId: string,
+    amount: number,
+    currency: string,
+    vatRate?: number,
+    vatExempt = false,
+  ) {
     return this.http.put<void>(this.variantUrl(productId, variantId) + '/price', {
-      amount,
+      ...(vatRate !== undefined ? { netAmount: amount } : { amount }),
       currency: currency.trim().toUpperCase(),
+      ...(vatRate !== undefined ? { vatRate, vatExempt } : {}),
     });
   }
   clearVariantPrice(productId: string, variantId: string) {

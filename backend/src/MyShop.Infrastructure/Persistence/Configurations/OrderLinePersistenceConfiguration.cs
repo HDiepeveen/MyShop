@@ -20,6 +20,9 @@ internal sealed class OrderLinePersistenceConfiguration : IEntityTypeConfigurati
         builder.Property(line => line.UnitAmount).IsRequired().HasPrecision(18, 2);
         builder.Property(line => line.Currency).IsRequired().HasMaxLength(3).IsFixedLength();
         builder.Property(line => line.TotalAmount).IsRequired().HasPrecision(20, 2);
+        builder.Property(line => line.VatRate).HasPrecision(5, 2);
+        builder.Property(line => line.NetAmount).HasPrecision(20, 2);
+        builder.Property(line => line.VatAmount).HasPrecision(20, 2);
         builder.HasOne(line => line.Order).WithMany(order => order.Lines)
             .HasForeignKey(line => line.OrderId).OnDelete(DeleteBehavior.Cascade);
     }

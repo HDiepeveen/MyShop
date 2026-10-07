@@ -56,7 +56,8 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
                 Quantity = line.Quantity,
                 UnitAmount = line.UnitAmount,
                 Currency = line.Currency,
-                TotalAmount = line.TotalAmount
+                TotalAmount = line.TotalAmount,
+                VatRate = line.VatRate, VatExempt = line.VatExempt
             }).ToArray(),
             Totals = payment.Totals.Select(total => new OnlinePaymentStartTotalPersistence
             {
@@ -76,7 +77,7 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
             payment.Lines.OrderBy(line => line.Ordinal).Select(line =>
                 new OnlinePaymentStartLineSnapshot(line.ProductId, line.VariantId,
                     line.ProductName, line.VariantName, line.Quantity, line.UnitAmount,
-                    line.Currency, line.TotalAmount)).ToArray(),
+                    line.Currency, line.TotalAmount, line.VatRate, line.VatExempt)).ToArray(),
             payment.Totals.OrderBy(total => total.Currency, StringComparer.Ordinal)
                 .Select(total => new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
             new OrderDeliveryMethodSnapshot(payment.DeliveryMethodId, payment.DeliveryMethodName,

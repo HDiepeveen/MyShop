@@ -58,7 +58,7 @@ import { errorMessage } from '../error-message';
           <p class="form-errors">Gebruik een valutacode van drie letters, bijvoorbeeld EUR.</p>
         }
         <label class="field"
-          >Basisprijs<input
+          >Prijs exclusief btw<input
             name="amount"
             inputmode="decimal"
             [(ngModel)]="amount"
@@ -68,6 +68,28 @@ import { errorMessage } from '../error-message';
           />
           <small>Vanaf 0, maximaal twee decimalen. Een komma of punt is toegestaan.</small></label
         >
+        @if (variant().price && !variant().price?.isNetPrice) {
+          <p>
+            De bestaande klantprijs is {{ variant().price?.grossAmount ?? variant().price?.amount }}
+            {{ variant().price?.currency }}. Deze prijs is als klantprijs vastgelegd. Vul hieronder
+            bewust de netto prijs en btw-keuze in.
+          </p>
+        }
+        <label class="field"
+          >Btw<select name="vat" [(ngModel)]="vatChoice" [disabled]="busy()" required>
+            <option value="">Kies een btw-behandeling</option>
+            <option value="21">21%</option>
+            <option value="9">9%</option>
+            <option value="0">0%</option>
+            <option value="exempt">Vrijgesteld</option>
+          </select></label
+        >
+        @if (taxPreview(); as split) {
+          <p>
+            Prijs: {{ split.net }} · Btw: {{ split.vat }} · Totaal voor de klant: {{ split.gross }}
+            {{ currency.toUpperCase() }}
+          </p>
+        }
         <label class="field"
           >Valuta<input
             name="currency"
@@ -79,7 +101,7 @@ import { errorMessage } from '../error-message';
         /></label>
         <button
           class="secondary"
-          [disabled]="busy() || parsedAmount() === null || !validCurrency()"
+          [disabled]="busy() || parsedAmount() === null || !validCurrency() || !taxPreview()"
         >
           Basisprijs opslaan
         </button>
@@ -174,7 +196,14 @@ export class VariantEdit {
       this.confirmingRemove.set(false);
       this.name = this.variant().name;
       this.sku = this.variant().sku ?? '';
-      this.amount = this.variant().price?.amount.toString() ?? '';
+      this.amount = this.variant().price?.isNetPrice ? (this.variant().price?.netAmount ?? '') : '';
+      this.vatChoice = this.variant().price
+        ? this.variant().price?.vatRate == null
+          ? ''
+          : this.variant().price?.vatExempt
+            ? 'exempt'
+            : String(this.variant().price?.vatRate)
+        : '21';
       this.currency = this.variant().price?.currency ?? 'EUR';
       this.stock = this.variant().stockQuantity?.toString() ?? '';
     });
@@ -221,14 +250,37 @@ export class VariantEdit {
       ? value
       : null;
   }
+  vatChoice = '21';
+  taxPreview(): { net: string; vat: string; gross: string } | null {
+    if (this.parsedAmount() === null || !['21', '9', '0', 'exempt'].includes(this.vatChoice))
+      return null;
+    const [whole, decimals = ''] = this.amount.trim().replace(',', '.').split('.');
+    const cents = BigInt(whole) * 100n + BigInt(decimals.padEnd(2, '0'));
+    const rate = this.vatChoice === 'exempt' ? 0n : BigInt(this.vatChoice);
+    const numerator = cents * rate;
+    let vat = numerator / 100n;
+    const remainder = numerator % 100n;
+    if (remainder >= 50n) vat++;
+    const gross = cents + vat;
+    const format = (value: bigint) =>
+      (value / 100n).toString() + ',' + (value % 100n).toString().padStart(2, '0');
+    return { net: format(cents), vat: format(gross - cents), gross: format(gross) };
+  }
   validCurrency() {
     return /^[a-zA-Z]{3}$/.test(this.currency.trim());
   }
   savePrice() {
     const amount = this.parsedAmount();
-    if (this.busy() || amount === null || !this.validCurrency()) return;
+    if (this.busy() || amount === null || !this.validCurrency() || !this.taxPreview()) return;
     this.save(
-      this.api.setVariantPrice(this.productId(), this.variant().id, amount, this.currency),
+      this.api.setVariantPrice(
+        this.productId(),
+        this.variant().id,
+        amount,
+        this.currency,
+        this.vatChoice === 'exempt' ? 0 : Number(this.vatChoice),
+        this.vatChoice === 'exempt',
+      ),
       'De basisprijs is bijgewerkt.',
     );
   }

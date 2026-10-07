@@ -133,7 +133,7 @@ public sealed class GetProductEndpointTests
             scenario.Product.Id.Value, scenario.UseCase, CancellationToken.None);
         var variant = Assert.Single(Assert.IsType<Ok<GetProductResponse>>(result.Result).Value!.Variants);
         if (hasPrice)
-            Assert.Equal(new MoneyResponse(0m, "EUR"), variant.Price);
+            Assert.Equal(new MoneyResponse(0m, "EUR", GrossAmount: "0.00"), variant.Price);
         else
             Assert.Null(variant.Price);
     }
@@ -151,8 +151,8 @@ public sealed class GetProductEndpointTests
         var result = await GetProductEndpoint.ExecuteAsync(
             scenario.Product.Id.Value, scenario.UseCase, CancellationToken.None);
         var variants = Assert.IsType<Ok<GetProductResponse>>(result.Result).Value!.Variants;
-        Assert.Equal(new MoneyResponse(100m, "EUR"), variants.Single(v => v.Id == scenario.Variant.Id.Value).Price);
-        Assert.Equal(new MoneyResponse(25m, "USD"), variants.Single(v => v.Id == second.Id.Value).Price);
+        Assert.Equal(new MoneyResponse(100m, "EUR", GrossAmount: "100.00"), variants.Single(v => v.Id == scenario.Variant.Id.Value).Price);
+        Assert.Equal(new MoneyResponse(25m, "USD", GrossAmount: "25.00"), variants.Single(v => v.Id == second.Id.Value).Price);
     }
 
     [Fact]

@@ -121,7 +121,7 @@ internal static class ProductPersistenceMapper
                 ? null
                 : Money.Create(persistence.PriceAmount ?? throw InvalidStructure(productId, "Variant price amount is missing."), persistence.PriceCurrency ?? throw InvalidStructure(productId, "Variant price currency is missing.")),
             persistence.PriceRules.OrderBy(rule => rule.Priority).Select(rule => PriceRule.Rehydrate(rule.Id, rule.Name, (PriceAdjustmentType)rule.AdjustmentType, rule.Value, rule.Priority, rule.StartsAt, rule.EndsAt)),
-            persistence.StockQuantity);
+            persistence.StockQuantity, persistence.VatRate, persistence.VatExempt, persistence.NetPriceAmount);
     }
 
     private static IReadOnlyList<T> OrderByOrdinal<T>(

@@ -80,7 +80,7 @@ public sealed class VariantPricingHttpFlowTests
         Assert.Equal(10m, updatedRule.Value);
         Assert.Null(updatedRule.StartsAt);
         Assert.Null(updatedRule.EndsAt);
-        Assert.Equal(new MoneyResponse(100m, "EUR"), variant.Variant.Price);
+        Assert.Equal(new MoneyResponse(100m, "EUR", GrossAmount: "100.00"), variant.Variant.Price);
         Assert.Equal(repository.Token.Revision, variant.Revision);
         var updatedQuote = await Read<ProductVariantPriceResponse>(
             await Send(app, repository, "GetProductVariantPrice", query: query));

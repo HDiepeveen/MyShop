@@ -43,6 +43,9 @@ public sealed class ProductVariant
     public ProductVariantId Id { get; }
     public string Name { get; private set; }
     public Money? Price { get; private set; }
+    public decimal? VatRate { get; private set; }
+    public bool VatExempt { get; private set; }
+    public decimal? NetPriceAmount { get; private set; }
     public IReadOnlyCollection<PriceRule> PriceRules => _readOnlyPriceRules;
     public Sku? Sku { get; private set; }
     public int? StockQuantity { get; private set; }
@@ -56,7 +59,7 @@ public sealed class ProductVariant
         IEnumerable<AttributeValue> attributeValues,
         Money? price = null,
         IEnumerable<PriceRule>? priceRules = null,
-        int? stockQuantity = null)
+        int? stockQuantity = null, decimal? vatRate = null, bool vatExempt = false, decimal? netPriceAmount = null)
     {
         ArgumentNullException.ThrowIfNull(attributeValues);
 
@@ -72,7 +75,10 @@ public sealed class ProductVariant
         var rules = (priceRules ?? []).ToList();
         if (rules.Any(rule => rule is null)) throw new InvalidOperationException("A variant cannot contain null price rules.");
         if (rules.GroupBy(rule => rule.Id).Any(group => group.Count() > 1)) throw new InvalidOperationException("A variant cannot contain duplicate price rules.");
-        return new ProductVariant(id, validatedName, sku, values, price, rules, stockQuantity);
+        var variant = new ProductVariant(id, validatedName, sku, values, price, rules, stockQuantity);
+        if (price is { } supplied) variant.SetPrice(supplied, vatRate, vatExempt, netPriceAmount);
+        else if (vatRate is not null || vatExempt || netPriceAmount is not null) throw new ArgumentException("VAT requires a price.");
+        return variant;
     }
 
     internal void Rename(string name) => Name = ValidateName(name);
@@ -85,14 +91,27 @@ public sealed class ProductVariant
 
     internal void ClearSku() => Sku = null;
 
-    internal void SetPrice(Money price)
+    internal void SetPrice(Money price, decimal? vatRate = null, bool vatExempt = false, decimal? netPriceAmount = null)
     {
         if (price == default)
             throw new ArgumentException("Price must be specified.", nameof(price));
+        if (vatRate is null && !vatExempt) { vatRate = VatRate; vatExempt = VatExempt; }
+        if (vatRate is { } rate) VatPrice.FromGross(price, rate, vatExempt);
+        else if (vatExempt) throw new ArgumentException("VAT exemption requires a zero rate.");
+        if (netPriceAmount is null && price == Price && VatRate == vatRate && VatExempt == vatExempt) netPriceAmount = NetPriceAmount;
+        if (netPriceAmount is { } net)
+        {
+            netPriceAmount = Money.Create(net, price.Currency).Amount;
+            if (vatRate is null || VatPrice.FromNet(Money.Create(netPriceAmount.Value, price.Currency), vatRate.Value, vatExempt).Gross != price)
+                throw new ArgumentException("Net and gross prices must agree with the VAT treatment.");
+        }
         Price = price;
+        VatRate = vatRate;
+        VatExempt = vatExempt;
+        NetPriceAmount = netPriceAmount;
     }
 
-    internal void ClearPrice() => Price = null;
+    internal void ClearPrice() { Price = null; VatRate = null; VatExempt = false; NetPriceAmount = null; }
 
     internal void SetStockQuantity(int quantity) => StockQuantity = ValidateStockQuantity(quantity);
 

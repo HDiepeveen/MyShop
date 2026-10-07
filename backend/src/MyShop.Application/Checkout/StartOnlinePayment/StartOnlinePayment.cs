@@ -90,7 +90,7 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
                 address.City, address.CountryCode),
             quote.Lines.Select(line => new OnlinePaymentStartLineSnapshot(line.ProductId,
                 line.VariantId, line.Name!, line.Variant!, line.Quantity, line.Amount!.Value,
-                line.Currency!, line.Total!.Value)).ToArray(), totals, deliverySnapshot,
+                line.Currency!, line.Total!.Value, line.VatRate, line.VatExempt)).ToArray(), totals, deliverySnapshot,
             DateTimeOffset.UtcNow);
         await onlinePaymentStarts.SaveAsync(payment, cancellationToken);
         return new(ToStart(payment), null);
