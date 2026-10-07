@@ -3,6 +3,16 @@ import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
+    path: 'instellingen/facturatie',
+    loadComponent: () => import('./billing/billing-settings').then((m) => m.BillingSettings),
+    title: 'Facturatie en btw · MyShop',
+  },
+  {
+    path: 'bestellingen/:id/factuur',
+    loadComponent: () => import('./billing/invoice-page').then((m) => m.InvoicePage),
+    title: 'Factuur · MyShop',
+  },
+  {
     path: 'instellingen/email',
     loadComponent: () => import('./settings/email-settings').then((m) => m.EmailSettings),
     title: 'E-mailinstellingen · MyShop',
@@ -144,6 +154,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./customer/customer-order-detail').then((m) => m.CustomerOrderDetail),
         title: 'Bestelling · MyShop',
+      },
+      {
+        path: 'account/bestellingen/:id/factuur',
+        canActivate: [customerGuard],
+        data: { customerInvoice: true },
+        loadComponent: () => import('./billing/invoice-page').then((m) => m.InvoicePage),
+        title: 'Factuur · MyShop',
       },
       {
         path: 'account/bestellingen',

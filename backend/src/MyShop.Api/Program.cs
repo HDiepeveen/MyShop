@@ -33,6 +33,7 @@ app.MapCatalog();
 app.MapStorefront();
 app.MapPaymentOptions();
 app.MapEmailSettings();
+app.MapBilling();
 app.MapDeliveryMethods();
 app.MapOrderManagement();
 app.MapDashboard();

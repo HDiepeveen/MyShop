@@ -32,6 +32,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<MyShop.Application.Notifications.IEmailQueue, MyShop.Infrastructure.Notifications.EmailQueue>();
         services.AddScoped<MyShop.Infrastructure.Notifications.EmailSettingsRepository>();
         services.AddScoped<MyShop.Application.Notifications.IEmailSettingsRepository>(provider => provider.GetRequiredService<MyShop.Infrastructure.Notifications.EmailSettingsRepository>());
+        services.AddScoped<MyShop.Application.Billing.IBillingSettingsRepository, BillingRepository>();
+        services.AddScoped<MyShop.Application.Billing.IInvoiceRepository, BillingRepository>();
+        services.AddScoped<IVatRateAvailability>(provider => new BillingRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IProductRepository>(provider =>
             new ProductRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IProductDeleter>(provider =>

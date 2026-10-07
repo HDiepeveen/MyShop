@@ -30,6 +30,10 @@ public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) :
     internal DbSet<WishlistItemPersistence> WishlistItems => Set<WishlistItemPersistence>();
     internal DbSet<EmailMessagePersistence> EmailMessages => Set<EmailMessagePersistence>();
     internal DbSet<EmailSettingsPersistence> EmailSettings => Set<EmailSettingsPersistence>();
+    internal DbSet<CompanySettingsPersistence> CompanySettings => Set<CompanySettingsPersistence>();
+    internal DbSet<VatRatePersistence> VatRates => Set<VatRatePersistence>();
+    internal DbSet<InvoicePersistence> Invoices => Set<InvoicePersistence>();
+    internal DbSet<InvoiceCounterPersistence> InvoiceCounters => Set<InvoiceCounterPersistence>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

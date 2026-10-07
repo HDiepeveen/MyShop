@@ -314,6 +314,11 @@ export class CatalogApi {
       ...(vatRate !== undefined ? { vatRate, vatExempt } : {}),
     });
   }
+  vatRates() {
+    return this.http.get<{ name: string; percentage: number; exempt: boolean }[]>(
+      '/api/billing/vat-rates?enabledOnly=true',
+    );
+  }
   clearVariantPrice(productId: string, variantId: string) {
     return this.http.delete<void>(this.variantUrl(productId, variantId) + '/price');
   }

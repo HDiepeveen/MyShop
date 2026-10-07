@@ -252,7 +252,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 line.Quantity,
                 line.UnitAmount,
                 line.Currency,
-                line.TotalAmount)).ToArray(),
+                line.TotalAmount, line.VatRate, line.VatExempt, line.NetAmount, line.VatAmount)).ToArray(),
             order.Totals.OrderBy(total => total.Currency).Select(total =>
                 new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
             Delivery(order));
@@ -303,7 +303,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             order.TrackingCode, order.CancelledAt, order.RefundedAt, order.Version,
             order.Lines.OrderBy(line => line.Ordinal).Select(line => new OrderLineSnapshot(
                 line.ProductId, line.VariantId, line.ProductName, line.VariantName, line.Quantity,
-                line.UnitAmount, line.Currency, line.TotalAmount)).ToArray(),
+                line.UnitAmount, line.Currency, line.TotalAmount, line.VatRate, line.VatExempt, line.NetAmount, line.VatAmount)).ToArray(),
             order.Totals.OrderBy(total => total.Currency).Select(total =>
                 new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(), Delivery(order));
     }

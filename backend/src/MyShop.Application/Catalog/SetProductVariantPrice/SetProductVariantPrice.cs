@@ -13,9 +13,10 @@ public sealed record SetProductVariantPriceResult(SetProductVariantPriceFailure?
 public sealed class SetProductVariantPrice
 {
     private readonly IProductRepository _products;
+    private readonly IVatRateAvailability? _rates;
 
-    public SetProductVariantPrice(IProductRepository products) =>
-        _products = products ?? throw new ArgumentNullException(nameof(products));
+    public SetProductVariantPrice(IProductRepository products, IVatRateAvailability? rates = null)
+    { _products = products ?? throw new ArgumentNullException(nameof(products)); _rates = rates; }
 
     public async Task<SetProductVariantPriceResult> ExecuteAsync(SetProductVariantPriceCommand command, CancellationToken cancellationToken)
     {
@@ -28,6 +29,9 @@ public sealed class SetProductVariantPrice
         var variant = snapshot.Product.Variants.SingleOrDefault(candidate => candidate.Id == command.ProductVariantId);
         if (variant is null) return new(SetProductVariantPriceFailure.VariantNotFound);
         var price = Money.Create(command.Amount, command.Currency);
+        if (_rates is not null && command.VatRate is { } requested && (variant.VatRate != requested || variant.VatExempt != command.VatExempt)
+            && !await _rates.IsAvailableAsync(requested, command.VatExempt, cancellationToken))
+            throw new ArgumentException("Dit btw-percentage is niet beschikbaar. Stel het eerst in bij facturatie.");
         var netPriceAmount = command.IsNet ? price.Amount : (decimal?)null;
         if (command.IsNet && command.VatRate is null) throw new ArgumentException("Net input requires a VAT treatment.");
         if (command.IsNet && command.VatRate is { } rate) price = VatPrice.FromNet(price, rate, command.VatExempt).Gross;

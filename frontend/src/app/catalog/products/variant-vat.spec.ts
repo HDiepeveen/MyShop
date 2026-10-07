@@ -101,4 +101,18 @@ describe('Net price and VAT editing', () => {
     editor.vatChoice = '21';
     expect(editor.taxPreview()!.gross).toBe('1210000000,00');
   });
+  it('loads a configured decimal percentage and previews it with exact cents', () => {
+    const { editor } = setup();
+    editor.loadVatRates();
+    http
+      .expectOne('/api/billing/vat-rates?enabledOnly=true')
+      .flush([{ name: 'Custom', percentage: 12.5, exempt: false }]);
+    editor.amount = '100';
+    editor.vatChoice = '12.5';
+    expect(editor.taxPreview()).toEqual({ net: '100,00', vat: '12,50', gross: '112,50' });
+    editor.savePrice();
+    const request = http.expectOne('/api/products/product/variants/variant/price');
+    expect(request.request.body.vatRate).toBe(12.5);
+    request.flush(null);
+  });
 });

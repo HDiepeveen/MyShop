@@ -30,6 +30,9 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
       <p class="error print-hide" role="alert">{{ actionError() }}</p>
     }
     @if (state()?.data; as order) {
+      <p class="print-hide">
+        <a [routerLink]="['/bestellingen', order.id, 'factuur']">Factuur bekijken / uitgeven</a>
+      </p>
       <div class="eyebrow">Bestelling</div>
       <button type="button" class="secondary" [disabled]="saving()" (click)="printOrder(order)">
         Besteloverzicht afdrukken / PDF

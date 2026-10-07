@@ -12,7 +12,7 @@ import { errorMessage } from '../error-message';
   selector: 'app-variant-edit',
   imports: [FormsModule],
   template: `
-    <details>
+    <details (toggle)="loadVatRates($event)">
       <summary>Variant bewerken: {{ variant().name }}</summary>
       <form (ngSubmit)="rename()">
         <label class="field"
@@ -78,12 +78,22 @@ import { errorMessage } from '../error-message';
         <label class="field"
           >Btw<select name="vat" [(ngModel)]="vatChoice" [disabled]="busy()" required>
             <option value="">Kies een btw-behandeling</option>
-            <option value="21">21%</option>
-            <option value="9">9%</option>
-            <option value="0">0%</option>
-            <option value="exempt">Vrijgesteld</option>
+            @for (rate of taxChoices(); track rate.exempt ? 'exempt' : rate.percentage) {
+              <option [value]="rate.exempt ? 'exempt' : rate.percentage.toString()">
+                {{ rate.name }}
+              </option>
+            }
           </select></label
         >
+        @if (vatLoading()) {
+          <p role="status">Btw-percentages ophalen…</p>
+        }
+        @if (vatError()) {
+          <p role="alert">{{ vatError() }}</p>
+          <button type="button" [disabled]="vatLoading() || busy()" (click)="loadVatRates()">
+            Opnieuw ophalen
+          </button>
+        }
         @if (taxPreview(); as split) {
           <p>
             Prijs: {{ split.net }} · Btw: {{ split.vat }} · Totaal voor de klant: {{ split.gross }}
@@ -251,16 +261,73 @@ export class VariantEdit {
       : null;
   }
   vatChoice = '21';
+  readonly vatDefinitions = signal([
+    { name: '21%', percentage: 21, exempt: false },
+    { name: '9%', percentage: 9, exempt: false },
+    { name: '0%', percentage: 0, exempt: false },
+    { name: 'Vrijgesteld', percentage: 0, exempt: true },
+  ]);
+  readonly vatLoading = signal(false);
+  readonly vatError = signal('');
+  private vatLoaded = false;
+  loadVatRates(event?: Event) {
+    if (event && (!(event.target as HTMLDetailsElement).open || this.vatLoaded)) return;
+    if (this.busy() || this.vatLoading()) return;
+    this.vatLoading.set(true);
+    this.vatError.set('');
+    this.api
+      .vatRates()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (values) => {
+          this.vatDefinitions.set(values);
+          this.vatLoading.set(false);
+          this.vatLoaded = true;
+        },
+        error: () => {
+          this.vatDefinitions.set([]);
+          this.vatLoading.set(false);
+          this.vatError.set('Btw-percentages konden niet worden opgehaald.');
+        },
+      });
+  }
+  taxChoices() {
+    const current = this.variant().price;
+    const values = this.vatDefinitions();
+    if (
+      current?.vatRate != null &&
+      !values.some(
+        (rate) => rate.percentage === current.vatRate && rate.exempt === !!current.vatExempt,
+      )
+    )
+      return [
+        ...values,
+        {
+          name: 'Vastgelegd: ' + current.vatRate + '%',
+          percentage: current.vatRate,
+          exempt: !!current.vatExempt,
+        },
+      ];
+    return values;
+  }
   taxPreview(): { net: string; vat: string; gross: string } | null {
-    if (this.parsedAmount() === null || !['21', '9', '0', 'exempt'].includes(this.vatChoice))
+    if (
+      this.parsedAmount() === null ||
+      !this.taxChoices().some(
+        (rate) => (rate.exempt ? 'exempt' : rate.percentage.toString()) === this.vatChoice,
+      )
+    )
       return null;
     const [whole, decimals = ''] = this.amount.trim().replace(',', '.').split('.');
     const cents = BigInt(whole) * 100n + BigInt(decimals.padEnd(2, '0'));
-    const rate = this.vatChoice === 'exempt' ? 0n : BigInt(this.vatChoice);
+    const [percentWhole, percentDecimals = ''] = (
+      this.vatChoice === 'exempt' ? '0' : this.vatChoice
+    ).split('.');
+    const rate = BigInt(percentWhole) * 100n + BigInt(percentDecimals.padEnd(2, '0'));
     const numerator = cents * rate;
-    let vat = numerator / 100n;
-    const remainder = numerator % 100n;
-    if (remainder >= 50n) vat++;
+    let vat = numerator / 10000n;
+    const remainder = numerator % 10000n;
+    if (remainder >= 5000n) vat++;
     const gross = cents + vat;
     const format = (value: bigint) =>
       (value / 100n).toString() + ',' + (value % 100n).toString().padStart(2, '0');
@@ -271,7 +338,14 @@ export class VariantEdit {
   }
   savePrice() {
     const amount = this.parsedAmount();
-    if (this.busy() || amount === null || !this.validCurrency() || !this.taxPreview()) return;
+    if (
+      this.busy() ||
+      this.vatLoading() ||
+      amount === null ||
+      !this.validCurrency() ||
+      !this.taxPreview()
+    )
+      return;
     this.save(
       this.api.setVariantPrice(
         this.productId(),

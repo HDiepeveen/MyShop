@@ -62,7 +62,7 @@ public sealed record OrderLineSnapshot(
     int Quantity,
     decimal UnitAmount,
     string Currency,
-    decimal TotalAmount);
+    decimal TotalAmount, decimal? VatRate = null, bool VatExempt = false, decimal? NetAmount = null, decimal? VatAmount = null);
 
 public sealed record OrderTotalSnapshot(string Currency, decimal Amount);
 public sealed record OrderDeliveryMethodSnapshot(Guid Id, string Name, string? Description,

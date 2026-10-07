@@ -148,6 +148,8 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Notifications.GetEmailSettings>();
         services.AddScoped<Notifications.UpdateEmailSettings>();
         services.AddScoped<Notifications.SendEmailTest>();
+        services.AddScoped<Billing.BillingSettings>();
+        services.AddScoped<Billing.IssueInvoice>();
         return services;
     }
 }

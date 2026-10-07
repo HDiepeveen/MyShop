@@ -38,6 +38,9 @@ import {
       </button>
     }
     @if (order(); as item) {
+      <p class="print-hide">
+        <a [routerLink]="['/winkel/account/bestellingen', item.id, 'factuur']">Factuur bekijken</a>
+      </p>
       <div class="eyebrow">{{ status(item.status) }}</div>
       <h1>Bestelling {{ item.number }}</h1>
       <app-copy-text [text]="item.number" label="Bestelnummer kopiëren" />
