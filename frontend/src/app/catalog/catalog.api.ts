@@ -34,6 +34,22 @@ export class CatalogApi {
     if (filters.stock) params = params.set('stock', filters.stock);
     return this.http.get<ProductPage>('/api/products', { params });
   }
+  exportProductsUrl(filters: {
+    search?: string;
+    categoryId?: string | null;
+    productTypeId?: string | null;
+    published?: boolean;
+    stock?: 'low' | 'out' | 'untracked';
+  }) {
+    let params = new HttpParams();
+    if (filters.search?.trim()) params = params.set('search', filters.search.trim());
+    if (filters.categoryId) params = params.set('categoryId', filters.categoryId);
+    if (filters.productTypeId) params = params.set('productTypeId', filters.productTypeId);
+    if (filters.published !== undefined) params = params.set('published', filters.published);
+    if (filters.stock) params = params.set('stock', filters.stock);
+    const query = params.toString();
+    return '/api/products/export' + (query ? '?' + query : '');
+  }
   setPresentation(
     id: string,
     value: import('./catalog.models').ProductPresentation & { revision: string },

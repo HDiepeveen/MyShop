@@ -76,6 +76,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<GetProductType>();
         services.AddScoped<ListCategories>();
         services.AddScoped<ListProducts>();
+        services.AddScoped<Catalog.ExportProducts.ExportProducts>();
         services.AddScoped<ListProductTypes>();
         services.AddScoped<MoveCategory>();
         services.AddScoped<RemoveProductAttributeValue>();

@@ -20,6 +20,7 @@ public sealed class CustomerWishlistHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync(
             "/api/customer/auth/register", new { email = "wishlist@example.com", password = SecurityHost.Password })).StatusCode);
         await host.Csrf();
+        Assert.Equal(HttpStatusCode.Forbidden, (await host.Client.GetAsync("/api/products/export")).StatusCode);
 
         Assert.Equal(HttpStatusCode.NoContent,
             (await host.Client.PostAsJsonAsync($"/api/customer/wishlist/{productId}", new { })).StatusCode);

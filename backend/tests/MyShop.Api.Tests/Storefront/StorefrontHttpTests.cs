@@ -41,6 +41,11 @@ public sealed class StorefrontHttpTests
         var managedPublished = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products?published=true&categoryId={categoryId}&productTypeId={type.GetProperty("id").GetGuid()}&limit=1&offset=1");
         Assert.Equal(3, managedPublished.GetProperty("totalCount").GetInt32());
         Assert.Equal(tracked, Assert.Single(managedPublished.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());
+        using var exportResponse = await host.Client.GetAsync($"/api/products/export?published=false&search=Zeta&categoryId={categoryId}");
+        Assert.Equal(HttpStatusCode.OK, exportResponse.StatusCode); Assert.Equal("text/csv", exportResponse.Content.Headers.ContentType!.MediaType);
+        var exportCsv = await exportResponse.Content.ReadAsStringAsync(); Assert.Contains(draft.ToString(), exportCsv); Assert.Contains("Zeta draft", exportCsv); Assert.DoesNotContain(tracked.ToString(), exportCsv);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/products/export")).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.GetAsync("/api/products/export?stock=invalid")).StatusCode);
         var managedDrafts = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products?published=false&search=Zeta&categoryId={categoryId}");
         Assert.Equal(1, managedDrafts.GetProperty("totalCount").GetInt32());
         Assert.Equal(draft, Assert.Single(managedDrafts.GetProperty("items").EnumerateArray()).GetProperty("id").GetGuid());

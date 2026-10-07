@@ -78,3 +78,11 @@ Wijzigen van de publicatiestatus gaat naar pagina één. Zoeken, bladeren, produ
 ## Producten per pagina
 
 Het productbeheer biedt 20 (standaard), 50 of 100 producten per pagina. De bestaande serverpaginering wordt hiervoor gebruikt. De URL bewaart limit=50 of limit=100 en een bijbehorende offset. Een andere paginagrootte gaat naar pagina één en behoudt zoekterm, categorie, producttype, publicatiestatus en voorraadfilter. Bladeren, productdetails en het nieuw-productscherm bewaren deze overzichtscontext. Ongeldige paginagroottes vallen in de beheerinterface terug op twintig; offsets die niet op de gekozen pagina aansluiten vallen terug op nul. Andere overzichts- en kiezerschermen behouden hun bestaande paginagrootte.
+
+## Productselectie als CSV exporteren
+
+Het beveiligde productoverzicht biedt een CSV-download van de toegepaste zoekterm, categorie, producttype, publicatiestatus en voorraadselectie. Een nog niet ingediende zoekterm verandert de export niet. De export begint bij het eerste resultaat, onafhankelijk van de huidige pagina en paginagrootte, en bevat maximaal de eerste 1.000 producten in de bestaande naam/ID-volgorde. Dit maximum is zichtbaar naast de downloadlink.
+
+GET /api/products/export gebruikt dezelfde filters als GET /api/products en de bestaande beheerdersbeveiliging. De kolommen zijn ProductId, ProductTypeId, Name, VariantCount en PublicationStatus (published/draft). De CSV gebruikt UTF-8 met BOM, komma als scheidingsteken en aanhalingstekens rond celwaarden. Aanhalingstekens in namen worden verdubbeld; formule-achtige of besturingsprefixen krijgen een apostrof zodat ze als tekst worden behandeld. De route schrijft geen productgegevens en geeft no-store terug.
+
+De response vermeldt X-Export-Limit en X-Export-Truncated. Er is geen extra opslag, migratie of importfunctie. De export wordt met de actuele filterquery gelezen; wijzigingen tijdens het tellen en ophalen kunnen de selectie beïnvloeden.

@@ -29,6 +29,7 @@ public sealed class CatalogEndpointContractTests
         new("GetProductType", "GET", "/api/product-types/{productTypeId:guid}"),
         new("ListCategories", "GET", "/api/categories"),
         new("ListProducts", "GET", "/api/products"),
+        new("ExportProducts", "GET", "/api/products/export"),
         new("ListProductTypes", "GET", "/api/product-types"),
         new("MoveCategory", "PUT", "/api/categories/{categoryId:guid}/parent"),
         new("RemoveProductAttributeValue", "DELETE", "/api/products/{productId:guid}/attributes/{attributeDefinitionId:guid}"),
@@ -172,6 +173,7 @@ public sealed class CatalogEndpointContractTests
         endpoints.MapGetProductAttributeValidation();
         endpoints.MapGetProductBySku();
         endpoints.MapListProducts();
+        endpoints.MapExportProducts();
         endpoints.MapListProductTypes();
         endpoints.MapMoveCategory();
         endpoints.MapRenameProductType();

@@ -75,6 +75,15 @@ import { readProductListQuery } from './product-list-query';
           Een product verschijnt zodra minstens één variant aan het voorraadfilter voldoet.
         </p>
       }
+      <p>
+        <a class="button secondary" [href]="exportUrl()" download="myshop-products.csv"
+          >Productselectie als CSV exporteren</a
+        >
+      </p>
+      <p class="muted">
+        De export bevat maximaal de eerste 1.000 producten die aan de toegepaste filters voldoen, op
+        naam gesorteerd.
+      </p>
       <label
         >Producten per pagina<select
           name="pageSize"
@@ -250,6 +259,9 @@ export class ProductList {
   readonly skuBusy = signal(false);
   readonly skuError = signal('');
   skuText = '';
+  exportUrl() {
+    return this.api.exportProductsUrl(this.listQuery());
+  }
   pageSize() {
     return this.listQuery().limit ?? 20;
   }

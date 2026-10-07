@@ -23,6 +23,7 @@ public static class CatalogEndpoints
         app.MapGetProductAttributeValidation();
         app.MapGetProductBySku();
         app.MapListProducts();
+        app.MapExportProducts();
         app.MapListProductTypes();
         app.MapMoveCategory();
         app.MapRenameProductType();
