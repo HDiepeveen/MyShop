@@ -33,6 +33,7 @@ public static class CatalogEndpoints
         app.MapRenameProduct();
         app.MapRenameCategory();
         app.MapAddProductVariant();
+        app.MapGenerateProductVariants();
         app.MapAddProductTypeAttribute();
         app.MapRenameProductVariant();
         app.MapSetProductVariantSku();

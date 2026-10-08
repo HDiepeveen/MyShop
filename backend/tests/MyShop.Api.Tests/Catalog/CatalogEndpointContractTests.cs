@@ -13,6 +13,7 @@ public sealed class CatalogEndpointContractTests
     [
         new("AddProductTypeAttribute", "POST", "/api/product-types/{productTypeId:guid}/attributes"),
         new("AddProductVariant", "POST", "/api/products/{productId:guid}/variants"),
+        new("GenerateProductVariants", "POST", "/api/products/{productId:guid}/variant-combinations"),
         new("AssignProductToCategory", "PUT", "/api/products/{productId:guid}/categories/{categoryId:guid}"),
         new("ClearProductVariantSku", "DELETE", "/api/products/{productId:guid}/variants/{variantId:guid}/sku"),
         new("ConfigureProductTypeAttribute", "PUT", "/api/product-types/{productTypeId:guid}/attributes/{attributeId:guid}/configuration"),
@@ -182,6 +183,7 @@ public sealed class CatalogEndpointContractTests
         endpoints.MapRenameProduct();
         endpoints.MapRenameCategory();
         endpoints.MapAddProductVariant();
+        endpoints.MapGenerateProductVariants();
         endpoints.MapAddProductTypeAttribute();
         endpoints.MapRenameProductVariant();
         endpoints.MapSetProductVariantSku();

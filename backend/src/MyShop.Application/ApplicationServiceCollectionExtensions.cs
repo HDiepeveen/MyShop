@@ -58,6 +58,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddScoped<AddProductVariant>();
+        services.AddScoped<MyShop.Application.Catalog.GenerateProductVariants.GenerateProductVariants>();
         services.AddScoped<AddProductVariantPriceRule>();
         services.AddScoped<AddProductTypeAttribute>();
         services.AddScoped<AssignProductToCategory>();

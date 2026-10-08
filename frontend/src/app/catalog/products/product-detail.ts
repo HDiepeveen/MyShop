@@ -7,6 +7,7 @@ import { AttributeEdit } from './attribute-edit';
 import { ProductEditState } from './product-edit-state';
 import { ProductValidation } from './product-validation';
 import { VariantEdit } from './variant-edit';
+import { VariantGenerator } from './variant-generator';
 import { ProductCategories } from './product-categories';
 import { ProductEdit } from './product-edit';
 import { Component, effect, inject, signal } from '@angular/core';
@@ -31,6 +32,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
     ProductImagesEdit,
     ProductValidation,
     VariantEdit,
+    VariantGenerator,
     ProductCategories,
     AttributeEdit,
     OrphanValues,
@@ -111,6 +113,11 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
       <app-product-images [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-validation [product]="detail.product" [type]="detail.type" />
       <h2>Varianten</h2>
+      <app-variant-generator
+        [product]="detail.product"
+        [definitions]="detail.type.attributeDefinitions"
+        (saved)="onSaved($event)"
+      />
       <form class="toolbar" (ngSubmit)="searchVariants()">
         <label
           >Zoek variant<input

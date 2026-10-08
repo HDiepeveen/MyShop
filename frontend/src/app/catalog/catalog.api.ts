@@ -16,6 +16,13 @@ import {
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
   private readonly http = inject(HttpClient);
+  generateVariants(id: string, body: string) {
+    return this.http.post<{ added: number; skipped: number }>(
+      '/api/products/' + encodeURIComponent(id) + '/variant-combinations',
+      body,
+      { headers: { 'Content-Type': 'application/json' } },
+    );
+  }
   products(
     offset = 0,
     search = '',
