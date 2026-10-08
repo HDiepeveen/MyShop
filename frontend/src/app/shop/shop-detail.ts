@@ -46,6 +46,13 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
       <div class="grid">
         <section class="panel">
           <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" />
+          <div class="grid" aria-label="Extra productfoto’s">
+            @for (image of product.images ?? []; track image.id) {
+              @if (image.url !== product.imageUrl) {
+                <app-shop-image [url]="image.url" [alt]="image.alternativeText" />
+              }
+            }
+          </div>
         </section>
         <section class="panel">
           <h2>Over dit product</h2>

@@ -102,7 +102,7 @@ public sealed class StorefrontHttpTests
         using var visitor = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         var publicEndpoints = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText!.StartsWith("/api/shop/")).ToArray();
-        Assert.Equal(10, publicEndpoints.Length);
+        Assert.Equal(11, publicEndpoints.Length);
         Assert.All(publicEndpoints, e =>
         {
             Assert.Equal(e.RoutePattern.RawText is "/api/shop/orders" or "/api/shop/online-payments" ? "POST" : "GET",
@@ -168,7 +168,7 @@ public sealed class StorefrontHttpTests
         Assert.True(item.GetProperty("isAvailable").GetBoolean());
         Assert.Empty(item.GetProperty("prices").EnumerateArray());
         var product = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}");
-        Assert.Equal(new[] { "categories", "description", "id", "imageAlt", "imageUrl", "name", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(new[] { "categories", "description", "id", "imageAlt", "images", "imageUrl", "name", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
         var productCategory = Assert.Single(product.GetProperty("categories").EnumerateArray());
         Assert.Equal(new[] { "id", "name" }, productCategory.EnumerateObject()
             .Select(property => property.Name).Order().ToArray());

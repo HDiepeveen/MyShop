@@ -1,3 +1,4 @@
+using MyShop.Application.Catalog.ManageProductImages;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Application.Catalog.UpdateProductPresentation;
@@ -13,11 +14,14 @@ public static class UpdateProductPresentationEndpoint
         return endpoints;
     }
     public static async Task<IResult> ExecuteAsync(Guid productId, ProductPresentationRequest request,
-        [FromServices] UpdateProductPresentation useCase, CancellationToken cancellationToken)
+        [FromServices] UpdateProductPresentation useCase, [FromServices] ManageProductImages images, CancellationToken cancellationToken)
     {
         try
         {
             var presentation = ProductPresentation.Create(request.Description, request.ImageUrl, request.ImageAlt, request.IsPublished);
+            if (presentation.ImageUrl?.StartsWith("/api/shop/product-images/", StringComparison.Ordinal) == true &&
+                !await images.OwnsAsync(productId, presentation.ImageUrl, cancellationToken))
+                return Results.BadRequest(new { message = "Kies een afbeelding van dit product." });
             var found = await useCase.ExecuteAsync(new(ProductId.From(productId), request.Revision, presentation), cancellationToken);
             return found ? Results.NoContent() : Results.NotFound();
         }

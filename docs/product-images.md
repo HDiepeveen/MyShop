@@ -1,0 +1,9 @@
+# Product images
+
+In product management, open **Afbeeldingen beheren**, choose multiple files, provide alternative text and upload. JPEG and PNG are supported: at most 5 MiB per file, 20 million pixels and 10 uploaded images per product. The server checks image signatures, dimensions and basic structure independently of the supplied file name or content type. It does not resize, recompress or strip EXIF metadata; prepare photos for public use before uploading.
+
+The first upload becomes the main image when none exists. Select **Als hoofdafbeelding** to change it. Deleting the main image selects the next uploaded image; deleting the last main image returns the product to draft. Existing external HTTPS image links remain supported. Uploads do not publish a draft automatically; save a description and publish the presentation separately. Save other pending product edits before changing images, since image changes refresh the product.
+
+Uploaded bytes and metadata are stored in SQL Server's `ProductImages` table. Include this data in normal database backups and account for it in database hosting quotas. The `ProductImages` migration adds a table without changing existing products. Product deletion cascades to uploaded images. A deployment must apply this migration before running the updated API.
+
+Admin writes require the existing administrator session, CSRF token and product revision. Multi-file uploads are atomic and concurrent changes cannot bypass the per-product image limit. Images of published products are public; draft images require an administrator. Responses use the detected raster MIME type, `nosniff`, a restrictive content policy and the API's existing `no-store` cache policy, so deleted/unpublished images cannot remain in the browser's normal cache. The storefront returns gallery metadata without loading binary data and displays additional images on the product detail page. List and wishlist cards continue to use the main image.

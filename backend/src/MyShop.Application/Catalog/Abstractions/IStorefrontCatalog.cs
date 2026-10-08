@@ -22,4 +22,7 @@ public sealed record StorefrontCategory(Guid Id, string Name);
 public sealed record StorefrontVariant(Guid Id, string Name, bool IsAvailable);
 public sealed record StorefrontProduct(Guid Id, string Name, string Description, string? ImageUrl,
     string ImageAlt, IReadOnlyList<StorefrontCategory> Categories,
-    IReadOnlyList<StorefrontVariant> Variants);
+    IReadOnlyList<StorefrontVariant> Variants)
+{
+    public IReadOnlyList<ProductImageInfo> Images { get; init; } = [];
+}

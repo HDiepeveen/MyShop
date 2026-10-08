@@ -70,6 +70,8 @@ describe('Product presentation editor', () => {
   });
   it.each([
     'http://example.com/a.jpg',
+    '/other/image.png',
+    '/api/shop/product-images/not-an-id',
     'javascript:alert(1)',
     'https://user:password@example.com/a.jpg',
   ])('rejects unsafe image URL %s', async (imageUrl) => {
@@ -79,6 +81,16 @@ describe('Product presentation editor', () => {
     editor.save(false);
     expect(editor.error()).toContain('HTTPS');
     http.expectNone('/api/products/p/presentation');
+  });
+  it('publishes a product with its uploaded main image', async () => {
+    const editor = (await setup()).componentInstance;
+    editor.description = 'Blue shirt';
+    editor.imageUrl = '/api/shop/product-images/00e3952b-9eac-4f72-b27f-bf895c06af36';
+    editor.imageAlt = 'Front of blue shirt';
+    editor.save(true);
+    const request = http.expectOne('/api/products/p/presentation');
+    expect(request.request.body.imageUrl).toBe(editor.imageUrl);
+    request.flush(null);
   });
   it('requires complete details to publish, while allowing an empty draft', async () => {
     const editor = (await setup()).componentInstance;

@@ -26,9 +26,11 @@ public sealed record ProductPresentation
         if (imageAlt.Length > 250) throw new ArgumentException("Image alternative text must not exceed 250 characters.", nameof(imageAlt));
         if (imageUrl is not null)
         {
-            if (imageUrl.Length > 2048 || imageUrl.Any(char.IsControl) || imageUrl.Contains('\\') ||
+            var uploaded = imageUrl.StartsWith("/api/shop/product-images/", StringComparison.Ordinal) &&
+                Guid.TryParseExact(imageUrl["/api/shop/product-images/".Length..], "D", out var imageId) && imageId != Guid.Empty;
+            if (!uploaded && (imageUrl.Length > 2048 || imageUrl.Any(char.IsControl) || imageUrl.Contains('\\') ||
                 !Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps ||
-                string.IsNullOrEmpty(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo))
+                string.IsNullOrEmpty(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo)))
                 throw new ArgumentException("Use an absolute HTTPS image URL without credentials.", nameof(imageUrl));
             if (imageAlt.Length == 0) throw new ArgumentException("An image requires alternative text.", nameof(imageAlt));
         }

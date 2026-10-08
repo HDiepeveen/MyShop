@@ -11,6 +11,7 @@ public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) :
     internal DbSet<AttributeDefinitionPersistence> AttributeDefinitions => Set<AttributeDefinitionPersistence>();
     internal DbSet<CategoryPersistence> Categories => Set<CategoryPersistence>();
     internal DbSet<ProductPersistence> Products => Set<ProductPersistence>();
+    internal DbSet<ProductImagePersistence> ProductImages => Set<ProductImagePersistence>();
     internal DbSet<ProductVariantPersistence> ProductVariants => Set<ProductVariantPersistence>();
     internal DbSet<PriceRulePersistence> PriceRules => Set<PriceRulePersistence>();
     internal DbSet<ProductCategoryPersistence> ProductCategories => Set<ProductCategoryPersistence>();

@@ -74,6 +74,11 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
                     .Select(item => new StorefrontCategory(item.Category.Id, item.Category.Name)).ToList(),
                 product.Variants.OrderBy(variant => variant.Ordinal)
                     .Select(variant => new StorefrontVariant(variant.Id, variant.Name,
-                        variant.StockQuantity == null || variant.StockQuantity > 0)).ToList()))
+                        variant.StockQuantity == null || variant.StockQuantity > 0)).ToList())
+            {
+                Images = product.Images.OrderBy(image => image.Ordinal).ThenBy(image => image.Id)
+                    .Select(image => new ProductImageInfo(image.Id, "/api/shop/product-images/" + image.Id,
+                        image.AlternativeText, image.FileName)).ToList()
+            })
             .SingleOrDefaultAsync(cancellationToken);
 }

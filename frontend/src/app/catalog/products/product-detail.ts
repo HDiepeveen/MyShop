@@ -1,4 +1,5 @@
 import { ProductPresentationEdit } from './product-presentation';
+import { ProductImagesEdit } from './product-images';
 import { OrphanValues } from './orphan-values';
 import { PriceRuleEdit } from './price-rule-edit';
 import { ProductDelete } from './product-delete';
@@ -27,6 +28,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
     FormsModule,
     ProductEdit,
     ProductPresentationEdit,
+    ProductImagesEdit,
     ProductValidation,
     VariantEdit,
     ProductCategories,
@@ -106,6 +108,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
         (saved)="onSaved($event)"
       />
       <app-product-categories [product]="detail.product" (saved)="onSaved($event)" />
+      <app-product-images [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-validation [product]="detail.product" [type]="detail.type" />
       <h2>Varianten</h2>
       <form class="toolbar" (ngSubmit)="searchVariants()">

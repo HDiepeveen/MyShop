@@ -38,6 +38,7 @@ public sealed class PersistenceSqlServerModelContractTests
         [typeof(InvoicePersistence)] = "Invoices",
         [typeof(InvoiceCounterPersistence)] = "InvoiceCounters",
         [typeof(ProductPersistence)] = "Products",
+        [typeof(ProductImagePersistence)] = "ProductImages",
         [typeof(ProductAttributeValuePersistence)] = "ProductAttributeValues",
         [typeof(ProductAttributeMultiChoiceValuePersistence)] = "ProductAttributeMultiChoiceValues",
         [typeof(ProductCategoryPersistence)] = "ProductCategories",
@@ -100,7 +101,7 @@ public sealed class PersistenceSqlServerModelContractTests
         Assert.Null(Entity(modelType).GetViewName());
 
     [Fact]
-    public void SqlServerModel_ContainsExpectedEntityCount() => Assert.Equal(34, Model().GetEntityTypes().Count());
+    public void SqlServerModel_ContainsExpectedEntityCount() => Assert.Equal(35, Model().GetEntityTypes().Count());
 
     [Fact]
     public void SqlServerModel_ContainsExpectedClrTypes() =>
@@ -108,7 +109,7 @@ public sealed class PersistenceSqlServerModelContractTests
 
     [Fact]
     public void SqlServerModel_ContainsUniqueTableNames() =>
-        Assert.Equal(34, Model().GetEntityTypes().Select(entity => entity.GetTableName()).Distinct().Count());
+        Assert.Equal(35, Model().GetEntityTypes().Select(entity => entity.GetTableName()).Distinct().Count());
 
     [Fact]
     public void SqlServerModel_ContainsOnlyExpectedTables() =>

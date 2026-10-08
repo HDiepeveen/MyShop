@@ -9,6 +9,7 @@ public static class CatalogEndpoints
     public static void MapCatalog(this IEndpointRouteBuilder app)
     {
         app.MapCreateProduct();
+        app.MapProductImages();
         app.MapUpdateProductPresentation();
         app.MapDeleteProduct();
         app.MapClearProductVariantSku();

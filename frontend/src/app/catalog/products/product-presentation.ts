@@ -157,9 +157,10 @@ export class ProductPresentationEdit {
     }
     if (imageUrl) {
       try {
-        const url = new URL(imageUrl);
+        const uploaded = /^\/api\/shop\/product-images\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(imageUrl);
+        const url = uploaded ? new URL(imageUrl, window.location.origin) : new URL(imageUrl);
         if (
-          url.protocol !== 'https:' ||
+          (!uploaded && url.protocol !== 'https:') ||
           url.username ||
           url.password ||
           /[\\\u0000-\u001f\u007f]/.test(imageUrl)

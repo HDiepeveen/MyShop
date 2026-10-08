@@ -21,6 +21,9 @@ public sealed class ProductPresentationTests
     }
     [Theory]
     [InlineData("http://example.com/a.jpg")]
+    [InlineData("/api/shop/product-images/00000000-0000-0000-0000-000000000000")]
+    [InlineData("/api/shop/product-images/00e3952b-9eac-4f72-b27f-bf895c06af36/../other")]
+    [InlineData("/api/shop/product-images/00e3952b-9eac-4f72-b27f-bf895c06af36?download=true")]
     [InlineData("javascript:alert(1)")]
     [InlineData("data:image/png;base64,abc")]
     [InlineData("//example.com/a.jpg")]
@@ -29,6 +32,12 @@ public sealed class ProductPresentationTests
     [InlineData("https://example.com/a\nb")]
     public void RejectsUnsafeImageLinks(string url) =>
         Assert.Throws<ArgumentException>(() => ProductPresentation.Create("Description", url, "Image", false));
+    [Fact]
+    public void Accepts_only_the_exact_uploaded_image_route()
+    {
+        var url = "/api/shop/product-images/00e3952b-9eac-4f72-b27f-bf895c06af36";
+        Assert.Equal(url, ProductPresentation.Create("Shirt", url, "Blue shirt", true).ImageUrl);
+    }
     [Theory]
     [InlineData("", null, "", true)]
     [InlineData("Description", null, "", true)]
