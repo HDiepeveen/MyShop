@@ -160,7 +160,9 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
         {{ visibleVariants(detail.product.variants).length }} van
         {{ detail.product.variants.length }} varianten
       </p>
-      @if (!visibleVariants(detail.product.variants).length) {
+      @if (!detail.product.variants.length) {
+        <p>Dit product heeft nog geen varianten. Voeg een variant toe of maak varianten uit opties aan.</p>
+      } @else if (!visibleVariants(detail.product.variants).length) {
         <p>Geen varianten gevonden. Pas de zoekterm of voorraadselectie aan.</p>
       }
       <div class="grid">

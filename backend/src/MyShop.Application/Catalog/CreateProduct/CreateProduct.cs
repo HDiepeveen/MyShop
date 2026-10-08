@@ -29,7 +29,9 @@ public sealed class CreateProduct
         if (await _productTypes.GetByIdAsync(command.ProductTypeId, cancellationToken) is null)
             return CreateProductResult.Failed(CreateProductFailure.ProductTypeNotFound);
 
-        var product = Product.Create(command.Name, command.ProductTypeId, command.InitialVariantName);
+        var product = command.InitialVariantName is null
+            ? Product.Create(command.Name, command.ProductTypeId)
+            : Product.Create(command.Name, command.ProductTypeId, command.InitialVariantName);
         var token = await _products.AddAsync(product, cancellationToken);
 
         return CreateProductResult.Succeeded(new ProductSnapshot(product, token));

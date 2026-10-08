@@ -89,6 +89,23 @@ describe('ProductDetail', () => {
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
   });
 
+  it('explains how to add variants to a newly created empty product', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    http.expectOne('/api/products/first').flush({
+      id: 'first', name: 'Product', productTypeId: 'type',
+      categoryIds: [], attributeValues: [], variants: [],
+    });
+    http.expectOne('/api/product-types/type').flush({
+      id: 'type', name: 'Type', attributeDefinitions: [],
+    });
+    fixture.detectChanges();
+    TestBed.tick();
+    http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
+    expect(fixture.nativeElement.textContent).toContain('Dit product heeft nog geen varianten.');
+    expect(fixture.nativeElement.textContent).not.toContain('Pas de zoekterm');
+    expect(fixture.debugElement.query(By.directive(VariantEdit))).toBeNull();
+  });
+
   it('serializes writes across editors, then reloads the persisted product after saving', () => {
     const fixture = TestBed.createComponent(ProductDetail);
     const product = {

@@ -11,7 +11,7 @@ public sealed class Product
     private readonly List<CategoryId> _categoryIds = [];
     private readonly ReadOnlyCollection<CategoryId> _readOnlyCategoryIds;
 
-    private Product(string name, ProductTypeId productTypeId, string initialVariantName)
+    private Product(string name, ProductTypeId productTypeId)
     {
         if (productTypeId == default)
             throw new ArgumentException("Product type ID must not be empty.", nameof(productTypeId));
@@ -22,7 +22,6 @@ public sealed class Product
         _readOnlyVariants = _variants.AsReadOnly();
         _readOnlyAttributeValues = _attributeValues.AsReadOnly();
         _readOnlyCategoryIds = _categoryIds.AsReadOnly();
-        AddVariant(initialVariantName);
     }
 
     private Product(
@@ -55,8 +54,14 @@ public sealed class Product
     public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
     public IReadOnlyCollection<CategoryId> CategoryIds => _readOnlyCategoryIds;
 
-    public static Product Create(string name, ProductTypeId productTypeId, string initialVariantName) =>
-        new(name, productTypeId, initialVariantName);
+    public static Product Create(string name, ProductTypeId productTypeId) => new(name, productTypeId);
+
+    public static Product Create(string name, ProductTypeId productTypeId, string initialVariantName)
+    {
+        var product = Create(name, productTypeId);
+        product.AddVariant(initialVariantName);
+        return product;
+    }
 
     internal static Product Rehydrate(
         ProductId id,
@@ -79,8 +84,6 @@ public sealed class Product
             throw new ArgumentException("Product ID must not be empty.", nameof(id));
         if (productTypeId == default)
             throw new ArgumentException("Product type ID must not be empty.", nameof(productTypeId));
-        if (variantList.Count == 0)
-            throw new InvalidOperationException("A product must contain at least one variant.");
         if (variantList.Any(variant => variant is null))
             throw new InvalidOperationException("A product cannot contain null variants.");
         if (variantList.GroupBy(variant => variant.Id).Any(group => group.Count() > 1))

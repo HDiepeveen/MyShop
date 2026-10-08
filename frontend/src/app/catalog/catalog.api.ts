@@ -273,11 +273,11 @@ export class CatalogApi {
       parentCategoryId: null,
     });
   }
-  createProduct(productTypeId: string, name: string, initialVariantName: string) {
+  createProduct(productTypeId: string, name: string, initialVariantName?: string) {
     return this.http.post<CreatedProduct>('/api/products', {
       productTypeId,
       name: name.trim(),
-      initialVariantName: initialVariantName.trim(),
+      ...(initialVariantName === undefined ? {} : { initialVariantName: initialVariantName.trim() }),
     });
   }
   renameProduct(id: string, name: string) {

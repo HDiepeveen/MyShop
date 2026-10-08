@@ -102,19 +102,11 @@ import { loadState } from '../load-state';
             [disabled]="saving()"
             placeholder="Bijvoorbeeld: linnen overhemd"
         /></label>
-        <label class="field"
-          >Naam van de eerste variant<input
-            name="variant"
-            [(ngModel)]="variantName"
-            required
-            [disabled]="saving()"
-            placeholder="Bijvoorbeeld: naturel / maat M"
-        /></label>
-        <p class="muted">Je kunt later meer varianten toevoegen.</p>
+        <p class="muted">Je kunt na het aanmaken varianten toevoegen of uit opties laten aanmaken.</p>
         @if (error()) {
           <p class="error" role="alert">{{ error() }}</p>
         }
-        <button [disabled]="saving() || !selected() || !name.trim() || !variantName.trim()">
+        <button [disabled]="saving() || !selected() || !name.trim()">
           {{ saving() ? 'Product aanmaken…' : 'Product aanmaken' }}
         </button>
       </form>
@@ -133,7 +125,6 @@ export class ProductCreate {
   readonly saving = signal(false);
   readonly error = signal('');
   name = '';
-  variantName = '';
   searchText = '';
   search() {
     if (this.saving()) return;
@@ -158,11 +149,11 @@ export class ProductCreate {
   }
   create() {
     const type = this.selected();
-    if (this.saving() || !type || !this.name.trim() || !this.variantName.trim()) return;
+    if (this.saving() || !type || !this.name.trim()) return;
     this.saving.set(true);
     this.error.set('');
     this.api
-      .createProduct(type.id, this.name, this.variantName)
+      .createProduct(type.id, this.name)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (product) => {

@@ -120,7 +120,7 @@ export interface CreatedProduct {
   id: string;
   productTypeId: string;
   name: string;
-  initialVariantId: string;
-  initialVariantName: string;
+  initialVariantId: string | null;
+  initialVariantName: string | null;
   revision: string;
 }

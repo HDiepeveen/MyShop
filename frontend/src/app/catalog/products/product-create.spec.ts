@@ -14,11 +14,10 @@ describe('ProductCreate', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
-  it('requires a selected type and names before creating', () => {
+  it('requires a selected type and name before creating', () => {
     const fixture = TestBed.createComponent(ProductCreate);
     http.expectOne((r) => r.url === '/api/product-types').flush([]);
     fixture.componentInstance.name = 'Product';
-    fixture.componentInstance.variantName = 'First';
     fixture.componentInstance.create();
     http.expectNone('/api/products');
   });
@@ -32,10 +31,13 @@ describe('ProductCreate', () => {
       attributeDefinitionCount: 0,
     });
     fixture.componentInstance.name = 'Product';
-    fixture.componentInstance.variantName = 'First';
     fixture.componentInstance.create();
     fixture.componentInstance.create();
-    http.expectOne('/api/products').flush({ id: 'new-id' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name=variant]')).toBeNull();
+    const request = http.expectOne('/api/products');
+    expect(request.request.body).toEqual({ productTypeId: 'type', name: 'Product' });
+    request.flush({ id: 'new-id', initialVariantId: null, initialVariantName: null });
     expect(navigate).toHaveBeenCalledWith(['/producten', 'new-id'], {
       queryParamsHandling: 'preserve',
     });
@@ -52,7 +54,6 @@ describe('ProductCreate', () => {
     http.expectOne((r) => r.params.get('offset') === '20').flush([]);
     expect(fixture.componentInstance.selected()?.id).toBe('type');
     fixture.componentInstance.name = 'Product';
-    fixture.componentInstance.variantName = 'First';
     fixture.componentInstance.create();
     http.expectOne('/api/products').flush({}, { status: 400, statusText: 'Bad request' });
     expect(fixture.componentInstance.name).toBe('Product');

@@ -8,6 +8,18 @@ namespace MyShop.Application.Tests.Catalog.CreateProduct;
 public sealed class CreateProductTests
 {
     [Fact]
+    public async Task ExecuteAsync_WithoutInitialVariant_AddsEmptyDraft()
+    {
+        var scenario = new Scenario();
+        var command = scenario.Command with { InitialVariantName = null };
+        var result = await scenario.Handler.ExecuteAsync(command, CancellationToken.None);
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Snapshot!.Product.Variants);
+        Assert.False(result.Snapshot.Product.Presentation.IsPublished);
+        Assert.Equal(1, scenario.Products.AddCalls);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_CreatesAndAddsProductAndReturnsSnapshot()
     {
         var scenario = new Scenario();

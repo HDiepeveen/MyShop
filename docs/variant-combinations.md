@@ -1,5 +1,7 @@
 # Varianten uit opties
 
+Maak een product aan met alleen het producttype en de productnaam. Varianten voeg je daarna toe.
+
 Open een product in beheer en gebruik **Varianten uit opties aanmaken**.
 Het producttype bepaalt de variantkenmerken; de opties verschillen per product.
 Vul één optie per regel in, bijvoorbeeld bij Maat: S, M, L en bij Kleur: blauw, zwart.

@@ -137,7 +137,10 @@ public sealed class ProductPersistenceMapperTests
         product = ValidProduct(); product.Name = " ";
         Assert.Throws<ArgumentException>(() => ProductPersistenceMapper.ToSnapshot(product));
         product = ValidProduct(); product.Variants.Clear();
-        Assert.Throws<InvalidOperationException>(() => ProductPersistenceMapper.ToSnapshot(product));
+        var snapshot = ProductPersistenceMapper.ToSnapshot(product);
+        Assert.Empty(snapshot.Product.Variants);
+        Assert.Equal(product.Id, snapshot.Product.Id.Value);
+        Assert.Equal(product.Version, snapshot.ConcurrencyToken.Revision);
     }
 
     [Fact]

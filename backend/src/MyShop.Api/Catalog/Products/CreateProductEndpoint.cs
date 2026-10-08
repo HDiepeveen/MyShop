@@ -47,13 +47,13 @@ public static class CreateProductEndpoint
             var snapshot = result.Snapshot
                 ?? throw new InvalidOperationException("A successful create result must contain a product snapshot.");
             var product = snapshot.Product;
-            var variant = product.Variants.Single();
+            var variant = product.Variants.SingleOrDefault();
             var response = new CreateProductResponse(
                 product.Id.Value,
                 product.ProductTypeId.Value,
                 product.Name,
-                variant.Id.Value,
-                variant.Name,
+                variant?.Id.Value,
+                variant?.Name,
                 snapshot.ConcurrencyToken.Revision);
 
             return TypedResults.Created($"/api/products/{product.Id.Value}", response);
@@ -72,12 +72,12 @@ public static class CreateProductEndpoint
 public sealed record CreateProductRequest(
     Guid ProductTypeId,
     string Name,
-    string InitialVariantName);
+    string? InitialVariantName = null);
 
 public sealed record CreateProductResponse(
     Guid Id,
     Guid ProductTypeId,
     string Name,
-    Guid InitialVariantId,
-    string InitialVariantName,
+    Guid? InitialVariantId,
+    string? InitialVariantName,
     Guid Revision);

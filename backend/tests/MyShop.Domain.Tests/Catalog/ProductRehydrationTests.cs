@@ -53,12 +53,14 @@ public sealed class ProductRehydrationTests
     }
 
     [Fact]
-    public void Rehydrate_WithZeroVariants_Throws()
+    public void Rehydrate_WithZeroVariants_AllowsAddingFirstVariantLater()
     {
-        var exception = Record.Exception(() => Product.Rehydrate(
-            ProductId.New(), ProductTypeId.New(), "Product", [], [], []));
+        var product = Product.Rehydrate(
+            ProductId.New(), ProductTypeId.New(), "Product", [], [], []);
 
-        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Empty(product.Variants);
+        var variant = product.AddVariant("First");
+        Assert.Same(variant, Assert.Single(product.Variants));
     }
 
     [Fact]

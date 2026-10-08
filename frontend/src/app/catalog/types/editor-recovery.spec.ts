@@ -103,7 +103,7 @@ describe('Catalog editor recovery', () => {
     const fixture = TestBed.createComponent(ProductCreate);
     const page = fixture.componentInstance;
     page.selected.set({ id: type.id, name: type.name, attributeDefinitionCount: 1 });
-    page.name = 'Shirt'; page.variantName = 'Blauw';
+    page.name = 'Shirt';
     page.create();
     page.searchText = 'Schoenen';
     page.search(); page.changePage(20); page.retry();
