@@ -49,6 +49,8 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IConfigurat
         {
             using var message = new MailMessage(new MailAddress(string.IsNullOrEmpty(settings.Public.FromAddress) ? "myshop@example.invalid" : settings.Public.FromAddress, settings.Public.FromName), new MailAddress(queued.Recipient))
                 { Subject = queued.Subject, Body = queued.Body, BodyEncoding = Encoding.UTF8, SubjectEncoding = Encoding.UTF8 };
+            message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(
+                EmailHtml.FromPlainText(queued.Body), Encoding.UTF8, "text/html"));
             message.Headers.Add("Message-ID", $"<{queued.Id:N}@myshop>");
             using var smtp = new SmtpClient();
             if (settings.Mode == "Pickup")
