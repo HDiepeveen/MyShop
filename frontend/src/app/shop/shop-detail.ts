@@ -68,6 +68,16 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
           @if (product.variants.length) {
             @if (options(); as choices) {
               @for (dimension of choices.dimensions; track dimension.id) {
+                @if (dimension.values.length === 1) {
+                  <dl class="detail-list">
+                    <dt>{{ dimension.name }}</dt>
+                    <dd>{{ selectedOption(dimension.id) || 'Niet ingevuld' }}</dd>
+                    @if (!selectedOption(dimension.id) && availableOption(dimension.id, dimension.values[0])) {
+                      <dd><button type="button" class="secondary"
+                        (click)="selectOption(dimension.id, dimension.values[0])">Deze uitvoering kiezen</button></dd>
+                    }
+                  </dl>
+                } @else {
                 <label class="field"
                   >Kies {{ dimension.name }}
                   <select
@@ -84,6 +94,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
                     }
                   </select>
                 </label>
+                }
               }
               @if (choices.otherVariants.length) {
                 <details>
@@ -122,7 +133,9 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               >
             }
             @if (selected(); as variant) {
-              <p role="status">Gekozen variant: {{ variant.name }}</p>
+              @if (!fixedCharacteristics()) {
+                <p role="status">Gekozen variant: {{ variant.name }}</p>
+              }
               @if (variant.isAvailable === false) {
                 <p role="status">Deze variant is uitverkocht.</p>
               }
@@ -295,6 +308,12 @@ export class ShopDetail {
     this.clearCartFeedback();
   }
   readonly options = computed(() => variantOptions(this.state()?.data));
+  readonly fixedCharacteristics = computed(() => {
+    const choices = this.options();
+    const selected = this.selected();
+    return !!choices && !!selected && choices.variants.includes(selected) &&
+      choices.dimensions.every(dimension => dimension.values.length === 1);
+  });
   selectedOption(definitionId: string) {
     return optionValue(this.selected(), definitionId) ?? '';
   }
