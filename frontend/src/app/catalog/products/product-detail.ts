@@ -82,7 +82,11 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
       <section class="panel">
         <h2>Productgegevens</h2>
         @if (!detail.product.attributeValues.length) {
-          <p class="muted">Dit product heeft nog geen ingevulde kenmerken.</p>
+          @if (hasProductDefinitions()) {
+            <p class="muted">Er zijn nog geen kenmerken op productniveau ingevuld. Variantkenmerken staan bij de varianten.</p>
+          } @else {
+            <p class="muted">Dit producttype heeft geen kenmerken op productniveau. Variantkenmerken staan bij de varianten.</p>
+          }
         }
         @for (definition of detail.type.attributeDefinitions; track definition.id) {
           @if (definition.scope === 'Product') {
@@ -366,6 +370,9 @@ export class ProductDetail {
   }
   attributeValue(id: string, values: AttributeValue[]) {
     return values.find((value) => value.attributeDefinitionId === id);
+  }
+  hasProductDefinitions() {
+    return this.state()?.data?.type.attributeDefinitions.some(definition => definition.scope === 'Product') ?? false;
   }
   attributeName(id: string, definitions: AttributeDefinition[]) {
     return definitions.find((value) => value.id === id)?.displayName ?? 'Verwijderd kenmerk';

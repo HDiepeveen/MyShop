@@ -106,6 +106,27 @@ describe('ProductDetail', () => {
     expect(fixture.debugElement.query(By.directive(VariantEdit))).toBeNull();
   });
 
+  it('distinguishes variant values from unfilled product-level characteristics', () => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    const variantDefinition = { id: 'year', code: 'year', name: 'Bouwjaar',
+      dataType: 'Integer', scope: 'Variant', isRequired: false, isFilterable: false };
+    http.expectOne('/api/products/first').flush({
+      id: 'first', name: 'Opel Corsa', productTypeId: 'type', categoryIds: [], attributeValues: [],
+      variants: [{ id: 'v', name: '2014', sku: null, price: null,
+        attributeValues: [{ attributeDefinitionId: 'year', dataType: 'Integer', value: 2014 }] }],
+    });
+    http.expectOne('/api/product-types/type').flush({
+      id: 'type', name: 'Auto', attributeDefinitions: [variantDefinition],
+    });
+    fixture.detectChanges();
+    TestBed.tick();
+    http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
+    expect(fixture.nativeElement.textContent).toContain('Dit producttype heeft geen kenmerken op productniveau.');
+    expect(fixture.nativeElement.textContent).toContain('Variantkenmerken staan bij de varianten.');
+    expect(fixture.nativeElement.textContent).not.toContain('Dit product heeft nog geen ingevulde kenmerken.');
+    expect(fixture.nativeElement.textContent).toContain('2014');
+  });
+
   it('serializes writes across editors, then reloads the persisted product after saving', () => {
     const fixture = TestBed.createComponent(ProductDetail);
     const product = {
