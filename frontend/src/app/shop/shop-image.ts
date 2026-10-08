@@ -1,6 +1,7 @@
 import { Component, effect, input, signal } from '@angular/core';
 @Component({
   selector: 'app-shop-image',
+  host: { '[class.large]': 'large()' },
   styles: [
     `
       :host {
@@ -20,6 +21,10 @@ import { Component, effect, input, signal } from '@angular/core';
         padding: 16px;
         color: #62716b;
       }
+      :host(.large) img,
+      :host(.large) .placeholder {
+        height: clamp(360px, 60vw, 560px);
+      }
     `,
   ],
   template: `@if (url() && !failed()) {
@@ -37,6 +42,7 @@ import { Component, effect, input, signal } from '@angular/core';
 export class ShopImage {
   readonly url = input<string | null>(null);
   readonly alt = input('');
+  readonly large = input(false);
   readonly failed = signal(false);
   constructor() {
     effect(() => {

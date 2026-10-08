@@ -46,12 +46,10 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
       <h1>{{ product.name }}</h1>
       <div class="grid">
         <section class="panel">
-          <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" />
+          <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" [large]="true" />
           <div class="grid" aria-label="Extra productfoto’s">
-            @for (image of product.images ?? []; track image.id) {
-              @if (image.url !== product.imageUrl) {
-                <app-shop-image [url]="image.url" [alt]="image.alternativeText" />
-              }
+            @for (image of extraImages(); track image.id) {
+              <app-shop-image [url]="image.url" [alt]="image.alternativeText" />
             }
           </div>
         </section>
@@ -355,6 +353,16 @@ export class ShopDetail {
     return value.replace('.', ',');
   }
   readonly selectedId = signal('');
+  readonly extraImages = computed(() => {
+    const product = this.state()?.data;
+    const main = product?.imageUrl;
+    const mainId = main
+      ?.match(/^\/api\/shop\/product-images\/([0-9a-f-]{36})$/i)?.[1]
+      .toLowerCase();
+    return (product?.images ?? []).filter(
+      (image) => image.url !== main && (!mainId || image.id.toLowerCase() !== mainId),
+    );
+  });
   readonly state = toSignal(
     this.route.paramMap.pipe(
       map((params) => params.get('id')!),

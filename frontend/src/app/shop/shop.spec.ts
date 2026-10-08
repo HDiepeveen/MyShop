@@ -62,7 +62,8 @@ describe('Public storefront', () => {
     expect(link.getAttribute('href')).toContain('offset=20');
     expect(link.getAttribute('href')).toContain('categoryId=c1');
     const list = harness.routeDebugElement!.componentInstance as ShopList;
-    const input = harness.routeNativeElement!.querySelector<HTMLInputElement>('input[name="search"]')!;
+    const input =
+      harness.routeNativeElement!.querySelector<HTMLInputElement>('input[name="search"]')!;
     input.value = 'coat';
     input.dispatchEvent(new Event('input'));
     await harness.fixture.whenStable();
@@ -257,5 +258,42 @@ describe('Public storefront', () => {
     fixture.componentRef.setInput('url', 'https://example.com/b.jpg');
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('img')).not.toBeNull();
+  });
+  it('shows a large main image once even when gallery URL casing differs and follows main-image changes', async () => {
+    const mainId = '07674a68-6808-45d5-9c46-704934736c54';
+    const extraId = '10000000-0000-0000-0000-000000000001';
+    const images = [
+      {
+        id: mainId,
+        url: '/api/shop/product-images/' + mainId.toUpperCase(),
+        alternativeText: 'Main photo',
+      },
+      { id: extraId, url: '/api/shop/product-images/' + extraId, alternativeText: 'Extra photo' },
+    ];
+    const harness = await RouterTestingHarness.create('/winkel/p');
+    http.expectOne('/api/shop/products/p').flush({
+      ...product,
+      imageUrl: '/api/shop/product-images/' + mainId,
+      images,
+    });
+    http
+      .expectOne('/api/shop/products/p/prices')
+      .flush({ at: '2026-10-08T12:00:00Z', variants: [] });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelectorAll('img')).toHaveLength(2);
+    expect(harness.routeNativeElement!.querySelectorAll('app-shop-image.large')).toHaveLength(1);
+    expect(
+      harness.routeNativeElement!.querySelector('app-shop-image.large img')?.getAttribute('src'),
+    ).toBe('/api/shop/product-images/' + mainId);
+    const detail = harness.routeDebugElement!.componentInstance as ShopDetail;
+    detail.retry();
+    http.expectOne('/api/shop/products/p').flush({
+      ...product,
+      imageUrl: '/api/shop/product-images/' + extraId,
+      images,
+    });
+    await harness.fixture.whenStable();
+    expect(harness.routeNativeElement!.querySelectorAll('img')).toHaveLength(2);
+    expect(detail.extraImages().map((i) => i.id)).toEqual([mainId]);
   });
 });
