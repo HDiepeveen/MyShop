@@ -20,15 +20,23 @@ public sealed record ProductImageUpload
         ArgumentNullException.ThrowIfNull(fileName);
         alternativeText = alternativeText.Trim();
         fileName = fileName.Replace('\\', '/').Split('/').Last().Trim();
-        if (bytes.Length == 0 || bytes.Length > MaximumBytes || alternativeText.Length is < 1 or > 250 ||
-            fileName.Length is < 1 or > 120 || fileName.Any(char.IsControl))
-            throw new ArgumentException("Use JPEG or PNG, at most 5 MB, with alternative text and a file name.");
+        if (bytes.Length == 0)
+            throw new ProductImageValidationException("emptyImage", "Het bestand is leeg.");
+        if (bytes.Length > MaximumBytes)
+            throw new ProductImageValidationException("imageTooLarge", "De foto is groter dan 5 MB.");
+        if (alternativeText.Length is < 1 or > 250)
+            throw new ProductImageValidationException("imageAlternativeText", "Vul alternatieve tekst in van 1 tot 250 tekens.");
+        if (fileName.Length is < 1 or > 120 || fileName.Any(char.IsControl))
+            throw new ProductImageValidationException("imageFileName", "Gebruik een bestandsnaam van maximaal 120 tekens zonder bijzondere controletekens.");
         var contentType = Detect(bytes);
         return new(bytes, contentType, alternativeText, fileName);
     }
 
     private static string Detect(ReadOnlySpan<byte> bytes)
     {
+        if (bytes.Length >= 16 && bytes.Slice(4, 4).SequenceEqual("ftyp"u8) &&
+            (bytes.Slice(8, 4).SequenceEqual("avif"u8) || bytes.Slice(8, 4).SequenceEqual("avis"u8)))
+            throw new ProductImageValidationException("imageFormat", "Dit bestand bevat een AVIF-afbeelding. Sla de foto opnieuw op als JPEG of PNG; alleen de bestandsnaam of extensie wijzigen helpt niet.");
         if (bytes.Length >= 45 && bytes[..8].SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }) &&
             BinaryPrimitives.ReadUInt32BigEndian(bytes.Slice(8, 4)) == 13 && bytes.Slice(12, 4).SequenceEqual("IHDR"u8))
         {
@@ -71,12 +79,14 @@ public sealed record ProductImageUpload
                 offset += length;
             }
         }
-        throw new ArgumentException("Only complete JPEG and PNG images are supported.");
+        throw new ProductImageValidationException("imageFormat", "Het bestand wordt niet herkend als een volledige JPEG- of PNG-afbeelding. Alleen de extensie wijzigen is niet voldoende.");
     }
 
     private static void CheckDimensions(uint width, uint height)
     {
-        if (width == 0 || height == 0 || (ulong)width * height > 20_000_000)
-            throw new ArgumentException("Images must not exceed 20 million pixels.");
+        if (width == 0 || height == 0)
+            throw new ProductImageValidationException("imageDimensions", "De afbeelding heeft ongeldige afmetingen.");
+        if ((ulong)width * height > 20_000_000)
+            throw new ProductImageValidationException("imagePixels", $"De foto is {width} × {height} pixels en overschrijdt de limiet van 20 miljoen pixels. Verklein de afmetingen; de bestandsgrootte kan wel onder 5 MB liggen.");
     }
 }

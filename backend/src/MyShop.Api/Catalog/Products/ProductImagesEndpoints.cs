@@ -44,10 +44,15 @@ public static class ProductImagesEndpoints
             var uploads = new List<ProductImageUpload>();
             foreach (var file in form.Files)
             {
-                if (file.Length is < 1 or > ProductImageUpload.MaximumBytes) throw new ArgumentException("Image too large.");
                 using var buffer = new MemoryStream();
                 await file.CopyToAsync(buffer, ct);
-                uploads.Add(ProductImageUpload.Create(buffer.ToArray(), form["alternativeText"].ToString(), file.FileName));
+                try { uploads.Add(ProductImageUpload.Create(buffer.ToArray(), form["alternativeText"].ToString(), file.FileName)); }
+                catch (ProductImageValidationException ex)
+                {
+                    var name = new string(file.FileName.Replace('\\', '/').Split('/').Last()
+                        .Where(character => !char.IsControl(character)).Take(120).ToArray());
+                    throw new ProductImageValidationException(ex.Code, $"‘{name}’: {ex.Message}");
+                }
             }
             return await images.UploadAsync(productId, revision, uploads, ct);
         });
@@ -57,6 +62,7 @@ public static class ProductImagesEndpoints
     {
         try { return await action() ? Results.NoContent() : Results.NotFound(); }
         catch (ProductConcurrencyException) { return Results.Conflict(new { message = "Het product is gewijzigd. Vernieuw de gegevens en probeer opnieuw." }); }
+        catch (ProductImageValidationException ex) { return Results.BadRequest(new { code = ex.Code, message = ex.Message }); }
         catch (Exception ex) when (ex is ArgumentException or InvalidDataException or BadHttpRequestException)
         { return Results.BadRequest(new { message = "Kies JPEG- of PNG-foto’s van maximaal 5 MB en 20 miljoen pixels, maximaal 10 per product. Vul ook alternatieve tekst in." }); }
     }

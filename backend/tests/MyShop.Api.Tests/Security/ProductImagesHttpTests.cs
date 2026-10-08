@@ -1,4 +1,5 @@
 using System.Net;
+using System.Buffers.Binary;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -63,6 +64,26 @@ public sealed class ProductImagesHttpTests
         }
         Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"/api/shop/products/{product.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync(firstUrl)).StatusCode);
+    }
+
+    [SecuritySqlFact]
+    public async Task Validation_identifies_the_rejected_file_and_reason_without_changing_the_product()
+    {
+        await using var host = await SecurityHost.Create(); await host.Csrf(); await host.Login(); await host.Csrf();
+        var product = await Product(host);
+        var oversizedDimensions = Png.ToArray();
+        BinaryPrimitives.WriteUInt32BigEndian(oversizedDimensions.AsSpan(16, 4), 6000);
+        BinaryPrimitives.WriteUInt32BigEndian(oversizedDimensions.AsSpan(20, 4), 4000);
+        using var upload = Upload(product.Revision, 2, oversizedDimensions);
+        var response = await host.Client.PostAsync($"/api/products/{product.Id}/images", upload);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("imagePixels", error.GetProperty("code").GetString());
+        Assert.Contains("shirt-0.png", error.GetProperty("message").GetString());
+        Assert.Contains("6000 × 4000", error.GetProperty("message").GetString());
+        var gallery = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{product.Id}/images");
+        Assert.Empty(gallery.GetProperty("images").EnumerateArray());
+        Assert.Equal(product.Revision, gallery.GetProperty("revision").GetGuid());
     }
 
     [SecuritySqlFact]

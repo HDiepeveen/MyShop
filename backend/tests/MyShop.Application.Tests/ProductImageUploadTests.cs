@@ -13,7 +13,7 @@ public sealed class ProductImageUploadTests
         var jpeg = Convert.FromBase64String("/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD8qqKKKAP/2Q==");
         Assert.Equal("image/jpeg", ProductImageUpload.Create(jpeg, "Shirt", "shirt.jpg").ContentType);
         byte[] frameOnly = [255, 216, 255, 192, 0, 8, 8, 0, 1, 0, 1, 1, 255, 217];
-        Assert.Throws<ArgumentException>(() => ProductImageUpload.Create(frameOnly, "Shirt", "shirt.jpg"));
+        Assert.Throws<ProductImageValidationException>(() => ProductImageUpload.Create(frameOnly, "Shirt", "shirt.jpg"));
     }
 
     [Fact]
@@ -28,10 +28,10 @@ public sealed class ProductImageUploadTests
     public void Rejects_executable_text_svg_truncated_images_and_excessive_dimensions()
     {
         foreach (var bytes in new[] { "<svg></svg>"u8.ToArray(), "<script>alert(1)</script>"u8.ToArray(), Png()[..40], Array.Empty<byte>(), new byte[ProductImageUpload.MaximumBytes + 1] })
-            Assert.Throws<ArgumentException>(() => ProductImageUpload.Create(bytes, "Shirt", "shirt.png"));
+            Assert.Throws<ProductImageValidationException>(() => ProductImageUpload.Create(bytes, "Shirt", "shirt.png"));
         var huge = Png(); BinaryPrimitives.WriteUInt32BigEndian(huge.AsSpan(16, 4), 100_000);
         BinaryPrimitives.WriteUInt32BigEndian(huge.AsSpan(20, 4), 100_000);
-        Assert.Throws<ArgumentException>(() => ProductImageUpload.Create(huge, "Shirt", "shirt.png"));
+        Assert.Throws<ProductImageValidationException>(() => ProductImageUpload.Create(huge, "Shirt", "shirt.png"));
     }
 
     [Theory]
@@ -39,5 +39,28 @@ public sealed class ProductImageUploadTests
     [InlineData("Shirt", "")]
     [InlineData("Shirt", "bad\nname.png")]
     public void Requires_safe_metadata(string alt, string fileName) =>
-        Assert.Throws<ArgumentException>(() => ProductImageUpload.Create(Png(), alt, fileName));
+        Assert.Throws<ProductImageValidationException>(() => ProductImageUpload.Create(Png(), alt, fileName));
+
+    [Fact]
+    public void Pixel_limit_reports_dimensions_even_for_a_small_file()
+    {
+        var bytes = Png();
+        BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(16, 4), 6000);
+        BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(20, 4), 4000);
+        Assert.True(bytes.Length < ProductImageUpload.MaximumBytes);
+        var error = Assert.Throws<ProductImageValidationException>(() => ProductImageUpload.Create(bytes, "Shirt", "shirt.png"));
+        Assert.Equal("imagePixels", error.Code);
+        Assert.Contains("6000 × 4000", error.Message);
+        Assert.Contains("bestandsgrootte", error.Message);
+    }
+
+    [Fact]
+    public void Identifies_avif_content_even_when_the_extension_is_jpg()
+    {
+        byte[] bytes = [0, 0, 0, 28, .. "ftypavif"u8.ToArray(), 0, 0, 0, 0];
+        var error = Assert.Throws<ProductImageValidationException>(() => ProductImageUpload.Create(bytes, "Blue shirt", "shirt.jpg"));
+        Assert.Equal("imageFormat", error.Code);
+        Assert.Contains("AVIF", error.Message);
+        Assert.Contains("opnieuw op als JPEG of PNG", error.Message);
+    }
 }
