@@ -12,6 +12,7 @@ import { readWishlistReturn } from '../customer/wishlist-query';
 import { readShopQuery, shopContextQuery } from './shop-query';
 import { Auth } from '../auth/auth';
 import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
+import { chooseOption, optionAvailable, optionValue, variantOptions } from './variant-options';
 @Component({
   imports: [FormsModule, RouterLink, ShopImage, DatePipe],
   styles: [
@@ -67,19 +68,61 @@ import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
             </nav>
           }
           @if (product.variants.length) {
-            <label class="field"
-              >Kies je variant<select
-                name="variant"
-                [ngModel]="selectedId()"
-                (ngModelChange)="selectVariant($event)"
+            @if (options(); as choices) {
+              @for (dimension of choices.dimensions; track dimension.id) {
+                <label class="field"
+                  >Kies {{ dimension.name }}
+                  <select
+                    [attr.name]="'option-' + dimension.id"
+                    [ngModel]="selectedOption(dimension.id)"
+                    (ngModelChange)="selectOption(dimension.id, $event)"
+                  >
+                    <option value="" disabled>Kies {{ dimension.name }}</option>
+                    @for (value of dimension.values; track value) {
+                      <option [value]="value" [disabled]="!availableOption(dimension.id, value)">
+                        {{ value
+                        }}{{ availableOption(dimension.id, value) ? '' : ' – niet beschikbaar' }}
+                      </option>
+                    }
+                  </select>
+                </label>
+              }
+              @if (choices.otherVariants.length) {
+                <details>
+                  <summary>Andere uitvoeringen</summary>
+                  <label class="field"
+                    >Kies een andere uitvoering
+                    <select
+                      name="otherVariant"
+                      [ngModel]="selectedId()"
+                      (ngModelChange)="selectVariant($event)"
+                    >
+                      <option value="" disabled>Kies een uitvoering</option>
+                      @for (variant of choices.otherVariants; track variant.id) {
+                        <option [value]="variant.id" [disabled]="variant.isAvailable === false">
+                          {{ variant.name
+                          }}{{ variant.isAvailable === false ? ' – uitverkocht' : '' }}
+                        </option>
+                      }
+                    </select>
+                  </label>
+                </details>
+              }
+            } @else {
+              <label class="field"
+                >Kies je variant<select
+                  name="variant"
+                  [ngModel]="selectedId()"
+                  (ngModelChange)="selectVariant($event)"
+                >
+                  @for (variant of product.variants; track variant.id) {
+                    <option [value]="variant.id" [disabled]="variant.isAvailable === false">
+                      {{ variant.name }}{{ variant.isAvailable === false ? ' – uitverkocht' : '' }}
+                    </option>
+                  }
+                </select></label
               >
-                @for (variant of product.variants; track variant.id) {
-                  <option [value]="variant.id" [disabled]="variant.isAvailable === false">
-                    {{ variant.name }}{{ variant.isAvailable === false ? ' – uitverkocht' : '' }}
-                  </option>
-                }
-              </select></label
-            >
+            }
             @if (selected(); as variant) {
               <p role="status">Gekozen variant: {{ variant.name }}</p>
               @if (variant.isAvailable === false) {
@@ -253,6 +296,20 @@ export class ShopDetail {
     this.selectedId.set(id);
     this.clearCartFeedback();
   }
+  readonly options = computed(() => variantOptions(this.state()?.data));
+  selectedOption(definitionId: string) {
+    return optionValue(this.selected(), definitionId) ?? '';
+  }
+  availableOption(definitionId: string, value: string) {
+    const model = this.options();
+    return !!model && optionAvailable(model, this.selected(), definitionId, value);
+  }
+  selectOption(definitionId: string, value: string) {
+    const model = this.options();
+    if (!model) return;
+    const variant = chooseOption(model, this.selected(), definitionId, value);
+    if (variant) this.selectVariant(variant.id);
+  }
   addToCart() {
     this.clearCartFeedback();
     const product = this.state()?.data;
@@ -318,6 +375,7 @@ export class ShopDetail {
       this.wishlistLoading.set(false);
       this.clearCartFeedback();
       if (product) {
+        const candidates = variantOptions(product)?.variants ?? product.variants;
         const sameProduct = this.selectionProductId === product.id;
         if (!sameProduct) this.quantity = 1;
         const selected = untracked(() => this.selectedId());
@@ -327,8 +385,8 @@ export class ShopDetail {
                 (variant) => variant.id === selected && variant.isAvailable !== false,
               )?.id
             : undefined) ??
-            product.variants.find((variant) => variant.isAvailable !== false)?.id ??
-            product.variants[0]?.id ??
+            candidates.find((variant) => variant.isAvailable !== false)?.id ??
+            candidates[0]?.id ??
             '',
         );
         this.selectionProductId = product.id;

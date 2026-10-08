@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 using MyShop.Application.Catalog.Abstractions;
 using MyShop.Domain.Catalog;
 using MyShop.Infrastructure.Persistence.Mappers;
@@ -61,8 +62,9 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
         .Select(category => new StorefrontCategory(category.Id, category.Name))
         .ToListAsync(cancellationToken);
 
-    public Task<StorefrontProduct?> GetAsync(ProductId id, CancellationToken cancellationToken) =>
-        context.Products.AsNoTracking()
+    public async Task<StorefrontProduct?> GetAsync(ProductId id, CancellationToken cancellationToken)
+    {
+        var detail = await context.Products.AsNoTracking()
             .Where(product => product.Id == id.Value && product.IsPublished)
             .Select(product => new StorefrontProduct(product.Id, product.Name, product.Description,
                 product.ImageUrl, product.ImageAlt,
@@ -81,4 +83,40 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
                         image.AlternativeText, image.FileName)).ToList()
             })
             .SingleOrDefaultAsync(cancellationToken);
+        if (detail is null) return null;
+        var definitions = await context.AttributeDefinitions.AsNoTracking()
+            .Where(d => d.ProductTypeId == context.Products.Where(p => p.Id == id.Value)
+                .Select(p => p.ProductTypeId).First()
+                && d.Scope == AttributeScope.Variant && d.DataType != AttributeDataType.MultiChoice)
+            .OrderBy(d => d.Code).ThenBy(d => d.Id).ToListAsync(cancellationToken);
+        var variantIds = detail.Variants.Select(v => v.Id).ToArray();
+        var values = await context.ProductVariantAttributeValues.AsNoTracking()
+            .Where(v => variantIds.Contains(v.ProductVariantId) && v.DataType != AttributeDataType.MultiChoice)
+            .ToListAsync(cancellationToken);
+        var valuesByVariant = values
+            .Where(v => definitions.Any(d => d.Id == v.AttributeDefinitionId && d.DataType == v.DataType))
+            .GroupBy(v => v.ProductVariantId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<StorefrontVariantAttribute>)g.Select(v =>
+                new StorefrontVariantAttribute(v.AttributeDefinitionId,
+                    OptionValue(AttributeValuePersistenceMapper.ToDomain(v)))).ToArray());
+        return detail with
+        {
+            VariantDefinitions = definitions.Select(d => new StorefrontVariantDefinition(d.Id, d.DisplayName)).ToArray(),
+            Variants = detail.Variants.Select(v => v with
+            {
+                Attributes = valuesByVariant.GetValueOrDefault(v.Id, [])
+            }).ToArray()
+        };
+    }
+
+    private static string OptionValue(AttributeValue value) => value switch
+    {
+        TextAttributeValue text => text.Value,
+        ChoiceAttributeValue choice => choice.Value.Value,
+        IntegerAttributeValue integer => integer.Value.ToString(CultureInfo.InvariantCulture),
+        DecimalAttributeValue number => number.Value.ToString("G29", CultureInfo.InvariantCulture),
+        BooleanAttributeValue boolean => boolean.Value ? "Ja" : "Nee",
+        DateAttributeValue date => date.Value.ToString("dd-MM-yyyy", CultureInfo.InvariantCulture),
+        _ => throw new InvalidOperationException("Only scalar variant options can be selected.")
+    };
 }

@@ -24,3 +24,15 @@ Opties die je niet aanmaakt worden niet apart opgeslagen.
 De gekozen combinaties worden samen via het bestaande productaggregate opgeslagen.
 Een ongeldig verzoek wordt volledig afgewezen. Een gewijzigde productrevisie geeft 409:
 vernieuw de pagina en controleer opnieuw. Er is geen nieuwe database-migratie nodig.
+
+## Kiezen in de winkel
+
+Klanten krijgen aparte keuzelijsten voor de ingevulde variantkenmerken, bijvoorbeeld
+Maat en Kleur. Een keuze verwijst steeds naar één bestaande variant, met diens prijs
+en voorraadbeschikbaarheid. Niet-bestaande en uitverkochte combinaties zijn niet selecteerbaar.
+Een wijziging in een eerdere lijst behoudt latere keuzes wanneer die combinatie
+beschikbaar is; anders wordt een beschikbare combinatie gekozen.
+
+Varianten zonder alle ingevulde kenmerken blijven bereikbaar onder **Andere uitvoeringen**.
+Bij producten zonder bruikbare kenmerkwaarden, of met meerdere varianten met exact
+dezelfde combinatie, blijft de lijst met variantnamen beschikbaar.
