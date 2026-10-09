@@ -47,3 +47,9 @@ secrets.json
 .mail/
 *.pem
 *.key
+
+# Private database exports
+*.bak
+*.bacpac
+MyShop-upload.zip
+database-data.sql

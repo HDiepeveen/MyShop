@@ -10,6 +10,7 @@ using MyShop.Api.Dashboard;
 var builder = WebApplication.CreateBuilder(args.Where(arg => arg is not "--create-admin" and not "--reset-admin").ToArray());
 
 builder.Services.AddMyShop(builder.Configuration);
+builder.Services.ConfigureHostingKeys(builder.Configuration, builder.Environment);
 
 builder.Services.AddAdminSecurity(builder.Environment.IsDevelopment());
 builder.Services.AddHostedService<MyShop.Infrastructure.Notifications.EmailDeliveryWorker>();
@@ -21,6 +22,7 @@ if (args.Contains("--create-admin") || args.Contains("--reset-admin"))
     return;
 }
 if (!app.Environment.IsDevelopment()) { app.UseHsts(); app.UseHttpsRedirection(); }
+app.UseStaticFiles();
 app.UseAdminSecurity();
 app.MapAdminEndpoints();
 app.MapCustomerEndpoints();
@@ -38,4 +40,5 @@ app.MapDeliveryMethods();
 app.MapOrderManagement();
 app.MapDashboard();
 
+app.MapFrontend();
 app.Run();
