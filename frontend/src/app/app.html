@@ -1,6 +1,6 @@
 <a class="skip" href="#content" (click)="$event.preventDefault(); content.focus()">Naar inhoud</a>
-<div class="workspace" [class.shop]="storefront()">
-  @if (!storefront()) {
+<div class="workspace" [class.shop]="storefront()" [class.no-sidebar]="!auth.session()?.authenticated || !auth.session()?.administrator">
+  @if (!storefront() && auth.session()?.authenticated && auth.session()?.administrator) {
     <aside class="sidebar">
       <a routerLink="/" class="brand" aria-label="MyShop startpagina"
         ><span class="brand-icon">m.</span> MyShop</a

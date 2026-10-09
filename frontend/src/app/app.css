@@ -174,3 +174,7 @@ footer {
   font-weight: 750;
   text-decoration: none;
 }
+
+.workspace.no-sidebar {
+  grid-template-columns: 1fr;
+}
