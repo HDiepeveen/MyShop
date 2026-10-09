@@ -148,6 +148,39 @@ describe('ShopDetail option selection', () => {
     expect(section.compareDocumentPosition(root.querySelector('select[name="option-size"]')!) &
       Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
+  it('hides the variant picker for one plain variant and still uses its price and cart identity', async () => {
+    const variant = { id: optionProduct.variants[0].id, name: 'Standaard', isAvailable: true };
+    const { harness, detail } = await setup(false, {
+      ...optionProduct, variantDefinitions: [], variants: [variant],
+    });
+    const root = harness.routeNativeElement!;
+    expect(root.querySelector('select[name="variant"]')).toBeNull();
+    expect(root.textContent).not.toContain('Kies je variant');
+    expect(root.textContent).not.toContain('Gekozen variant:');
+    expect(root.querySelector('.price')?.textContent).toContain('EUR 10,00');
+    expect(root.textContent).not.toContain('Prijs opgehaald op');
+    expect(root.textContent).not.toContain('Prijs vernieuwen');
+    detail.addToCart();
+    expect(TestBed.inject(Cart).lines()[0].variantId).toBe(variant.id);
+  });
+  it('retains the picker for multiple plain variants', async () => {
+    const { harness } = await setup(false, {
+      ...optionProduct, variantDefinitions: [],
+      variants: optionProduct.variants.slice(0, 2).map(v => ({ ...v, attributes: [] })),
+    });
+    expect(harness.routeNativeElement!.querySelector('select[name="variant"]')).not.toBeNull();
+    expect(harness.routeNativeElement!.textContent).toContain('Gekozen variant:');
+  });
+  it('retains the sold-out notice and prevents ordering a single sold-out variant', async () => {
+    const { harness, detail } = await setup(false, {
+      ...optionProduct, variantDefinitions: [],
+      variants: [{ id: optionProduct.variants[0].id, name: 'Standaard', isAvailable: false }],
+    });
+    expect(harness.routeNativeElement!.textContent).toContain('Deze variant is uitverkocht.');
+    expect(harness.routeNativeElement!.querySelector('select[name="variant"]')).toBeNull();
+    detail.addToCart();
+    expect(TestBed.inject(Cart).lines()).toEqual([]);
+  });
   it('clears cart feedback and refuses forged missing or sold-out choices', async () => {
     const { detail } = await setup();
     detail.addToCart();

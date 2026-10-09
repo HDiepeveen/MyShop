@@ -1,5 +1,4 @@
 import { Cart } from './cart';
-import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -14,7 +13,7 @@ import { Auth } from '../auth/auth';
 import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
 import { chooseOption, optionAvailable, optionValue, variantOptions } from './variant-options';
 @Component({
-  imports: [FormsModule, RouterLink, ShopImage, DatePipe],
+  imports: [FormsModule, RouterLink, ShopImage],
   styles: [
     `
       .description {
@@ -128,7 +127,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
                   </label>
                 </details>
               }
-            } @else {
+            } @else if (product.variants.length > 1) {
               <label class="field"
                 >Kies je variant<select
                   name="variant"
@@ -144,7 +143,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               >
             }
             @if (selected(); as variant) {
-              @if (!fixedCharacteristics()) {
+              @if (product.variants.length > 1 && !fixedCharacteristics()) {
                 <p role="status">Gekozen variant: {{ variant.name }}</p>
               }
               @if (variant.isAvailable === false) {
@@ -158,7 +157,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
             @if (prices()?.loading) {
               <p>Prijs ophalen…</p>
             } @else if (prices()?.error) {
-              <p role="alert">Prijs niet beschikbaar. Probeer de prijs opnieuw op te halen.</p>
+              <p role="alert">Prijs niet beschikbaar. Probeer het later opnieuw.</p>
             } @else if (selectedPrice(); as price) {
               @if (price.amount !== null && price.currency) {
                 <p class="price">{{ price.currency }} {{ amount(price.amount) }}</p>
@@ -169,17 +168,6 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
             @if (prices()?.data && !selectedPrice()) {
               <p>Voor deze variant is nog geen prijs beschikbaar.</p>
             }
-            @if (prices()?.data; as quote) {
-              <p class="muted">Prijs opgehaald op {{ quote.at | date: 'dd-MM-yyyy HH:mm:ss' }}.</p>
-            }
-            <button
-              type="button"
-              class="secondary"
-              [disabled]="prices()?.loading"
-              (click)="refreshPrices()"
-            >
-              Prijs vernieuwen
-            </button>
           </section>
           @if (selected()) {
             <div class="toolbar">
