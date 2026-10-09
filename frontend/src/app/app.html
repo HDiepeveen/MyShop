@@ -74,6 +74,9 @@
       <span>{{
         storefront() ? 'Ontdek wat bij je past.' : 'Een goed assortiment begint bij de details.'
       }}</span>
+      @if (!storefront() && auth.session()?.authenticated && auth.session()?.administrator) {
+        <span class="webshop-version">Versie {{ version }}</span>
+      }
     </footer>
   </div>
 </div>

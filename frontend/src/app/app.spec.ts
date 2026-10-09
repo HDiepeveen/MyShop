@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Auth } from './auth/auth';
 import { App } from './app';
+import webshopVersion from '../../../version.json';
 
 it('offers accessible navigation and a skip link', async () => {
   TestBed.configureTestingModule({
@@ -16,6 +17,7 @@ it('offers accessible navigation and a skip link', async () => {
   expect(element.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
   expect(element.querySelectorAll('nav a').length).toBe(10);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');
+  expect(element.querySelector('.webshop-version')?.textContent).toContain(webshopVersion.version);
 });
 
 it('keeps the skip link on the current page and focuses main content', async () => {
@@ -44,6 +46,7 @@ it('lets an administrator return from the assortment to administration', async (
   const link = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a'))
     .find(anchor => anchor.textContent?.trim() === 'Beheer');
   expect(link?.getAttribute('href')).toBe('/');
+  expect(fixture.nativeElement.querySelector('.webshop-version')).toBeNull();
   link!.click();
   await fixture.whenStable();
   expect(router.url).toBe('/');
@@ -72,10 +75,12 @@ it.each([true, false])('does not offer a direct admin return link to customer=%s
   auth.session.set(null);
   await fixture.whenStable();
   expect(fixture.nativeElement.querySelector('.sidebar')).toBeNull();
+  expect(fixture.nativeElement.querySelector('.webshop-version')).toBeNull();
   expect(fixture.nativeElement.querySelector('.workspace').classList.contains('no-sidebar')).toBe(true);
   auth.session.set({ authenticated: true, administrator: false, customer: true, name: 'Customer' });
   fixture.detectChanges();
   expect(fixture.nativeElement.querySelector('.sidebar')).toBeNull();
+  expect(fixture.nativeElement.querySelector('.webshop-version')).toBeNull();
   auth.session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
   fixture.detectChanges();
   expect(fixture.nativeElement.querySelector('nav[aria-label="Hoofdnavigatie"]')).not.toBeNull();
@@ -83,4 +88,5 @@ it.each([true, false])('does not offer a direct admin return link to customer=%s
   auth.session.set(null);
   fixture.detectChanges();
   expect(fixture.nativeElement.querySelector('.sidebar')).toBeNull();
+  expect(fixture.nativeElement.querySelector('.webshop-version')).toBeNull();
 });

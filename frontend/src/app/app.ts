@@ -1,3 +1,4 @@
+import webshopVersion from '../../../version.json';
 import { ShopSettings } from './shop/shop-settings';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Cart } from './shop/cart';
@@ -14,6 +15,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
   styleUrl: './app.css',
 })
 export class App {
+  readonly version = webshopVersion.version;
   readonly shopSettings = inject(ShopSettings);
   constructor() {
     this.router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed()).subscribe(() => {

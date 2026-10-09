@@ -2,6 +2,18 @@
 
 MyShop is an e-commerce application with an ASP.NET Core catalog API and a modular backend. An Angular interface provides the first local catalog management screens.
 
+## Webshop version
+
+The webshop version is stored centrally in `version.json`. The administration
+footer displays this value to signed-in administrators. It is not displayed in
+the customer storefront or on the sign-in page.
+
+Use `MAJOR.MINOR.PATCH`: increase PATCH for fixes, MINOR for new functionality,
+and MAJOR for incompatible changes. Change the value before building a release;
+the displayed version is embedded in the frontend build. The initial recorded
+version is `0.1.0`. This webshop version is separate from dependency versions
+and the frontend package's internal version.
+
 ## Local Development Requirements
 
 Use the following versions for local development:
