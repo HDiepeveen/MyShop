@@ -73,6 +73,8 @@ h3 {
 }
 .button,
 button {
+  margin-top: 5px;
+  margin-bottom: 5px;
   border: 1px solid #1d5543;
   background: #1d5543;
   color: white;
@@ -415,7 +417,7 @@ textarea:disabled {
   padding-top: 10px;
 }
 .attribute-editor form > button {
-  margin: 0 8px 10px 0;
+  margin-right: 8px;
 }
 
 .remove-section {
@@ -427,7 +429,7 @@ textarea:disabled {
   overflow-wrap: anywhere;
 }
 .remove-section button {
-  margin: 12px 8px 0 0;
+  margin-right: 8px;
   max-width: 100%;
   white-space: normal;
 }
