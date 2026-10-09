@@ -14,6 +14,7 @@ internal sealed class PaymentOptionsPersistenceConfiguration : IEntityTypeConfig
         builder.ToTable("PaymentOptions");
         builder.HasKey(options => options.Id);
         builder.Property(options => options.Id).ValueGeneratedNever();
+        builder.Property(options => options.CheckoutEnabled).IsRequired().HasDefaultValue(true);
         builder.Property(options => options.PayLaterEnabled).IsRequired();
         builder.Property(options => options.OnlinePaymentEnabled).IsRequired();
         builder.Property(options => options.PayLaterInstructions).HasMaxLength(2000);

@@ -21,6 +21,9 @@ import { errorMessage } from '../catalog/error-message';
     }
     @if (state()?.data; as options) {
       <form class="panel" (ngSubmit)="save(options)">
+        <label><input type="checkbox" name="checkoutEnabled" [(ngModel)]="checkoutEnabled" [disabled]="busy()" />
+          Winkelmand en bestellen inschakelen</label>
+        <p class="muted">Uitgeschakeld: klanten kunnen het assortiment en de prijzen bekijken, maar niet bestellen of betalen. Je betaalopties blijven bewaard.</p>
         <label
           ><input type="checkbox" name="payLater" [(ngModel)]="payLater" [disabled]="busy()" />
           Later betalen</label
@@ -75,6 +78,7 @@ export class PaymentSettings {
   readonly busy = signal(false);
   readonly validation = signal('');
   readonly message = signal('');
+  checkoutEnabled = true;
   payLater = false;
   online = false;
   payLaterInstructions = '';
@@ -83,6 +87,7 @@ export class PaymentSettings {
     effect(() => {
       const options = this.state()?.data;
       if (options) {
+        this.checkoutEnabled = options.checkoutEnabled !== false;
         this.payLater = options.payLaterEnabled;
         this.online = options.onlinePaymentEnabled;
         this.payLaterInstructions = options.payLaterInstructions ?? '';
@@ -99,17 +104,18 @@ export class PaymentSettings {
     if (this.busy() || this.state()?.data !== options) return;
     this.validation.set('');
     this.message.set('');
-    if (!this.payLater && !this.online) {
+    if (this.checkoutEnabled && !this.payLater && !this.online) {
       this.validation.set('Schakel minimaal één betaaloptie in.');
       return;
     }
-    if (this.online && !options.onlinePaymentConfigured) {
+    if (this.checkoutEnabled && this.online && !options.onlinePaymentConfigured) {
       this.validation.set('Koppel eerst een online betaalprovider.');
       return;
     }
     this.busy.set(true);
     this.api
       .update({
+        checkoutEnabled: this.checkoutEnabled,
         payLaterEnabled: this.payLater,
         onlinePaymentEnabled: this.online,
         payLaterInstructions: this.payLaterInstructions.trim() || null,

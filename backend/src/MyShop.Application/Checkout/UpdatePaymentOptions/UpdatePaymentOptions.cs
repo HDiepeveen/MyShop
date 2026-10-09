@@ -3,7 +3,7 @@ using MyShop.Application.Checkout.Abstractions;
 namespace MyShop.Application.Checkout.UpdatePaymentOptions;
 
 public sealed record UpdatePaymentOptionsCommand(bool PayLaterEnabled, bool OnlinePaymentEnabled,
-    string? PayLaterInstructions, Guid Revision);
+    string? PayLaterInstructions, Guid Revision, bool CheckoutEnabled = true);
 public enum UpdatePaymentOptionsFailure { OnlinePaymentNotConfigured, ConcurrencyConflict }
 public sealed record UpdatePaymentOptionsResult(PaymentOptionsSnapshot? Settings, UpdatePaymentOptionsFailure? Failure)
 {
@@ -21,9 +21,9 @@ public sealed class UpdatePaymentOptions(IPaymentOptionsRepository repository, I
         ArgumentNullException.ThrowIfNull(command);
         cancellationToken.ThrowIfCancellationRequested();
         if (command.Revision == Guid.Empty) throw new ArgumentException("Revision is required.", nameof(command));
-        if (!command.PayLaterEnabled && !command.OnlinePaymentEnabled)
+        if (command.CheckoutEnabled && !command.PayLaterEnabled && !command.OnlinePaymentEnabled)
             throw new ArgumentException("At least one payment option must be enabled.", nameof(command));
-        if (command.OnlinePaymentEnabled && !online.IsConfigured)
+        if (command.CheckoutEnabled && command.OnlinePaymentEnabled && !online.IsConfigured)
             return UpdatePaymentOptionsResult.Failed(UpdatePaymentOptionsFailure.OnlinePaymentNotConfigured);
         var payLaterInstructions = string.IsNullOrWhiteSpace(command.PayLaterInstructions)
             ? null
@@ -31,7 +31,7 @@ public sealed class UpdatePaymentOptions(IPaymentOptionsRepository repository, I
         if (payLaterInstructions?.Length > 2000)
             throw new ArgumentException("Pay-later instructions must contain at most 2000 characters.", nameof(command));
         var saved = await repository.SaveAsync(command.PayLaterEnabled, command.OnlinePaymentEnabled,
-            payLaterInstructions, command.Revision, cancellationToken);
+            payLaterInstructions, command.Revision, cancellationToken, command.CheckoutEnabled);
         return saved is null
             ? UpdatePaymentOptionsResult.Failed(UpdatePaymentOptionsFailure.ConcurrencyConflict)
             : new(saved, null);

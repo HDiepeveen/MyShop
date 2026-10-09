@@ -29,7 +29,10 @@
         <a routerLink="/winkel" class="shop-brand">MyShop</a>
         <nav aria-label="Winkelnavigatie" class="actions">
           <a routerLink="/winkel">Assortiment</a
-          ><a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
+          >
+          @if (shopSettings.checkoutEnabled()) {
+            <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
+          }
           @if (auth.session()?.administrator) {
             <a routerLink="/">Beheer</a>
           }

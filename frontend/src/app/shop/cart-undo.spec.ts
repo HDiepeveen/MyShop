@@ -19,7 +19,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 describe('Undo cart removal', () => {
-  function setup() {
+  function setup(checkoutEnabled = true) {
     const quote = vi.fn(() => of({ at: '', lines: [], totals: [] }));
     TestBed.configureTestingModule({
       imports: [ShopCart],
@@ -27,7 +27,7 @@ describe('Undo cart removal', () => {
         provideRouter([]),
         { provide: Auth, useValue: { session: signal(null) } },
         { provide: ShopApi, useValue: { quote } },
-        { provide: PaymentOptionsApi, useValue: { publicOptions: vi.fn(() => of({ items: [] })) } },
+        { provide: PaymentOptionsApi, useValue: { publicOptions: vi.fn(() => of({ checkoutEnabled, items: [] })) } },
         { provide: DeliveryMethodsApi, useValue: { publicMethods: vi.fn(() => of([])) } },
       ],
     });
@@ -38,6 +38,13 @@ describe('Undo cart removal', () => {
     TestBed.tick();
     return { fixture, page: fixture.componentInstance, cart, quote };
   }
+  it('hides an existing cart and checkout form in catalogue-only mode without deleting its contents', () => {
+    const { fixture, cart } = setup(false);
+    expect(fixture.nativeElement.textContent).toContain('Bestellen is momenteel uitgeschakeld.');
+    expect(fixture.nativeElement.querySelector('app-shop-checkout')).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name=quantity]')).toBeNull();
+    expect(cart.lines()).toEqual([first, second]);
+  });
   it('restores a removed line with the original quantity and rechecks it', () => {
     const { fixture, page, cart, quote } = setup();
     page.remove(first);

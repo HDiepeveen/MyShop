@@ -101,6 +101,26 @@ public sealed class PaymentOptionsTests
         Assert.Equal(0, store.SaveCalls);
     }
 
+    [Fact]
+    public async Task Disabled_checkout_hides_public_methods_preserves_admin_settings_and_can_be_reenabled()
+    {
+        var store = new Store(true, false, "Pay later");
+        var update = new UpdatePaymentOptions(store, new Availability(false));
+        var disabled = await update.ExecuteAsync(new(true, false, "Pay later", store.Revision, false), CancellationToken.None);
+        Assert.Null(disabled.Failure);
+        Assert.False(disabled.Settings!.CheckoutEnabled);
+        var publicOptions = await new GetPaymentOptions(store, new Availability(false)).ExecuteAsync(CancellationToken.None);
+        Assert.False(publicOptions.CheckoutEnabled);
+        Assert.Empty(publicOptions.Items);
+        var admin = await new GetAdminPaymentOptions(store, new Availability(false)).ExecuteAsync(CancellationToken.None);
+        Assert.False(admin.CheckoutEnabled);
+        Assert.True(admin.PayLaterEnabled);
+        Assert.Equal("Pay later", admin.PayLaterInstructions);
+        var enabled = await update.ExecuteAsync(new(true, false, "Pay later", store.Revision, true), CancellationToken.None);
+        Assert.True(enabled.Settings!.CheckoutEnabled);
+        Assert.Single((await new GetPaymentOptions(store, new Availability(false)).ExecuteAsync(CancellationToken.None)).Items);
+    }
+
     private sealed class Availability(bool configured, string? providerName = null) : IOnlinePaymentAvailability
     {
         public bool IsConfigured => configured;
@@ -110,23 +130,25 @@ public sealed class PaymentOptionsTests
     private sealed class Store(bool payLater, bool online, string? instructions = null) : IPaymentOptionsRepository
     {
         public Guid Revision { get; } = Guid.NewGuid();
+        public bool CheckoutEnabled { get; set; } = true;
         public bool RejectSave { get; init; }
         public int SaveCalls { get; private set; }
 
         public Task<PaymentOptionsSnapshot> GetAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(new PaymentOptionsSnapshot(payLater, online, instructions, Revision));
+            return Task.FromResult(new PaymentOptionsSnapshot(payLater, online, instructions, Revision) { CheckoutEnabled = CheckoutEnabled });
         }
 
         public Task<PaymentOptionsSnapshot?> SaveAsync(bool payLaterEnabled, bool onlinePaymentEnabled,
-            string? payLaterInstructions, Guid expectedRevision, CancellationToken cancellationToken)
+            string? payLaterInstructions, Guid expectedRevision, CancellationToken cancellationToken, bool checkoutEnabled = true)
         {
             cancellationToken.ThrowIfCancellationRequested();
             SaveCalls++;
+            CheckoutEnabled = checkoutEnabled;
             return Task.FromResult<PaymentOptionsSnapshot?>(RejectSave
                 ? null
-                : new(payLaterEnabled, onlinePaymentEnabled, payLaterInstructions, Guid.NewGuid()));
+                : new(payLaterEnabled, onlinePaymentEnabled, payLaterInstructions, Guid.NewGuid()) { CheckoutEnabled = checkoutEnabled });
         }
     }
 }

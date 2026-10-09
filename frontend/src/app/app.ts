@@ -1,3 +1,5 @@
+import { ShopSettings } from './shop/shop-settings';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Cart } from './shop/cart';
 import { Component, inject, signal } from '@angular/core';
 import { Auth } from './auth/auth';
@@ -12,6 +14,13 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
   styleUrl: './app.css',
 })
 export class App {
+  readonly shopSettings = inject(ShopSettings);
+  constructor() {
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed()).subscribe(() => {
+      if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
+    });
+    if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
+  }
   readonly auth = inject(Auth);
   readonly cart = inject(Cart);
   private readonly router = inject(Router);

@@ -10,6 +10,15 @@ namespace MyShop.Application.Tests.Checkout;
 public sealed class PlaceOrderTests
 {
     [Fact]
+    public async Task Disabled_checkout_rejects_new_requests()
+    {
+        var scenario = new Scenario();
+        scenario.Payments.CheckoutEnabled = false;
+        var result = await scenario.Execute();
+        Assert.Equal(PlaceOrderFailure.CheckoutDisabled, result.Failure);
+    }
+
+    [Fact]
     public async Task PlacesPayLaterOrderFromFreshServerPrices()
     {
         var scenario = new Scenario();
@@ -138,13 +147,14 @@ public sealed class PlaceOrderTests
 
     private sealed class Payments : IPaymentOptionsRepository
     {
+        public bool CheckoutEnabled { get; set; } = true;
         public bool PayLater { get; set; } = true;
         public Task<PaymentOptionsSnapshot> GetAsync(CancellationToken cancellationToken) =>
             Task.FromResult(new PaymentOptionsSnapshot(PayLater, false,
-                "Betaal binnen 14 dagen.", Guid.NewGuid()));
+                "Betaal binnen 14 dagen.", Guid.NewGuid()) { CheckoutEnabled = CheckoutEnabled });
         public Task<PaymentOptionsSnapshot?> SaveAsync(bool payLaterEnabled, bool onlinePaymentEnabled,
             string? payLaterInstructions, Guid expectedRevision,
-            CancellationToken cancellationToken) => throw new NotSupportedException();
+            CancellationToken cancellationToken, bool checkoutEnabled = true) => throw new NotSupportedException();
     }
 
     private sealed class Availability : IOnlinePaymentAvailability { public bool IsConfigured => false; public string? ProviderName => null; }

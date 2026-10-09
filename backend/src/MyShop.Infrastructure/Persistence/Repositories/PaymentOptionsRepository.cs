@@ -10,22 +10,23 @@ internal sealed class PaymentOptionsRepository(MyShopDbContext context) : IPayme
     {
         var row = await context.PaymentOptions.AsNoTracking().SingleAsync(
             options => options.Id == PaymentOptionsPersistenceConfiguration.SingletonId, cancellationToken);
-        return new(row.PayLaterEnabled, row.OnlinePaymentEnabled, row.PayLaterInstructions, row.Version);
+        return new(row.PayLaterEnabled, row.OnlinePaymentEnabled, row.PayLaterInstructions, row.Version) { CheckoutEnabled = row.CheckoutEnabled };
     }
 
     public async Task<PaymentOptionsSnapshot?> SaveAsync(bool payLaterEnabled, bool onlinePaymentEnabled,
-        string? payLaterInstructions, Guid expectedRevision, CancellationToken cancellationToken)
+        string? payLaterInstructions, Guid expectedRevision, CancellationToken cancellationToken, bool checkoutEnabled = true)
     {
         var replacement = Guid.NewGuid();
         var changed = await context.PaymentOptions
             .Where(options => options.Id == PaymentOptionsPersistenceConfiguration.SingletonId
                 && options.Version == expectedRevision)
             .ExecuteUpdateAsync(update => update
+                .SetProperty(options => options.CheckoutEnabled, checkoutEnabled)
                 .SetProperty(options => options.PayLaterEnabled, payLaterEnabled)
                 .SetProperty(options => options.OnlinePaymentEnabled, onlinePaymentEnabled)
                 .SetProperty(options => options.PayLaterInstructions, payLaterInstructions)
                 .SetProperty(options => options.Version, replacement), cancellationToken);
         return changed == 0 ? null : new(payLaterEnabled, onlinePaymentEnabled,
-            payLaterInstructions, replacement);
+            payLaterInstructions, replacement) { CheckoutEnabled = checkoutEnabled };
     }
 }

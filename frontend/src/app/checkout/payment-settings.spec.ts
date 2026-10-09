@@ -38,11 +38,31 @@ describe('Payment settings', () => {
 
     const inputs = fixture.nativeElement.querySelectorAll('input') as NodeListOf<HTMLInputElement>;
     expect(inputs[0].checked).toBe(true);
-    expect(inputs[1].disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('input[name=online]').disabled).toBe(true);
     expect(fixture.componentInstance.payLaterInstructions).toBe('Betaal binnen 14 dagen.');
     expect(fixture.nativeElement.textContent).toContain('nadat een betaalprovider is gekoppeld');
   });
 
+  it('saves catalogue-only mode without clearing the payment options', async () => {
+    const fixture = TestBed.createComponent(PaymentSettings);
+    await load(fixture);
+    const page = fixture.componentInstance;
+    page.checkoutEnabled = false;
+    page.save(page.state()!.data!);
+    const request = http.expectOne('/api/payment-options');
+    expect(request.request.body.checkoutEnabled).toBe(false);
+    expect(request.request.body.payLaterEnabled).toBe(true);
+    request.flush({});
+    http.expectOne('/api/payment-options').flush({
+      checkoutEnabled: false, payLaterEnabled: true, onlinePaymentEnabled: false,
+      onlinePaymentConfigured: false, onlinePaymentProvider: null,
+      payLaterInstructions: 'Betaal binnen 14 dagen.', revision,
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(page.checkoutEnabled).toBe(false);
+    expect(page.payLater).toBe(true);
+  });
   it('validates and saves an allowed selection with its revision', async () => {
     const fixture = TestBed.createComponent(PaymentSettings);
     await load(fixture);
@@ -59,6 +79,7 @@ describe('Payment settings', () => {
     const update = http.expectOne('/api/payment-options');
     expect(update.request.method).toBe('PUT');
     expect(update.request.body).toEqual({
+      checkoutEnabled: true,
       payLaterEnabled: true,
       onlinePaymentEnabled: false,
       payLaterInstructions: 'Nieuwe instructies.',

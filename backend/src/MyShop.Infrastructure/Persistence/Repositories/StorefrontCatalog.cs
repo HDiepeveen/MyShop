@@ -105,8 +105,11 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
             .ToDictionary(g => g.Key, g => (IReadOnlyList<StorefrontVariantAttribute>)g.Select(v =>
                 new StorefrontVariantAttribute(v.AttributeDefinitionId,
                     OptionValue(AttributeValuePersistenceMapper.ToDomain(v)))).ToArray());
+        var checkoutEnabled = await context.PaymentOptions.AsNoTracking()
+            .Select(options => options.CheckoutEnabled).SingleAsync(cancellationToken);
         return detail with
         {
+            CheckoutEnabled = checkoutEnabled,
             Attributes = productDefinitions.Join(productValues, d => d.Id, v => v.AttributeDefinitionId,
                 (d, v) => new { Definition = d, Value = v })
                 .Where(item => item.Definition.DataType == item.Value.DataType)

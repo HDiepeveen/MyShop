@@ -30,6 +30,7 @@ public sealed record StorefrontProduct(Guid Id, string Name, string Description,
     string ImageAlt, IReadOnlyList<StorefrontCategory> Categories,
     IReadOnlyList<StorefrontVariant> Variants)
 {
+    public bool CheckoutEnabled { get; init; } = true;
     public IReadOnlyList<StorefrontProductAttribute> Attributes { get; init; } = [];
     public IReadOnlyList<ProductImageInfo> Images { get; init; } = [];
     public IReadOnlyList<StorefrontVariantDefinition> VariantDefinitions { get; init; } = [];

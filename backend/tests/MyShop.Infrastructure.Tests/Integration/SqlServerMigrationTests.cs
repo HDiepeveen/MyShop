@@ -73,7 +73,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(25, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(26, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -90,7 +90,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(25, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(26, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

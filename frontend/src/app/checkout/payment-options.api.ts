@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
 export interface AdminPaymentOptions {
+  checkoutEnabled?: boolean;
   payLaterEnabled: boolean;
   onlinePaymentEnabled: boolean;
   payLaterInstructions: string | null;
@@ -14,7 +15,7 @@ export interface AdminPaymentOptions {
 export class PaymentOptionsApi {
   private readonly http = inject(HttpClient);
   publicOptions() {
-    return this.http.get<{ items: { code: string; name: string; instructions: string | null }[] }>(
+    return this.http.get<{ checkoutEnabled?: boolean; items: { code: string; name: string; instructions: string | null }[] }>(
       '/api/shop/payment-options',
     );
   }
@@ -24,13 +25,13 @@ export class PaymentOptionsApi {
   update(
     value: Pick<
       AdminPaymentOptions,
-      'payLaterEnabled' | 'onlinePaymentEnabled' | 'payLaterInstructions' | 'revision'
+      'checkoutEnabled' | 'payLaterEnabled' | 'onlinePaymentEnabled' | 'payLaterInstructions' | 'revision'
     >,
   ) {
     return this.http.put<
       Pick<
         AdminPaymentOptions,
-        'payLaterEnabled' | 'onlinePaymentEnabled' | 'payLaterInstructions' | 'revision'
+        'checkoutEnabled' | 'payLaterEnabled' | 'onlinePaymentEnabled' | 'payLaterInstructions' | 'revision'
       >
     >('/api/payment-options', value);
   }

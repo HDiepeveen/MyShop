@@ -18,6 +18,10 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
   imports: [DatePipe, FormsModule, RouterLink, ShopCheckout],
   template: `
     <a routerLink="/winkel">← Verder winkelen</a>
+    @if (paymentOptions()?.data?.checkoutEnabled === false) {
+      <h1>Assortiment</h1>
+      <p>Bestellen is momenteel uitgeschakeld. Je kunt het assortiment bekijken.</p>
+    } @else {
     <h1>Winkelmand</h1>
     @if (cart.warning()) {
       <p role="status">{{ cart.warning() }}</p>
@@ -212,6 +216,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
         Winkelmand vernieuwen
       </button>
       <p class="muted">Er wordt nog geen voorraad gereserveerd.</p>
+    }
     }
   `,
 })

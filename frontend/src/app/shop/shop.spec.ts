@@ -233,6 +233,7 @@ describe('Public storefront', () => {
   it('shows a public shell without administration navigation', async () => {
     const fixture = TestBed.createComponent(App);
     await TestBed.inject(Router).navigateByUrl('/winkel');
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true, items: [] });
     await fixture.whenStable();
     http.expectOne('/api/shop/categories').flush([]);
     http
@@ -245,6 +246,21 @@ describe('Public storefront', () => {
     );
     expect(fixture.nativeElement.querySelector('[href="/producten"]')).toBeNull();
     http.expectNone((r) => r.url.startsWith('/api/auth'));
+  });
+  it('hides the cart link when checkout is disabled and restores it after navigation', async () => {
+    const fixture = TestBed.createComponent(App);
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/winkel');
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false, items: [] });
+    await fixture.whenStable();
+    http.expectOne('/api/shop/categories').flush([]);
+    http.expectOne('/api/shop/products?offset=0&limit=20').flush({ items: [], totalCount: 0 });
+    expect(fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).toBeNull();
+    await router.navigateByUrl('/winkel?search=auto');
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true, items: [] });
+    await fixture.whenStable();
+    http.expectOne('/api/shop/products?offset=0&limit=20&search=auto').flush({ items: [], totalCount: 0 });
+    expect(fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).not.toBeNull();
   });
   it('shows an image fallback and retries when the image URL changes', async () => {
     const fixture = TestBed.createComponent(ShopImage);

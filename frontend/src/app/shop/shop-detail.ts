@@ -169,6 +169,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               <p>Voor deze variant is nog geen prijs beschikbaar.</p>
             }
           </section>
+          @if (product.checkoutEnabled !== false) {
           @if (selected()) {
             <div class="toolbar">
               <button
@@ -230,6 +231,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
           }
           @if (cart.warning()) {
             <p role="status">{{ cart.warning() }}</p>
+          }
           }
           @if (auth.session()?.customer) {
             <button
@@ -327,6 +329,7 @@ export class ShopDetail {
     if (variant) this.selectVariant(variant.id);
   }
   addToCart() {
+    if (this.state()?.data?.checkoutEnabled === false) return;
     this.clearCartFeedback();
     const product = this.state()?.data;
     const variant = this.selected();

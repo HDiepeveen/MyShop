@@ -10,7 +10,7 @@ public sealed record StartOnlinePaymentLine(Guid ProductId, Guid VariantId, int 
 public sealed record StartOnlinePaymentCommand(Guid CheckoutToken, Guid DeliveryMethodId,
     string CustomerName, string Email, string AddressLine, string PostalCode, string City,
     string CountryCode, IReadOnlyList<StartOnlinePaymentLine> Lines, string? CustomerUserId = null);
-public enum StartOnlinePaymentFailure { CartUnavailable, PaymentUnavailable, DeliveryUnavailable }
+public enum StartOnlinePaymentFailure { CheckoutDisabled, CartUnavailable, PaymentUnavailable, DeliveryUnavailable }
 public sealed record OnlinePaymentStart(Guid CheckoutToken, string ProviderName, string PaymentReference,
     string ProviderPaymentId, Uri CheckoutUrl, IReadOnlyList<OrderTotalSnapshot> Totals,
     OrderDeliveryMethodSnapshot DeliveryMethod);
@@ -45,6 +45,9 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
             throw new ArgumentException("Order lines must not contain null values.", nameof(command));
         if (command.Lines.Count is < 1 or > 20)
             throw new ArgumentException("Order must contain 1 to 20 lines.", nameof(command));
+        var settings = await paymentOptions.GetAsync(cancellationToken);
+        if (!settings.CheckoutEnabled)
+            return StartOnlinePaymentResult.Failed(StartOnlinePaymentFailure.CheckoutDisabled);
         var existing = await onlinePaymentStarts.GetByCheckoutTokenAsync(command.CheckoutToken,
             cancellationToken);
         if (existing is not null)
@@ -52,7 +55,6 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         if (command.DeliveryMethodId == Guid.Empty)
             return StartOnlinePaymentResult.Failed(StartOnlinePaymentFailure.DeliveryUnavailable);
 
-        var settings = await paymentOptions.GetAsync(cancellationToken);
         if (!settings.OnlinePaymentEnabled || !onlinePayment.IsConfigured || onlinePayment.ProviderName is null)
             return StartOnlinePaymentResult.Failed(StartOnlinePaymentFailure.PaymentUnavailable);
 

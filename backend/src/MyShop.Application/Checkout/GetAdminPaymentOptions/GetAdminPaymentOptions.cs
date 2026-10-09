@@ -4,7 +4,10 @@ namespace MyShop.Application.Checkout.GetAdminPaymentOptions;
 
 public sealed record AdminPaymentOptions(bool PayLaterEnabled, bool OnlinePaymentEnabled,
     string? PayLaterInstructions, bool OnlinePaymentConfigured, string? OnlinePaymentProvider,
-    Guid Revision);
+    Guid Revision)
+{
+    public bool CheckoutEnabled { get; init; } = true;
+}
 
 public sealed class GetAdminPaymentOptions(
     IPaymentOptionsRepository repository,
@@ -20,6 +23,6 @@ public sealed class GetAdminPaymentOptions(
         cancellationToken.ThrowIfCancellationRequested();
         var settings = await repository.GetAsync(cancellationToken);
         return new(settings.PayLaterEnabled, settings.OnlinePaymentEnabled,
-            settings.PayLaterInstructions, online.IsConfigured, online.ProviderName, settings.Revision);
+            settings.PayLaterInstructions, online.IsConfigured, online.ProviderName, settings.Revision) { CheckoutEnabled = settings.CheckoutEnabled };
     }
 }

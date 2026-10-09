@@ -181,6 +181,15 @@ describe('ShopDetail option selection', () => {
     detail.addToCart();
     expect(TestBed.inject(Cart).lines()).toEqual([]);
   });
+  it('shows the catalogue and price without quantity or cart controls when checkout is disabled', async () => {
+    const { harness, detail } = await setup(false, { ...optionProduct, checkoutEnabled: false });
+    const root = harness.routeNativeElement!;
+    expect(root.querySelector('input[name=quantity]')).toBeNull();
+    expect(root.textContent).not.toContain('In winkelmand');
+    expect(root.querySelector('.price')?.textContent).toContain('EUR 10,00');
+    detail.addToCart();
+    expect(TestBed.inject(Cart).lines()).toEqual([]);
+  });
   it('clears cart feedback and refuses forged missing or sold-out choices', async () => {
     const { detail } = await setup();
     detail.addToCart();

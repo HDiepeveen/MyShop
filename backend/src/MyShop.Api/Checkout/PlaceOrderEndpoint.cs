@@ -38,6 +38,11 @@ public static class PlaceOrderEndpoint
                 cancellationToken);
             return result.Failure switch
             {
+                PlaceOrderFailure.CheckoutDisabled => Results.Conflict(new
+                {
+                    code = "checkoutDisabled",
+                    message = "Bestellen is momenteel uitgeschakeld. Je kunt het assortiment bekijken."
+                }),
                 PlaceOrderFailure.CartUnavailable => Results.Conflict(new
                 {
                     code = "cartChanged",

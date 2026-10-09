@@ -1,3 +1,4 @@
+import { ShopSettings } from '../shop/shop-settings';
 import { CopyText } from '../copy-text';
 import { Cart } from '../shop/cart';
 import { DatePipe } from '@angular/common';
@@ -75,7 +76,7 @@ import {
       </section>
       <section class="panel">
         <h2>Artikelen</h2>
-        @if (item.lines.length) {
+        @if (item.lines.length && shopSettings.checkoutEnabled()) {
           <p class="muted print-hide">
             Opnieuw bestellen zet deze artikelen in je winkelmand. Je controleert daarna de actuele
             prijzen, voorraad en bezorgoptie.
@@ -158,6 +159,7 @@ import {
     }`,
 })
 export class CustomerOrderDetail {
+  readonly shopSettings = inject(ShopSettings);
   private readonly api = inject(CustomerOrderApi);
   private readonly cart = inject(Cart);
   private readonly router = inject(Router);
@@ -238,6 +240,7 @@ export class CustomerOrderDetail {
     window.print();
   }
   reorder(order: Detail) {
+    if (!this.shopSettings.checkoutEnabled()) return;
     if (this.order() !== order || this.loading() || this.cancelling() || this.reordered()) return;
     if (
       this.cart.lines().length &&

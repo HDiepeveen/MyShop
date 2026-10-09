@@ -24,6 +24,7 @@ export interface ShopCategory {
   name: string;
 }
 export interface ShopProduct extends ShopItem {
+  checkoutEnabled?: boolean;
   images?: { id: string; url: string; alternativeText: string }[];
   description: string;
   categories: ShopCategory[];

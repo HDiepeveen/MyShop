@@ -10,7 +10,7 @@ public sealed record PlaceOrderLine(Guid ProductId, Guid VariantId, int Quantity
 public sealed record PlaceOrderCommand(Guid CheckoutToken, string PaymentMethod, string CustomerName,
     string Email, string AddressLine, string PostalCode, string City, string CountryCode,
     IReadOnlyList<PlaceOrderLine> Lines, string? CustomerUserId = null, Guid DeliveryMethodId = default);
-public enum PlaceOrderFailure { CartUnavailable, PaymentUnavailable, OnlinePaymentRequired, DeliveryUnavailable }
+public enum PlaceOrderFailure { CheckoutDisabled, CartUnavailable, PaymentUnavailable, OnlinePaymentRequired, DeliveryUnavailable }
 public sealed record PlaceOrderResult(OrderReceipt? Receipt, PlaceOrderFailure? Failure)
 {
     public static PlaceOrderResult Failed(PlaceOrderFailure failure) => new(null, failure);
@@ -36,6 +36,9 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
             throw new ArgumentException("Checkout token is required.", nameof(command));
         if (command.Lines.Any(line => line is null))
             throw new ArgumentException("Order lines must not contain null values.", nameof(command));
+        var settings = await paymentOptions.GetAsync(cancellationToken);
+        if (!settings.CheckoutEnabled)
+            return PlaceOrderResult.Failed(PlaceOrderFailure.CheckoutDisabled);
         var existing = await orders.GetByCheckoutTokenAsync(command.CheckoutToken, cancellationToken);
         if (existing is not null) return new(existing, null);
         if (command.Lines.Count is < 1 or > 20)
@@ -46,7 +49,6 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
         if (delivery is null || !delivery.Enabled)
             return PlaceOrderResult.Failed(PlaceOrderFailure.DeliveryUnavailable);
 
-        var settings = await paymentOptions.GetAsync(cancellationToken);
         if (command.PaymentMethod == "online")
             return settings.OnlinePaymentEnabled && onlinePayment.IsConfigured
                 ? PlaceOrderResult.Failed(PlaceOrderFailure.OnlinePaymentRequired)
