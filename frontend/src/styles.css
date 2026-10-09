@@ -73,8 +73,8 @@ h3 {
 }
 .button,
 button {
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   border: 1px solid #1d5543;
   background: #1d5543;
   color: white;
@@ -496,4 +496,16 @@ textarea:disabled {
   .printable-order .table-wrap { overflow: visible; }
   .printable-order a { color: black; text-decoration: none; }
   .printable-order .grid { display: block; }
+}
+
+label:has(> input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+label > input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  padding: 0;
 }
