@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -27,7 +28,7 @@ public static class CustomerEmailEndpoints
     private static async Task<IResult> RequestConfirmationAsync(CustomerEmailRequest request, UserManager<IdentityUser> users,
         IEmailQueue queue, IEmailSettingsRepository settings, IHostEnvironment environment, CancellationToken cancellationToken)
     {
-        var user = await CustomerAsync(request.Email, users);
+        var user = await CustomerAsync(request.Email, users, cancellationToken);
         if (user is not null && !user.EmailConfirmed)
             await QueueConfirmationAsync(user, users, queue, settings, environment, cancellationToken);
         return Results.NoContent();
@@ -36,7 +37,7 @@ public static class CustomerEmailEndpoints
     private static async Task<IResult> RequestResetAsync(CustomerEmailRequest request, UserManager<IdentityUser> users,
         IEmailQueue queue, IEmailSettingsRepository settings, IHostEnvironment environment, CancellationToken cancellationToken)
     {
-        var user = await CustomerAsync(request.Email, users);
+        var user = await CustomerAsync(request.Email, users, cancellationToken);
         if (user is not null && !await users.IsLockedOutAsync(user))
         {
             var token = await users.GeneratePasswordResetTokenAsync(user);
@@ -66,12 +67,19 @@ public static class CustomerEmailEndpoints
         return result.Succeeded ? Results.NoContent() : InvalidLink();
     }
 
-    private static async Task<IdentityUser?> CustomerAsync(string? email, UserManager<IdentityUser> users)
+    internal static async Task<IdentityUser?> CustomerAsync(string? email, UserManager<IdentityUser> users,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(email) || email.Length > 320) return null;
-        var user = await users.FindByEmailAsync(email.Trim());
-        return user is not null && await users.IsInRoleAsync(user, AdminSecurity.CustomerRole)
-            && !await users.IsInRoleAsync(user, AdminSecurity.Role) ? user : null;
+        var normalizedEmail = users.NormalizeEmail(email.Trim());
+        var candidates = await users.Users.Where(user => user.NormalizedEmail == normalizedEmail)
+            .ToListAsync(cancellationToken);
+        var customers = new List<IdentityUser>();
+        foreach (var candidate in candidates)
+            if (await users.IsInRoleAsync(candidate, AdminSecurity.CustomerRole)
+                && !await users.IsInRoleAsync(candidate, AdminSecurity.Role))
+                customers.Add(candidate);
+        return customers.SingleOrDefault();
     }
     private static async Task<IdentityUser?> TokenCustomerAsync(string? id, UserManager<IdentityUser> users)
     {

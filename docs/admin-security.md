@@ -45,3 +45,19 @@ Bewaar ASP.NET Core Data Protection-sleutels duurzaam en afgeschermd voor het se
 De beveiligingstests gebruiken een echte HTTP-server en eigen tijdelijke `MyShopTests_<guid>` SQL Server-databases. Ze testen alle catalogusroutes zonder login, CSRF, rolintrekking, wachtwoordwijziging, cookiehergebruik, sessieverloop, accountaanmaak/herstel en loginlimieten. Stel `MYSHOP_TEST_SQLSERVER` in, zoals bij de bestaande databasetests. De ontwikkelingsdatabase wordt niet gewijzigd.
 
 Bronnen: [ASP.NET Core cookie authentication](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-10.0), [antiforgery](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-10.0).
+
+## Gelijk e-mailadres voor beheer en klant
+
+Beheeraccounts en klantaccounts zijn afzonderlijke Identity-gebruikers. Een klant
+kan zich registreren met hetzelfde e-mailadres als een beheerder, ook wanneer de
+beheerder dat e-mailadres als gebruikersnaam gebruikt. Nieuwe klanten krijgen een
+interne gebruikersnaam op basis van het genormaliseerde e-mailadres, met een
+klantspecifiek voorvoegsel. De bestaande unieke gebruikersnaamindex voorkomt twee
+nieuwe klantaccounts voor hetzelfde adres. Bestaande klantgebruikersnamen blijven
+ongewijzigd; registratie controleert ook deze bestaande accounts.
+
+Klantlogin, herbevestiging en wachtwoordherstel zoeken uitsluitend een klantaccount
+zonder beheerdersrol op het genormaliseerde e-mailadres. Tokens blijven aan de
+gebruikers-ID en het token-doel gebonden. Wachtwoorden en rechten worden nooit tussen
+accounts gedeeld. De sessieweergave toont bij klanten hun e-mailadres.
+Geen databasemigratie of aanpassing van bestaande beheeraccounts nodig.

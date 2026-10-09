@@ -1,3 +1,7 @@
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Application.Customers.GetCustomerProfile;
@@ -38,8 +42,19 @@ public static class CustomerEndpoints
                 return Results.Problem(statusCode: 503);
         }
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
-        var user = new IdentityUser { UserName = email, Email = email };
-        var created = await users.CreateAsync(user, request.Password);
+        if (await CustomerEmailEndpoints.CustomerAsync(email, users, cancellationToken) is not null)
+            return Results.Conflict(new { code = "accountExists", message = "Voor dit e-mailadres bestaat al een klantaccount." });
+        // A stable customer-specific username keeps simultaneous registrations unique,
+        // while allowing an administrator to use the same email as their username.
+        var customerName = "customer-" + Convert.ToHexString(SHA256.HashData(
+            Encoding.UTF8.GetBytes(users.NormalizeEmail(email))));
+        var user = new IdentityUser { UserName = customerName, Email = email };
+        IdentityResult created;
+        try { created = await users.CreateAsync(user, request.Password); }
+        catch (DbUpdateException exception) when (exception.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            return Results.Conflict(new { code = "accountExists", message = "Voor dit e-mailadres bestaat al een klantaccount." });
+        }
         if (!created.Succeeded)
             return created.Errors.Any(error => error.Code.Contains("Duplicate", StringComparison.OrdinalIgnoreCase))
                 ? Results.Conflict(new { code = "accountExists", message = "Voor dit e-mailadres bestaat al een account." })
@@ -60,7 +75,7 @@ public static class CustomerEndpoints
         UserManager<IdentityUser> users, SignInManager<IdentityUser> signIn)
     {
         if (!ValidCredentials(request.Email, request.Password)) return Results.Unauthorized();
-        var user = await users.FindByEmailAsync(request.Email.Trim());
+        var user = await CustomerEmailEndpoints.CustomerAsync(request.Email, users);
         if (user is null)
         {
             users.PasswordHasher.VerifyHashedPassword(MissingUser, MissingUserHash, request.Password);

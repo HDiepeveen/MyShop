@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 
@@ -22,7 +23,9 @@ public static class AdminEndpoints
         app.MapGet("/api/auth/session", (HttpContext context) => Results.Ok(new
         {
             authenticated = context.User.Identity?.IsAuthenticated == true,
-            name = context.User.Identity?.Name,
+            name = context.User.IsInRole(AdminSecurity.CustomerRole) && !context.User.IsInRole(AdminSecurity.Role)
+                ? context.User.FindFirstValue(ClaimTypes.Email) ?? context.User.Identity?.Name
+                : context.User.Identity?.Name,
             administrator = context.User.IsInRole(AdminSecurity.Role),
             customer = context.User.IsInRole(AdminSecurity.CustomerRole)
         })).AllowAnonymous();
