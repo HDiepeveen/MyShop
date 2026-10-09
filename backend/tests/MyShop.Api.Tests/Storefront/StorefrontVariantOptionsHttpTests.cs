@@ -36,11 +36,32 @@ public sealed class StorefrontVariantOptionsHttpTests
             await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductVariantAttributeValues (ProductVariantId, AttributeDefinitionId, DataType, Ordinal, DecimalCoefficient, DecimalScale) VALUES ({variant}, {weight}, {2}, {1}, {coefficient}, {28})");
             await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductVariantAttributeValues (ProductVariantId, AttributeDefinitionId, DataType, Ordinal, IntegerValue) VALUES ({variant}, {number}, {1}, {2}, {long.MaxValue})");
             await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductVariantAttributeValues (ProductVariantId, AttributeDefinitionId, DataType, Ordinal, TextValue) VALUES ({variant}, {hidden}, {0}, {3}, {"Private"})");
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductAttributeValues (ProductId, AttributeDefinitionId, DataType, Ordinal, TextValue) VALUES ({product}, {hidden}, {0}, {0}, {"Opel"})");
+            // A variant-scoped value must not leak into the product characteristics.
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductAttributeValues (ProductId, AttributeDefinitionId, DataType, Ordinal, ChoiceValue) VALUES ({product}, {size}, {5}, {1}, {"Hidden product value"})");
+        }
+        var features = Guid.NewGuid();
+        await using (var scope = host.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO AttributeDefinitions (Id, ProductTypeId, Code, DisplayName, DataType, Scope, IsRequired, IsFilterable) VALUES ({features}, {type}, {"features"}, {"Uitrusting"}, {6}, {0}, {false}, {false})");
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductAttributeValues (ProductId, AttributeDefinitionId, DataType, Ordinal) VALUES ({product}, {features}, {6}, {2})");
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductAttributeMultiChoiceValues (ProductId, AttributeDefinitionId, Ordinal, Value) VALUES ({product}, {features}, {1}, {"Radio"})");
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductAttributeMultiChoiceValues (ProductId, AttributeDefinitionId, Ordinal, Value) VALUES ({product}, {features}, {0}, {"Airco"})");
         }
         using var visitor = new HttpClient { BaseAddress = host.Client.BaseAddress };
         var response = await visitor.GetAsync($"/api/shop/products/{product}");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var detail = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var productAttributes = detail.GetProperty("attributes").EnumerateArray().ToArray();
+        Assert.Equal(2, productAttributes.Length);
+        var equipment = productAttributes[0];
+        Assert.Equal("Uitrusting", equipment.GetProperty("name").GetString());
+        Assert.Equal("Airco, Radio", equipment.GetProperty("value").GetString());
+        var productAttribute = productAttributes[1];
+        Assert.Equal(hidden, productAttribute.GetProperty("attributeDefinitionId").GetGuid());
+        Assert.Equal("Internal", productAttribute.GetProperty("name").GetString());
+        Assert.Equal("Opel", productAttribute.GetProperty("value").GetString());
         Assert.Equal(3, detail.GetProperty("variantDefinitions").GetArrayLength());
         Assert.DoesNotContain(detail.GetProperty("variantDefinitions").EnumerateArray(), d => d.GetProperty("id").GetGuid() == hidden);
         var publicVariant = Assert.Single(detail.GetProperty("variants").EnumerateArray());

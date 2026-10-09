@@ -87,8 +87,14 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
         var definitions = await context.AttributeDefinitions.AsNoTracking()
             .Where(d => d.ProductTypeId == context.Products.Where(p => p.Id == id.Value)
                 .Select(p => p.ProductTypeId).First()
-                && d.Scope == AttributeScope.Variant && d.DataType != AttributeDataType.MultiChoice)
+                && (d.Scope == AttributeScope.Product ||
+                    (d.Scope == AttributeScope.Variant && d.DataType != AttributeDataType.MultiChoice)))
             .OrderBy(d => d.Code).ThenBy(d => d.Id).ToListAsync(cancellationToken);
+        var productDefinitions = definitions.Where(d => d.Scope == AttributeScope.Product).ToArray();
+        var productValues = await context.ProductAttributeValues.AsNoTracking()
+            .Where(v => v.ProductId == id.Value)
+            .Include(v => v.MultiChoiceValues).ToListAsync(cancellationToken);
+        definitions = definitions.Where(d => d.Scope == AttributeScope.Variant).ToList();
         var variantIds = detail.Variants.Select(v => v.Id).ToArray();
         var values = await context.ProductVariantAttributeValues.AsNoTracking()
             .Where(v => variantIds.Contains(v.ProductVariantId) && v.DataType != AttributeDataType.MultiChoice)
@@ -101,6 +107,11 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
                     OptionValue(AttributeValuePersistenceMapper.ToDomain(v)))).ToArray());
         return detail with
         {
+            Attributes = productDefinitions.Join(productValues, d => d.Id, v => v.AttributeDefinitionId,
+                (d, v) => new { Definition = d, Value = v })
+                .Where(item => item.Definition.DataType == item.Value.DataType)
+                .Select(item => new StorefrontProductAttribute(item.Definition.Id, item.Definition.DisplayName,
+                    OptionValue(AttributeValuePersistenceMapper.ToDomain(item.Value)))).ToArray(),
             VariantDefinitions = definitions.Select(d => new StorefrontVariantDefinition(d.Id, d.DisplayName)).ToArray(),
             Variants = detail.Variants.Select(v => v with
             {
@@ -111,6 +122,7 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
 
     private static string OptionValue(AttributeValue value) => value switch
     {
+        MultiChoiceAttributeValue choices => string.Join(", ", choices.Values.Select(choice => choice.Value)),
         TextAttributeValue text => text.Value,
         ChoiceAttributeValue choice => choice.Value.Value,
         IntegerAttributeValue integer => integer.Value.ToString(CultureInfo.InvariantCulture),

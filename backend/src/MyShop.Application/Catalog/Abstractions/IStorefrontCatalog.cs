@@ -19,6 +19,7 @@ public sealed record StorefrontItem(Guid Id, string Name, string? ImageUrl, stri
 public sealed record StorefrontPage(DateTimeOffset At, IReadOnlyList<StorefrontItem> Items,
     int TotalCount, int Offset, int Limit);
 public sealed record StorefrontCategory(Guid Id, string Name);
+public sealed record StorefrontProductAttribute(Guid AttributeDefinitionId, string Name, string Value);
 public sealed record StorefrontVariantAttribute(Guid AttributeDefinitionId, string Value);
 public sealed record StorefrontVariantDefinition(Guid Id, string Name);
 public sealed record StorefrontVariant(Guid Id, string Name, bool IsAvailable)
@@ -29,6 +30,7 @@ public sealed record StorefrontProduct(Guid Id, string Name, string Description,
     string ImageAlt, IReadOnlyList<StorefrontCategory> Categories,
     IReadOnlyList<StorefrontVariant> Variants)
 {
+    public IReadOnlyList<StorefrontProductAttribute> Attributes { get; init; } = [];
     public IReadOnlyList<ProductImageInfo> Images { get; init; } = [];
     public IReadOnlyList<StorefrontVariantDefinition> VariantDefinitions { get; init; } = [];
 }

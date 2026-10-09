@@ -135,6 +135,19 @@ describe('ShopDetail option selection', () => {
     expect(detail.selectedId()).toBe(optionProduct.variants[0].id);
     expect(harness.routeNativeElement!.textContent).not.toContain('Gekozen variant:');
   });
+  it('renders product characteristics as safe text above variant choices', async () => {
+    const { harness } = await setup(false, {
+      ...optionProduct,
+      attributes: [{ attributeDefinitionId: 'brand', name: 'Merk', value: '<img src=x>Opel' }],
+    });
+    const root = harness.routeNativeElement!;
+    const section = root.querySelector('[aria-label="Productkenmerken"]')!;
+    expect(section.textContent).toContain('Merk');
+    expect(section.textContent).toContain('<img src=x>Opel');
+    expect(section.querySelector('img')).toBeNull();
+    expect(section.compareDocumentPosition(root.querySelector('select[name="option-size"]')!) &
+      Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
   it('clears cart feedback and refuses forged missing or sold-out choices', async () => {
     const { detail } = await setup();
     detail.addToCart();

@@ -65,6 +65,17 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               }
             </nav>
           }
+          @if (product.attributes?.length) {
+            <section aria-label="Productkenmerken">
+              <h3>Productkenmerken</h3>
+              <dl class="detail-list">
+                @for (attribute of product.attributes; track attribute.attributeDefinitionId) {
+                  <dt>{{ attribute.name }}</dt>
+                  <dd>{{ attribute.value }}</dd>
+                }
+              </dl>
+            </section>
+          }
           @if (product.variants.length) {
             @if (options(); as choices) {
               @for (dimension of choices.dimensions; track dimension.id) {

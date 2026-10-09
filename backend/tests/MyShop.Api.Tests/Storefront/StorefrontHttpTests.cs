@@ -168,7 +168,7 @@ public sealed class StorefrontHttpTests
         Assert.True(item.GetProperty("isAvailable").GetBoolean());
         Assert.Empty(item.GetProperty("prices").EnumerateArray());
         var product = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}");
-        Assert.Equal(new[] { "categories", "description", "id", "imageAlt", "images", "imageUrl", "name", "variantDefinitions", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(new[] { "attributes", "categories", "description", "id", "imageAlt", "images", "imageUrl", "name", "variantDefinitions", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
         var productCategory = Assert.Single(product.GetProperty("categories").EnumerateArray());
         Assert.Equal(new[] { "id", "name" }, productCategory.EnumerateObject()
             .Select(property => property.Name).Order().ToArray());
