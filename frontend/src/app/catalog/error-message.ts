@@ -10,6 +10,8 @@ export function errorMessage(error: unknown): string {
     if (error.status === 400 && error.error?.code === 'csrf')
       return 'Je beveiligingstoken is verlopen. Vernieuw de pagina en probeer opnieuw.';
     if (error.status === 400) return 'Controleer de ingevulde gegevens en probeer het opnieuw.';
+    if (error.status === 409 && error.error?.code === 'accountExists')
+      return 'Voor dit e-mailadres bestaat al een klantaccount. Log in of herstel je wachtwoord.';
     if (error.status === 409)
       return 'Deze wijziging kon niet worden opgeslagen. Vernieuw de gegevens en probeer het opnieuw.';
   }
