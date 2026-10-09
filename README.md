@@ -5,7 +5,7 @@ MyShop is an e-commerce application with an ASP.NET Core catalog API and a modul
 ## Webshop version
 
 The webshop version is stored centrally in `version.json`. The administration
-footer displays this value to signed-in administrators. It is not displayed in
+sidebar displays this value at the bottom to signed-in administrators. It is not displayed in
 the customer storefront or on the sign-in page.
 
 Use `MAJOR.MINOR.PATCH`: increase PATCH for fixes, MINOR for new functionality,

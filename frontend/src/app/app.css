@@ -178,3 +178,7 @@ footer {
 .workspace.no-sidebar {
   grid-template-columns: 1fr;
 }
+
+.sidebar-footer .webshop-version {
+  margin-top: 6px;
+}

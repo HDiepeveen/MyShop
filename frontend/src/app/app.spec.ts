@@ -17,7 +17,8 @@ it('offers accessible navigation and a skip link', async () => {
   expect(element.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
   expect(element.querySelectorAll('nav a').length).toBe(10);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');
-  expect(element.querySelector('.webshop-version')?.textContent).toContain(webshopVersion.version);
+  expect(element.querySelector('.sidebar-footer .webshop-version')?.textContent).toContain(webshopVersion.version);
+  expect(element.querySelector('footer .webshop-version')).toBeNull();
 });
 
 it('keeps the skip link on the current page and focuses main content', async () => {
