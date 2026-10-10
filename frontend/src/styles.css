@@ -122,6 +122,11 @@ button:disabled {
   flex-wrap: wrap;
   margin-bottom: 20px;
 }
+/* Align adjacent controls without counting the button's bottom margin. */
+.toolbar:has(input:not([type='checkbox']):not([type='radio'])) button,
+.toolbar:has(input:not([type='checkbox']):not([type='radio'])) .button {
+  margin-bottom: 0;
+}
 .toolbar label {
   flex: 1;
   min-width: 180px;
