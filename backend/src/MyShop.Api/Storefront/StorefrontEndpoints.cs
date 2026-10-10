@@ -14,6 +14,11 @@ public static class StorefrontEndpoints
 {
     public static void MapStorefront(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet("/api/shop/settings", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            return Results.Ok(new { settings.ShopName, settings.WelcomeText, settings.Introduction });
+        }).AllowAnonymous();
         endpoints.MapCartQuote();
         endpoints.MapPlaceOrder();
         endpoints.MapStartOnlinePayment();
@@ -50,7 +55,7 @@ public static class StorefrontEndpoints
                             new StorefrontPriceRangeResponse(price.Currency,
                                 price.MinimumAmount.ToString("F2", CultureInfo.InvariantCulture),
                                 price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()) { WebAddress = item.WebAddress })
-                        .ToList(), page.TotalCount, page.Offset, page.Limit) { Heading = page.Heading, SeoTitle = page.SeoTitle });
+                        .ToList(), page.TotalCount, page.Offset, page.Limit) { WelcomeText = page.WelcomeText, Introduction = page.Introduction, Heading = page.Heading, SeoTitle = page.SeoTitle });
             }
             catch (ArgumentException) { return (IResult)Results.BadRequest(); }
         }).AllowAnonymous();
@@ -71,6 +76,8 @@ public static class StorefrontEndpoints
 public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<StorefrontItemResponse> Items,
     int TotalCount, int Offset, int Limit)
 {
+    public string WelcomeText { get; init; } = "Welkom bij MyShop";
+    public string Introduction { get; init; } = "Bekijk onze producten en kies de variant die bij je past.";
     public string Heading { get; init; } = "Ontdek ons assortiment";
     public string SeoTitle { get; init; } = "Assortiment · MyShop";
 }

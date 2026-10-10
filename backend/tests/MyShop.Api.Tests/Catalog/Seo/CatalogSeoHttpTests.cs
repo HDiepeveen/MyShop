@@ -7,6 +7,31 @@ namespace MyShop.Api.Tests.Catalog.Seo;
 public sealed class CatalogSeoHttpTests
 {
     [SecuritySqlFact]
+    public async Task Branding_defaults_and_validation_preserve_stored_settings()
+    {
+        await using var host = await SecurityHost.Create();
+        var initial = await host.Client.GetFromJsonAsync<JsonElement>("/api/shop/settings");
+        Assert.Equal("MyShop", initial.GetProperty("shopName").GetString());
+        Assert.Equal("Welkom bij MyShop", initial.GetProperty("welcomeText").GetString());
+        Assert.Equal("Bekijk onze producten en kies de variant die bij je past.", initial.GetProperty("introduction").GetString());
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
+        var revision = settings.GetProperty("revision").GetGuid();
+        foreach (var (name, welcome, introduction) in new[]
+        {
+            (" ", "Welcome", "Introduction"), (new string('n', 101), "Welcome", "Introduction"),
+            ("Company", " ", "Introduction"), ("Company", new string('w', 201), "Introduction"),
+            ("Company", "Welcome", " "), ("Company", "Welcome", new string('i', 1001))
+        })
+            Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/seo-settings",
+                new { heading = "Heading", seoTitle = "Title", shopName = name, welcomeText = welcome, introduction, revision })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/seo-settings", new { heading = "Heading", seoTitle = "Title", revision })).StatusCode);
+        var unchanged = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
+        Assert.Equal(revision, unchanged.GetProperty("revision").GetGuid());
+        Assert.Equal("MyShop", unchanged.GetProperty("shopName").GetString());
+    }
+
+    [SecuritySqlFact]
     public async Task Settings_optional_product_metadata_and_historical_addresses_work_without_exposing_drafts_or_admin_pages()
     {
         var folder = Path.Combine(Path.GetTempPath(), "MyShopSeo_" + Guid.NewGuid().ToString("N"));
@@ -19,13 +44,18 @@ public sealed class CatalogSeoHttpTests
             Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/seo-settings")).StatusCode);
             await host.Csrf(); Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode); await host.Csrf();
             var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
-            var request = new { heading = "Occasions te koop", seoTitle = "Auto kopen $& <script>bad</script>", revision = settings.GetProperty("revision").GetGuid() };
+            var request = new { shopName = "Autohuis Hans", welcomeText = "Welkom bij Autohuis Hans", introduction = "Bekijk onze occasions.", heading = "Occasions te koop", seoTitle = "Auto kopen $& <script>bad</script>", revision = settings.GetProperty("revision").GetGuid() };
             Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", request)).StatusCode);
             Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PutAsJsonAsync("/api/seo-settings", request)).StatusCode);
             var page = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products");
             Assert.Equal("Occasions te koop", page.GetProperty("heading").GetString());
             var html = await visitor.GetStringAsync("/winkel");
             Assert.Contains("<h1>Occasions te koop</h1>", html);
+            Assert.Contains("Welkom bij Autohuis Hans", html);
+            Assert.Contains("Bekijk onze occasions.", html);
+            var branding = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
+            Assert.Equal("Autohuis Hans", branding.GetProperty("shopName").GetString());
+            Assert.Equal(new[] { "introduction", "shopName", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
             Assert.Contains("$&amp;", html);
             Assert.DoesNotContain("<script>bad</script>", html);
             var product = await CreateProduct(host, "Opel Corsa 2014");
@@ -60,7 +90,7 @@ public sealed class CatalogSeoHttpTests
             var oldAutomatic = await visitor.GetAsync("/winkel/" + auto);
             Assert.Equal(HttpStatusCode.MovedPermanently, oldAutomatic.StatusCode);
             publicProduct = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products/corsa-lpg");
-            Assert.Equal("Opel Corsa 2014 · MyShop", publicProduct.GetProperty("seoTitle").GetString());
+            Assert.Equal("Opel Corsa 2014 · Autohuis Hans", publicProduct.GetProperty("seoTitle").GetString());
             Assert.Equal("Een goed onderhouden auto.", publicProduct.GetProperty("seoDescription").GetString());
             var other = await CreateProduct(host, "Another car");
             Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PutAsJsonAsync($"/api/products/{other.GetProperty("id").GetGuid()}/seo", new { webAddress = "opel-corsa-2014", revision = Guid.Empty })).StatusCode);

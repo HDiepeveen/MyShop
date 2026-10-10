@@ -1,12 +1,12 @@
 # SEO-instellingen voor assortiment en producten
 
-Open **Beheer > SEO** om de zichtbare koptekst en de SEO-titel van het assortiment
+Open **Beheer > Webshop en SEO** om de zichtbare koptekst en de SEO-titel van het assortiment
 te wijzigen. De titel wordt voor het browsertabblad en als aanwijzing voor
 zoekmachines gebruikt. De bestaande standaardwaarden blijven beschikbaar.
 
 Open bij een product **SEO voor dit product**. De drie velden zijn optioneel:
 SEO-titel, SEO-omschrijving en webadres. Lege titel gebruikt de productnaam met
-MyShop; lege omschrijving gebruikt een korte samenvatting van de beschrijving.
+de ingestelde webshopnaam; lege omschrijving gebruikt een korte samenvatting van de beschrijving.
 Een leeg webadres gebruikt de productnaam met een unieke product-ID. Vul voor een
 kort eigen adres bijvoorbeeld `opel-corsa-2014` in, zonder `/winkel/`.
 
@@ -34,3 +34,14 @@ De migraties `CatalogSeo` en `CatalogSeoNaming` voegen de configuratie, productm
 en adresgeschiedenis toe. De tweede migratie brengt de tabelnaam in lijn met de
 bestaande meervoudconventie en bewaart de data. Beide moeten vóór een serverupdate
 worden toegepast. Lokaal is dit uitgevoerd; de online webshop is niet aangepast.
+
+## Webshopnaam en welkomstteksten
+
+De webshopnaam (maximaal 100 tekens), welkomsttekst (200 tekens) en introductietekst
+(1000 tekens) staan bij dezelfde instellingen. Ze zijn verplicht; de bestaande
+MyShop-teksten blijven de beginwaarden. De naam wordt gebruikt in de winkelkop,
+beheerkop, footer, besteloverzichten en standaard producttitels. Eigen SEO-titels
+blijven onafhankelijk instelbaar. De technische projectnaam verandert niet.
+De openbare route /api/shop/settings geeft uitsluitend de drie zichtbare teksten.
+De migratie ShopBranding voegt deze velden toe zonder bestaande SEO-instellingen
+te overschrijven. Pas die ook toe voordat deze versie online wordt gezet.

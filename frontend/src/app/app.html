@@ -2,8 +2,8 @@
 <div class="workspace" [class.shop]="storefront()" [class.no-sidebar]="!auth.session()?.authenticated || !auth.session()?.administrator">
   @if (!storefront() && auth.session()?.authenticated && auth.session()?.administrator) {
     <aside class="sidebar">
-      <a routerLink="/" class="brand" aria-label="MyShop startpagina"
-        ><span class="brand-icon">m.</span> MyShop</a
+      <a routerLink="/" class="brand" [attr.aria-label]="branding.name() + ' startpagina'"
+        ><span class="brand-icon">m.</span> {{ branding.name() }}</a
       >
       <p class="nav-label">WERKRUIMTE</p>
       <nav aria-label="Hoofdnavigatie">
@@ -19,7 +19,7 @@
         <a routerLink="/instellingen/bezorgen" routerLinkActive="active">Bezorgopties</a>
         <a routerLink="/instellingen/email" routerLinkActive="active">E-mailinstellingen</a>
         <a routerLink="/instellingen/facturatie" routerLinkActive="active">Facturatie en btw</a>
-        <a routerLink="/instellingen/seo" routerLinkActive="active">SEO</a>
+        <a routerLink="/instellingen/seo" routerLinkActive="active">Webshop en SEO</a>
       </nav>
       <div class="sidebar-footer">
         <div><span class="status-dot"></span> Catalogusbeheer</div>
@@ -30,7 +30,7 @@
   <div class="body">
     <header class="topbar">
       @if (storefront()) {
-        <a routerLink="/winkel" class="shop-brand">MyShop</a>
+        <a routerLink="/winkel" class="shop-brand">{{ branding.name() }}</a>
         <nav aria-label="Winkelnavigatie" class="actions">
           <a routerLink="/winkel">Assortiment</a
           >
@@ -74,7 +74,7 @@
     }
     <main #content id="content" tabindex="-1"><router-outlet /></main>
     <footer>
-      MyShop
+      {{ branding.name() }}
       <span>{{
         storefront() ? 'Ontdek wat bij je past.' : 'Een goed assortiment begint bij de details.'
       }}</span>

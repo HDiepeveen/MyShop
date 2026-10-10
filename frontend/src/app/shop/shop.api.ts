@@ -10,6 +10,8 @@ export interface ShopItem {
   imageAlt: string;
 }
 export interface ShopPage {
+  welcomeText?: string;
+  introduction?: string;
   heading?: string;
   seoTitle?: string;
   at: string;

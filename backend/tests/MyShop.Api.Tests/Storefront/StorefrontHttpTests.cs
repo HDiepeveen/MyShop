@@ -102,7 +102,7 @@ public sealed class StorefrontHttpTests
         using var visitor = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         var publicEndpoints = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText!.StartsWith("/api/shop/")).ToArray();
-        Assert.Equal(11, publicEndpoints.Length);
+        Assert.Equal(12, publicEndpoints.Length);
         Assert.All(publicEndpoints, e =>
         {
             Assert.Equal(e.RoutePattern.RawText is "/api/shop/orders" or "/api/shop/online-payments" ? "POST" : "GET",
@@ -158,7 +158,7 @@ public sealed class StorefrontHttpTests
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
         Assert.True(pageResponse.Headers.CacheControl?.NoStore);
         var page = await pageResponse.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(new[] { "at", "heading", "items", "limit", "offset", "seoTitle", "totalCount" }, page.EnumerateObject()
+        Assert.Equal(new[] { "at", "heading", "introduction", "items", "limit", "offset", "seoTitle", "totalCount", "welcomeText" }, page.EnumerateObject()
             .Select(property => property.Name).Order().ToArray());
         Assert.InRange(page.GetProperty("at").GetDateTimeOffset(), pageRequestedAt, DateTimeOffset.UtcNow);
         Assert.Equal(2, page.GetProperty("totalCount").GetInt32());

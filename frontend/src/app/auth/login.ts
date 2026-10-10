@@ -1,3 +1,4 @@
+import { ShopBranding } from '../shop/shop-branding';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,7 +11,7 @@ import { safeReturnUrl } from './auth-routing';
   imports: [FormsModule],
   template: `
     <h1>Inloggen</h1>
-    <p class="muted">Log in met je MyShop-beheerdersaccount.</p>
+    <p class="muted">Log in met je beheerdersaccount voor {{ branding.name() }}.</p>
     @if (reason === 'expired') {
       <p role="status">Je sessie is verlopen. Log opnieuw in.</p>
     }
@@ -58,6 +59,7 @@ import { safeReturnUrl } from './auth-routing';
   `,
 })
 export class Login {
+  readonly branding = inject(ShopBranding);
   private readonly auth = inject(Auth);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

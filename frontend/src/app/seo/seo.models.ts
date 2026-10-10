@@ -1,4 +1,4 @@
-export interface ShopSeoSettings { heading: string; seoTitle: string; revision: string; }
+export interface ShopSeoSettings { heading: string; seoTitle: string; revision: string; shopName: string; welcomeText: string; introduction: string; }
 export interface ProductSeoInfo {
   productId: string; name: string; revision: string;
   values: { seoTitle: string | null; seoDescription: string | null; webAddress: string | null };

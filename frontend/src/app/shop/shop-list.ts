@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { ShopBranding } from './shop-branding';
 import { StorefrontSeo } from './storefront-seo';
 import { ShopApi } from './shop.api';
 import { ShopImage } from './shop-image';
@@ -29,9 +30,9 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
     `,
   ],
   template: `
-    <div class="eyebrow">Welkom bij MyShop</div>
+    <div class="eyebrow">{{ state()?.data?.welcomeText || 'Welkom bij MyShop' }}</div>
     <h1>{{ state()?.data?.heading || 'Ontdek ons assortiment' }}</h1>
-    <p class="muted">Bekijk onze producten en kies de variant die bij je past.</p>
+    <p class="muted">{{ state()?.data?.introduction || 'Bekijk onze producten en kies de variant die bij je past.' }}</p>
     @if (categories()?.loading) {
       <p role="status">Categorieën ophalen…</p>
     }
@@ -275,8 +276,9 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
   `,
 })
 export class ShopList {
+  private readonly branding = inject(ShopBranding);
   private readonly seo = inject(StorefrontSeo);
-  constructor() { effect(() => { const page = this.state()?.data; if (page) this.seo.apply(page.seoTitle || 'Assortiment · MyShop', undefined, '/winkel'); }); }
+  constructor() { effect(() => { const page = this.state()?.data; if (page) this.seo.apply(page.seoTitle || 'Assortiment · ' + this.branding.name(), undefined, '/winkel'); }); }
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

@@ -9,19 +9,22 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id, ct);
-        return new(row.Heading, row.SeoTitle, row.Version);
+        return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction);
     }
     public async Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
     {
         var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
-            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.Version, Guid.NewGuid()), ct);
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
+                .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.Version, Guid.NewGuid()), ct);
         return new(changed == 1 ? null : SeoFailure.Conflict);
     }
     public async Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken ct)
     {
         var row = await context.Products.AsNoTracking().Include(x => x.Seo).SingleOrDefaultAsync(x => x.Id == id, ct);
-        return row is null ? null : new(row.Id, row.Name, row.Description, row.ImageUrl, row.ImageAlt, row.IsPublished,
-            new(row.Seo?.SeoTitle, row.Seo?.SeoDescription, row.Seo?.WebAddress), row.Seo?.Version ?? Guid.Empty);
+        if (row is null) return null;
+        var settings = await GetSettingsAsync(ct);
+        return new(row.Id, row.Name, row.Description, row.ImageUrl, row.ImageAlt, row.IsPublished,
+            new(row.Seo?.SeoTitle, row.Seo?.SeoDescription, row.Seo?.WebAddress), row.Seo?.Version ?? Guid.Empty) { ShopName = settings.ShopName };
     }
     public async Task<Guid?> ResolveProductAsync(string key, CancellationToken ct)
     {

@@ -13,9 +13,10 @@ describe('SEO editors', () => {
     const fixture = TestBed.createComponent(SeoSettings);
     http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
     const page = fixture.componentInstance;
-    page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop'; page.save(); page.save();
+    page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop';
+    page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision });
+    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.' });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
@@ -24,8 +25,9 @@ describe('SEO editors', () => {
   it('keeps an edited heading when saving fails', () => {
     const fixture = TestBed.createComponent(SeoSettings);
     http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
-    const page = fixture.componentInstance; page.heading = 'Mijn ontwerp'; page.save();
+    const page = fixture.componentInstance; page.heading = 'Mijn ontwerp'; page.shopName = 'Mijn bedrijf'; page.welcomeText = 'Mijn welkom'; page.introduction = 'Mijn introductie'; page.save();
     http.expectOne('/api/seo-settings').flush({}, { status: 409, statusText: 'Conflict' });
+    expect(page.shopName).toBe('Mijn bedrijf'); expect(page.welcomeText).toBe('Mijn welkom'); expect(page.introduction).toBe('Mijn introductie');
     expect(page.heading).toBe('Mijn ontwerp'); expect(page.error()).toBeTruthy(); expect(page.busy()).toBe(false);
   });
   function product() {

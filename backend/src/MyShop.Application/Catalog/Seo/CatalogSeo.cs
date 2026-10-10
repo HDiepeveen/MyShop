@@ -4,12 +4,13 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision);
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction);
 public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
 public sealed record ProductSeoInfo(Guid ProductId, string Name, string Description, string? ImageUrl,
     string ImageAlt, bool Published, ProductSeoValues Values, Guid Revision)
 {
-    public string ResolvedTitle => Values.SeoTitle ?? Name + " · MyShop";
+    public string ShopName { get; init; } = "MyShop";
+    public string ResolvedTitle => Values.SeoTitle ?? Name + " · " + ShopName;
     public string ResolvedDescription => Values.SeoDescription ?? SeoText.Summary(Description);
     public string ResolvedAddress => Values.WebAddress ?? SeoText.AutomaticAddress(Name, ProductId);
 }
@@ -62,10 +63,14 @@ public sealed class ManageSeo(ICatalogSeoStore store)
 {
     public Task<ShopSeoSettings> GetSettingsAsync(CancellationToken cancellationToken) => store.GetSettingsAsync(cancellationToken);
     public Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken cancellationToken) => store.GetProductAsync(id, cancellationToken);
-    public Task<SeoResult> SaveSettingsAsync(string heading, string title, Guid revision, CancellationToken cancellationToken)
+    public Task<SeoResult> SaveSettingsAsync(string heading, string title, Guid revision, CancellationToken cancellationToken,
+        string shopName, string welcomeText, string introduction)
     {
         var settings = new ShopSeoSettings(SeoText.Optional(heading, 200) ?? throw new ArgumentException("Vul een koptekst in."),
-            SeoText.Optional(title, 200) ?? throw new ArgumentException("Vul een SEO-titel in."), revision);
+            SeoText.Optional(title, 200) ?? throw new ArgumentException("Vul een SEO-titel in."), revision,
+            SeoText.Optional(shopName, 100) ?? throw new ArgumentException("Vul een webshopnaam in."),
+            SeoText.Optional(welcomeText, 200) ?? throw new ArgumentException("Vul een welkomsttekst in."),
+            SeoText.Optional(introduction, 1000) ?? throw new ArgumentException("Vul een introductietekst in."));
         if (revision == Guid.Empty) throw new ArgumentException("Vernieuw de instellingen.");
         return store.SaveSettingsAsync(settings, cancellationToken);
     }

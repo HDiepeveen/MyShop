@@ -8,14 +8,15 @@ internal static class SeoHtml
     public static async Task<bool> WriteAsync(HttpContext context, string template, ICatalogSeoStore seo)
     {
         var path = context.Request.Path.Value ?? "/";
-        var title = "MyShop"; string? description = null; string? canonical = null; var preview = ""; var index = false;
+        var branding = await seo.GetSettingsAsync(context.RequestAborted);
+        var title = branding.ShopName; string? description = null; string? canonical = null; var preview = ""; var index = false;
         if (path.TrimEnd('/') == "/winkel")
         {
-            var settings = await seo.GetSettingsAsync(context.RequestAborted);
+            var settings = branding;
             title = settings.SeoTitle; canonical = "/winkel"; index = true;
             var catalog = context.RequestServices.GetRequiredService<IStorefrontCatalog>();
             var page = await catalog.ListAsync(0, 20, null, null, DateTimeOffset.UtcNow, context.RequestAborted);
-            preview = "<main><h1>" + E(settings.Heading) + "</h1><ul>" + string.Concat(page.Items.Select(p =>
+            preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
                 "<li><a href=\"/winkel/" + E(p.WebAddress ?? p.Id.ToString("D")) + "\">" + E(p.Name) + "</a></li>")) + "</ul></main>";
         }
         else if (path.StartsWith("/winkel/", StringComparison.Ordinal) && path[8..].IndexOf('/') < 0)
@@ -26,7 +27,7 @@ internal static class SeoHtml
                 var id = await seo.ResolveProductAsync(key, context.RequestAborted);
                 var product = id is null ? null : await seo.GetProductAsync(id.Value, context.RequestAborted);
                 if (product is null || !product.Published)
-                { context.Response.StatusCode = 404; title = "Product niet beschikbaar · MyShop"; }
+                { context.Response.StatusCode = 404; title = "Product niet beschikbaar · " + branding.ShopName; }
                 else
                 {
                     canonical = "/winkel/" + product.ResolvedAddress;

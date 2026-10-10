@@ -35,7 +35,7 @@ describe('Public storefront', () => {
     });
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => http.verify());
+  afterEach(() => { http.match('/api/shop/settings').forEach(request => request.flush({ shopName: 'MyShop' })); http.verify(); });
   it('opens without authentication and preserves search/page when following product links', async () => {
     const harness = await RouterTestingHarness.create(
       '/winkel?search=shirt&offset=20&categoryId=c1',
@@ -43,7 +43,7 @@ describe('Public storefront', () => {
     http.expectNone((r) => r.url.startsWith('/api/auth'));
     http.expectOne('/api/shop/categories').flush([{ id: 'c1', name: 'Kleding' }]);
     http.expectOne('/api/shop/products?offset=20&limit=20&search=shirt&categoryId=c1').flush({
-      at: '2026-09-30T12:00:00Z',
+      at: '2026-09-30T12:00:00Z', welcomeText: 'Welkom bij Hans', introduction: 'Onze geselecteerde occasions.',
       items: [
         {
           ...product,
@@ -55,6 +55,9 @@ describe('Public storefront', () => {
       limit: 20,
     });
     harness.detectChanges();
+    expect(harness.routeNativeElement!.textContent).toContain('Welkom bij Hans');
+    expect(harness.routeNativeElement!.textContent).toContain('Onze geselecteerde occasions.');
+    expect(harness.routeNativeElement!.textContent).not.toContain('Welkom bij MyShop');
     expect(harness.routeNativeElement!.textContent).toContain('EUR 12,50');
     expect(harness.routeNativeElement!.textContent).toContain('25,00');
     const link = harness.routeNativeElement!.querySelector('a[href*="/winkel/p?"]')!;

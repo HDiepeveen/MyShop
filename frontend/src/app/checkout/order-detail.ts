@@ -1,3 +1,4 @@
+import { ShopBranding } from '../shop/shop-branding';
 import { CopyText } from '../copy-text';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
@@ -11,7 +12,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
 @Component({
   imports: [RouterLink, DatePipe, CurrencyPipe, CopyText],
   host: { class: 'printable-order' },
-  template: ` <p class="print-only">MyShop · Besteloverzicht</p>
+  template: ` <p class="print-only">{{ branding.name() }} · Besteloverzicht</p>
     <a class="back print-hide" routerLink="/bestellingen" queryParamsHandling="preserve"
       >← Terug naar bestellingen</a
     >
@@ -278,7 +279,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
         <section class="panel print-hide">
           <h2>Terugbetaling registreren</h2>
           <p class="muted">
-            Gebruik dit nadat het volledige bedrag buiten MyShop aan de klant is terugbetaald.
+            Gebruik dit nadat het volledige bedrag buiten de webshop aan de klant is terugbetaald.
           </p>
           <details>
             <summary>Bestelling als terugbetaald markeren</summary>
@@ -320,6 +321,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
     }`,
 })
 export class OrderDetailComponent {
+  readonly branding = inject(ShopBranding);
   private readonly api = inject(OrderManagementApi);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);

@@ -1,3 +1,4 @@
+import { ShopBranding } from '../shop/shop-branding';
 import { ShopSettings } from '../shop/shop-settings';
 import { CopyText } from '../copy-text';
 import { Cart } from '../shop/cart';
@@ -25,7 +26,7 @@ import {
 @Component({
   imports: [DatePipe, RouterLink, CopyText],
   host: { class: 'printable-order' },
-  template: `<p class="print-only">MyShop · Besteloverzicht</p>
+  template: `<p class="print-only">{{ branding.name() }} · Besteloverzicht</p>
     <a class="print-hide" routerLink="/winkel/account/bestellingen" [queryParams]="listQuery()"
       >← Mijn bestellingen</a
     >
@@ -159,6 +160,7 @@ import {
     }`,
 })
 export class CustomerOrderDetail {
+  readonly branding = inject(ShopBranding);
   readonly shopSettings = inject(ShopSettings);
   private readonly api = inject(CustomerOrderApi);
   private readonly cart = inject(Cart);

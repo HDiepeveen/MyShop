@@ -9,6 +9,9 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
     {
         builder.ToTable("CatalogSeoSettings"); builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.ShopName).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.WelcomeText).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.Introduction).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.Heading).HasMaxLength(200).IsRequired();
         builder.Property(x => x.SeoTitle).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Version).IsConcurrencyToken().ValueGeneratedNever();

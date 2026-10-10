@@ -1,3 +1,4 @@
+import { ShopBranding } from './shop/shop-branding';
 import { DatePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -10,7 +11,7 @@ import { loadState } from './catalog/load-state';
   imports: [RouterLink, DatePipe],
   template: `
     <div class="page-head">
-      <div><div class="eyebrow">Vandaag in MyShop</div><h1>Overzicht</h1></div>
+      <div><div class="eyebrow">Vandaag in {{ branding.name() }}</div><h1>Overzicht</h1></div>
       <button class="secondary" [disabled]="state()?.loading" (click)="refresh()">Vernieuwen</button>
     </div>
     @if (state()?.loading) { <p role="status">Overzicht ophalen…</p> }
@@ -65,6 +66,7 @@ import { loadState } from './catalog/load-state';
   `,
 })
 export class Home {
+  readonly branding = inject(ShopBranding);
   private readonly api = inject(DashboardApi);
   private readonly reload = new BehaviorSubject(0);
   readonly state = toSignal(this.reload.pipe(switchMap(() => loadState(this.api.get()))));

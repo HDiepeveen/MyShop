@@ -8,6 +8,29 @@ namespace MyShop.Infrastructure.Tests.Integration;
 public sealed class SqlServerMigrationTests(SqlServerDatabase database)
 {
     [SqlServerFact]
+    public async Task Branding_migration_keeps_existing_heading_title_and_revision()
+    {
+        var isolated = new SqlServerDatabase();
+        await isolated.InitializeAsync();
+        try
+        {
+            await using var context = isolated.CreateContext();
+            await context.GetService<IMigrator>().MigrateAsync("20261010115938_CatalogSeoNaming");
+            var revision = Guid.NewGuid();
+            await context.Database.ExecuteSqlInterpolatedAsync($"UPDATE [CatalogSeoSettings] SET [Heading] = {"Existing heading"}, [SeoTitle] = {"Existing title"}, [Version] = {revision}");
+            await context.Database.MigrateAsync();
+            var settings = await context.CatalogSeoSettings.AsNoTracking().SingleAsync();
+            Assert.Equal("Existing heading", settings.Heading);
+            Assert.Equal("Existing title", settings.SeoTitle);
+            Assert.Equal(revision, settings.Version);
+            Assert.Equal("MyShop", settings.ShopName);
+            Assert.Equal("Welkom bij MyShop", settings.WelcomeText);
+            Assert.Equal("Bekijk onze producten en kies de variant die bij je past.", settings.Introduction);
+        }
+        finally { await isolated.DisposeAsync(); }
+    }
+
+    [SqlServerFact]
     public async Task LaterMigrationsPreserveExistingDataAndSeedPaymentOptions()
     {
         var isolated = new SqlServerDatabase();
@@ -73,7 +96,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(28, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(29, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -90,7 +113,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(28, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(29, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

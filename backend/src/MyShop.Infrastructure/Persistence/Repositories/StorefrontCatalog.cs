@@ -43,7 +43,7 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
             { WebAddress = row.Slug ?? MyShop.Application.Catalog.Seo.SeoText.AutomaticAddress(row.Name, row.Id) };
         }).ToList();
         var seo = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(cancellationToken);
-        return new(at, items, count, offset, limit) { Heading = seo.Heading, SeoTitle = seo.SeoTitle };
+        return new(at, items, count, offset, limit) { WelcomeText = seo.WelcomeText, Introduction = seo.Introduction, Heading = seo.Heading, SeoTitle = seo.SeoTitle };
     }
 
     private static IReadOnlyList<StorefrontPriceRange> PriceRanges(

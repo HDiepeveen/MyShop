@@ -8,7 +8,7 @@ public static class SeoEndpoints
         endpoints.MapGet("/api/seo-settings", async ([FromServices] ManageSeo useCase, CancellationToken ct) => Results.Ok(await useCase.GetSettingsAsync(ct)));
         endpoints.MapPut("/api/seo-settings", async (ShopSeoSettings request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
-            try { return Map(await useCase.SaveSettingsAsync(request.Heading, request.SeoTitle, request.Revision, ct)); }
+            try { return Map(await useCase.SaveSettingsAsync(request.Heading, request.SeoTitle, request.Revision, ct, request.ShopName, request.WelcomeText, request.Introduction)); }
             catch (ArgumentException ex) { return Results.BadRequest(new { code = "invalidSeo", message = ex.Message }); }
         });
         endpoints.MapGet("/api/products/{id:guid}/seo", async (Guid id, [FromServices] ManageSeo useCase, CancellationToken ct) =>
