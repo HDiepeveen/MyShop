@@ -7,7 +7,7 @@ wachtwoord. Afrekenen als gast blijft beschikbaar. Een klantaccount krijgt uitsl
 Een ingelogde klant kan onder **Mijn account** een naam en standaardafleveradres opslaan. Het profiel
 gebruikt een revisie, zodat gelijktijdige wijzigingen niet stilzwijgend worden overschreven. Na
 inloggen in dezelfde browsersessie vult de checkout het opgeslagen profiel in; de klant kan de
-gegevens voor de bestelling nog aanpassen. De bestelling bewaart zoals voorheen een onveranderlijke
+naam en e-mailadres voor de bestelling nog aanpassen. Met een volledig accountadres toont de checkout een samenvatting en gebruikt dit adres standaard. Pas bij **Afwijkend afleveradres** verschijnen de adresvelden. Zonder volledig accountadres blijven de velden zichtbaar. Een afwijkend adres wijzigt het accountprofiel niet. Handmatige invoer blijft behouden als het profiel later wordt opgehaald. De bestelling bewaart zoals voorheen een onveranderlijke
 snapshot van de gebruikte klant- en adresgegevens.
 
 Registratie en klantlogin zijn begrensd tot tien pogingen per bron-IP per minuut. Dezelfde beveiligde,

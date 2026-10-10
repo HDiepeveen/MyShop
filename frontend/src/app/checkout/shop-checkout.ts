@@ -1,12 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, untracked, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CheckoutOrderLine, OnlinePaymentStart, OrderApi, OrderReceipt } from './order.api';
 import { errorMessage } from '../catalog/error-message';
 import { PendingPayment } from './pending-payment';
 import { Auth } from '../auth/auth';
-import { CustomerAccountApi } from '../customer/customer-account.api';
+import { CustomerAccountApi, CustomerProfile } from '../customer/customer-account.api';
 
 @Component({
   selector: 'app-shop-checkout',
@@ -19,6 +19,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
           >Naam<input
             name="name"
             [(ngModel)]="customerName"
+            (ngModelChange)="markEdited('customerName')"
             autocomplete="name"
             maxlength="200"
             [disabled]="busy()"
@@ -28,16 +29,30 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
           >E-mailadres<input
             name="email"
             [(ngModel)]="email"
+            (ngModelChange)="markEdited('email')"
             type="email"
             autocomplete="email"
             maxlength="320"
             [disabled]="busy()"
             required
         /></label>
+        @if (savedAddress(); as address) {
+          <label class="check-field"><input type="checkbox" name="differentAddress"
+            [ngModel]="differentAddress()" (ngModelChange)="differentAddress.set($event)"
+            [disabled]="busy() || !!onlinePayment()" />Afwijkend afleveradres</label>
+          @if (!differentAddress()) {
+            <section aria-label="Opgeslagen afleveradres">
+              <h3>Afleveradres uit je account</h3>
+              <p>{{ address.addressLine }}<br />{{ address.postalCode }} {{ address.city }}<br />{{ address.countryCode }}</p>
+            </section>
+          }
+        }
+        @if (!savedAddress() || differentAddress()) {
         <label
           >Adres<input
             name="address"
             [(ngModel)]="addressLine"
+            (ngModelChange)="markEdited('addressLine')"
             autocomplete="street-address"
             maxlength="200"
             [disabled]="busy()"
@@ -47,6 +62,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
           >Postcode<input
             name="postalCode"
             [(ngModel)]="postalCode"
+            (ngModelChange)="markEdited('postalCode')"
             autocomplete="postal-code"
             maxlength="32"
             [disabled]="busy()"
@@ -56,6 +72,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
           >Plaats<input
             name="city"
             [(ngModel)]="city"
+            (ngModelChange)="markEdited('city')"
             autocomplete="address-level2"
             maxlength="100"
             [disabled]="busy()"
@@ -65,12 +82,14 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
           >Landcode<input
             name="countryCode"
             [(ngModel)]="countryCode"
+            (ngModelChange)="markEdited('countryCode')"
             autocomplete="country"
             minlength="2"
             maxlength="2"
             [disabled]="busy()"
             required
         /></label>
+        }
         @if (failure()) {
           <p class="error" role="alert">{{ failure() }}</p>
         }
@@ -111,7 +130,7 @@ import { CustomerAccountApi } from '../customer/customer-account.api';
     </section>
   `,
 })
-export class ShopCheckout implements OnInit {
+export class ShopCheckout {
   private readonly api = inject(OrderApi);
   private readonly pending = inject(PendingPayment);
   private readonly destroyRef = inject(DestroyRef);
@@ -134,49 +153,76 @@ export class ShopCheckout implements OnInit {
   countryCode = 'NL';
   private checkoutToken = crypto.randomUUID();
 
-  ngOnInit() {
-    if (!this.auth.session()?.customer) return;
-    this.account
-      .profile()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (profile) => {
-          if (
-            this.busy() ||
-            this.customerName ||
-            this.email ||
-            this.addressLine ||
-            this.postalCode ||
-            this.city ||
-            this.countryCode !== 'NL'
-          )
-            return;
-          this.customerName = profile.name ?? '';
-          this.email = profile.email;
-          this.addressLine = profile.addressLine ?? '';
-          this.postalCode = profile.postalCode ?? '';
-          this.city = profile.city ?? '';
-          this.countryCode = profile.countryCode ?? 'NL';
-        },
-        error: () => {
-          if (!this.busy() && !this.onlinePayment())
-            this.notice.set('Je profiel kon niet worden opgehaald. Vul je gegevens zelf in.');
-        },
-      });
+  private readonly savedProfile = signal<CustomerProfile | null>(null);
+  readonly differentAddress = signal(false);
+  private readonly editedFields = new Set<string>();
+  readonly savedAddress = computed(() => {
+    const profile = this.savedProfile();
+    const addressLine = profile?.addressLine?.trim() ?? '';
+    const postalCode = profile?.postalCode?.trim() ?? '';
+    const city = profile?.city?.trim() ?? '';
+    const countryCode = profile?.countryCode?.trim() ?? '';
+    return addressLine && addressLine.length <= 200 && postalCode && postalCode.length <= 32 &&
+      city && city.length <= 100 && /^[a-zA-Z]{2}$/.test(countryCode)
+      ? { addressLine, postalCode, city, countryCode } : null;
+  });
+
+  constructor() {
+    effect((onCleanup) => {
+      const session = this.auth.session();
+      if (!session?.customer) return;
+      const subscription = untracked(() => this.account.profile()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (profile) => {
+            if (this.auth.session() !== session || this.busy() || this.onlinePayment()) return;
+            if ((this.addressLine && this.addressLine !== profile.addressLine) ||
+                (this.postalCode && this.postalCode !== profile.postalCode) ||
+                (this.city && this.city !== profile.city) ||
+                (this.countryCode !== 'NL' && this.countryCode !== profile.countryCode))
+              this.differentAddress.set(true);
+            this.savedProfile.set(profile);
+            if (!this.customerName && !this.editedFields.has('customerName')) this.customerName = profile.name ?? '';
+            if (!this.email && !this.editedFields.has('email')) this.email = profile.email;
+            if (!this.addressLine && !this.editedFields.has('addressLine')) this.addressLine = profile.addressLine ?? '';
+            if (!this.postalCode && !this.editedFields.has('postalCode')) this.postalCode = profile.postalCode ?? '';
+            if (!this.city && !this.editedFields.has('city')) this.city = profile.city ?? '';
+            if (this.countryCode === 'NL' && !this.editedFields.has('countryCode')) this.countryCode = profile.countryCode ?? 'NL';
+          },
+          error: () => {
+            if (this.auth.session() === session && !this.busy() && !this.onlinePayment())
+              this.notice.set('Je profiel kon niet worden opgehaald. Vul je gegevens zelf in.');
+          },
+        }));
+      onCleanup(() => subscription.unsubscribe());
+    });
+  }
+
+  markEdited(field: string) {
+    this.editedFields.add(field);
+    if (['addressLine', 'postalCode', 'city', 'countryCode'].includes(field)) this.differentAddress.set(true);
+  }
+  private shippingAddress() {
+    const saved = this.savedAddress();
+    return saved && !this.differentAddress() ? saved : {
+      addressLine: this.addressLine, postalCode: this.postalCode,
+      city: this.city, countryCode: this.countryCode,
+    };
   }
 
   validationError() {
+    const address = this.shippingAddress();
     if (!this.customerName.trim() || this.customerName.trim().length > 200)
       return 'Vul een naam van maximaal 200 tekens in.';
     if (this.email.trim().length > 320 || !/^[^\s@]+@[^\s@]+$/.test(this.email.trim()))
       return 'Vul een geldig e-mailadres van maximaal 320 tekens in.';
-    if (!this.addressLine.trim() || this.addressLine.trim().length > 200)
+    if (!address.addressLine.trim() || address.addressLine.trim().length > 200)
       return 'Vul een adres van maximaal 200 tekens in.';
-    if (!this.postalCode.trim() || this.postalCode.trim().length > 32)
+    if (!address.postalCode.trim() || address.postalCode.trim().length > 32)
       return 'Vul een postcode van maximaal 32 tekens in.';
-    if (!this.city.trim() || this.city.trim().length > 100)
+    if (!address.city.trim() || address.city.trim().length > 100)
       return 'Vul een plaats van maximaal 100 tekens in.';
-    if (!/^[a-zA-Z]{2}$/.test(this.countryCode.trim()))
+    if (!/^[a-zA-Z]{2}$/.test(address.countryCode.trim()))
       return 'Gebruik een landcode van twee letters.';
     const lines = this.lines();
     if (
@@ -212,16 +258,17 @@ export class ShopCheckout implements OnInit {
     }
     this.busy.set(true);
     this.busyChanged.emit(true);
+    const address = this.shippingAddress();
     const request = {
       checkoutToken: this.checkoutToken,
       paymentMethod: this.paymentMethod(),
       deliveryMethodId: this.deliveryMethodId(),
       customerName: this.customerName,
       email: this.email,
-      addressLine: this.addressLine,
-      postalCode: this.postalCode,
-      city: this.city,
-      countryCode: this.countryCode,
+      addressLine: address.addressLine,
+      postalCode: address.postalCode,
+      city: address.city,
+      countryCode: address.countryCode,
       lines: this.lines(),
     };
     if (this.paymentMethod() === 'online') {

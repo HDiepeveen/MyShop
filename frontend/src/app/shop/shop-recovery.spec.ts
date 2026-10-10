@@ -141,11 +141,12 @@ describe('Storefront recovery', () => {
     expect(shopApi.quote).toHaveBeenCalledTimes(2);
   });
 
-  function checkoutFixture() {
+  function checkoutFixture(customer = true) {
+    const session = signal<{ customer: boolean } | null>(customer ? { customer: true } : null);
     const response = new Subject<CustomerProfile>();
     const orders = { place: vi.fn(() => new Subject()), startOnlinePayment: vi.fn() };
     TestBed.configureTestingModule({ imports: [ShopCheckout], providers: [
-      { provide: Auth, useValue: { session: signal({ customer: true }) } },
+      { provide: Auth, useValue: { session } },
       { provide: CustomerAccountApi, useValue: { profile: vi.fn(() => response) } },
       { provide: OrderApi, useValue: orders },
     ] });
@@ -154,10 +155,89 @@ describe('Storefront recovery', () => {
     fixture.componentRef.setInput('paymentMethod', 'payLater');
     fixture.componentRef.setInput('deliveryMethodId', 'delivery-1');
     fixture.detectChanges();
-    return { fixture, response };
+    return { fixture, response, session, orders };
   }
 
   const profile: CustomerProfile = { email: 'ada@example.test', name: 'Ada', addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL', revision: null };
+
+  it('uses the saved account address by default and only shows editable address fields when requested', () => {
+    const { fixture, response, orders } = checkoutFixture();
+    const page = fixture.componentInstance;
+    response.next(profile);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name=address]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-label="Opgeslagen afleveradres"]').textContent).toContain('Straat 1');
+    page.differentAddress.set(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('input[name=address]')).not.toBeNull();
+    page.addressLine = 'Andere straat 2';
+    page.postalCode = '5678 CD';
+    page.city = 'Rotterdam';
+    page.differentAddress.set(false);
+    page.submit();
+    expect(orders.place).toHaveBeenCalledWith(expect.objectContaining({
+      addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL',
+    }));
+  });
+  it('submits a different address without changing the saved profile', () => {
+    const { fixture, response, orders } = checkoutFixture();
+    const page = fixture.componentInstance;
+    response.next(profile);
+    page.differentAddress.set(true);
+    page.addressLine = 'Andere straat 2';
+    page.postalCode = '5678 CD';
+    page.city = 'Rotterdam';
+    page.submit();
+    expect(orders.place).toHaveBeenCalledWith(expect.objectContaining({
+      addressLine: 'Andere straat 2', postalCode: '5678 CD', city: 'Rotterdam',
+    }));
+    expect(profile.addressLine).toBe('Straat 1');
+  });
+  it('loads the profile when the customer session becomes available after checkout opens', () => {
+    const { fixture, response, session } = checkoutFixture(false);
+    session.set({ customer: true });
+    fixture.detectChanges();
+    response.next(profile);
+    expect(fixture.componentInstance.savedAddress()?.addressLine).toBe('Straat 1');
+    expect(fixture.componentInstance.customerName).toBe('Ada');
+  });
+  it('keeps the address fields visible when the account address is incomplete', () => {
+    const { fixture, response } = checkoutFixture();
+    response.next({ ...profile, postalCode: null });
+    fixture.detectChanges();
+    expect(fixture.componentInstance.savedAddress()).toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name=address]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('input[name=differentAddress]')).toBeNull();
+  });
+  it('keeps intentionally cleared fields empty when a profile arrives late', () => {
+    const { fixture, response } = checkoutFixture();
+    const page = fixture.componentInstance;
+    page.markEdited('addressLine');
+    response.next(profile);
+    expect(page.addressLine).toBe('');
+    expect(page.differentAddress()).toBe(true);
+    expect(page.validationError()).toContain('adres');
+  });
+
+  it('does not apply a profile response after the customer has signed out', () => {
+    const { fixture, response, session } = checkoutFixture();
+    session.set(null);
+    response.next(profile);
+    expect(fixture.componentInstance.customerName).toBe('');
+    expect(fixture.componentInstance.savedAddress()).toBeNull();
+  });
+  it('uses the same saved address when starting an online payment', () => {
+    const { fixture, response, orders } = checkoutFixture();
+    orders.startOnlinePayment.mockReturnValue(new Subject());
+    fixture.componentRef.setInput('paymentMethod', 'online');
+    response.next(profile);
+    fixture.componentInstance.addressLine = 'Unused draft address';
+    fixture.componentInstance.postalCode = '9999 ZZ';
+    fixture.componentInstance.submit();
+    expect(orders.startOnlinePayment).toHaveBeenCalledWith(expect.objectContaining({
+      addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL',
+    }));
+  });
 
   it('offers manual entry when the checkout profile cannot be loaded', () => {
     const { fixture, response } = checkoutFixture();
@@ -173,7 +253,7 @@ describe('Storefront recovery', () => {
     const entered = fixture.componentInstance[field];
     response.next(profile);
     expect(fixture.componentInstance[field]).toBe(entered);
-    expect(fixture.componentInstance.customerName).toBe('');
+    expect(fixture.componentInstance.customerName).toBe('Ada');
   });
 
   it.each(['success', 'error'])('ignores a late profile %s while an order is being placed', (result) => {
