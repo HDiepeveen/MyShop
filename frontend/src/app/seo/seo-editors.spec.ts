@@ -16,7 +16,7 @@ describe('SEO editors', () => {
     page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop';
     page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.' });
+    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
@@ -29,6 +29,16 @@ describe('SEO editors', () => {
     http.expectOne('/api/seo-settings').flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.shopName).toBe('Mijn bedrijf'); expect(page.welcomeText).toBe('Mijn welkom'); expect(page.introduction).toBe('Mijn introductie');
     expect(page.heading).toBe('Mijn ontwerp'); expect(page.error()).toBeTruthy(); expect(page.busy()).toBe(false);
+  });
+  it('saves company information and an empty footer text without losing drafts on conflicts', () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    const page = fixture.componentInstance; page.footerText = '';
+    page.company = { heading: 'Ons bedrijf', name: 'Hans', description: 'Eerste regel\nTweede regel', address: 'Straat 1', email: 'contact@example.test', phone: '030 1234567', openingHours: 'Maandag' };
+    page.save(); const request = http.expectOne('/api/seo-settings');
+    expect(request.request.body.company).toEqual(page.company); expect(request.request.body.footerText).toBe('');
+    request.flush({}, { status: 409, statusText: 'Conflict' });
+    expect(page.company.description).toBe('Eerste regel\nTweede regel'); expect(page.footerText).toBe('');
   });
   function product() {
     const fixture = TestBed.createComponent(ProductSeoEdit); fixture.componentRef.setInput('productId', 'p'); fixture.detectChanges();

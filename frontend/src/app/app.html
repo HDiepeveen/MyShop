@@ -74,9 +74,10 @@
     }
     <main #content id="content" tabindex="-1"><router-outlet /></main>
     <footer>
+      @if (storefront()) { <a routerLink="/winkel/informatie/bedrijf">Over ons en contact</a> }
       {{ branding.name() }}
       <span>{{
-        storefront() ? 'Ontdek wat bij je past.' : 'Een goed assortiment begint bij de details.'
+        storefront() ? branding.footerText() : 'Een goed assortiment begint bij de details.'
       }}</span>
     </footer>
   </div>

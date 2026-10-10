@@ -1,3 +1,4 @@
+import { CompanyPage } from '../seo/seo.models';
 import { ShopSort } from './shop-query';
 import { CartLine } from './cart';
 import { Injectable, inject } from '@angular/core';
@@ -71,6 +72,7 @@ export interface CartQuote {
 @Injectable({ providedIn: 'root' })
 export class ShopApi {
   private readonly http = inject(HttpClient);
+  company() { return this.http.get<CompanyPage>('/api/shop/company'); }
   quote(lines: readonly CartLine[]) {
     let params = new HttpParams();
     for (const line of lines)

@@ -17,7 +17,12 @@ public static class StorefrontEndpoints
         endpoints.MapGet("/api/shop/settings", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            return Results.Ok(new { settings.ShopName, settings.WelcomeText, settings.Introduction });
+            return Results.Ok(new { settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText });
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/company", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            return Results.Ok(settings.Company with { Name = settings.Company.Name ?? settings.ShopName });
         }).AllowAnonymous();
         endpoints.MapCartQuote();
         endpoints.MapPlaceOrder();

@@ -18,13 +18,18 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id, ct);
-        return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction);
+        return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours));
     }
     public async Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
     {
         var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
             .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
-                .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.Version, Guid.NewGuid()), ct);
+                .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.FooterText, value.FooterText)
+                .SetProperty(x => x.CompanyHeading, value.Company.Heading).SetProperty(x => x.CompanyName, value.Company.Name)
+                .SetProperty(x => x.CompanyDescription, value.Company.Description).SetProperty(x => x.CompanyAddress, value.Company.Address)
+                .SetProperty(x => x.CompanyEmail, value.Company.Email).SetProperty(x => x.CompanyPhone, value.Company.Phone)
+                .SetProperty(x => x.CompanyOpeningHours, value.Company.OpeningHours).SetProperty(x => x.Version, Guid.NewGuid()), ct);
         return new(changed == 1 ? null : SeoFailure.Conflict);
     }
     public async Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken ct)

@@ -102,7 +102,7 @@ public sealed class StorefrontHttpTests
         using var visitor = new HttpClient(new HttpClientHandler { UseCookies = false, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         var publicEndpoints = ((IEndpointRouteBuilder)host.App).DataSources.SelectMany(s => s.Endpoints).OfType<RouteEndpoint>()
             .Where(e => e.RoutePattern.RawText!.StartsWith("/api/shop/")).ToArray();
-        Assert.Equal(12, publicEndpoints.Length);
+        Assert.Equal(13, publicEndpoints.Length);
         Assert.All(publicEndpoints, e =>
         {
             Assert.Equal(e.RoutePattern.RawText is "/api/shop/orders" or "/api/shop/online-payments" ? "POST" : "GET",

@@ -19,6 +19,14 @@ internal static class SeoHtml
             preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
                 "<li><a href=\"/winkel/" + E(p.WebAddress ?? p.Id.ToString("D")) + "\">" + E(p.Name) + "</a></li>")) + "</ul></main>";
         }
+        else if (path.TrimEnd('/') == "/winkel/informatie/bedrijf")
+        {
+            var company = branding.Company;
+            title = company.Heading + " · " + branding.ShopName; description = company.Description is null ? null : SeoText.Summary(company.Description);
+            canonical = "/winkel/informatie/bedrijf"; index = true;
+            preview = "<main><h1>" + E(company.Heading) + "</h1><h2>" + E(company.Name ?? branding.ShopName) + "</h2><p>" + E(company.Description ?? "") + "</p><dl>" +
+                Contact("Adres", company.Address) + Contact("E-mailadres", company.Email) + Contact("Telefoonnummer", company.Phone) + Contact("Openingstijden", company.OpeningHours) + "</dl></main>";
+        }
         else if (path.StartsWith("/winkel/", StringComparison.Ordinal) && path[8..].IndexOf('/') < 0)
         {
             var key = path[8..];
@@ -51,5 +59,6 @@ internal static class SeoHtml
         await context.Response.WriteAsync(template, context.RequestAborted);
         return true;
     }
+    private static string Contact(string label, string? value) => value is null ? "" : "<dt>" + E(label) + "</dt><dd>" + E(value) + "</dd>";
     private static string E(string value) => WebUtility.HtmlEncode(value);
 }

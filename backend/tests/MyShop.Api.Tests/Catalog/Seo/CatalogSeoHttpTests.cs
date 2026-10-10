@@ -7,6 +7,29 @@ namespace MyShop.Api.Tests.Catalog.Seo;
 public sealed class CatalogSeoHttpTests
 {
     [SecuritySqlFact]
+    public async Task Company_validation_preserves_stored_settings_and_blank_footer_is_allowed()
+    {
+        await using var host = await SecurityHost.Create();
+        var publicCompany = await host.Client.GetFromJsonAsync<JsonElement>("/api/shop/company");
+        Assert.Equal("MyShop", publicCompany.GetProperty("name").GetString());
+        Assert.Equal(new[] { "address", "description", "email", "heading", "name", "openingHours", "phone" }, publicCompany.EnumerateObject().Select(x => x.Name).Order());
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
+        foreach (var (field, value) in new[] { ("email", "not an email"), ("heading", " "), ("description", new string('a', 4001)), ("address", new string('a', 501)), ("openingHours", new string('a', 1001)), ("phone", new string('a', 101)), ("name", new string('a', 201)), ("footerText", new string('a', 201)) })
+        {
+            var request = System.Text.Json.Nodes.JsonNode.Parse(settings.GetRawText())!;
+            if (field == "footerText") request[field] = value; else request["company"]![field] = value;
+            Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/seo-settings", request)).StatusCode);
+        }
+        var unchanged = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
+        Assert.Equal(settings.GetProperty("revision").GetGuid(), unchanged.GetProperty("revision").GetGuid());
+        var blankFooter = System.Text.Json.Nodes.JsonNode.Parse(settings.GetRawText())!;
+        blankFooter["footerText"] = " ";
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", blankFooter)).StatusCode);
+        Assert.Equal("", (await host.Client.GetFromJsonAsync<JsonElement>("/api/shop/settings")).GetProperty("footerText").GetString());
+    }
+
+    [SecuritySqlFact]
     public async Task Type_headings_apply_to_every_product_of_that_type_and_survive_renaming()
     {
         await using var host = await SecurityHost.Create();
@@ -57,7 +80,7 @@ public sealed class CatalogSeoHttpTests
             ("Company", "Welcome", " "), ("Company", "Welcome", new string('i', 1001))
         })
             Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/seo-settings",
-                new { heading = "Heading", seoTitle = "Title", shopName = name, welcomeText = welcome, introduction, revision })).StatusCode);
+                new { footerText = "Footer", company = new { heading = "Over ons en contact" }, heading = "Heading", seoTitle = "Title", shopName = name, welcomeText = welcome, introduction, revision })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/seo-settings", new { heading = "Heading", seoTitle = "Title", revision })).StatusCode);
         var unchanged = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
         Assert.Equal(revision, unchanged.GetProperty("revision").GetGuid());
@@ -77,7 +100,7 @@ public sealed class CatalogSeoHttpTests
             Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/seo-settings")).StatusCode);
             await host.Csrf(); Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode); await host.Csrf();
             var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
-            var request = new { shopName = "Autohuis Hans", welcomeText = "Welkom bij Autohuis Hans", introduction = "Bekijk onze occasions.", heading = "Occasions te koop", seoTitle = "Auto kopen $& <script>bad</script>", revision = settings.GetProperty("revision").GetGuid() };
+            var request = new { footerText = "Welkom onderaan", company = new { heading = "Over ons en contact", name = "Autohuis <Hans>", description = "Een familiebedrijf.\nSinds 2001 <script>text</script>", address = "Straat 1\n1234 AB Utrecht", email = "contact@example.test", phone = "030 1234567", openingHours = "Maandag\n09:00 – 18:00" }, shopName = "Autohuis Hans", welcomeText = "Welkom bij Autohuis Hans", introduction = "Bekijk onze occasions.", heading = "Occasions te koop", seoTitle = "Auto kopen $& <script>bad</script>", revision = settings.GetProperty("revision").GetGuid() };
             Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", request)).StatusCode);
             Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PutAsJsonAsync("/api/seo-settings", request)).StatusCode);
             var page = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products");
@@ -88,7 +111,18 @@ public sealed class CatalogSeoHttpTests
             Assert.Contains("Bekijk onze occasions.", html);
             var branding = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
             Assert.Equal("Autohuis Hans", branding.GetProperty("shopName").GetString());
-            Assert.Equal(new[] { "introduction", "shopName", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
+            Assert.Equal(new[] { "footerText", "introduction", "shopName", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
+            Assert.Equal("Welkom onderaan", branding.GetProperty("footerText").GetString());
+            var company = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/company");
+            Assert.Equal("Straat 1\n1234 AB Utrecht", company.GetProperty("address").GetString());
+            Assert.Equal("contact@example.test", company.GetProperty("email").GetString());
+            var companyHtml = await visitor.GetStringAsync("/winkel/informatie/bedrijf");
+            Assert.Contains("<h1>Over ons en contact</h1>", companyHtml);
+            Assert.Contains("Autohuis &lt;Hans&gt;", companyHtml);
+            Assert.Contains("contact@example.test", companyHtml);
+            Assert.DoesNotContain("<script>text</script>", companyHtml);
+            Assert.DoesNotContain("noindex", companyHtml);
+            Assert.Contains("/winkel/informatie/bedrijf", companyHtml);
             Assert.Contains("$&amp;", html);
             Assert.DoesNotContain("<script>bad</script>", html);
             var product = await CreateProduct(host, "Opel Corsa 2014");

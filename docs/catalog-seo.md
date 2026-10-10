@@ -55,3 +55,17 @@ De migratie ProductTypeSectionHeadings verplaatst de kopteksten naar ProductType
 Een eenduidig eerder ingevulde koptekst wordt overgenomen. Bij verschillende
 kopteksten binnen hetzelfde type stopt de migratie zonder gegevens te verwijderen;
 maak de oude teksten eerst gelijk. De productinstellingen bevatten daarna alleen SEO.
+
+## Bedrijfspagina en tekst onderaan
+
+Bij Webshop en SEO kun je de tekst onderaan de winkel wijzigen of leeg maken.
+De standaard blijft Ontdek wat bij je past. De openbare pagina
+/winkel/informatie/bedrijf is bereikbaar via Over ons en contact onderaan de winkel.
+Je kunt de koptekst, bedrijfsnaam, beschrijving, adres, contact e-mailadres,
+telefoonnummer en openingstijden invullen. Alleen de koptekst is verplicht.
+Een lege bedrijfsnaam gebruikt de webshopnaam. Contactvelden die leeg blijven,
+worden verborgen. De gegevens zijn openbaar en blijven gescheiden van facturatiegegevens.
+Beschrijving, adres en openingstijden ondersteunen meerdere regels; HTML wordt als
+gewone tekst getoond. De pagina krijgt ook metadata en basisinhoud in de eerste
+HTML-response van de gecombineerde hosting. Pas de migratie CompanyPage toe voordat
+versie 0.2.4 online wordt gezet. De huidige aanpassingen zijn alleen lokaal uitgevoerd.

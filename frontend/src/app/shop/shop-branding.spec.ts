@@ -34,13 +34,15 @@ describe('Webshop name', () => {
   });
   it('shows the configured name as plain text in the shop header and footer', async () => {
     const fixture = TestBed.createComponent(App);
-    http.expectOne('/api/shop/settings').flush({ shopName: 'Autohuis <Hans>' });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Autohuis <Hans>', footerText: 'Onze occasions wachten op je.' });
     await TestBed.inject(Router).navigateByUrl('/winkel');
-    http.expectOne('/api/shop/settings').flush({ shopName: 'Autohuis <Hans>' });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Autohuis <Hans>', footerText: 'Onze occasions wachten op je.' });
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.shop-brand').textContent).toBe('Autohuis <Hans>');
     expect(fixture.nativeElement.querySelector('footer').textContent).toContain('Autohuis <Hans>');
+    expect(fixture.nativeElement.querySelector('footer').textContent).toContain('Onze occasions wachten op je.');
+    expect(fixture.nativeElement.querySelector('footer a').getAttribute('href')).toBe('/winkel/informatie/bedrijf');
     expect(fixture.nativeElement.querySelector('.shop-brand hans')).toBeNull();
   });
 });

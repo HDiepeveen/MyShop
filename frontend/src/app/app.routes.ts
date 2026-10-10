@@ -104,6 +104,11 @@ export const routes: Routes = [
     path: 'winkel',
     children: [
       {
+        path: 'informatie/bedrijf',
+        loadComponent: () => import('./shop/shop-company').then(m => m.ShopCompany),
+        title: 'Over ons en contact · MyShop',
+      },
+      {
         path: 'betaling',
         loadComponent: () => import('./checkout/payment-return').then((m) => m.PaymentReturn),
         title: 'Betaling · MyShop',

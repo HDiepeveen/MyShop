@@ -114,6 +114,8 @@ footer {
   font-size: 12px;
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 .skip {
   position: absolute;
@@ -161,7 +163,7 @@ footer {
   footer {
     padding: 16px 20px;
   }
-  footer span {
+  .workspace:not(.shop) footer span {
     display: none;
   }
 }

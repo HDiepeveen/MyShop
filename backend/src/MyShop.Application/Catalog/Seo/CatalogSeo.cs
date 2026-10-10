@@ -4,7 +4,8 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction);
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company);
+public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours);
 public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
 public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeading, string? AttributesHeading, Guid Revision);
 public sealed record ProductSeoInfo(Guid ProductId, string Name, string Description, string? ImageUrl,
@@ -75,16 +76,40 @@ public sealed class ManageSeo(ICatalogSeoStore store)
     }
     public Task<ShopSeoSettings> GetSettingsAsync(CancellationToken cancellationToken) => store.GetSettingsAsync(cancellationToken);
     public Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken cancellationToken) => store.GetProductAsync(id, cancellationToken);
-    public Task<SeoResult> SaveSettingsAsync(string heading, string title, Guid revision, CancellationToken cancellationToken,
-        string shopName, string welcomeText, string introduction)
+    public Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
     {
-        var settings = new ShopSeoSettings(SeoText.Optional(heading, 200) ?? throw new ArgumentException("Vul een koptekst in."),
-            SeoText.Optional(title, 200) ?? throw new ArgumentException("Vul een SEO-titel in."), revision,
-            SeoText.Optional(shopName, 100) ?? throw new ArgumentException("Vul een webshopnaam in."),
-            SeoText.Optional(welcomeText, 200) ?? throw new ArgumentException("Vul een welkomsttekst in."),
-            SeoText.Optional(introduction, 1000) ?? throw new ArgumentException("Vul een introductietekst in."));
-        if (revision == Guid.Empty) throw new ArgumentException("Vernieuw de instellingen.");
-        return store.SaveSettingsAsync(settings, cancellationToken);
+        if (value.Revision == Guid.Empty) throw new ArgumentException("Vernieuw de instellingen.");
+        if (value.Company is null) throw new ArgumentException("Vul de bedrijfsinformatie in.");
+        var company = value.Company;
+        var email = SeoText.Optional(company.Email, 254);
+        if (email is not null && (!System.Net.Mail.MailAddress.TryCreate(email, out var parsed)
+            || !string.Equals(parsed.Address, email, StringComparison.OrdinalIgnoreCase)))
+            throw new ArgumentException("Vul een geldig e-mailadres in.");
+        var settings = value with
+        {
+            Heading = SeoText.Optional(value.Heading, 200) ?? throw new ArgumentException("Vul een koptekst in."),
+            SeoTitle = SeoText.Optional(value.SeoTitle, 200) ?? throw new ArgumentException("Vul een SEO-titel in."),
+            ShopName = SeoText.Optional(value.ShopName, 100) ?? throw new ArgumentException("Vul een webshopnaam in."),
+            WelcomeText = SeoText.Optional(value.WelcomeText, 200) ?? throw new ArgumentException("Vul een welkomsttekst in."),
+            Introduction = SeoText.Optional(value.Introduction, 1000) ?? throw new ArgumentException("Vul een introductietekst in."),
+            FooterText = SeoText.Optional(value.FooterText, 200) ?? "",
+            Company = company with
+            {
+                Heading = SeoText.Optional(company.Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de bedrijfspagina in."),
+                Name = SeoText.Optional(company.Name, 200), Description = Multiline(company.Description, 4000),
+                Address = Multiline(company.Address, 500), Email = email,
+                Phone = SeoText.Optional(company.Phone, 100), OpeningHours = Multiline(company.OpeningHours, 1000)
+            }
+        };
+        return store.SaveSettingsAsync(settings, ct);
+    }
+    private static string? Multiline(string? value, int limit)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        value = value.Trim().Replace("\r\n", "\n");
+        if (value.Length > limit || value.Any(c => char.IsControl(c) && c is not ('\n' or '\t')))
+            throw new ArgumentException($"Gebruik maximaal {limit} tekens.");
+        return value;
     }
     public Task<SeoResult> SaveProductAsync(Guid id, ProductSeoValues values, Guid revision, CancellationToken cancellationToken)
     {
