@@ -16,8 +16,6 @@ internal sealed class ProductSeoPersistence
     public string? SeoTitle { get; set; }
     public string? SeoDescription { get; set; }
     public string? WebAddress { get; set; }
-    public string? AboutHeading { get; set; }
-    public string? AttributesHeading { get; set; }
     public Guid Version { get; set; }
 }
 internal sealed class ProductWebAddressPersistence

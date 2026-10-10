@@ -4,7 +4,7 @@ Open **Beheer > Webshop en SEO** om de zichtbare koptekst en de SEO-titel van he
 te wijzigen. De titel wordt voor het browsertabblad en als aanwijzing voor
 zoekmachines gebruikt. De bestaande standaardwaarden blijven beschikbaar.
 
-Open bij een product **Weergave en SEO voor dit product**. De drie velden zijn optioneel:
+Open bij een product **SEO voor dit product**. De drie velden zijn optioneel:
 SEO-titel, SEO-omschrijving en webadres. Lege titel gebruikt de productnaam met
 de ingestelde webshopnaam; lege omschrijving gebruikt een korte samenvatting van de beschrijving.
 Een leeg webadres gebruikt de productnaam met een unieke product-ID. Vul voor een
@@ -47,6 +47,11 @@ De migratie ShopBranding voegt deze velden toe zonder bestaande SEO-instellingen
 te overschrijven. Pas die ook toe voordat deze versie online wordt gezet.
 
 De optionele kopteksten voor de productbeschrijving en productkenmerken zijn
-per product instelbaar bij Weergave en SEO voor dit product. Leeg betekent
+per producttype instelbaar bij Producttypen > Kopteksten voor producten. Leeg betekent
 respectievelijk Over dit product en Productkenmerken. De migratie
 ProductSectionHeadings voegt twee optionele kolommen toe zonder bestaande data te wijzigen.
+
+De migratie ProductTypeSectionHeadings verplaatst de kopteksten naar ProductTypes.
+Een eenduidig eerder ingevulde koptekst wordt overgenomen. Bij verschillende
+kopteksten binnen hetzelfde type stopt de migratie zonder gegevens te verwijderen;
+maak de oude teksten eerst gelijk. De productinstellingen bevatten daarna alleen SEO.

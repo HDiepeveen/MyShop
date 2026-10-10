@@ -1,3 +1,4 @@
+import { TypeHeadingsEdit } from '../../seo/type-headings-edit';
 import { DefinitionEdit } from './definition-edit';
 import { TypeEditState } from './type-edit-state';
 import { TypeUsage } from './type-usage';
@@ -14,7 +15,7 @@ import { attributeTypeLabel } from '../attribute-types';
 
 @Component({
   providers: [TypeEditState],
-  imports: [RouterLink, DefinitionCreate, TypeEdit, TypeUsage, DefinitionEdit],
+  imports: [TypeHeadingsEdit, RouterLink, DefinitionCreate, TypeEdit, TypeUsage, DefinitionEdit],
   template: `
     <a class="back" routerLink="/producttypen" [queryParams]="listQuery()"
       >← Terug naar producttypen</a
@@ -44,6 +45,7 @@ import { attributeTypeLabel } from '../attribute-types';
         [listSearch]="listQuery()?.search ?? ''"
       />
       <app-type-edit [type]="type" (saved)="onRenamed()" />
+      <app-type-headings [typeId]="type.id" />
       <app-definition-create [typeId]="type.id" (started)="notice.set('')" (saved)="onSaved()" />
       <section class="panel">
         <h2>Kenmerken</h2>

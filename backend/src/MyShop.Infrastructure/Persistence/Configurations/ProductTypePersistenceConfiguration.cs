@@ -12,6 +12,9 @@ internal sealed class ProductTypePersistenceConfiguration : IEntityTypeConfigura
         builder.HasKey(productType => productType.Id);
         builder.Property(productType => productType.Id).ValueGeneratedNever();
         builder.Property(productType => productType.Name).IsRequired();
+        builder.Property(x => x.AboutHeading).HasMaxLength(200);
+        builder.Property(x => x.AttributesHeading).HasMaxLength(200);
+        builder.Property(x => x.SectionHeadingsRevision).ValueGeneratedNever();
 
         builder.HasMany(productType => productType.AttributeDefinitions)
             .WithOne(attribute => attribute.ProductType)

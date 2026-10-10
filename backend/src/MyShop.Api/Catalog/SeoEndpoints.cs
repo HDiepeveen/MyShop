@@ -5,6 +5,16 @@ public static class SeoEndpoints
 {
     public static void MapSeo(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapGet("/api/product-types/{id:guid}/section-headings", async (Guid id, [FromServices] ManageSeo useCase, CancellationToken ct) =>
+        {
+            var headings = await useCase.GetTypeHeadingsAsync(id, ct);
+            return headings is null ? (IResult)Results.NotFound() : Results.Ok(headings);
+        });
+        endpoints.MapPut("/api/product-types/{id:guid}/section-headings", async (Guid id, ProductTypeHeadingsRequest request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
+        {
+            try { return Map(await useCase.SaveTypeHeadingsAsync(new(id, request.AboutHeading, request.AttributesHeading, request.Revision), ct)); }
+            catch (ArgumentException ex) { return Results.BadRequest(new { code = "invalidSeo", message = ex.Message }); }
+        });
         endpoints.MapGet("/api/seo-settings", async ([FromServices] ManageSeo useCase, CancellationToken ct) => Results.Ok(await useCase.GetSettingsAsync(ct)));
         endpoints.MapPut("/api/seo-settings", async (ShopSeoSettings request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
@@ -18,7 +28,7 @@ public static class SeoEndpoints
         });
         endpoints.MapPut("/api/products/{id:guid}/seo", async (Guid id, ProductSeoRequest request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
-            try { return Map(await useCase.SaveProductAsync(id, new(request.SeoTitle, request.SeoDescription, request.WebAddress, request.AboutHeading, request.AttributesHeading), request.Revision, ct)); }
+            try { return Map(await useCase.SaveProductAsync(id, new(request.SeoTitle, request.SeoDescription, request.WebAddress), request.Revision, ct)); }
             catch (ArgumentException ex) { return Results.BadRequest(new { code = "invalidSeo", message = ex.Message }); }
         });
     }
@@ -31,5 +41,5 @@ public static class SeoEndpoints
         _ => throw new InvalidOperationException()
     };
 }
-public sealed record ProductSeoRequest(string? SeoTitle, string? SeoDescription, string? WebAddress, Guid Revision,
-    string? AboutHeading = null, string? AttributesHeading = null);
+public sealed record ProductSeoRequest(string? SeoTitle, string? SeoDescription, string? WebAddress, Guid Revision);
+public sealed record ProductTypeHeadingsRequest(string? AboutHeading, string? AttributesHeading, Guid Revision);

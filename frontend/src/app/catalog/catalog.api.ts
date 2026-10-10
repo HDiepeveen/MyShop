@@ -1,4 +1,4 @@
-import { ShopSeoSettings, ProductSeoInfo } from '../seo/seo.models';
+import { ShopSeoSettings, ProductSeoInfo, ProductTypeHeadings } from '../seo/seo.models';
 import { map } from 'rxjs';
 import { parseProduct } from './product-json';
 import { inject, Injectable } from '@angular/core';
@@ -16,6 +16,8 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
+  typeHeadings(id: string) { return this.http.get<ProductTypeHeadings>(`/api/product-types/${encodeURIComponent(id)}/section-headings`); }
+  updateTypeHeadings(id: string, settings: Omit<ProductTypeHeadings, 'productTypeId'>) { return this.http.put<void>(`/api/product-types/${encodeURIComponent(id)}/section-headings`, settings); }
   seoSettings() { return this.http.get<ShopSeoSettings>('/api/seo-settings'); }
   updateSeoSettings(settings: ShopSeoSettings) { return this.http.put<void>('/api/seo-settings', settings); }
   productSeo(id: string) { return this.http.get<ProductSeoInfo>(`/api/products/${id}/seo`); }

@@ -5,15 +5,15 @@ using System.Text.RegularExpressions;
 namespace MyShop.Application.Catalog.Seo;
 
 public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction);
-public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress,
-    string? AboutHeading = null, string? AttributesHeading = null);
+public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
+public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeading, string? AttributesHeading, Guid Revision);
 public sealed record ProductSeoInfo(Guid ProductId, string Name, string Description, string? ImageUrl,
     string ImageAlt, bool Published, ProductSeoValues Values, Guid Revision)
 {
     public string ShopName { get; init; } = "MyShop";
     public string ResolvedTitle => Values.SeoTitle ?? Name + " · " + ShopName;
-    public string ResolvedAboutHeading => Values.AboutHeading ?? "Over dit product";
-    public string ResolvedAttributesHeading => Values.AttributesHeading ?? "Productkenmerken";
+    public string ResolvedAboutHeading { get; init; } = "Over dit product";
+    public string ResolvedAttributesHeading { get; init; } = "Productkenmerken";
     public string ResolvedDescription => Values.SeoDescription ?? SeoText.Summary(Description);
     public string ResolvedAddress => Values.WebAddress ?? SeoText.AutomaticAddress(Name, ProductId);
 }
@@ -21,6 +21,8 @@ public enum SeoFailure { NotFound, Conflict, AddressInUse }
 public sealed record SeoResult(SeoFailure? Failure);
 public interface ICatalogSeoStore
 {
+    Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken cancellationToken);
+    Task<SeoResult> SaveTypeHeadingsAsync(ProductTypeHeadings headings, CancellationToken cancellationToken);
     Task<ShopSeoSettings> GetSettingsAsync(CancellationToken cancellationToken);
     Task<SeoResult> SaveSettingsAsync(ShopSeoSettings settings, CancellationToken cancellationToken);
     Task<ProductSeoInfo?> GetProductAsync(Guid productId, CancellationToken cancellationToken);
@@ -64,6 +66,13 @@ public static class SeoText
 }
 public sealed class ManageSeo(ICatalogSeoStore store)
 {
+    public Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken ct) => store.GetTypeHeadingsAsync(id, ct);
+    public Task<SeoResult> SaveTypeHeadingsAsync(ProductTypeHeadings headings, CancellationToken ct)
+    {
+        if (headings.ProductTypeId == Guid.Empty) throw new ArgumentException("Producttype ontbreekt.");
+        return store.SaveTypeHeadingsAsync(headings with { AboutHeading = SeoText.Optional(headings.AboutHeading, 200),
+            AttributesHeading = SeoText.Optional(headings.AttributesHeading, 200) }, ct);
+    }
     public Task<ShopSeoSettings> GetSettingsAsync(CancellationToken cancellationToken) => store.GetSettingsAsync(cancellationToken);
     public Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken cancellationToken) => store.GetProductAsync(id, cancellationToken);
     public Task<SeoResult> SaveSettingsAsync(string heading, string title, Guid revision, CancellationToken cancellationToken,
@@ -80,7 +89,6 @@ public sealed class ManageSeo(ICatalogSeoStore store)
     public Task<SeoResult> SaveProductAsync(Guid id, ProductSeoValues values, Guid revision, CancellationToken cancellationToken)
     {
         if (id == Guid.Empty) throw new ArgumentException("Product ontbreekt.");
-        return store.SaveProductAsync(id, new(SeoText.Optional(values.SeoTitle, 200), SeoText.Optional(values.SeoDescription, 500), SeoText.Address(values.WebAddress),
-            SeoText.Optional(values.AboutHeading, 200), SeoText.Optional(values.AttributesHeading, 200)), revision, cancellationToken);
+        return store.SaveProductAsync(id, new(SeoText.Optional(values.SeoTitle, 200), SeoText.Optional(values.SeoDescription, 500), SeoText.Address(values.WebAddress)), revision, cancellationToken);
     }
 }

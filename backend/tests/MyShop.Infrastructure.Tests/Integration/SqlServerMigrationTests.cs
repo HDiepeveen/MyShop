@@ -8,6 +8,45 @@ namespace MyShop.Infrastructure.Tests.Integration;
 public sealed class SqlServerMigrationTests(SqlServerDatabase database)
 {
     [SqlServerFact]
+    public async Task Type_headings_migration_transfers_existing_texts_and_refuses_conflicting_texts()
+    {
+        foreach (var conflict in new[] { false, true })
+        {
+            var isolated = new SqlServerDatabase();
+            await isolated.InitializeAsync();
+            try
+            {
+                await using var context = isolated.CreateContext();
+                await context.GetService<IMigrator>().MigrateAsync("20261010125930_ProductSectionHeadings");
+                var typeId = Guid.NewGuid();
+                await context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductTypes (Id, Name) VALUES ({typeId}, {"Cars"})");
+                foreach (var text in new[] { "Over deze auto", conflict ? "Different text" : "Over deze auto" })
+                {
+                    var productId = Guid.NewGuid(); var revision = Guid.NewGuid();
+                    await context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Products (Id, ProductTypeId, Name, Version) VALUES ({productId}, {typeId}, {"Car"}, {revision})");
+                    await context.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO ProductSeos (ProductId, Version, AboutHeading, AttributesHeading) VALUES ({productId}, {revision}, {text}, {"Voertuiggegevens"})");
+                }
+                if (conflict)
+                {
+                    var error = await Assert.ThrowsAsync<Microsoft.Data.SqlClient.SqlException>(() => context.Database.MigrateAsync());
+                    Assert.Equal(51000, error.Number);
+                    Assert.Equal(30, (await context.Database.GetAppliedMigrationsAsync()).Count());
+                    Assert.Equal(2, await context.Database.SqlQueryRaw<string>("SELECT DISTINCT AboutHeading AS Value FROM ProductSeos").CountAsync());
+                }
+                else
+                {
+                    await context.Database.MigrateAsync();
+                    var type = await context.ProductTypes.AsNoTracking().SingleAsync(x => x.Id == typeId);
+                    Assert.Equal("Over deze auto", type.AboutHeading); Assert.Equal("Voertuiggegevens", type.AttributesHeading);
+                    Assert.NotEqual(Guid.Empty, type.SectionHeadingsRevision);
+                    Assert.Equal(2, await context.ProductSeos.CountAsync());
+                }
+            }
+            finally { await isolated.DisposeAsync(); }
+        }
+    }
+
+    [SqlServerFact]
     public async Task Branding_migration_keeps_existing_heading_title_and_revision()
     {
         var isolated = new SqlServerDatabase();
@@ -96,7 +135,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(30, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(31, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -113,7 +152,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(30, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(31, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

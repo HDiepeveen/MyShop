@@ -6,6 +6,15 @@ using MyShop.Infrastructure.Persistence.Models;
 namespace MyShop.Infrastructure.Persistence.Repositories;
 internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStore
 {
+    public Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken ct) => context.ProductTypes.AsNoTracking()
+        .Where(x => x.Id == id).Select(x => new ProductTypeHeadings(x.Id, x.AboutHeading, x.AttributesHeading, x.SectionHeadingsRevision)).SingleOrDefaultAsync(ct);
+    public async Task<SeoResult> SaveTypeHeadingsAsync(ProductTypeHeadings value, CancellationToken ct)
+    {
+        var changed = await context.ProductTypes.Where(x => x.Id == value.ProductTypeId && x.SectionHeadingsRevision == value.Revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.AboutHeading, value.AboutHeading)
+                .SetProperty(x => x.AttributesHeading, value.AttributesHeading).SetProperty(x => x.SectionHeadingsRevision, Guid.NewGuid()), ct);
+        return new(changed == 1 ? null : await context.ProductTypes.AnyAsync(x => x.Id == value.ProductTypeId, ct) ? SeoFailure.Conflict : SeoFailure.NotFound);
+    }
     public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id, ct);
@@ -20,11 +29,12 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     }
     public async Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken ct)
     {
-        var row = await context.Products.AsNoTracking().Include(x => x.Seo).SingleOrDefaultAsync(x => x.Id == id, ct);
+        var row = await context.Products.AsNoTracking().Include(x => x.Seo).Include(x => x.ProductType).SingleOrDefaultAsync(x => x.Id == id, ct);
         if (row is null) return null;
         var settings = await GetSettingsAsync(ct);
         return new(row.Id, row.Name, row.Description, row.ImageUrl, row.ImageAlt, row.IsPublished,
-            new(row.Seo?.SeoTitle, row.Seo?.SeoDescription, row.Seo?.WebAddress, row.Seo?.AboutHeading, row.Seo?.AttributesHeading), row.Seo?.Version ?? Guid.Empty) { ShopName = settings.ShopName };
+            new(row.Seo?.SeoTitle, row.Seo?.SeoDescription, row.Seo?.WebAddress), row.Seo?.Version ?? Guid.Empty) { ShopName = settings.ShopName, ResolvedAboutHeading = row.ProductType.AboutHeading ?? "Over dit product",
+                ResolvedAttributesHeading = row.ProductType.AttributesHeading ?? "Productkenmerken" };
     }
     public async Task<Guid?> ResolveProductAsync(string key, CancellationToken ct)
     {
@@ -47,7 +57,7 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
             if (address is null) context.ProductWebAddresses.Add(new() { Address = value.WebAddress, ProductId = id });
         }
         if (row is null) { row = new() { ProductId = id }; context.ProductSeos.Add(row); }
-        row.SeoTitle = value.SeoTitle; row.SeoDescription = value.SeoDescription; row.WebAddress = value.WebAddress; row.AboutHeading = value.AboutHeading; row.AttributesHeading = value.AttributesHeading; row.Version = Guid.NewGuid();
+        row.SeoTitle = value.SeoTitle; row.SeoDescription = value.SeoDescription; row.WebAddress = value.WebAddress; row.Version = Guid.NewGuid();
         try { await context.SaveChangesAsync(ct); await transaction.CommitAsync(ct); return new(null); }
         catch (DbUpdateConcurrencyException) { return new(SeoFailure.Conflict); }
         catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
