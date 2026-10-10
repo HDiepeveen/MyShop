@@ -66,7 +66,7 @@ public sealed class CatalogSeoHttpTests
             Assert.Equal(Guid.Empty, initial.GetProperty("revision").GetGuid());
             var auto = initial.GetProperty("resolvedAddress").GetString();
             Assert.StartsWith("opel-corsa-2014-", auto);
-            Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{id}/seo", new { seoTitle = "Opel Corsa kopen", seoDescription = "Bekijk deze Opel Corsa.", webAddress = "opel-corsa-2014", revision = Guid.Empty })).StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{id}/seo", new { seoTitle = "Opel Corsa kopen", seoDescription = "Bekijk deze Opel Corsa.", webAddress = "opel-corsa-2014", aboutHeading = " Over deze auto ", attributesHeading = "Voertuiggegevens", revision = Guid.Empty })).StatusCode);
             Assert.Equal(revision, (await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{id}")).GetProperty("revision").GetGuid());
             Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/winkel/opel-corsa-2014")).StatusCode);
             Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/api/shop/products/opel-corsa-2014")).StatusCode);
@@ -74,11 +74,14 @@ public sealed class CatalogSeoHttpTests
             var publicProduct = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products/opel-corsa-2014");
             Assert.Equal(id, publicProduct.GetProperty("id").GetGuid());
             Assert.Equal("Opel Corsa kopen", publicProduct.GetProperty("seoTitle").GetString());
+            Assert.Equal("Over deze auto", publicProduct.GetProperty("aboutHeading").GetString());
+            Assert.Equal("Voertuiggegevens", publicProduct.GetProperty("attributesHeading").GetString());
             Assert.Equal(HttpStatusCode.OK, (await visitor.GetAsync("/api/shop/products/opel-corsa-2014/prices")).StatusCode);
             html = await visitor.GetStringAsync("/winkel/opel-corsa-2014");
             Assert.Contains("<title>Opel Corsa kopen</title>", html);
             Assert.Contains("name=\"description\" content=\"Bekijk deze Opel Corsa.\"", html);
             Assert.Contains("<h1>Opel Corsa 2014</h1>", html);
+            Assert.Contains("<h2>Over deze auto</h2>", html);
             Assert.DoesNotContain("noindex", html);
             Assert.Equal(HttpStatusCode.MovedPermanently, (await visitor.GetAsync($"/winkel/{id}")).StatusCode);
             var current = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{id}/seo");
@@ -90,8 +93,14 @@ public sealed class CatalogSeoHttpTests
             var oldAutomatic = await visitor.GetAsync("/winkel/" + auto);
             Assert.Equal(HttpStatusCode.MovedPermanently, oldAutomatic.StatusCode);
             publicProduct = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/products/corsa-lpg");
+            Assert.Equal("Over dit product", publicProduct.GetProperty("aboutHeading").GetString());
+            Assert.Equal("Productkenmerken", publicProduct.GetProperty("attributesHeading").GetString());
             Assert.Equal("Opel Corsa 2014 · Autohuis Hans", publicProduct.GetProperty("seoTitle").GetString());
             Assert.Equal("Een goed onderhouden auto.", publicProduct.GetProperty("seoDescription").GetString());
+            var unchanged = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{id}/seo");
+            foreach (var headings in new[] { new { aboutHeading = new string('a', 201), attributesHeading = "Valid" }, new { aboutHeading = "Valid", attributesHeading = new string('a', 201) } })
+                Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync($"/api/products/{id}/seo", new { headings.aboutHeading, headings.attributesHeading, revision = unchanged.GetProperty("revision").GetGuid() })).StatusCode);
+            Assert.Equal(unchanged.GetProperty("revision").GetGuid(), (await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{id}/seo")).GetProperty("revision").GetGuid());
             var other = await CreateProduct(host, "Another car");
             Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PutAsJsonAsync($"/api/products/{other.GetProperty("id").GetGuid()}/seo", new { webAddress = "opel-corsa-2014", revision = Guid.Empty })).StatusCode);
             current = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{id}/seo");

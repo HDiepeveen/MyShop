@@ -71,6 +71,18 @@ describe('ShopDetail option selection', () => {
     harness.detectChanges();
     return { harness, detail: harness.routeDebugElement!.componentInstance as ShopDetail };
   }
+  it.each([true, false])('uses configured section headings or their defaults, custom=%s', async custom => {
+    const { harness } = await setup(false, { ...optionProduct,
+      aboutHeading: custom ? 'Over deze auto <test>' : undefined,
+      attributesHeading: custom ? 'Voertuiggegevens' : undefined,
+      attributes: [{ attributeDefinitionId: 'brand', name: 'Merk', value: 'Opel' }],
+    });
+    const root = harness.routeNativeElement!;
+    expect(root.querySelector('h2')?.textContent).toBe(custom ? 'Over deze auto <test>' : 'Over dit product');
+    expect(root.querySelector('h3')?.textContent).toBe(custom ? 'Voertuiggegevens' : 'Productkenmerken');
+    expect(root.querySelector('h3')?.parentElement?.getAttribute('aria-label')).toBe(custom ? 'Voertuiggegevens' : 'Productkenmerken');
+    expect(root.querySelector('h2 test')).toBeNull();
+  });
   it('renders separate size and colour controls and adds the matching variant with its price', async () => {
     const { harness, detail } = await setup();
     const root = harness.routeNativeElement!;

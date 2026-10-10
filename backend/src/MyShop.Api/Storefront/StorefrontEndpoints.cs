@@ -68,7 +68,7 @@ public static class StorefrontEndpoints
             if (product is null) return Results.NotFound();
             var metadata = await seo.GetProductAsync(id, cancellationToken);
             if (metadata is null || !metadata.Published) return Results.NotFound();
-            return Results.Ok(product with { SeoTitle = metadata!.ResolvedTitle, SeoDescription = metadata.ResolvedDescription, WebAddress = metadata.ResolvedAddress });
+            return Results.Ok(product with { SeoTitle = metadata!.ResolvedTitle, SeoDescription = metadata.ResolvedDescription, WebAddress = metadata.ResolvedAddress, AboutHeading = metadata.ResolvedAboutHeading, AttributesHeading = metadata.ResolvedAttributesHeading });
         }).AllowAnonymous();
     }
 }

@@ -30,6 +30,8 @@ export interface ShopCategory {
   name: string;
 }
 export interface ShopProduct extends ShopItem {
+  aboutHeading?: string;
+  attributesHeading?: string;
   seoTitle?: string;
   seoDescription?: string;
   checkoutEnabled?: boolean;

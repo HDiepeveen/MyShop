@@ -55,7 +55,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
           </div>
         </section>
         <section class="panel">
-          <h2>Over dit product</h2>
+          <h2>{{ product.aboutHeading || 'Over dit product' }}</h2>
           <p class="description">{{ product.description }}</p>
           @if (product.categories.length) {
             <nav aria-label="Productcategorieën" class="actions">
@@ -67,8 +67,8 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
             </nav>
           }
           @if (product.attributes?.length) {
-            <section aria-label="Productkenmerken">
-              <h3>Productkenmerken</h3>
+            <section [attr.aria-label]="product.attributesHeading || 'Productkenmerken'">
+              <h3>{{ product.attributesHeading || 'Productkenmerken' }}</h3>
               <dl class="detail-list">
                 @for (attribute of product.attributes; track attribute.attributeDefinitionId) {
                   <dt>{{ attribute.name }}</dt>

@@ -42,8 +42,18 @@ describe('SEO editors', () => {
     const fixture = product(); const page = fixture.componentInstance;
     expect(fixture.nativeElement.textContent).toContain('/winkel/opel-corsa-p');
     page.save();
-    const request = http.expectOne('/api/products/p/seo'); expect(request.request.body).toEqual({ seoTitle: null, seoDescription: null, webAddress: null, revision });
+    const request = http.expectOne('/api/products/p/seo'); expect(request.request.body).toEqual({ seoTitle: null, seoDescription: null, webAddress: null, aboutHeading: null, attributesHeading: null, revision });
     request.flush(null); http.expectOne('/api/products/p/seo').flush(info); expect(page.notice()).toContain('opgeslagen');
+  });
+  it('saves and reloads the two product section headings', () => {
+    const fixture = product(); const page = fixture.componentInstance;
+    page.aboutHeading = 'Over deze auto'; page.attributesHeading = 'Voertuiggegevens'; page.save();
+    const request = http.expectOne('/api/products/p/seo');
+    expect(request.request.body.aboutHeading).toBe('Over deze auto');
+    expect(request.request.body.attributesHeading).toBe('Voertuiggegevens');
+    request.flush(null);
+    http.expectOne('/api/products/p/seo').flush({ ...info, values: { ...info.values, aboutHeading: 'Over deze auto', attributesHeading: 'Voertuiggegevens' } });
+    expect(page.aboutHeading).toBe('Over deze auto'); expect(page.attributesHeading).toBe('Voertuiggegevens');
   });
   it('shows address conflicts clearly without discarding the draft', () => {
     const fixture = product(); const page = fixture.componentInstance; page.webAddress = 'opel-corsa'; page.save();

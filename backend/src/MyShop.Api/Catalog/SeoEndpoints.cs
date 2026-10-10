@@ -18,7 +18,7 @@ public static class SeoEndpoints
         });
         endpoints.MapPut("/api/products/{id:guid}/seo", async (Guid id, ProductSeoRequest request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
-            try { return Map(await useCase.SaveProductAsync(id, new(request.SeoTitle, request.SeoDescription, request.WebAddress), request.Revision, ct)); }
+            try { return Map(await useCase.SaveProductAsync(id, new(request.SeoTitle, request.SeoDescription, request.WebAddress, request.AboutHeading, request.AttributesHeading), request.Revision, ct)); }
             catch (ArgumentException ex) { return Results.BadRequest(new { code = "invalidSeo", message = ex.Message }); }
         });
     }
@@ -31,4 +31,5 @@ public static class SeoEndpoints
         _ => throw new InvalidOperationException()
     };
 }
-public sealed record ProductSeoRequest(string? SeoTitle, string? SeoDescription, string? WebAddress, Guid Revision);
+public sealed record ProductSeoRequest(string? SeoTitle, string? SeoDescription, string? WebAddress, Guid Revision,
+    string? AboutHeading = null, string? AttributesHeading = null);

@@ -42,6 +42,8 @@ public sealed record StorefrontProduct(Guid Id, string Name, string Description,
     public string SeoTitle { get; init; } = "";
     public string SeoDescription { get; init; } = "";
     public string WebAddress { get; init; } = "";
+    public string AboutHeading { get; init; } = "Over dit product";
+    public string AttributesHeading { get; init; } = "Productkenmerken";
     public bool CheckoutEnabled { get; init; } = true;
     public IReadOnlyList<StorefrontProductAttribute> Attributes { get; init; } = [];
     public IReadOnlyList<ProductImageInfo> Images { get; init; } = [];

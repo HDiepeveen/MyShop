@@ -24,7 +24,7 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
         if (row is null) return null;
         var settings = await GetSettingsAsync(ct);
         return new(row.Id, row.Name, row.Description, row.ImageUrl, row.ImageAlt, row.IsPublished,
-            new(row.Seo?.SeoTitle, row.Seo?.SeoDescription, row.Seo?.WebAddress), row.Seo?.Version ?? Guid.Empty) { ShopName = settings.ShopName };
+            new(row.Seo?.SeoTitle, row.Seo?.SeoDescription, row.Seo?.WebAddress, row.Seo?.AboutHeading, row.Seo?.AttributesHeading), row.Seo?.Version ?? Guid.Empty) { ShopName = settings.ShopName };
     }
     public async Task<Guid?> ResolveProductAsync(string key, CancellationToken ct)
     {
@@ -47,7 +47,7 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
             if (address is null) context.ProductWebAddresses.Add(new() { Address = value.WebAddress, ProductId = id });
         }
         if (row is null) { row = new() { ProductId = id }; context.ProductSeos.Add(row); }
-        row.SeoTitle = value.SeoTitle; row.SeoDescription = value.SeoDescription; row.WebAddress = value.WebAddress; row.Version = Guid.NewGuid();
+        row.SeoTitle = value.SeoTitle; row.SeoDescription = value.SeoDescription; row.WebAddress = value.WebAddress; row.AboutHeading = value.AboutHeading; row.AttributesHeading = value.AttributesHeading; row.Version = Guid.NewGuid();
         try { await context.SaveChangesAsync(ct); await transaction.CommitAsync(ct); return new(null); }
         catch (DbUpdateConcurrencyException) { return new(SeoFailure.Conflict); }
         catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })

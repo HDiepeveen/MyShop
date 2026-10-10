@@ -27,6 +27,8 @@ internal sealed class ProductSeoPersistenceConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.SeoTitle).HasMaxLength(200);
         builder.Property(x => x.SeoDescription).HasMaxLength(500);
         builder.Property(x => x.WebAddress).HasMaxLength(160);
+        builder.Property(x => x.AboutHeading).HasMaxLength(200);
+        builder.Property(x => x.AttributesHeading).HasMaxLength(200);
         builder.Property(x => x.Version).IsConcurrencyToken().ValueGeneratedNever();
         builder.HasOne(x => x.Product).WithOne(x => x.Seo).HasForeignKey<ProductSeoPersistence>(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
     }

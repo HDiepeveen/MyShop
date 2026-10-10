@@ -36,7 +36,7 @@ internal static class SeoHtml
                     title = product.ResolvedTitle; description = product.ResolvedDescription; index = true;
                     var catalog = context.RequestServices.GetRequiredService<IStorefrontCatalog>();
                     var detail = await catalog.GetAsync(MyShop.Domain.Catalog.ProductId.From(product.ProductId), context.RequestAborted);
-                    preview = "<main><h1>" + E(product.Name) + "</h1><p>" + E(product.Description) + "</p><dl>" +
+                    preview = "<main><h1>" + E(product.Name) + "</h1><h2>" + E(product.ResolvedAboutHeading) + "</h2><p>" + E(product.Description) + "</p>" + ((detail?.Attributes.Count ?? 0) > 0 ? "<h3>" + E(product.ResolvedAttributesHeading) + "</h3>" : "") + "<dl>" +
                         string.Concat((detail?.Attributes ?? []).Select(a => "<dt>" + E(a.Name) + "</dt><dd>" + E(a.Value) + "</dd>")) + "</dl></main>";
                 }
             }

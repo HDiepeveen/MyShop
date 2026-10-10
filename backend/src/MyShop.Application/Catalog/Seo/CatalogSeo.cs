@@ -5,12 +5,15 @@ using System.Text.RegularExpressions;
 namespace MyShop.Application.Catalog.Seo;
 
 public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction);
-public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
+public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress,
+    string? AboutHeading = null, string? AttributesHeading = null);
 public sealed record ProductSeoInfo(Guid ProductId, string Name, string Description, string? ImageUrl,
     string ImageAlt, bool Published, ProductSeoValues Values, Guid Revision)
 {
     public string ShopName { get; init; } = "MyShop";
     public string ResolvedTitle => Values.SeoTitle ?? Name + " · " + ShopName;
+    public string ResolvedAboutHeading => Values.AboutHeading ?? "Over dit product";
+    public string ResolvedAttributesHeading => Values.AttributesHeading ?? "Productkenmerken";
     public string ResolvedDescription => Values.SeoDescription ?? SeoText.Summary(Description);
     public string ResolvedAddress => Values.WebAddress ?? SeoText.AutomaticAddress(Name, ProductId);
 }
@@ -77,6 +80,7 @@ public sealed class ManageSeo(ICatalogSeoStore store)
     public Task<SeoResult> SaveProductAsync(Guid id, ProductSeoValues values, Guid revision, CancellationToken cancellationToken)
     {
         if (id == Guid.Empty) throw new ArgumentException("Product ontbreekt.");
-        return store.SaveProductAsync(id, new(SeoText.Optional(values.SeoTitle, 200), SeoText.Optional(values.SeoDescription, 500), SeoText.Address(values.WebAddress)), revision, cancellationToken);
+        return store.SaveProductAsync(id, new(SeoText.Optional(values.SeoTitle, 200), SeoText.Optional(values.SeoDescription, 500), SeoText.Address(values.WebAddress),
+            SeoText.Optional(values.AboutHeading, 200), SeoText.Optional(values.AttributesHeading, 200)), revision, cancellationToken);
     }
 }
