@@ -10,6 +10,10 @@ export function errorMessage(error: unknown): string {
     if (error.status === 400 && error.error?.code === 'csrf')
       return 'Je beveiligingstoken is verlopen. Vernieuw de pagina en probeer opnieuw.';
     if (error.status === 400) return 'Controleer de ingevulde gegevens en probeer het opnieuw.';
+    if (error.status === 400 && error.error?.code === 'invalidSeo' && typeof error.error.message === 'string')
+      return error.error.message;
+    if (error.status === 409 && error.error?.code === 'webAddressInUse')
+      return 'Dit webadres is al gebruikt voor een ander product. Kies een ander adres.';
     if (error.status === 409 && error.error?.code === 'accountExists')
       return 'Voor dit e-mailadres bestaat al een klantaccount. Log in of herstel je wachtwoord.';
     if (error.status === 409)

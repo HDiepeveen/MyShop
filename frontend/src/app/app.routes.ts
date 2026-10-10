@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
+  { path: 'instellingen/seo', loadComponent: () => import('./seo/seo-settings').then(m => m.SeoSettings), title: 'SEO · MyShop' },
   {
     path: 'instellingen/facturatie',
     loadComponent: () => import('./billing/billing-settings').then((m) => m.BillingSettings),

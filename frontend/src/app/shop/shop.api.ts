@@ -4,11 +4,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 export interface ShopItem {
   id: string;
+  webAddress?: string;
   name: string;
   imageUrl: string | null;
   imageAlt: string;
 }
 export interface ShopPage {
+  heading?: string;
+  seoTitle?: string;
   at: string;
   items: ShopListItem[];
   totalCount: number;
@@ -21,9 +24,12 @@ export interface ShopListItem extends ShopItem {
 }
 export interface ShopCategory {
   id: string;
+  webAddress?: string;
   name: string;
 }
 export interface ShopProduct extends ShopItem {
+  seoTitle?: string;
+  seoDescription?: string;
   checkoutEnabled?: boolean;
   images?: { id: string; url: string; alternativeText: string }[];
   description: string;
@@ -34,6 +40,7 @@ export interface ShopProduct extends ShopItem {
 }
 export interface ShopVariant {
   id: string;
+  webAddress?: string;
   name: string;
   isAvailable?: boolean;
   attributes?: { attributeDefinitionId: string; value: string }[];

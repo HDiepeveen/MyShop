@@ -30,7 +30,9 @@ public static class FrontendHosting
             }
             context.Response.ContentType = "text/html; charset=utf-8";
             context.Response.Headers.CacheControl = "no-store";
-            await context.Response.SendFileAsync(index, context.RequestAborted);
+            var seo = context.RequestServices.GetService<MyShop.Application.Catalog.Seo.ICatalogSeoStore>();
+            if (seo is null) await context.Response.SendFileAsync(index, context.RequestAborted);
+            else await SeoHtml.WriteAsync(context, await File.ReadAllTextAsync(index, context.RequestAborted), seo);
         }).AllowAnonymous();
     }
 }

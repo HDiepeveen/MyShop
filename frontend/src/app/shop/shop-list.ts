@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { StorefrontSeo } from './storefront-seo';
 import { ShopApi } from './shop.api';
 import { ShopImage } from './shop-image';
 import { loadState } from '../catalog/load-state';
@@ -29,7 +30,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
   ],
   template: `
     <div class="eyebrow">Welkom bij MyShop</div>
-    <h1>Ontdek ons assortiment</h1>
+    <h1>{{ state()?.data?.heading || 'Ontdek ons assortiment' }}</h1>
     <p class="muted">Bekijk onze producten en kies de variant die bij je past.</p>
     @if (categories()?.loading) {
       <p role="status">Categorieën ophalen…</p>
@@ -164,7 +165,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
           @for (product of page.items; track product.id) {
             <a
               class="panel product"
-              [routerLink]="['/winkel', product.id]"
+              [routerLink]="['/winkel', product.webAddress || product.id]"
               [queryParams]="contextQuery()"
             >
               <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" />
@@ -274,6 +275,8 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
   `,
 })
 export class ShopList {
+  private readonly seo = inject(StorefrontSeo);
+  constructor() { effect(() => { const page = this.state()?.data; if (page) this.seo.apply(page.seoTitle || 'Assortiment · MyShop', undefined, '/winkel'); }); }
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

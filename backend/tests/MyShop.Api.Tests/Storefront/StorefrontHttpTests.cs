@@ -158,17 +158,17 @@ public sealed class StorefrontHttpTests
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
         Assert.True(pageResponse.Headers.CacheControl?.NoStore);
         var page = await pageResponse.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(new[] { "at", "items", "limit", "offset", "totalCount" }, page.EnumerateObject()
+        Assert.Equal(new[] { "at", "heading", "items", "limit", "offset", "seoTitle", "totalCount" }, page.EnumerateObject()
             .Select(property => property.Name).Order().ToArray());
         Assert.InRange(page.GetProperty("at").GetDateTimeOffset(), pageRequestedAt, DateTimeOffset.UtcNow);
         Assert.Equal(2, page.GetProperty("totalCount").GetInt32());
         var item = Assert.Single(page.GetProperty("items").EnumerateArray());
         Assert.Equal(beta, item.GetProperty("id").GetGuid());
-        Assert.Equal(new[] { "id", "imageAlt", "imageUrl", "isAvailable", "name", "prices" }, item.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(new[] { "id", "imageAlt", "imageUrl", "isAvailable", "name", "prices", "webAddress" }, item.EnumerateObject().Select(p => p.Name).Order().ToArray());
         Assert.True(item.GetProperty("isAvailable").GetBoolean());
         Assert.Empty(item.GetProperty("prices").EnumerateArray());
         var product = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{alpha}");
-        Assert.Equal(new[] { "attributes", "categories", "checkoutEnabled", "description", "id", "imageAlt", "images", "imageUrl", "name", "variantDefinitions", "variants" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
+        Assert.Equal(new[] { "attributes", "categories", "checkoutEnabled", "description", "id", "imageAlt", "images", "imageUrl", "name", "seoDescription", "seoTitle", "variantDefinitions", "variants", "webAddress" }, product.EnumerateObject().Select(p => p.Name).Order().ToArray());
         var productCategory = Assert.Single(product.GetProperty("categories").EnumerateArray());
         Assert.Equal(new[] { "id", "name" }, productCategory.EnumerateObject()
             .Select(property => property.Name).Order().ToArray());

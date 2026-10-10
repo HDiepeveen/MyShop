@@ -32,6 +32,7 @@ app.MapCustomerWishlistEndpoints();
 app.MapCustomerManagementEndpoints();
 
 app.MapCatalog();
+app.MapSeo();
 app.MapStorefront();
 app.MapPaymentOptions();
 app.MapEmailSettings();

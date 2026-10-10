@@ -289,7 +289,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         var sql = new SqlConnectionStringBuilder(Environment.GetEnvironmentVariable("MYSHOP_TEST_SQLSERVER")) { InitialCatalog = databaseName };
         if (!string.IsNullOrEmpty(sql.AttachDBFilename)) throw new InvalidOperationException("AttachDBFilename is not supported.");
         connection = sql.ConnectionString;
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development", WebRootPath = configuration?.GetValueOrDefault("Hosting:FrontendRoot") });
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         builder.Logging.ClearProviders();
         var values = new Dictionary<string, string?> { ["ConnectionStrings:MyShop"] = connection };
@@ -301,6 +301,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         builder.Services.Configure<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme, options => options.TimeProvider = Clock);
         configureServices?.Invoke(builder.Services);
         App = builder.Build();
+        if (configuration?.GetValueOrDefault("Hosting:FrontendRoot") is not null) App.UseStaticFiles();
         App.UseAdminSecurity();
         App.MapAdminEndpoints();
         App.MapCustomerEndpoints();
@@ -309,6 +310,8 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.MapCustomerWishlistEndpoints();
         App.MapCustomerManagementEndpoints();
         App.MapCatalog();
+        App.MapSeo();
+        if (configuration?.GetValueOrDefault("Hosting:FrontendRoot") is not null) App.MapFrontend();
         App.MapStorefront();
         App.MapPaymentOptions();
         App.MapEmailSettings();

@@ -1,3 +1,4 @@
+import { ShopSeoSettings, ProductSeoInfo } from '../seo/seo.models';
 import { map } from 'rxjs';
 import { parseProduct } from './product-json';
 import { inject, Injectable } from '@angular/core';
@@ -15,6 +16,10 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class CatalogApi {
+  seoSettings() { return this.http.get<ShopSeoSettings>('/api/seo-settings'); }
+  updateSeoSettings(settings: ShopSeoSettings) { return this.http.put<void>('/api/seo-settings', settings); }
+  productSeo(id: string) { return this.http.get<ProductSeoInfo>(`/api/products/${id}/seo`); }
+  updateProductSeo(id: string, settings: ProductSeoInfo['values'] & { revision: string }) { return this.http.put<void>(`/api/products/${id}/seo`, settings); }
   private readonly http = inject(HttpClient);
   generateVariants(id: string, body: string) {
     return this.http.post<{ added: number; skipped: number }>(

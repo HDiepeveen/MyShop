@@ -23,9 +23,10 @@ public static class StorefrontEndpoints
             [FromServices] ListStorefrontCategories useCase, CancellationToken cancellationToken) =>
             Results.Ok(await useCase.ExecuteAsync(cancellationToken))).AllowAnonymous();
         endpoints.MapGet("/api/shop/products/{productId}/prices", async (string productId,
-            [FromServices] GetStorefrontPrices useCase, CancellationToken cancellationToken) =>
+            [FromServices] GetStorefrontPrices useCase, [FromServices] MyShop.Application.Catalog.Seo.ICatalogSeoStore seo, CancellationToken cancellationToken) =>
         {
-            if (!Guid.TryParse(productId, out var id) || id == Guid.Empty) return Results.NotFound();
+            var resolved = await seo.ResolveProductAsync(productId, cancellationToken);
+            if (resolved is not Guid id) return Results.NotFound();
             var prices = await useCase.ExecuteAsync(new(ProductId.From(id), DateTimeOffset.UtcNow), cancellationToken);
             return prices is null ? (IResult)Results.NotFound() : Results.Ok(new StorefrontPricesResponse(
                 prices.At, prices.Variants.Select(price => new StorefrontVariantPriceResponse(price.VariantId,
@@ -48,25 +49,36 @@ public static class StorefrontEndpoints
                         item.ImageUrl, item.ImageAlt, item.IsAvailable, item.Prices.Select(price =>
                             new StorefrontPriceRangeResponse(price.Currency,
                                 price.MinimumAmount.ToString("F2", CultureInfo.InvariantCulture),
-                                price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()))
-                        .ToList(), page.TotalCount, page.Offset, page.Limit));
+                                price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()) { WebAddress = item.WebAddress })
+                        .ToList(), page.TotalCount, page.Offset, page.Limit) { Heading = page.Heading, SeoTitle = page.SeoTitle });
             }
             catch (ArgumentException) { return (IResult)Results.BadRequest(); }
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/products/{productId}", async (string productId,
-            [FromServices] GetStorefrontProduct useCase, CancellationToken cancellationToken) =>
+            [FromServices] GetStorefrontProduct useCase, [FromServices] MyShop.Application.Catalog.Seo.ICatalogSeoStore seo, CancellationToken cancellationToken) =>
         {
-            if (!Guid.TryParse(productId, out var id) || id == Guid.Empty) return Results.NotFound();
+            var resolved = await seo.ResolveProductAsync(productId, cancellationToken);
+            if (resolved is not Guid id) return Results.NotFound();
             var product = await useCase.ExecuteAsync(new(ProductId.From(id)), cancellationToken);
-            return product is null ? (IResult)Results.NotFound() : Results.Ok(product);
+            if (product is null) return Results.NotFound();
+            var metadata = await seo.GetProductAsync(id, cancellationToken);
+            if (metadata is null || !metadata.Published) return Results.NotFound();
+            return Results.Ok(product with { SeoTitle = metadata!.ResolvedTitle, SeoDescription = metadata.ResolvedDescription, WebAddress = metadata.ResolvedAddress });
         }).AllowAnonymous();
     }
 }
 
 public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<StorefrontItemResponse> Items,
-    int TotalCount, int Offset, int Limit);
+    int TotalCount, int Offset, int Limit)
+{
+    public string Heading { get; init; } = "Ontdek ons assortiment";
+    public string SeoTitle { get; init; } = "Assortiment · MyShop";
+}
 public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,
-    bool IsAvailable, IReadOnlyList<StorefrontPriceRangeResponse> Prices);
+    bool IsAvailable, IReadOnlyList<StorefrontPriceRangeResponse> Prices)
+{
+    public string? WebAddress { get; init; }
+}
 public sealed record StorefrontPriceRangeResponse(string Currency, string MinimumAmount, string MaximumAmount);
 public sealed record StorefrontPricesResponse(DateTimeOffset At,
     IReadOnlyList<StorefrontVariantPriceResponse> Variants);

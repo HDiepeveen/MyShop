@@ -2,6 +2,7 @@ namespace MyShop.Infrastructure.Persistence.Models;
 
 internal sealed class ProductPersistence
 {
+    public ProductSeoPersistence? Seo { get; set; }
     public Guid Id { get; set; }
     public Guid ProductTypeId { get; set; }
     public string Name { get; set; } = null!;

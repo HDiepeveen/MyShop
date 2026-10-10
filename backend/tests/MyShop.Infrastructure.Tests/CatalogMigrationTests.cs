@@ -11,7 +11,7 @@ public sealed class CatalogMigrationTests
     public void MigrationSnapshotMatchesCurrentSqlServerModel()
     {
         using var context = new MyShopDesignTimeDbContextFactory().CreateDbContext([]);
-        Assert.EndsWith("_StorefrontCheckoutSwitch", context.Database.GetMigrations().Last());
+        Assert.EndsWith("_CatalogSeoNaming", context.Database.GetMigrations().Last());
         Assert.False(context.Database.HasPendingModelChanges());
     }
 
@@ -21,7 +21,9 @@ public sealed class CatalogMigrationTests
         using var context = new MyShopDesignTimeDbContextFactory().CreateDbContext([]);
         var script = context.GetService<IMigrator>().GenerateScript(options: MigrationsSqlGenerationOptions.Idempotent);
         foreach (var table in context.Model.GetEntityTypes().Select(entity => entity.GetTableName()).Distinct())
-            Assert.Contains($"CREATE TABLE [{table}]", script);
+            Assert.Contains($"CREATE TABLE [{(table == "ProductSeos" ? "ProductSeo" : table)}]", script);
+        Assert.Contains("sp_rename", script);
+        Assert.Contains("ProductSeos", script);
         Assert.Contains("[__EFMigrationsHistory]", script);
         Assert.Contains("IF NOT EXISTS", script);
         foreach (var migration in context.Database.GetMigrations()) Assert.Contains(migration, script);
@@ -35,7 +37,8 @@ public sealed class CatalogMigrationTests
         var migration = context.Database.GetMigrations().Last();
         var script = context.GetService<IMigrator>().GenerateScript(migration, Migration.InitialDatabase);
         foreach (var table in context.Model.GetEntityTypes().Select(entity => entity.GetTableName()).Distinct())
-            Assert.Contains($"DROP TABLE [{table}]", script);
+            Assert.Contains($"DROP TABLE [{(table == "ProductSeos" ? "ProductSeo" : table)}]", script);
+        Assert.Contains("sp_rename", script);
         Assert.Contains("DELETE FROM [__EFMigrationsHistory]", script);
     }
 }

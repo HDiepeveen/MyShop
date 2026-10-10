@@ -1,3 +1,4 @@
+import { ProductSeoEdit } from '../../seo/product-seo-edit';
 import { ProductPresentationEdit } from './product-presentation';
 import { ProductImagesEdit } from './product-images';
 import { OrphanValues } from './orphan-values';
@@ -29,6 +30,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
     FormsModule,
     ProductEdit,
     ProductPresentationEdit,
+    ProductSeoEdit,
     ProductImagesEdit,
     ProductValidation,
     VariantEdit,
@@ -72,6 +74,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           </p>
         </div>
       </div>
+      <app-product-seo [productId]="detail.product.id" />
       <app-product-presentation [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-edit [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-delete

@@ -1,3 +1,4 @@
+import { StorefrontSeo } from './storefront-seo';
 import { Cart } from './cart';
 import { Component, computed, DestroyRef, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -252,6 +253,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
   `,
 })
 export class ShopDetail {
+  private readonly seo = inject(StorefrontSeo);
   readonly auth = inject(Auth);
   private readonly wishlistApi = inject(CustomerWishlistApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -395,6 +397,7 @@ export class ShopDetail {
     this.state()?.data?.variants.find((variant) => variant.id === this.selectedId()),
   );
   constructor() {
+    effect(() => { const product = this.state()?.data; if (product) this.seo.apply(product.seoTitle || product.name + " · MyShop", product.seoDescription, "/winkel/" + encodeURIComponent(product.webAddress || product.id)); });
     effect(() => {
       const product = this.state()?.data;
       this.wishlistVersion++;

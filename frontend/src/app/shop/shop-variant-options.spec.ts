@@ -190,6 +190,13 @@ describe('ShopDetail option selection', () => {
     detail.addToCart();
     expect(TestBed.inject(Cart).lines()).toEqual([]);
   });
+  it('uses the product SEO title, description and canonical address', async () => {
+    const { harness } = await setup(false, { ...optionProduct, seoTitle: 'T-shirt kopen', seoDescription: 'Katoenen shirt.', webAddress: 'katoenen-shirt' });
+    expect(document.title).toBe('T-shirt kopen');
+    expect(document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content).toBe('Katoenen shirt.');
+    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toContain('/winkel/katoenen-shirt');
+    expect(harness.routeNativeElement!.querySelector('h1')?.textContent).toBe(optionProduct.name);
+  });
   it('clears cart feedback and refuses forged missing or sold-out choices', async () => {
     const { detail } = await setup();
     detail.addToCart();

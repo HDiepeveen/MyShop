@@ -152,6 +152,7 @@ public static class ApplicationServiceCollectionExtensions
         services.AddScoped<Billing.BillingSettings>();
         services.AddScoped<Billing.IssueInvoice>();
         services.AddScoped<Catalog.ManageProductImages.ManageProductImages>();
+        services.AddScoped<Catalog.Seo.ManageSeo>();
         return services;
     }
 }

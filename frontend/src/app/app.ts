@@ -1,3 +1,4 @@
+import { StorefrontSeo } from './shop/storefront-seo';
 import webshopVersion from '../../../version.json';
 import { ShopSettings } from './shop/shop-settings';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,9 +17,11 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 })
 export class App {
   readonly version = webshopVersion.version;
+  private readonly seo = inject(StorefrontSeo);
   readonly shopSettings = inject(ShopSettings);
   constructor() {
     this.router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed()).subscribe(() => {
+      this.seo.reset(this.router.url);
       if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
     });
     if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();

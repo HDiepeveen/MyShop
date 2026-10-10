@@ -25,7 +25,7 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
         var count = await query.CountAsync(cancellationToken);
         var rows = await ordered
             .Skip(offset).Take(limit)
-            .Select(product => new { product.Id, product.Name, product.ImageUrl, product.ImageAlt })
+            .Select(product => new { product.Id, product.Name, product.ImageUrl, product.ImageAlt, Slug = product.Seo == null ? null : product.Seo.WebAddress })
             .ToListAsync(cancellationToken);
         var productIds = rows.Select(row => row.Id).ToArray();
         var persistedVariants = productIds.Length == 0
@@ -39,9 +39,11 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
         {
             var variants = variantsByProduct.GetValueOrDefault(row.Id, []);
             return new StorefrontItem(row.Id, row.Name, row.ImageUrl, row.ImageAlt,
-                variants.Any(variant => variant.CanFulfill(1)), PriceRanges(variants, at));
+                variants.Any(variant => variant.CanFulfill(1)), PriceRanges(variants, at))
+            { WebAddress = row.Slug ?? MyShop.Application.Catalog.Seo.SeoText.AutomaticAddress(row.Name, row.Id) };
         }).ToList();
-        return new(at, items, count, offset, limit);
+        var seo = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(cancellationToken);
+        return new(at, items, count, offset, limit) { Heading = seo.Heading, SeoTitle = seo.SeoTitle };
     }
 
     private static IReadOnlyList<StorefrontPriceRange> PriceRanges(
