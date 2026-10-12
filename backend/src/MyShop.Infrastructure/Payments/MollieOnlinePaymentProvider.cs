@@ -43,8 +43,9 @@ internal sealed class MollieOnlinePaymentProvider(HttpClient http, MolliePayment
     {
         if (!configuration.IsConfigured || request.ProviderName != "Mollie") throw new OnlinePaymentProviderException();
         if (request.CheckoutToken == Guid.Empty || request.Totals.Count != 1
-            || request.Totals[0].Currency != "EUR" || request.Totals[0].Amount <= 0)
-            throw new ArgumentException("Mollie requires one positive EUR total.");
+            || request.Totals[0].Currency != "EUR" || request.Totals[0].Amount < 0.01m || request.Totals[0].Amount > 50000m
+            || decimal.Round(request.Totals[0].Amount, 2) != request.Totals[0].Amount)
+            throw new ArgumentException("iDEAL requires one EUR total between 0.01 and 50000 with at most two decimal places.");
         var token = request.CheckoutToken.ToString("D");
         using var message = CreateMessage(HttpMethod.Post, "payments");
         message.Headers.Add("Idempotency-Key", request.CheckoutToken.ToString("N"));
@@ -52,6 +53,8 @@ internal sealed class MollieOnlinePaymentProvider(HttpClient http, MolliePayment
         {
             amount = new { currency = "EUR", value = request.Totals[0].Amount.ToString("0.00", CultureInfo.InvariantCulture) },
             description = request.PaymentReference,
+            method = "ideal",
+            locale = "nl_NL",
             redirectUrl = configuration.ReturnUrl!.AbsoluteUri + "?checkoutToken=" + token,
             webhookUrl = configuration.WebhookUrl!.AbsoluteUri + "?checkoutToken=" + token,
             metadata = new { checkoutToken = token, paymentReference = request.PaymentReference }
@@ -64,6 +67,7 @@ internal sealed class MollieOnlinePaymentProvider(HttpClient http, MolliePayment
             var id = root.GetProperty("id").GetString();
             var url = root.GetProperty("_links").GetProperty("checkout").GetProperty("href").GetString();
             if (!ValidPaymentId(id) || root.GetProperty("mode").GetString() != "test"
+                || root.GetProperty("method").GetString() != "ideal"
                 || !Matches(root, request.CheckoutToken, request.PaymentReference, request.Totals)
                 || !Uri.TryCreate(url, UriKind.Absolute, out var checkout) || checkout.Scheme != "https"
                 || checkout.UserInfo.Length != 0 || checkout.Host != "www.mollie.com")

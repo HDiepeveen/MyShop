@@ -15,7 +15,7 @@ Voor lokale ontwikkeling kun je **scripts/configure-mollie-test.ps1** uitvoeren.
 
 Voor lokale ontwikkeling laadt de API .NET user secrets met id `MyShop-Development`; instellingen en de sleutel blijven daarmee buiten de repository. Productieconfiguratie hoort in de secret store van de hostingomgeving. De database moet de migratie **MollieCustomerPaymentStarts** hebben voordat de API wordt gestart.
 
-Herstart de backend na configuratie. Schakel daarna **Direct online betalen** in onder **Betaalopties**. Bij onvolledige configuratie blijft Mollie onbeschikbaar. Betaalmethoden worden aangeboden op Mollies betaalpagina op basis van je Mollie-profiel; MyShop dwingt geen methode af.
+Herstart de backend na configuratie. Schakel daarna **Direct online betalen** in onder **Betaalopties**. Bij onvolledige configuratie blijft Mollie onbeschikbaar. De klant ziet iDEAL als betaaloptie. MyShop maakt expliciet een iDEAL-betaling aan (method=ideal, locale=nl_NL); bankkeuze vindt plaats bij Mollie. Activeer iDEAL in je Mollie-profiel. Bedragen moeten in EUR zijn, tussen €0,01 en €50.000,00, met maximaal twee decimalen.
 
 ## Betaalcyclus
 
@@ -47,3 +47,17 @@ De automatische tests simuleren Mollies HTTP-antwoorden en controleren de echte 
 **TestPay** blijft een interne simulator, met `Payments:Online:Provider=TestPay` en een fictieve checkout-URL; dit is geen aansluiting op Mollie en geen echte betaling.
 
 Bronnen: [Mollie betaalstart](https://docs.mollie.com/reference/create-payment), [webhooks](https://docs.mollie.com/reference/webhooks), [idempotency](https://docs.mollie.com/reference/api-idempotency), [testmodus](https://docs.mollie.com/reference/testing).
+
+## iDEAL testen vanaf versie 0.2.5
+
+Maak eerst een Mollie-account voor de onderneming en activeer iDEAL in het profiel.
+Gebruik vervolgens alleen de test-API-sleutel met het lokale configuratiescript;
+voer de sleutel niet in deze chat of in Git in. Een publiek bereikbaar HTTPS-
+callback-adres blijft nodig, ook als de webshop lokaal wordt bekeken.
+MyShop biedt iDEAL aan zodra de Mollie-configuratie compleet is en de beheerder
+online betalen heeft ingeschakeld. De API kiest method=ideal; er is geen verouderde
+bankkeuzelijst in MyShop. Mollie verzorgt de bankkeuze.
+Automatische tests controleren deze parameters en de betaalcyclus met gesimuleerde
+Mollie-antwoorden. Een eigen account is nog nodig voor de daadwerkelijke Mollie-test.
+Live-sleutels blijven geblokkeerd. Voorraadreservering, automatische refunds en
+betaalreconciliatie zijn vervolgstappen voordat de webshop productiegeschikt wordt verklaard.

@@ -19,9 +19,9 @@ public sealed class MollieOnlinePaymentProviderTests
     };
     private static OnlinePaymentStartRecord Payment() => new(Token, "Mollie", "OP-TEST", "tr_123", new("https://www.mollie.com/checkout/test"),
         new("Ada", "ada@example.test"), new("Street 1", "1234 AB", "Utrecht", "NL"), [], [new("EUR", 29.95m)], new(Guid.NewGuid(), "Shipping", null, 4.95m, "EUR"), DateTimeOffset.UtcNow);
-    private static string Response(string status = "paid", string amount = "29.95", string mode = "test", string currency = "EUR", string? token = null, string reference = "OP-TEST", string url = "https://www.mollie.com/checkout/test", string id = "tr_123") => JsonSerializer.Serialize(new
+    private static string Response(string status = "paid", string amount = "29.95", string mode = "test", string currency = "EUR", string? token = null, string reference = "OP-TEST", string url = "https://www.mollie.com/checkout/test", string id = "tr_123", string? method = "ideal") => JsonSerializer.Serialize(new
     {
-        id, mode, status, amount = new { currency, value = amount },
+        id, mode, method, status, amount = new { currency, value = amount },
         metadata = new { checkoutToken = token ?? Token.ToString("D"), paymentReference = reference },
         _links = new { checkout = new { href = url } }
     });
@@ -38,6 +38,9 @@ public sealed class MollieOnlinePaymentProviderTests
         Assert.Equal(Token.ToString("N"), handler.IdempotencyKey);
         Assert.Equal("Bearer", handler.AuthorizationScheme);
         using var body = JsonDocument.Parse(handler.Body!);
+        Assert.Equal("ideal", body.RootElement.GetProperty("method").GetString());
+        Assert.Equal("nl_NL", body.RootElement.GetProperty("locale").GetString());
+        Assert.False(body.RootElement.TryGetProperty("issuer", out _));
         Assert.Equal("29.95", body.RootElement.GetProperty("amount").GetProperty("value").GetString());
         Assert.Equal(Token.ToString("D"), body.RootElement.GetProperty("metadata").GetProperty("checkoutToken").GetString());
         Assert.EndsWith("?checkoutToken=" + Token, body.RootElement.GetProperty("redirectUrl").GetString());
@@ -108,6 +111,40 @@ public sealed class MollieOnlinePaymentProviderTests
         var handler = new Handler(Response());
         await Assert.ThrowsAsync<ArgumentException>(() => Provider(handler).StartAsync(new("Mollie", Token, "OP-TEST", [new("EUR", 20), new("USD", 5)]), CancellationToken.None));
         Assert.Null(handler.Url);
+    }
+
+    [Theory]
+    [InlineData("0")][InlineData("0.001")][InlineData("-1")][InlineData("50000.01")][InlineData("12.345")]
+    public async Task InvalidIdealAmountNeverReachesMollie(string amount)
+    {
+        var handler = new Handler(Response());
+        await Assert.ThrowsAsync<ArgumentException>(() => Provider(handler).StartAsync(new("Mollie", Token, "OP-TEST",
+            [new("EUR", decimal.Parse(amount, System.Globalization.CultureInfo.InvariantCulture))]), CancellationToken.None));
+        Assert.Null(handler.Url);
+    }
+
+    [Theory]
+    [InlineData("0.01")][InlineData("50000.00")]
+    public async Task IdealAmountBoundariesAreAccepted(string amount)
+    {
+        var handler = new Handler(Response(amount: amount));
+        await Provider(handler).StartAsync(new("Mollie", Token, "OP-TEST",
+            [new("EUR", decimal.Parse(amount, System.Globalization.CultureInfo.InvariantCulture))]), CancellationToken.None);
+        Assert.NotNull(handler.Url);
+    }
+
+    [Theory]
+    [InlineData("creditcard")][InlineData(null)]
+    public async Task WrongOrMissingMethodCannotStartAnIdealCheckout(string? method)
+    {
+        await Assert.ThrowsAsync<OnlinePaymentProviderException>(() => Provider(new(Response(method: method)))
+            .StartAsync(new("Mollie", Token, "OP-TEST", [new("EUR", 29.95m)]), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ExistingPaymentsRemainVerifiableRegardlessOfTheirPreviousMethod()
+    {
+        Assert.True((await Provider(new(Response(method: "creditcard"))).VerifyAsync(Payment(), CancellationToken.None)).MatchesPayment);
     }
 
     private sealed class Handler(string response, HttpStatusCode status = HttpStatusCode.OK) : HttpMessageHandler

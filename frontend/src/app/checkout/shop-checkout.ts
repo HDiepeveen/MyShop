@@ -109,9 +109,9 @@ import { CustomerAccountApi, CustomerProfile } from '../customer/customer-accoun
               <p>Providerbetaling: {{ payment.providerPaymentId }}</p>
             }
             @if (payment.providerName === 'Mollie') {
-              <p>Testmodus: er wordt geen echt geld afgeschreven.</p>
+              <p>iDEAL via Mollie · Testmodus: er wordt geen echt geld afgeschreven.</p>
             }
-            <p><a [href]="payment.checkoutUrl">Betaalpagina openen</a></p>
+            <p><a [href]="payment.checkoutUrl">{{ payment.providerName === 'Mollie' ? 'iDEAL-betaalpagina openen' : 'Betaalpagina openen' }}</a></p>
             <button type="button" [disabled]="busy()" (click)="completeOnlinePayment(payment)">
               {{ busy() ? 'Betaalstatus controleren…' : 'Betaalstatus controleren' }}
             </button>

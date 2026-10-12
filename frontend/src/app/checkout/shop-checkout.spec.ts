@@ -161,6 +161,8 @@ describe('Shop checkout', () => {
     expect(content).toContain('Testmodus: er wordt geen echt geld afgeschreven.');
     const link = fixture.nativeElement.querySelector('a');
     expect(link.getAttribute('href')).toBe('https://payments.example.test/test_123');
+    expect(link.textContent).toContain('iDEAL-betaalpagina openen');
+    expect(content).toContain('iDEAL via Mollie');
     expect(content).toContain('Bezorging: Pakketdienst');
     expect(content).toContain('Totaal EUR 29,95');
 

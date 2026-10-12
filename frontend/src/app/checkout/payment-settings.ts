@@ -51,7 +51,7 @@ import { errorMessage } from '../catalog/error-message';
         >
         @if (options.onlinePaymentConfigured) {
           @if (options.onlinePaymentProvider === 'Mollie') {
-            <p class="muted">Mollie is ingesteld in testmodus. Er wordt geen echt geld afgeschreven.</p>
+            <p class="muted">iDEAL via Mollie is ingesteld in testmodus. Er wordt geen echt geld afgeschreven.</p>
           } @else {
             <p class="muted">Online betalen is voorbereid via {{ options.onlinePaymentProvider }}.</p>
           }

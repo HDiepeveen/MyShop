@@ -33,6 +33,8 @@ public sealed class MolliePaymentCycleHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{productId}/presentation", new { description = "Test", imageUrl = "https://example.test/product.jpg", imageAlt = "Product", isPublished = true, revision = detail.GetProperty("revision").GetGuid() })).StatusCode);
         var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/payment-options");
         Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync("/api/payment-options", new { payLaterEnabled = true, onlinePaymentEnabled = true, revision = settings.GetProperty("revision").GetGuid() })).StatusCode);
+        var publicOptions = await host.Client.GetFromJsonAsync<JsonElement>("/api/shop/payment-options");
+        Assert.Equal("iDEAL", publicOptions.GetProperty("items").EnumerateArray().Single(x => x.GetProperty("code").GetString() == "online").GetProperty("name").GetString());
         var delivery = await (await host.Client.PostAsJsonAsync("/api/delivery-methods", new { name = "Pakket", amount = "4.95", currency = "EUR", enabled = true })).Content.ReadFromJsonAsync<JsonElement>();
         var company = await host.Client.GetFromJsonAsync<JsonElement>("/api/billing/company");
         Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync("/api/billing/company", new { name = "Test seller", addressLine = "Street 1", postalCode = "1234 AB", city = "Utrecht", vatId = "NL123456789B01", kvkNumber = "12345678", invoicePrefix = "INV-", revision = company.GetProperty("revision").GetGuid() })).StatusCode);
@@ -106,10 +108,12 @@ public sealed class MolliePaymentCycleHttpTests
                 Starts++; request = JsonSerializer.Deserialize<JsonElement>(await message.Content!.ReadAsStringAsync(cancellationToken));
                 Assert.Equal("https://api.mollie.com/v2/payments", message.RequestUri!.AbsoluteUri);
                 Assert.True(message.Headers.Contains("Idempotency-Key"));
+                Assert.Equal("ideal", request.GetProperty("method").GetString());
+                Assert.Equal("nl_NL", request.GetProperty("locale").GetString());
             }
             else Assert.Equal("https://api.mollie.com/v2/payments/" + Id, message.RequestUri!.AbsoluteUri);
             var amount = request.GetProperty("amount");
-            var body = JsonSerializer.Serialize(new { id = Id, mode = "test", status = Status, amount = new { currency = amount.GetProperty("currency").GetString(), value = AmountOverride ?? amount.GetProperty("value").GetString() }, metadata = request.GetProperty("metadata"), _links = new { checkout = new { href = "https://www.mollie.com/checkout/test" } } });
+            var body = JsonSerializer.Serialize(new { id = Id, mode = "test", method = "ideal", status = Status, amount = new { currency = amount.GetProperty("currency").GetString(), value = AmountOverride ?? amount.GetProperty("value").GetString() }, metadata = request.GetProperty("metadata"), _links = new { checkout = new { href = "https://www.mollie.com/checkout/test" } } });
             return new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
         }
     }
