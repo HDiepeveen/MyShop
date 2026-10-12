@@ -32,7 +32,7 @@ public static class CompleteOnlinePaymentEndpoint
                     code = "paymentMismatch",
                     message = "De betaling hoort niet bij deze checkout. Start de online betaling opnieuw."
                 }),
-                CompleteOnlinePaymentFailure.PaymentPending => Results.Conflict(new { code = "paymentPending", message = "De betaling is nog niet bevestigd. Controleer de betaalstatus opnieuw.", checkoutUrl = result.CheckoutUrl?.AbsoluteUri }),
+                CompleteOnlinePaymentFailure.PaymentPending => Results.Conflict(new { code = "paymentPending", message = "De betaling is nog niet bevestigd. Controleer de betaalstatus opnieuw.", checkoutUrl = result.CheckoutUrl?.AbsoluteUri, payment = result.PreparedPayment is null ? null : new { providerName = result.PreparedPayment.ProviderName, paymentReference = result.PreparedPayment.PaymentReference, totals = result.PreparedPayment.Totals.Select(MapTotal).ToArray(), deliveryMethod = MapDelivery(result.PreparedPayment.DeliveryMethod) } }),
                 CompleteOnlinePaymentFailure.PaymentFailed => Results.Conflict(new { code = "paymentFailed", message = "De betaling is mislukt. Je winkelmand is bewaard; je kunt opnieuw afrekenen." }),
                 CompleteOnlinePaymentFailure.PaymentCanceled => Results.Conflict(new { code = "paymentCanceled", message = "De betaling is geannuleerd. Je winkelmand is bewaard; je kunt opnieuw afrekenen." }),
                 CompleteOnlinePaymentFailure.PaymentExpired => Results.Conflict(new { code = "paymentExpired", message = "De betaling is verlopen. Je winkelmand is bewaard; je kunt opnieuw afrekenen." }),

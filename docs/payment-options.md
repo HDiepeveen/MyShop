@@ -101,3 +101,9 @@ Vanaf 0.2.9 toont een lege winkelmand geen melding meer dat een nieuwe winkelman
 kan worden afgerekend vanwege een oude betaalpoging. Een bestelling met Later
 betalen gaat niet naar Mollie en is na de bevestigingsmail nog niet betaald.
 Kies iDEAL om de online betaalcyclus te doorlopen.
+
+Vanaf 0.2.10 worden de voorbereide betaalgegevens bij terugkeer in dezelfde
+winkelmand hersteld vanuit de geverifieerde betaalstart op de server. Het
+betalingskenmerk, provider, totalen en bezorging blijven zichtbaar. Alleen een
+open betaling krijgt de oorspronkelijke betaallink. Herstellen start geen nieuwe
+betaling en toont geen klantnaam, e-mailadres of adres in de publieke statusrespons.

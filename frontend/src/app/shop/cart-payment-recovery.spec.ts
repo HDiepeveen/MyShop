@@ -85,4 +85,30 @@ describe('Cart reopening after payment', () => {
     expect(fixture.nativeElement.textContent).not.toContain('nieuwe winkelmand afrekenen');
     expect(fixture.nativeElement.querySelector('a[href*="checkoutToken"]')).toBeNull();
   });
+  it('restores the existing Mollie information and checkout URL after navigation', () => {
+    const { response, fixture, page, complete } = setup();
+    response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending', checkoutUrl: 'https://www.mollie.com/checkout/existing', payment: {
+      providerName: 'Mollie', paymentReference: 'OP-EXISTING', totals: [{ currency: 'EUR', amount: '36.30' }],
+      deliveryMethod: { id: line.productId, name: 'Standaardbezorging', description: null, amount: '0.00', currency: 'EUR' },
+    } } }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Betaalprovider: Mollie');
+    expect(fixture.nativeElement.textContent).toContain('OP-EXISTING');
+    expect(fixture.nativeElement.textContent).toContain('36,30');
+    expect(fixture.nativeElement.querySelector('a[href="https://www.mollie.com/checkout/existing"]')?.textContent).toContain('iDEAL-betaalpagina');
+    expect(page.blocksCheckout()).toBe(true); expect(complete).toHaveBeenCalledTimes(1);
+  });
+  it('does not show old payment details as the details of a changed basket', () => {
+    const { response, fixture, cart } = setup(); cart.setQuantity(line, 3);
+    response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending', payment: { providerName: 'Mollie', paymentReference: 'OLD' } } }));
+    fixture.detectChanges(); expect(fixture.nativeElement.querySelector('[aria-label="Voorbereide online betaling"]')).toBeNull();
+  });
+  it('rechecks the restored payment without starting a new payment', () => {
+    const { response, complete, page, cart } = setup();
+    response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending' } }));
+    complete.mockReturnValueOnce(of(receipt) as any);
+    page.checkPreparedPayment();
+    expect(complete).toHaveBeenLastCalledWith(token); expect(complete).toHaveBeenCalledTimes(2);
+    expect(cart.lines()).toEqual([]); expect(page.orderReceipt()?.number).toBe('MS-PAID');
+  });
 });

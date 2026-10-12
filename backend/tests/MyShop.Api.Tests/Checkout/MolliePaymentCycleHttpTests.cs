@@ -77,6 +77,15 @@ public sealed class MolliePaymentCycleHttpTests
             Assert.Equal(code, statusBody.GetProperty("code").GetString());
             if (status == "open") Assert.Equal("https://www.mollie.com/checkout/test", statusBody.GetProperty("checkoutUrl").GetString());
             else if (code == "paymentPending") Assert.Equal(JsonValueKind.Null, statusBody.GetProperty("checkoutUrl").ValueKind);
+            if (code == "paymentPending")
+            {
+                var restored = statusBody.GetProperty("payment");
+                Assert.Equal("Mollie", restored.GetProperty("providerName").GetString());
+                Assert.Equal(payment.GetProperty("paymentReference").GetString(), restored.GetProperty("paymentReference").GetString());
+                Assert.Equal("29.15", restored.GetProperty("totals")[0].GetProperty("amount").GetString());
+                Assert.False(restored.TryGetProperty("customer", out _));
+                Assert.False(restored.TryGetProperty("address", out _));
+            }
             Assert.Equal(HttpStatusCode.OK, (await callback.PostAsync(webhook, Form(id))).StatusCode);
         }
         mollie.Status = "paid"; mollie.AmountOverride = "0.01";

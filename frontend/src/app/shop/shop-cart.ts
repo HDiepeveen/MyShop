@@ -12,7 +12,7 @@ import { ShopApi } from './shop.api';
 import { loadState } from '../catalog/load-state';
 import { PaymentOptionsApi } from '../checkout/payment-options.api';
 import { ShopCheckout } from '../checkout/shop-checkout';
-import { OrderApi, OrderReceipt } from '../checkout/order.api';
+import { OrderApi, OrderReceipt, OrderReceiptTotal, OrderReceiptDeliveryMethod } from '../checkout/order.api';
 import { Auth } from '../auth/auth';
 import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
 
@@ -33,6 +33,19 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
         <p role="status">Er is nog een eerdere betaalpoging voor andere artikelen. Je kunt deze nieuwe winkelmand afrekenen.</p>
       }
       <a routerLink="/winkel/betaling" [queryParams]="{ checkoutToken: token }">Eerdere betaling controleren</a>
+    }
+    @if (currentPreparedPayment(); as payment) {
+      <section class="panel" aria-label="Voorbereide online betaling">
+        <h2>Voorbereide online betaling</h2>
+        <p>Betaalprovider: {{ payment.providerName }}</p>
+        <p>Betalingskenmerk: {{ payment.paymentReference }}</p>
+        @if (payment.providerName === 'Mollie') { <p>iDEAL via Mollie · Testmodus: er wordt geen echt geld afgeschreven.</p> }
+        <button type="button" class="secondary" [disabled]="recoveringPayment() || checkoutBusy()" (click)="checkPreparedPayment()">Betaalstatus controleren</button>
+        <p>Bezorging: {{ payment.deliveryMethod.name }}</p>
+        @for (total of payment.totals; track total.currency) { <p>Totaal {{ total.currency }} {{ amount(total.amount) }}</p> }
+        @if (resumeCheckoutUrl()) { <a [href]="resumeCheckoutUrl()">{{ payment.providerName === 'Mollie' ? 'iDEAL-betaalpagina openen' : 'Betaalpagina openen' }}</a> }
+        @else { <p>De betaling wordt nog verwerkt. Controleer de eerdere betaalstatus.</p> }
+      </section>
     }
     @if (cart.warning()) {
       <p role="status">{{ cart.warning() }}</p>
@@ -235,6 +248,9 @@ export class ShopCart {
   private readonly pending = inject(PendingPayment);
   private readonly orderApi = inject(OrderApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly restoredPayment = signal<{ providerName: string; paymentReference: string; totals: readonly OrderReceiptTotal[]; deliveryMethod: OrderReceiptDeliveryMethod; } | null>(null);
+  readonly resumeCheckoutUrl = signal<string | null>(null);
+  readonly currentPreparedPayment = computed(() => { const token = this.unresolvedPayment(); return token && this.pending.matches(token, this.cart.lines()) ? this.restoredPayment() : null; });
   readonly recoveringPayment = signal(false);
   readonly unresolvedPayment = signal<string | null>(null);
   readonly cart = inject(Cart);
@@ -319,8 +335,10 @@ export class ShopCart {
         this.selectedDelivery.set(methods[0]?.id ?? '');
     });
   }
+  checkPreparedPayment() { if (!this.recoveringPayment() && !this.checkoutBusy()) this.recoverPayment(); }
   private recoverPayment() {
     const token = this.pending.token(); if (!token) return;
+    this.restoredPayment.set(null); this.resumeCheckoutUrl.set(null);
     this.unresolvedPayment.set(token); this.recoveringPayment.set(true); this.checkoutBusy.set(true);
     this.orderApi.completeOnlinePayment(token).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: receipt => {
@@ -332,6 +350,10 @@ export class ShopCart {
       },
       error: (error: unknown) => {
         const code = error instanceof HttpErrorResponse ? error.error?.code : undefined;
+        if (code === 'paymentPending' && error instanceof HttpErrorResponse && this.pending.token() === token) {
+          this.restoredPayment.set(error.error?.payment ?? null);
+          try { const url = new URL(error.error?.checkoutUrl); if (url.protocol === 'https:' && !url.username && !url.password) this.resumeCheckoutUrl.set(url.href); } catch {}
+        }
         if (['paymentFailed', 'paymentCanceled', 'paymentExpired'].includes(code)) {
           this.pending.clear(token); this.unresolvedPayment.set(this.pending.token());
           this.notice.set('De eerdere betaling is niet geslaagd. Je winkelmand is behouden.');
