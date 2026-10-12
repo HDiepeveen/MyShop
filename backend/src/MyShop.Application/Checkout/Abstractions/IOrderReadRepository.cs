@@ -52,7 +52,7 @@ public sealed record OrderDetail(
     Guid Revision,
     IReadOnlyList<OrderLineSnapshot> Lines,
     IReadOnlyList<OrderTotalSnapshot> Totals,
-    OrderDeliveryMethodSnapshot? DeliveryMethod = null);
+    OrderDeliveryMethodSnapshot? DeliveryMethod = null, string PhoneNumber = "", string Notes = "");
 
 public sealed record OrderLineSnapshot(
     Guid ProductId,

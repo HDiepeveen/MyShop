@@ -1,3 +1,4 @@
+import { countryName } from '../customer/country-name';
 import { ShopBranding } from '../shop/shop-branding';
 import { CopyText } from '../copy-text';
 import { CurrencyPipe, DatePipe } from '@angular/common';
@@ -74,7 +75,15 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           <h2>Bezorgadres</h2>
           <address>
             {{ order.deliveryAddress.addressLine }}<br />{{ order.deliveryAddress.postalCode }}
-            {{ order.deliveryAddress.city }}<br />{{ order.deliveryAddress.countryCode }}
+            {{ order.deliveryAddress.city }}<br />{{
+              countryName(order.deliveryAddress.countryCode)
+            }}
+            @if (order.deliveryAddress.phoneNumber) {
+              <br />Telefoonnummer: {{ order.deliveryAddress.phoneNumber }}
+            }
+            @if (order.deliveryAddress.notes) {
+              <p class="preserve-lines">Opmerkingen: {{ order.deliveryAddress.notes }}</p>
+            }
           </address>
         </section>
       </div>
@@ -321,6 +330,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
     }`,
 })
 export class OrderDetailComponent {
+  readonly countryName = countryName;
   readonly branding = inject(ShopBranding);
   private readonly api = inject(OrderManagementApi);
   private readonly route = inject(ActivatedRoute);

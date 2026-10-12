@@ -43,6 +43,8 @@ export interface PlaceOrderRequest {
   postalCode: string;
   city: string;
   countryCode: string;
+  phoneNumber?: string;
+  notes?: string;
   lines: readonly CheckoutOrderLine[];
 }
 
@@ -55,6 +57,8 @@ export interface StartOnlinePaymentRequest {
   postalCode: string;
   city: string;
   countryCode: string;
+  phoneNumber?: string;
+  notes?: string;
   lines: readonly CheckoutOrderLine[];
 }
 

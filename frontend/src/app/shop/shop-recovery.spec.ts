@@ -14,7 +14,15 @@ import { ShopCart } from './shop-cart';
 import { Cart } from './cart';
 import { CartQuote, ShopApi, ShopProduct } from './shop.api';
 
-const product: ShopProduct = { id: 'p1', name: 'Shirt', imageUrl: null, imageAlt: '', description: '', categories: [], variants: [] };
+const product: ShopProduct = {
+  id: 'p1',
+  name: 'Shirt',
+  imageUrl: null,
+  imageAlt: '',
+  description: '',
+  categories: [],
+  variants: [],
+};
 
 describe('Storefront recovery', () => {
   function detailFixture() {
@@ -23,13 +31,28 @@ describe('Storefront recovery', () => {
     const first = new Subject<{ saved: boolean }>();
     const second = new Subject<{ saved: boolean }>();
     const operation = new Subject<void>();
-    const wishlist = { state: vi.fn().mockReturnValueOnce(first).mockReturnValue(second), add: vi.fn(() => operation), remove: vi.fn(() => operation) };
+    const wishlist = {
+      state: vi.fn().mockReturnValueOnce(first).mockReturnValue(second),
+      add: vi.fn(() => operation),
+      remove: vi.fn(() => operation),
+    };
     TestBed.configureTestingModule({
-      imports: [ShopDetail], providers: [provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: of(convertToParamMap({})) } },
+      imports: [ShopDetail],
+      providers: [
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: params, queryParamMap: of(convertToParamMap({})) },
+        },
         { provide: Auth, useValue: { session: signal({ customer: true }) } },
         { provide: Cart, useValue: { add: vi.fn(), warning: signal('') } },
-        { provide: ShopApi, useValue: { product: vi.fn(() => products), prices: vi.fn(() => of({ at: '', variants: [] })) } },
+        {
+          provide: ShopApi,
+          useValue: {
+            product: vi.fn(() => products),
+            prices: vi.fn(() => of({ at: '', variants: [] })),
+          },
+        },
         { provide: CustomerWishlistApi, useValue: wishlist },
       ],
     });
@@ -49,17 +72,20 @@ describe('Storefront recovery', () => {
     expect(fixture.componentInstance.wishlistMessage()).toBe('');
   });
 
-  it.each(['success', 'error'])('ignores a late wishlist read %s from another product', (result) => {
-    const { fixture, params, products, first, second } = detailFixture();
-    params.next(convertToParamMap({ id: 'p2' }));
-    products.next({ ...product, id: 'p2' });
-    fixture.detectChanges();
-    second.next({ saved: false });
-    if (result === 'success') first.next({ saved: true });
-    else first.error(new Error('Offline'));
-    expect(fixture.componentInstance.wishlistSaved()).toBe(false);
-    expect(fixture.componentInstance.wishlistMessage()).toBe('');
-  });
+  it.each(['success', 'error'])(
+    'ignores a late wishlist read %s from another product',
+    (result) => {
+      const { fixture, params, products, first, second } = detailFixture();
+      params.next(convertToParamMap({ id: 'p2' }));
+      products.next({ ...product, id: 'p2' });
+      fixture.detectChanges();
+      second.next({ saved: false });
+      if (result === 'success') first.next({ saved: true });
+      else first.error(new Error('Offline'));
+      expect(fixture.componentInstance.wishlistSaved()).toBe(false);
+      expect(fixture.componentInstance.wishlistMessage()).toBe('');
+    },
+  );
 
   it('blocks wishlist changes while reading the state or already updating it', () => {
     const { fixture, first, wishlist } = detailFixture();
@@ -88,17 +114,30 @@ describe('Storefront recovery', () => {
 
   function cartFixture() {
     const quote = new Subject<CartQuote>();
-    const payment = new Subject<{ items: { code: string; name: string; instructions: string | null }[] }>();
+    const payment = new Subject<{
+      items: { code: string; name: string; instructions: string | null }[];
+    }>();
     const delivery = new Subject<PublicDeliveryMethod[]>();
     const paymentApi = { publicOptions: vi.fn(() => payment) };
     const deliveryApi = { publicMethods: vi.fn(() => delivery) };
     const shopApi = { quote: vi.fn(() => quote) };
-    TestBed.configureTestingModule({ imports: [ShopCart], providers: [provideRouter([]),
-      { provide: Auth, useValue: { session: signal(null) } },
-      { provide: Cart, useValue: { lines: signal([{ productId: 'p1', variantId: 'v1', quantity: 1 }]), warning: signal('') } },
-      { provide: ShopApi, useValue: shopApi }, { provide: PaymentOptionsApi, useValue: paymentApi },
-      { provide: DeliveryMethodsApi, useValue: deliveryApi },
-    ] });
+    TestBed.configureTestingModule({
+      imports: [ShopCart],
+      providers: [
+        provideRouter([]),
+        { provide: Auth, useValue: { session: signal(null) } },
+        {
+          provide: Cart,
+          useValue: {
+            lines: signal([{ productId: 'p1', variantId: 'v1', quantity: 1 }]),
+            warning: signal(''),
+          },
+        },
+        { provide: ShopApi, useValue: shopApi },
+        { provide: PaymentOptionsApi, useValue: paymentApi },
+        { provide: DeliveryMethodsApi, useValue: deliveryApi },
+      ],
+    });
     const fixture = TestBed.createComponent(ShopCart);
     fixture.detectChanges();
     return { fixture, quote, payment, delivery, paymentApi, deliveryApi, shopApi };
@@ -107,7 +146,9 @@ describe('Storefront recovery', () => {
   it('retries payment options after failure without duplicate requests', () => {
     const { fixture, payment, paymentApi } = cartFixture();
     payment.error(new Error('Offline'));
-    const retry = new Subject<{ items: { code: string; name: string; instructions: string | null }[] }>();
+    const retry = new Subject<{
+      items: { code: string; name: string; instructions: string | null }[];
+    }>();
     paymentApi.publicOptions.mockReturnValue(retry);
     fixture.componentInstance.retryPayment();
     fixture.componentInstance.retryPayment();
@@ -126,7 +167,9 @@ describe('Storefront recovery', () => {
     fixture.componentInstance.retryDelivery();
     fixture.componentInstance.retryDelivery();
     expect(deliveryApi.publicMethods).toHaveBeenCalledTimes(2);
-    retry.next([{ id: 'delivery-1', name: 'PostNL', description: null, amount: '4.95', currency: 'EUR' }]);
+    retry.next([
+      { id: 'delivery-1', name: 'PostNL', description: null, amount: '4.95', currency: 'EUR' },
+    ]);
     fixture.detectChanges();
     expect(fixture.componentInstance.deliveryMethods()?.error).toBe('');
     expect(fixture.componentInstance.selectedDelivery()).toBe('delivery-1');
@@ -145,20 +188,41 @@ describe('Storefront recovery', () => {
     const session = signal<{ customer: boolean } | null>(customer ? { customer: true } : null);
     const response = new Subject<CustomerProfile>();
     const orders = { place: vi.fn(() => new Subject()), startOnlinePayment: vi.fn() };
-    TestBed.configureTestingModule({ imports: [ShopCheckout], providers: [
-      { provide: Auth, useValue: { session } },
-      { provide: CustomerAccountApi, useValue: { profile: vi.fn(() => response) } },
-      { provide: OrderApi, useValue: orders },
-    ] });
+    TestBed.configureTestingModule({
+      imports: [ShopCheckout],
+      providers: [
+        { provide: Auth, useValue: { session } },
+        { provide: CustomerAccountApi, useValue: { profile: vi.fn(() => response) } },
+        { provide: OrderApi, useValue: orders },
+      ],
+    });
     const fixture = TestBed.createComponent(ShopCheckout);
-    fixture.componentRef.setInput('lines', [{ productId: 'p', variantId: 'v', quantity: 1, expectedAmount: '10.00', expectedCurrency: 'EUR' }]);
+    fixture.componentRef.setInput('lines', [
+      {
+        productId: 'p',
+        variantId: 'v',
+        quantity: 1,
+        expectedAmount: '10.00',
+        expectedCurrency: 'EUR',
+      },
+    ]);
     fixture.componentRef.setInput('paymentMethod', 'payLater');
     fixture.componentRef.setInput('deliveryMethodId', 'delivery-1');
     fixture.detectChanges();
     return { fixture, response, session, orders };
   }
 
-  const profile: CustomerProfile = { email: 'ada@example.test', name: 'Ada', addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL', revision: null };
+  const profile: CustomerProfile = {
+    email: 'ada@example.test',
+    name: 'Ada',
+    addressLine: 'Straat 1',
+    postalCode: '1234 AB',
+    city: 'Utrecht',
+    countryCode: 'NL',
+    phoneNumber: '0301234567',
+    notes: '',
+    revision: null,
+  };
 
   it('uses the saved account address by default and only shows editable address fields when requested', () => {
     const { fixture, response, orders } = checkoutFixture();
@@ -166,7 +230,9 @@ describe('Storefront recovery', () => {
     response.next(profile);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('input[name=address]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('[aria-label="Opgeslagen afleveradres"]').textContent).toContain('Straat 1');
+    expect(
+      fixture.nativeElement.querySelector('[aria-label="Opgeslagen afleveradres"]').textContent,
+    ).toContain('Straat 1');
     page.differentAddress.set(true);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('input[name=address]')).not.toBeNull();
@@ -175,9 +241,16 @@ describe('Storefront recovery', () => {
     page.city = 'Rotterdam';
     page.differentAddress.set(false);
     page.submit();
-    expect(orders.place).toHaveBeenCalledWith(expect.objectContaining({
-      addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL',
-    }));
+    expect(orders.place).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'Nederland',
+        phoneNumber: '0301234567',
+        notes: '',
+      }),
+    );
   });
   it('submits a different address without changing the saved profile', () => {
     const { fixture, response, orders } = checkoutFixture();
@@ -188,10 +261,30 @@ describe('Storefront recovery', () => {
     page.postalCode = '5678 CD';
     page.city = 'Rotterdam';
     page.submit();
-    expect(orders.place).toHaveBeenCalledWith(expect.objectContaining({
-      addressLine: 'Andere straat 2', postalCode: '5678 CD', city: 'Rotterdam',
-    }));
+    expect(orders.place).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addressLine: 'Andere straat 2',
+        postalCode: '5678 CD',
+        city: 'Rotterdam',
+      }),
+    );
     expect(profile.addressLine).toBe('Straat 1');
+  });
+  it('prefills contacts and submits edited notes without changing the saved account address', () => {
+    const { fixture, response, orders } = checkoutFixture();
+    const page = fixture.componentInstance;
+    expect(page.countryCode).toBe('');
+    response.next({ ...profile, notes: 'Bel even.' });
+    expect(page.countryCode).toBe('Nederland');
+    expect(page.phoneNumber).toBe('0301234567');
+    expect(page.notes).toBe('Bel even.');
+    page.phoneNumber = '+597 123456';
+    page.notes = 'Gebruik de zijdeur.';
+    page.submit();
+    expect(orders.place).toHaveBeenCalledWith(expect.objectContaining({
+      addressLine: profile.addressLine, phoneNumber: '+597 123456', notes: 'Gebruik de zijdeur.',
+    }));
+    expect(profile.phoneNumber).toBe('0301234567');
   });
   it('loads the profile when the customer session becomes available after checkout opens', () => {
     const { fixture, response, session } = checkoutFixture(false);
@@ -234,9 +327,16 @@ describe('Storefront recovery', () => {
     fixture.componentInstance.addressLine = 'Unused draft address';
     fixture.componentInstance.postalCode = '9999 ZZ';
     fixture.componentInstance.submit();
-    expect(orders.startOnlinePayment).toHaveBeenCalledWith(expect.objectContaining({
-      addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL',
-    }));
+    expect(orders.startOnlinePayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addressLine: 'Straat 1',
+        postalCode: '1234 AB',
+        city: 'Utrecht',
+        countryCode: 'Nederland',
+        phoneNumber: '0301234567',
+        notes: '',
+      }),
+    );
   });
 
   it('offers manual entry when the checkout profile cannot be loaded', () => {
@@ -247,25 +347,36 @@ describe('Storefront recovery', () => {
     expect(fixture.componentInstance.busy()).toBe(false);
   });
 
-  it.each(['email', 'countryCode'] as const)('preserves an entered %s when a profile arrives late', (field) => {
-    const { fixture, response } = checkoutFixture();
-    fixture.componentInstance[field] = field === 'email' ? 'other@example.test' : 'BE';
-    const entered = fixture.componentInstance[field];
-    response.next(profile);
-    expect(fixture.componentInstance[field]).toBe(entered);
-    expect(fixture.componentInstance.customerName).toBe('Ada');
-  });
+  it.each(['email', 'countryCode'] as const)(
+    'preserves an entered %s when a profile arrives late',
+    (field) => {
+      const { fixture, response } = checkoutFixture();
+      fixture.componentInstance[field] = field === 'email' ? 'other@example.test' : 'BE';
+      const entered = fixture.componentInstance[field];
+      response.next(profile);
+      expect(fixture.componentInstance[field]).toBe(entered);
+      expect(fixture.componentInstance.customerName).toBe('Ada');
+    },
+  );
 
-  it.each(['success', 'error'])('ignores a late profile %s while an order is being placed', (result) => {
-    const { fixture, response } = checkoutFixture();
-    fixture.componentInstance.customerName = 'Entered'; fixture.componentInstance.email = 'entered@example.test';
-    fixture.componentInstance.addressLine = 'Street 1'; fixture.componentInstance.postalCode = '1234 AB'; fixture.componentInstance.city = 'Utrecht';
-    fixture.componentInstance.submit();
-    if (result === 'success') response.next(profile);
-    else response.error(new Error('Offline'));
-    expect(fixture.componentInstance.customerName).toBe('Entered');
-    expect(fixture.componentInstance.email).toBe('entered@example.test');
-    expect(fixture.componentInstance.busy()).toBe(true);
-    expect(fixture.componentInstance.notice()).toBe('');
-  });
+  it.each(['success', 'error'])(
+    'ignores a late profile %s while an order is being placed',
+    (result) => {
+      const { fixture, response } = checkoutFixture();
+      fixture.componentInstance.customerName = 'Entered';
+      fixture.componentInstance.email = 'entered@example.test';
+      fixture.componentInstance.addressLine = 'Street 1';
+      fixture.componentInstance.postalCode = '1234 AB';
+      fixture.componentInstance.city = 'Utrecht';
+      fixture.componentInstance.phoneNumber = '0301234567';
+      fixture.componentInstance.countryCode = 'Nederland';
+      fixture.componentInstance.submit();
+      if (result === 'success') response.next(profile);
+      else response.error(new Error('Offline'));
+      expect(fixture.componentInstance.customerName).toBe('Entered');
+      expect(fixture.componentInstance.email).toBe('entered@example.test');
+      expect(fixture.componentInstance.busy()).toBe(true);
+      expect(fixture.componentInstance.notice()).toBe('');
+    },
+  );
 });

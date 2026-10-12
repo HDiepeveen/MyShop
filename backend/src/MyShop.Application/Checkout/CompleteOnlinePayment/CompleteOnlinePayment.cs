@@ -53,7 +53,7 @@ public sealed class CompleteOnlinePayment(IOnlinePaymentStartRepository paymentS
 
         var customer = OrderCustomer.Create(payment.Customer.Name, payment.Customer.Email);
         var address = DeliveryAddress.Create(payment.Address.AddressLine, payment.Address.PostalCode,
-            payment.Address.City, payment.Address.CountryCode);
+            payment.Address.City, payment.Address.CountryCode, payment.Address.PhoneNumber, payment.Address.Notes);
         var delivery = new OrderDeliveryMethod(payment.DeliveryMethod.Id, payment.DeliveryMethod.Name,
             payment.DeliveryMethod.Description,
             Money.Create(payment.DeliveryMethod.Amount, payment.DeliveryMethod.Currency));

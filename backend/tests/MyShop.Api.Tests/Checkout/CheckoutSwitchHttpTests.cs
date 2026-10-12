@@ -29,7 +29,7 @@ public sealed class CheckoutSwitchHttpTests
         Assert.False(publicOptions.GetProperty("checkoutEnabled").GetBoolean());
         Assert.Empty(publicOptions.GetProperty("items").EnumerateArray());
         var request = new { checkoutToken = Guid.NewGuid(), paymentMethod = "payLater", deliveryMethodId = Guid.NewGuid(),
-            customerName = "Ada", email = "ada@example.test", addressLine = "Street 1", postalCode = "1234 AB", city = "City", countryCode = "NL",
+            customerName = "Ada", email = "ada@example.test", addressLine = "Street 1", postalCode = "1234 AB", city = "City", countryCode = "NL", phoneNumber = "0301234567",
             lines = new[] { new { productId = Guid.NewGuid(), variantId = Guid.NewGuid(), quantity = 1, expectedAmount = "10.00", expectedCurrency = "EUR" } } };
         foreach (var path in new[] { "/api/shop/orders", "/api/shop/online-payments" })
         {

@@ -33,8 +33,21 @@ export interface OrderDetail {
   number: string;
   placedAt: string;
   customer: { name: string; email: string };
-  deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
-  deliveryMethod?: { id: string; name: string; description: string | null; amount: string; currency: string } | null;
+  deliveryAddress: {
+    addressLine: string;
+    postalCode: string;
+    city: string;
+    countryCode: string;
+    phoneNumber?: string;
+    notes?: string;
+  };
+  deliveryMethod?: {
+    id: string;
+    name: string;
+    description: string | null;
+    amount: string;
+    currency: string;
+  } | null;
   paymentMethod: OrderPaymentMethod;
   paymentInstructions: string | null;
   status: 'awaitingPayment' | 'paid' | 'shipped' | 'cancelled' | 'refunded';

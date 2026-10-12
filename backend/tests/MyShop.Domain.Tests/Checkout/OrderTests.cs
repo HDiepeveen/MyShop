@@ -6,6 +6,32 @@ namespace MyShop.Domain.Tests.Checkout;
 public sealed class OrderTests
 {
     [Fact]
+    public void AddressPreservesFreeCountryPhoneAndOptionalNotes()
+    {
+        var address = DeliveryAddress.Create("Street 1", "1234 AB", "Paramaribo",
+            " Suriname ", " +597 123456 ", " Bij de zijdeur.\r\nBel even. ");
+        Assert.Equal("Suriname", address.CountryCode);
+        Assert.Equal("+597 123456", address.PhoneNumber);
+        Assert.Equal("Bij de zijdeur.\nBel even.", address.Notes);
+        Assert.Equal("", DeliveryAddress.Create("Street 1", "1234 AB", "Utrecht", "NL").PhoneNumber);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    [InlineData("abc")]
+    [InlineData("123<script>")]
+    public void RequiredPhoneRejectsMissingOrInvalidValues(string phone) =>
+        Assert.Throws<ArgumentException>(() => DeliveryAddress.NormalizePhone(phone, true));
+
+    [Fact]
+    public void AddressRejectsOversizedCountryAndNotes()
+    {
+        Assert.Throws<ArgumentException>(() => DeliveryAddress.Create("Street 1", "1234 AB", "Utrecht", new string('x', 101)));
+        Assert.Throws<ArgumentException>(() => DeliveryAddress.Create("Street 1", "1234 AB", "Utrecht", "Nederland", "0301234567", new string('x', 1001)));
+    }
+
+    [Fact]
     public void PlaceCapturesTrimmedCustomerAddressLinesAndExactTotals()
     {
         var id = Guid.NewGuid();
@@ -58,8 +84,8 @@ public sealed class OrderTests
 
     [Theory]
     [InlineData("", "1234 AB", "Amsterdam", "NL")]
-    [InlineData("Street 1", "1234 AB", "Amsterdam", "NLD")]
-    [InlineData("Street 1", "1234 AB", "Amsterdam", "1L")]
+    [InlineData("Street 1", "1234 AB", "Amsterdam", "")]
+    [InlineData("Street 1", "1234 AB", "Amsterdam", "\n")]
     public void AddressRejectsInvalidValues(string line, string postalCode, string city, string country) =>
         Assert.Throws<ArgumentException>(() => DeliveryAddress.Create(line, postalCode, city, country));
 

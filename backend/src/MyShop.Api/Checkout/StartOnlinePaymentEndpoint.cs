@@ -32,7 +32,7 @@ public static class StartOnlinePaymentEndpoint
             var result = await useCase.ExecuteAsync(new(request.CheckoutToken, request.DeliveryMethodId,
                 request.CustomerName, request.Email, request.AddressLine, request.PostalCode,
                 request.City, request.CountryCode, lines, context.User.IsInRole(AdminSecurity.CustomerRole)
-                    ? context.User.FindFirstValue(ClaimTypes.NameIdentifier) : null),
+                    ? context.User.FindFirstValue(ClaimTypes.NameIdentifier) : null, MyShop.Domain.Checkout.DeliveryAddress.NormalizePhone(request.PhoneNumber, true), request.Notes),
                 cancellationToken);
             return result.Failure switch
             {
@@ -88,7 +88,7 @@ public static class StartOnlinePaymentEndpoint
 
 public sealed record StartOnlinePaymentRequest(Guid CheckoutToken, Guid DeliveryMethodId,
     string CustomerName, string Email, string AddressLine, string PostalCode, string City,
-    string CountryCode, IReadOnlyList<StartOnlinePaymentLineRequest?> Lines);
+    string CountryCode, IReadOnlyList<StartOnlinePaymentLineRequest?> Lines, string? PhoneNumber = null, string? Notes = null);
 public sealed record StartOnlinePaymentLineRequest(Guid ProductId, Guid VariantId, int Quantity,
     string ExpectedAmount, string ExpectedCurrency);
 public sealed record StartOnlinePaymentResponse(Guid CheckoutToken, string ProviderName,

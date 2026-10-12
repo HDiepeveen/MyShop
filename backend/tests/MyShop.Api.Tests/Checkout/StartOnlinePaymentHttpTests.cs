@@ -75,7 +75,7 @@ public sealed class StartOnlinePaymentHttpTests
             addressLine = "Main street 1",
             postalCode = "1234 AB",
             city = "Amsterdam",
-            countryCode = "NL",
+            countryCode = "NL", phoneNumber = "0301234567",
             lines = new[]
             {
                 new { productId, variantId, quantity = 2, expectedAmount = "12.50", expectedCurrency = "EUR" }
@@ -116,7 +116,7 @@ public sealed class StartOnlinePaymentHttpTests
             addressLine = "Main street 1",
             postalCode = "1234 AB",
             city = "Amsterdam",
-            countryCode = "NL",
+            countryCode = "NL", phoneNumber = "0301234567",
             lines = new[]
             {
                 new { productId, variantId, quantity = 2, expectedAmount = "12.50", expectedCurrency = "EUR" }

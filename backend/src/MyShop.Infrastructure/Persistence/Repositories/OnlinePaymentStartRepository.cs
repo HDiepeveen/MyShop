@@ -40,7 +40,7 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
             AddressLine = payment.Address.AddressLine,
             PostalCode = payment.Address.PostalCode,
             City = payment.Address.City,
-            CountryCode = payment.Address.CountryCode,
+            CountryCode = payment.Address.CountryCode, PhoneNumber = payment.Address.PhoneNumber, Notes = payment.Address.Notes,
             CreatedAt = payment.CreatedAt.ToUniversalTime(),
             DeliveryMethodId = payment.DeliveryMethod.Id,
             DeliveryMethodName = payment.DeliveryMethod.Name,
@@ -82,7 +82,7 @@ internal sealed class OnlinePaymentStartRepository(MyShopDbContext context) : IO
         new(payment.CheckoutToken, payment.ProviderName, payment.PaymentReference,
             payment.ProviderPaymentId, new Uri(payment.CheckoutUrl),
             new(payment.CustomerName, payment.Email),
-            new(payment.AddressLine, payment.PostalCode, payment.City, payment.CountryCode),
+            new(payment.AddressLine, payment.PostalCode, payment.City, payment.CountryCode, payment.PhoneNumber, payment.Notes),
             payment.Lines.OrderBy(line => line.Ordinal).Select(line =>
                 new OnlinePaymentStartLineSnapshot(line.ProductId, line.VariantId,
                     line.ProductName, line.VariantName, line.Quantity, line.UnitAmount,

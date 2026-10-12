@@ -28,7 +28,14 @@ export interface CustomerOrderPage {
 }
 export interface CustomerOrderDetail extends CustomerOrderSummary {
   customer: { name: string; email: string };
-  deliveryAddress: { addressLine: string; postalCode: string; city: string; countryCode: string };
+  deliveryAddress: {
+    addressLine: string;
+    postalCode: string;
+    city: string;
+    countryCode: string;
+    phoneNumber?: string;
+    notes?: string;
+  };
   deliveryMethod?: {
     id: string;
     name: string;

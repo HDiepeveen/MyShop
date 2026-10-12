@@ -194,17 +194,15 @@ describe('Cart page', () => {
     TestBed.inject(Cart).add(productId, variantId);
     const harness = await RouterTestingHarness.create('/winkel/winkelmand');
     paymentReply();
-    http
-      .expectOne('/api/shop/delivery-methods')
-      .flush([
-        {
-          id: '40000000-0000-0000-0000-000000000001',
-          name: 'Post',
-          amount: '0.00',
-          currency: 'EUR',
-          description: null,
-        },
-      ]);
+    http.expectOne('/api/shop/delivery-methods').flush([
+      {
+        id: '40000000-0000-0000-0000-000000000001',
+        name: 'Post',
+        amount: '0.00',
+        currency: 'EUR',
+        description: null,
+      },
+    ]);
     request().flush(quote());
     await harness.fixture.whenStable();
     harness.detectChanges();
@@ -216,6 +214,8 @@ describe('Cart page', () => {
     checkout.addressLine = 'Street 1';
     checkout.postalCode = '1234 AB';
     checkout.city = 'Utrecht';
+    checkout.phoneNumber = '0301234567';
+    checkout.countryCode = 'Nederland';
     checkout.submit();
     expect(page.checkoutBusy()).toBe(true);
     const before = TestBed.inject(Cart).lines();

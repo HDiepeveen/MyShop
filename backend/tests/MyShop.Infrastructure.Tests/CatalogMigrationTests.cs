@@ -11,7 +11,7 @@ public sealed class CatalogMigrationTests
     public void MigrationSnapshotMatchesCurrentSqlServerModel()
     {
         using var context = new MyShopDesignTimeDbContextFactory().CreateDbContext([]);
-        Assert.EndsWith("_ManagedMollieSettings", context.Database.GetMigrations().Last());
+        Assert.EndsWith("_DeliveryContactDetails", context.Database.GetMigrations().Last());
         Assert.False(context.Database.HasPendingModelChanges());
     }
 

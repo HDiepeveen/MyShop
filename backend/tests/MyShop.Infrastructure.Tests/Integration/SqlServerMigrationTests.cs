@@ -123,6 +123,9 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             Assert.Null(order.RefundReason);
             Assert.Null(order.CustomerUserId);
             Assert.Null(order.DeliveryMethodId);
+            Assert.Equal("NL", order.CountryCode.Trim());
+            Assert.Equal("", order.PhoneNumber);
+            Assert.Equal("", order.Notes);
             var delivery = await context.DeliveryMethods.SingleAsync();
             Assert.Equal("Standaardbezorging", delivery.Name);
             Assert.True(delivery.Enabled);
@@ -135,7 +138,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
     {
         await using var context = database.CreateContext();
         await context.Database.MigrateAsync();
-        Assert.Equal(33, (await context.Database.GetAppliedMigrationsAsync()).Count());
+        Assert.Equal(34, (await context.Database.GetAppliedMigrationsAsync()).Count());
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         Assert.False(context.Database.HasPendingModelChanges());
         Assert.True(await context.Database.CanConnectAsync());
@@ -152,7 +155,7 @@ public sealed class SqlServerMigrationTests(SqlServerDatabase database)
             await context.GetService<IMigrator>().MigrateAsync(Migration.InitialDatabase);
             Assert.Empty(await context.Database.GetAppliedMigrationsAsync());
             await context.Database.MigrateAsync();
-            Assert.Equal(33, (await context.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(34, (await context.Database.GetAppliedMigrationsAsync()).Count());
             Assert.Empty(await context.Database.GetPendingMigrationsAsync());
         }
         finally

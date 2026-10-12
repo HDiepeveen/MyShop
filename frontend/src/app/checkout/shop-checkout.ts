@@ -1,9 +1,20 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, computed, effect, untracked, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  effect,
+  untracked,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CheckoutOrderLine, OnlinePaymentStart, OrderApi, OrderReceipt } from './order.api';
 import { errorMessage } from '../catalog/error-message';
+import { countryName } from '../customer/country-name';
 import { MollieNavigation } from './mollie-navigation';
 import { PendingPayment } from './pending-payment';
 import { Auth } from '../auth/auth';
@@ -37,59 +48,89 @@ import { CustomerAccountApi, CustomerProfile } from '../customer/customer-accoun
             [disabled]="busy()"
             required
         /></label>
+        <label
+          >Telefoonnummer<input
+            name="phoneNumber"
+            type="tel"
+            autocomplete="tel"
+            [(ngModel)]="phoneNumber"
+            (ngModelChange)="markEdited('phoneNumber')"
+            maxlength="50"
+            required
+            [disabled]="busy()"
+        /></label>
+        <label
+          >Opmerkingen<textarea
+            name="notes"
+            [(ngModel)]="notes"
+            (ngModelChange)="markEdited('notes')"
+            maxlength="1000"
+            rows="3"
+            [disabled]="busy()"
+          ></textarea>
+        </label>
         @if (savedAddress(); as address) {
-          <label class="check-field"><input type="checkbox" name="differentAddress"
-            [ngModel]="differentAddress()" (ngModelChange)="differentAddress.set($event)"
-            [disabled]="busy() || !!onlinePayment()" />Afwijkend afleveradres</label>
+          <label class="check-field"
+            ><input
+              type="checkbox"
+              name="differentAddress"
+              [ngModel]="differentAddress()"
+              (ngModelChange)="differentAddress.set($event)"
+              [disabled]="busy() || !!onlinePayment()"
+            />Afwijkend afleveradres</label
+          >
           @if (!differentAddress()) {
             <section aria-label="Opgeslagen afleveradres">
               <h3>Afleveradres uit je account</h3>
-              <p>{{ address.addressLine }}<br />{{ address.postalCode }} {{ address.city }}<br />{{ address.countryCode }}</p>
+              <p>
+                {{ address.addressLine }}<br />{{ address.postalCode }} {{ address.city }}<br />{{
+                  address.countryCode
+                }}
+              </p>
             </section>
           }
         }
         @if (!savedAddress() || differentAddress()) {
-        <label
-          >Adres<input
-            name="address"
-            [(ngModel)]="addressLine"
-            (ngModelChange)="markEdited('addressLine')"
-            autocomplete="street-address"
-            maxlength="200"
-            [disabled]="busy()"
-            required
-        /></label>
-        <label
-          >Postcode<input
-            name="postalCode"
-            [(ngModel)]="postalCode"
-            (ngModelChange)="markEdited('postalCode')"
-            autocomplete="postal-code"
-            maxlength="32"
-            [disabled]="busy()"
-            required
-        /></label>
-        <label
-          >Plaats<input
-            name="city"
-            [(ngModel)]="city"
-            (ngModelChange)="markEdited('city')"
-            autocomplete="address-level2"
-            maxlength="100"
-            [disabled]="busy()"
-            required
-        /></label>
-        <label
-          >Landcode<input
-            name="countryCode"
-            [(ngModel)]="countryCode"
-            (ngModelChange)="markEdited('countryCode')"
-            autocomplete="country"
-            minlength="2"
-            maxlength="2"
-            [disabled]="busy()"
-            required
-        /></label>
+          <label
+            >Adres<input
+              name="address"
+              [(ngModel)]="addressLine"
+              (ngModelChange)="markEdited('addressLine')"
+              autocomplete="street-address"
+              maxlength="200"
+              [disabled]="busy()"
+              required
+          /></label>
+          <label
+            >Postcode<input
+              name="postalCode"
+              [(ngModel)]="postalCode"
+              (ngModelChange)="markEdited('postalCode')"
+              autocomplete="postal-code"
+              maxlength="32"
+              [disabled]="busy()"
+              required
+          /></label>
+          <label
+            >Plaats<input
+              name="city"
+              [(ngModel)]="city"
+              (ngModelChange)="markEdited('city')"
+              autocomplete="address-level2"
+              maxlength="100"
+              [disabled]="busy()"
+              required
+          /></label>
+          <label
+            >Land<input
+              name="countryCode"
+              [(ngModel)]="countryCode"
+              (ngModelChange)="markEdited('countryCode')"
+              autocomplete="country-name"
+              maxlength="100"
+              [disabled]="busy()"
+              required
+          /></label>
         }
         @if (failure()) {
           <p class="error" role="alert">{{ failure() }}</p>
@@ -112,7 +153,13 @@ import { CustomerAccountApi, CustomerProfile } from '../customer/customer-accoun
             @if (payment.providerName === 'Mollie') {
               <p>iDEAL via Mollie · Testmodus: er wordt geen echt geld afgeschreven.</p>
             }
-            <p><a [href]="payment.checkoutUrl">{{ payment.providerName === 'Mollie' ? 'iDEAL-betaalpagina openen' : 'Betaalpagina openen' }}</a></p>
+            <p>
+              <a [href]="payment.checkoutUrl">{{
+                payment.providerName === 'Mollie'
+                  ? 'iDEAL-betaalpagina openen'
+                  : 'Betaalpagina openen'
+              }}</a>
+            </p>
             <button type="button" [disabled]="busy()" (click)="completeOnlinePayment(payment)">
               {{ busy() ? 'Betaalstatus controleren…' : 'Betaalstatus controleren' }}
             </button>
@@ -153,7 +200,9 @@ export class ShopCheckout {
   addressLine = '';
   postalCode = '';
   city = '';
-  countryCode = 'NL';
+  countryCode = '';
+  phoneNumber = '';
+  notes = '';
   private checkoutToken = crypto.randomUUID();
 
   private readonly savedProfile = signal<CustomerProfile | null>(null);
@@ -164,53 +213,77 @@ export class ShopCheckout {
     const addressLine = profile?.addressLine?.trim() ?? '';
     const postalCode = profile?.postalCode?.trim() ?? '';
     const city = profile?.city?.trim() ?? '';
-    const countryCode = profile?.countryCode?.trim() ?? '';
-    return addressLine && addressLine.length <= 200 && postalCode && postalCode.length <= 32 &&
-      city && city.length <= 100 && /^[a-zA-Z]{2}$/.test(countryCode)
-      ? { addressLine, postalCode, city, countryCode } : null;
+    const countryCode = countryName(profile?.countryCode);
+    return addressLine &&
+      addressLine.length <= 200 &&
+      postalCode &&
+      postalCode.length <= 32 &&
+      city &&
+      city.length <= 100 &&
+      countryCode.length > 0 &&
+      countryCode.length <= 100
+      ? { addressLine, postalCode, city, countryCode }
+      : null;
   });
 
   constructor() {
     effect((onCleanup) => {
       const session = this.auth.session();
       if (!session?.customer) return;
-      const subscription = untracked(() => this.account.profile()
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (profile) => {
-            if (this.auth.session() !== session || this.busy() || this.onlinePayment()) return;
-            if ((this.addressLine && this.addressLine !== profile.addressLine) ||
+      const subscription = untracked(() =>
+        this.account
+          .profile()
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (profile) => {
+              if (this.auth.session() !== session || this.busy() || this.onlinePayment()) return;
+              if (
+                (this.addressLine && this.addressLine !== profile.addressLine) ||
                 (this.postalCode && this.postalCode !== profile.postalCode) ||
                 (this.city && this.city !== profile.city) ||
-                (this.countryCode !== 'NL' && this.countryCode !== profile.countryCode))
-              this.differentAddress.set(true);
-            this.savedProfile.set(profile);
-            if (!this.customerName && !this.editedFields.has('customerName')) this.customerName = profile.name ?? '';
-            if (!this.email && !this.editedFields.has('email')) this.email = profile.email;
-            if (!this.addressLine && !this.editedFields.has('addressLine')) this.addressLine = profile.addressLine ?? '';
-            if (!this.postalCode && !this.editedFields.has('postalCode')) this.postalCode = profile.postalCode ?? '';
-            if (!this.city && !this.editedFields.has('city')) this.city = profile.city ?? '';
-            if (this.countryCode === 'NL' && !this.editedFields.has('countryCode')) this.countryCode = profile.countryCode ?? 'NL';
-          },
-          error: () => {
-            if (this.auth.session() === session && !this.busy() && !this.onlinePayment())
-              this.notice.set('Je profiel kon niet worden opgehaald. Vul je gegevens zelf in.');
-          },
-        }));
+                (!!this.countryCode && this.countryCode !== countryName(profile.countryCode))
+              )
+                this.differentAddress.set(true);
+              this.savedProfile.set(profile);
+              if (!this.customerName && !this.editedFields.has('customerName'))
+                this.customerName = profile.name ?? '';
+              if (!this.email && !this.editedFields.has('email')) this.email = profile.email;
+              if (!this.addressLine && !this.editedFields.has('addressLine'))
+                this.addressLine = profile.addressLine ?? '';
+              if (!this.postalCode && !this.editedFields.has('postalCode'))
+                this.postalCode = profile.postalCode ?? '';
+              if (!this.city && !this.editedFields.has('city')) this.city = profile.city ?? '';
+              if (!this.countryCode && !this.editedFields.has('countryCode'))
+                this.countryCode = countryName(profile.countryCode);
+              if (!this.phoneNumber && !this.editedFields.has('phoneNumber'))
+                this.phoneNumber = profile.phoneNumber ?? '';
+              if (!this.notes && !this.editedFields.has('notes')) this.notes = profile.notes ?? '';
+            },
+            error: () => {
+              if (this.auth.session() === session && !this.busy() && !this.onlinePayment())
+                this.notice.set('Je profiel kon niet worden opgehaald. Vul je gegevens zelf in.');
+            },
+          }),
+      );
       onCleanup(() => subscription.unsubscribe());
     });
   }
 
   markEdited(field: string) {
     this.editedFields.add(field);
-    if (['addressLine', 'postalCode', 'city', 'countryCode'].includes(field)) this.differentAddress.set(true);
+    if (['addressLine', 'postalCode', 'city', 'countryCode'].includes(field))
+      this.differentAddress.set(true);
   }
   private shippingAddress() {
     const saved = this.savedAddress();
-    return saved && !this.differentAddress() ? saved : {
-      addressLine: this.addressLine, postalCode: this.postalCode,
-      city: this.city, countryCode: this.countryCode,
-    };
+    return saved && !this.differentAddress()
+      ? saved
+      : {
+          addressLine: this.addressLine,
+          postalCode: this.postalCode,
+          city: this.city,
+          countryCode: this.countryCode,
+        };
   }
 
   validationError() {
@@ -225,8 +298,16 @@ export class ShopCheckout {
       return 'Vul een postcode van maximaal 32 tekens in.';
     if (!address.city.trim() || address.city.trim().length > 100)
       return 'Vul een plaats van maximaal 100 tekens in.';
-    if (!/^[a-zA-Z]{2}$/.test(address.countryCode.trim()))
-      return 'Gebruik een landcode van twee letters.';
+    if (!address.countryCode.trim() || address.countryCode.trim().length > 100)
+      return 'Vul een land in van maximaal 100 tekens.';
+    if (
+      !this.phoneNumber.trim() ||
+      this.phoneNumber.length > 50 ||
+      !/[0-9]/.test(this.phoneNumber) ||
+      !new RegExp('^[+0-9 ()./-]+$').test(this.phoneNumber)
+    )
+      return 'Vul een geldig telefoonnummer in.';
+    if (this.notes.length > 1000) return 'Gebruik maximaal 1000 tekens voor opmerkingen.';
     const lines = this.lines();
     if (
       !lines.length ||
@@ -272,6 +353,8 @@ export class ShopCheckout {
       postalCode: address.postalCode,
       city: address.city,
       countryCode: address.countryCode,
+      phoneNumber: this.phoneNumber.trim(),
+      notes: this.notes.trim(),
       lines: this.lines(),
     };
     if (this.paymentMethod() === 'online') {
@@ -285,6 +368,8 @@ export class ShopCheckout {
           postalCode: request.postalCode,
           city: request.city,
           countryCode: request.countryCode,
+          phoneNumber: request.phoneNumber,
+          notes: request.notes,
           lines: request.lines,
         })
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -296,12 +381,19 @@ export class ShopCheckout {
             this.onlinePayment.set(payment);
             this.pending.save(payment.checkoutToken, request.lines);
             if (payment.providerName === 'Mollie') {
-              this.redirecting.set(true); this.busy.set(true); this.busyChanged.emit(true);
+              this.redirecting.set(true);
+              this.busy.set(true);
+              this.busyChanged.emit(true);
               this.notice.set('Je wordt doorgestuurd naar Mollie voor iDEAL…');
-              try { this.navigation.open(payment.checkoutUrl); }
-              catch {
-                this.redirecting.set(false); this.busy.set(false); this.busyChanged.emit(false);
-                this.notice.set('Automatisch doorsturen lukte niet. Open hieronder de bestaande iDEAL-betaalpagina.');
+              try {
+                this.navigation.open(payment.checkoutUrl);
+              } catch {
+                this.redirecting.set(false);
+                this.busy.set(false);
+                this.busyChanged.emit(false);
+                this.notice.set(
+                  'Automatisch doorsturen lukte niet. Open hieronder de bestaande iDEAL-betaalpagina.',
+                );
               }
             }
           },
@@ -367,8 +459,6 @@ export class ShopCheckout {
   buttonText() {
     if (this.busy())
       return this.paymentMethod() === 'online' ? 'Doorsturen naar iDEAL…' : 'Bestelling plaatsen…';
-    return this.paymentMethod() === 'online'
-      ? 'Betalen met iDEAL'
-      : 'Bestelling plaatsen';
+    return this.paymentMethod() === 'online' ? 'Betalen met iDEAL' : 'Bestelling plaatsen';
   }
 }

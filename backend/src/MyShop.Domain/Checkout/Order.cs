@@ -36,24 +36,41 @@ public sealed record OrderCustomer
 
 public sealed record DeliveryAddress
 {
-    private DeliveryAddress(string addressLine, string postalCode, string city, string countryCode)
-    { AddressLine = addressLine; PostalCode = postalCode; City = city; CountryCode = countryCode; }
+    private DeliveryAddress(string addressLine, string postalCode, string city, string countryCode, string phoneNumber, string notes)
+    { AddressLine = addressLine; PostalCode = postalCode; City = city; CountryCode = countryCode; PhoneNumber = phoneNumber; Notes = notes; }
     public string AddressLine { get; }
     public string PostalCode { get; }
     public string City { get; }
     public string CountryCode { get; }
+    public string PhoneNumber { get; }
+    public string Notes { get; }
 
-    public static DeliveryAddress Create(string addressLine, string postalCode, string city, string countryCode)
+    public static DeliveryAddress Create(string addressLine, string postalCode, string city, string countryCode, string? phoneNumber = null, string? notes = null)
     {
         addressLine = Required(addressLine, 200, nameof(addressLine));
         postalCode = Required(postalCode, 32, nameof(postalCode));
         city = Required(city, 100, nameof(city));
-        countryCode = Required(countryCode, 2, nameof(countryCode)).ToUpperInvariant();
-        if (countryCode.Length != 2 || countryCode.Any(character => character is < 'A' or > 'Z'))
-            throw new ArgumentException("Country code must contain two letters.", nameof(countryCode));
-        return new(addressLine, postalCode, city, countryCode);
+        countryCode = Required(countryCode, 100, nameof(countryCode));
+        if (countryCode.Any(char.IsControl)) throw new ArgumentException("Vul een geldig land in.");
+        if (countryCode.Length == 2 && countryCode.All(char.IsLetter)) countryCode = countryCode.ToUpperInvariant();
+        return new(addressLine, postalCode, city, countryCode, NormalizePhone(phoneNumber), NormalizeNotes(notes));
     }
 
+    public static string NormalizePhone(string? value, bool required = false)
+    {
+        value = value?.Trim() ?? "";
+        if (required && value.Length == 0) throw new ArgumentException("Vul een telefoonnummer in.");
+        if (value.Length > 50 || value.Length > 0 && (!value.Any(char.IsDigit) || !System.Text.RegularExpressions.Regex.IsMatch(value, "^[+0-9 ()\\-./]+$")))
+            throw new ArgumentException("Vul een geldig telefoonnummer van maximaal 50 tekens in.");
+        return value;
+    }
+    public static string NormalizeNotes(string? value)
+    {
+        value = value?.Trim().Replace("\r\n", "\n") ?? "";
+        if (value.Length > 1000 || value.Any(c => char.IsControl(c) && c is not ('\n' or '\t')))
+            throw new ArgumentException("Gebruik maximaal 1000 tekens voor opmerkingen.");
+        return value;
+    }
     private static string Required(string value, int maximum, string parameter)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);

@@ -13,6 +13,8 @@ internal sealed class OnlinePaymentStartPersistence
     public string AddressLine { get; set; } = null!;
     public string PostalCode { get; set; } = null!;
     public string City { get; set; } = null!;
+    public string PhoneNumber { get; set; } = "";
+    public string Notes { get; set; } = "";
     public string CountryCode { get; set; } = null!;
     public DateTimeOffset CreatedAt { get; set; }
     public Guid DeliveryMethodId { get; set; }

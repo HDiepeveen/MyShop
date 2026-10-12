@@ -1,3 +1,4 @@
+import { countryName } from './country-name';
 import { ShopBranding } from '../shop/shop-branding';
 import { ShopSettings } from '../shop/shop-settings';
 import { CopyText } from '../copy-text';
@@ -125,8 +126,14 @@ import {
           {{ item.customer.name }}<br />
           {{ item.deliveryAddress.addressLine }}<br />{{ item.deliveryAddress.postalCode }}
           {{ item.deliveryAddress.city }}<br />
-          {{ item.deliveryAddress.countryCode }}
+          {{ countryName(item.deliveryAddress.countryCode) }}
+          @if (item.deliveryAddress.phoneNumber) {
+            <br />Telefoonnummer: {{ item.deliveryAddress.phoneNumber }}
+          }
         </p>
+        @if (item.deliveryAddress.notes) {
+          <p class="preserve-lines">Opmerkingen: {{ item.deliveryAddress.notes }}</p>
+        }
         <p>{{ item.customer.email }}</p>
       </section>
       <section class="panel">
@@ -160,6 +167,7 @@ import {
     }`,
 })
 export class CustomerOrderDetail {
+  readonly countryName = countryName;
   readonly branding = inject(ShopBranding);
   readonly shopSettings = inject(ShopSettings);
   private readonly api = inject(CustomerOrderApi);

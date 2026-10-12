@@ -20,31 +20,70 @@ describe('Shop checkout', () => {
     localStorage.removeItem('myshop.pending-payment.v1');
     TestBed.configureTestingModule({
       imports: [ShopCheckout],
-      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MollieNavigation, useValue: { open: vi.fn(() => { throw new Error('Blocked navigation'); }) } }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: MollieNavigation,
+          useValue: {
+            open: vi.fn(() => {
+              throw new Error('Blocked navigation');
+            }),
+          },
+        },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => { http.verify(); localStorage.removeItem('myshop.pending-payment.v1'); });
+  afterEach(() => {
+    http.verify();
+    localStorage.removeItem('myshop.pending-payment.v1');
+  });
 
   it('saves the payment before redirecting directly and blocks duplicate clicks during navigation', () => {
     const fixture = TestBed.createComponent(ShopCheckout);
-    fixture.componentRef.setInput('lines', [line]); fixture.componentRef.setInput('paymentMethod', 'online');
+    fixture.componentRef.setInput('lines', [line]);
+    fixture.componentRef.setInput('paymentMethod', 'online');
     fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
     const page = fixture.componentInstance;
-    page.customerName = 'Ada'; page.email = 'ada@example.test'; page.addressLine = 'Street 1'; page.postalCode = '1234 AB'; page.city = 'Utrecht';
-    const placed = vi.fn(); page.placed.subscribe(placed);
+    page.customerName = 'Ada';
+    page.email = 'ada@example.test';
+    page.addressLine = 'Street 1';
+    page.postalCode = '1234 AB';
+    page.city = 'Utrecht';
+    page.phoneNumber = '0301234567';
+    page.countryCode = 'Nederland';
+    const placed = vi.fn();
+    page.placed.subscribe(placed);
     const navigation = vi.spyOn(TestBed.inject(MollieNavigation), 'open').mockImplementation(() => {
       expect(TestBed.inject(PendingPayment).token()).not.toBeNull();
-      expect(TestBed.inject(PendingPayment).matches(TestBed.inject(PendingPayment).token()!, [line])).toBe(true);
+      expect(
+        TestBed.inject(PendingPayment).matches(TestBed.inject(PendingPayment).token()!, [line]),
+      ).toBe(true);
     });
-    page.submit(); page.submit(); http.expectOne('/api/auth/csrf').flush(null);
+    page.submit();
+    page.submit();
+    http.expectOne('/api/auth/csrf').flush(null);
     const start = http.expectOne('/api/shop/online-payments');
-    start.flush({ checkoutToken: start.request.body.checkoutToken, providerName: 'Mollie', checkoutUrl: 'https://www.mollie.com/checkout/test', paymentReference: 'OP-TEST', providerPaymentId: 'tr_test', totals: [], deliveryMethod: {} });
+    start.flush({
+      checkoutToken: start.request.body.checkoutToken,
+      providerName: 'Mollie',
+      checkoutUrl: 'https://www.mollie.com/checkout/test',
+      paymentReference: 'OP-TEST',
+      providerPaymentId: 'tr_test',
+      totals: [],
+      deliveryMethod: {},
+    });
     expect(navigation).toHaveBeenCalledWith('https://www.mollie.com/checkout/test');
-    expect(page.redirecting()).toBe(true); expect(page.busy()).toBe(true); expect(placed).not.toHaveBeenCalled();
-    page.submit(); http.expectNone('/api/auth/csrf'); http.expectNone('/api/shop/online-payments');
-    fixture.detectChanges(); expect(fixture.nativeElement.querySelector('[aria-label="Online betaling"]')).toBeNull();
+    expect(page.redirecting()).toBe(true);
+    expect(page.busy()).toBe(true);
+    expect(placed).not.toHaveBeenCalled();
+    page.submit();
+    http.expectNone('/api/auth/csrf');
+    http.expectNone('/api/shop/online-payments');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-label="Online betaling"]')).toBeNull();
   });
 
   it('prepares CSRF and submits only customer input, the choice and cart identifiers', () => {
@@ -58,11 +97,15 @@ describe('Shop checkout', () => {
     page.addressLine = 'Main street 1';
     page.postalCode = '1234 AB';
     page.city = 'Amsterdam';
+    page.phoneNumber = '0301234567';
+    page.countryCode = 'Nederland';
     page.customerName = 'Ada Lovelace';
     page.email = 'ada@example.com';
     page.addressLine = 'Main street 1';
     page.postalCode = '1234 AB';
     page.city = 'Amsterdam';
+    page.phoneNumber = '0301234567';
+    page.countryCode = 'Nederland';
     const placed = vi.fn();
     page.placed.subscribe(placed);
 
@@ -80,7 +123,9 @@ describe('Shop checkout', () => {
       addressLine: 'Main street 1',
       postalCode: '1234 AB',
       city: 'Amsterdam',
-      countryCode: 'NL',
+      countryCode: 'Nederland',
+      phoneNumber: '0301234567',
+      notes: '',
       lines: [line],
     });
     request.flush({
@@ -104,6 +149,8 @@ describe('Shop checkout', () => {
     page.addressLine = 'Main street 1';
     page.postalCode = '1234 AB';
     page.city = 'Amsterdam';
+    page.phoneNumber = '0301234567';
+    page.countryCode = 'Nederland';
 
     page.submit();
     http.expectOne('/api/auth/csrf').flush(null);
@@ -138,6 +185,8 @@ describe('Shop checkout', () => {
     page.addressLine = 'Main street 1';
     page.postalCode = '1234 AB';
     page.city = 'Amsterdam';
+    page.phoneNumber = '0301234567';
+    page.countryCode = 'Nederland';
     const placed = vi.fn();
     page.placed.subscribe(placed);
     fixture.detectChanges();
@@ -155,7 +204,9 @@ describe('Shop checkout', () => {
       addressLine: 'Main street 1',
       postalCode: '1234 AB',
       city: 'Amsterdam',
-      countryCode: 'NL',
+      countryCode: 'Nederland',
+      phoneNumber: '0301234567',
+      notes: '',
       lines: [line],
     });
     request.flush({
@@ -174,7 +225,9 @@ describe('Shop checkout', () => {
         currency: 'EUR',
       },
     });
-    expect(TestBed.inject(MollieNavigation).open).toHaveBeenCalledWith('https://payments.example.test/test_123');
+    expect(TestBed.inject(MollieNavigation).open).toHaveBeenCalledWith(
+      'https://payments.example.test/test_123',
+    );
     expect(page.notice()).toContain('Automatisch doorsturen lukte niet');
     fixture.detectChanges();
     const content = fixture.nativeElement.textContent;

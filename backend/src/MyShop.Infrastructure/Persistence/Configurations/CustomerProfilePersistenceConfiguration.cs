@@ -18,7 +18,9 @@ internal sealed class CustomerProfilePersistenceConfiguration : IEntityTypeConfi
         builder.Property(profile => profile.AddressLine).IsRequired().HasMaxLength(200);
         builder.Property(profile => profile.PostalCode).IsRequired().HasMaxLength(32);
         builder.Property(profile => profile.City).IsRequired().HasMaxLength(100);
-        builder.Property(profile => profile.CountryCode).IsRequired().HasMaxLength(2).IsFixedLength();
+        builder.Property(profile => profile.CountryCode).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.PhoneNumber).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Notes).HasMaxLength(1000).IsRequired();
         builder.Property(profile => profile.Version).IsRequired().IsConcurrencyToken();
         builder.HasOne<IdentityUser>().WithOne().HasForeignKey<CustomerProfilePersistence>(profile => profile.UserId)
             .OnDelete(DeleteBehavior.Cascade);

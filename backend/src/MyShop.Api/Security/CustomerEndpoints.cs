@@ -97,7 +97,7 @@ public static class CustomerEndpoints
         var profile = await useCase.ExecuteAsync(user.Id, cancellationToken);
         return Results.Ok(new CustomerProfileResponse(user.Email!, profile?.Name,
             profile?.AddressLine, profile?.PostalCode, profile?.City, profile?.CountryCode,
-            profile?.Revision, user.EmailConfirmed));
+            profile?.Revision, user.EmailConfirmed, profile?.PhoneNumber, profile?.Notes));
     }
 
     private static async Task<IResult> UpdateProfileAsync(CustomerProfileRequest request,
@@ -109,12 +109,12 @@ public static class CustomerEndpoints
         try
         {
             var result = await useCase.ExecuteAsync(new(user.Id, request.Name, request.AddressLine,
-                request.PostalCode, request.City, request.CountryCode, request.Revision), cancellationToken);
+                request.PostalCode, request.City, request.CountryCode, request.Revision, request.PhoneNumber, request.Notes), cancellationToken);
             return result.Failure is UpdateCustomerProfileFailure.ConcurrencyConflict
                 ? Results.Conflict(new { code = "concurrency", message = "Je profiel is intussen gewijzigd. Vernieuw de pagina." })
                 : Results.Ok(new CustomerProfileResponse(user.Email!, result.Profile!.Name,
                     result.Profile.AddressLine, result.Profile.PostalCode, result.Profile.City,
-                    result.Profile.CountryCode, result.Profile.Revision, user.EmailConfirmed));
+                    result.Profile.CountryCode, result.Profile.Revision, user.EmailConfirmed, result.Profile.PhoneNumber, result.Profile.Notes));
         }
         catch (ArgumentException exception)
         {
@@ -135,6 +135,6 @@ public static class CustomerEndpoints
 public sealed record CustomerRegistrationRequest(string Email, string Password);
 public sealed record CustomerLoginRequest(string Email, string Password);
 public sealed record CustomerProfileRequest(string Name, string AddressLine, string PostalCode,
-    string City, string CountryCode, Guid? Revision);
+    string City, string CountryCode, Guid? Revision, string? PhoneNumber = null, string? Notes = null);
 public sealed record CustomerProfileResponse(string Email, string? Name, string? AddressLine,
-    string? PostalCode, string? City, string? CountryCode, Guid? Revision, bool EmailConfirmed = false);
+    string? PostalCode, string? City, string? CountryCode, Guid? Revision, bool EmailConfirmed = false, string? PhoneNumber = null, string? Notes = null);

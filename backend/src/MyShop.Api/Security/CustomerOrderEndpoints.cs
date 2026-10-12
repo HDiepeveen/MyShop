@@ -104,7 +104,7 @@ public static class CustomerOrderEndpoints
     private static CustomerOrderDetailResponse MapDetail(CustomerOrderDetail order) => new(
         order.Id, order.Number, order.PlacedAt,
         new(order.CustomerName, order.Email),
-        new(order.AddressLine, order.PostalCode, order.City, order.CountryCode),
+        new(order.AddressLine, order.PostalCode, order.City, order.CountryCode, order.PhoneNumber, order.Notes),
         PaymentMethod(order.PaymentMethod), order.PaymentInstructions, Status(order.Status),
         order.PaidAt, order.ShippedAt, order.ShippingCarrier, order.TrackingCode,
         order.CancelledAt, order.RefundedAt, order.Revision,
@@ -152,7 +152,7 @@ public sealed record CustomerOrderDeliveryMethodResponse(Guid Id, string Name, s
     string Amount, string Currency);
 public sealed record CustomerOrderCustomerResponse(string Name, string Email);
 public sealed record CustomerOrderAddressResponse(string AddressLine, string PostalCode, string City,
-    string CountryCode);
+    string CountryCode, string PhoneNumber = "", string Notes = "");
 public sealed record CustomerOrderLineResponse(Guid ProductId, Guid VariantId, string ProductName,
     string VariantName, int Quantity, string UnitAmount, string Currency, string TotalAmount);
 public sealed record CustomerOrderTotalResponse(string Currency, string Amount);

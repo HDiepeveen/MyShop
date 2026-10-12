@@ -443,14 +443,23 @@ namespace MyShop.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("CountryCode")
                         .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("nchar(2)")
-                        .IsFixedLength();
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PostalCode")
                         .IsRequired()
@@ -752,9 +761,8 @@ namespace MyShop.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("CountryCode")
                         .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("nchar(2)")
-                        .IsFixedLength();
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -795,10 +803,20 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
 
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("PaymentReference")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("PostalCode")
                         .IsRequired()
@@ -931,9 +949,8 @@ namespace MyShop.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("CountryCode")
                         .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("nchar(2)")
-                        .IsFixedLength();
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CustomerName")
                         .IsRequired()
@@ -969,6 +986,11 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(320)
                         .HasColumnType("nvarchar(320)");
 
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasMaxLength(40)
@@ -987,6 +1009,11 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                     b.Property<string>("PaymentReference")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTimeOffset>("PlacedAt")
                         .HasColumnType("datetimeoffset");

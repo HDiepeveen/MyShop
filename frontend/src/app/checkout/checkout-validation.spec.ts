@@ -38,6 +38,8 @@ describe('Checkout validation', () => {
     page.addressLine = 'Street 1';
     page.postalCode = '1234 AB';
     page.city = 'Utrecht';
+    page.phoneNumber = '0301234567';
+    page.countryCode = 'Nederland';
     return { fixture, page, api };
   }
   for (const [field, maximum] of [
@@ -57,18 +59,46 @@ describe('Checkout validation', () => {
       expect(api.startOnlinePayment).not.toHaveBeenCalled();
     });
   }
-  it.each(['a', 'NL1', '12', ''])('rejects country code %s', (country) => {
+  it.each(['', '  ', 'x'.repeat(101)])('rejects country code %s', (country) => {
     const { page, api } = setup();
     page.countryCode = country;
     page.submit();
     expect(api.place).not.toHaveBeenCalled();
-    expect(page.failure()).toContain('landcode');
+    expect(page.failure()).toContain('land');
   });
   it.each([0, 100, 1.5, NaN])('rejects cart quantity %s', (quantity) => {
     const { fixture, page, api } = setup();
     fixture.componentRef.setInput('lines', [{ ...line, quantity }]);
     page.submit();
     expect(api.place).not.toHaveBeenCalled();
+  });
+  it.each(['', '  ', 'abc', '123<script>'])('requires a valid phone: %s', (phone) => {
+    const { page, api } = setup();
+    page.phoneNumber = phone;
+    page.submit();
+    expect(api.place).not.toHaveBeenCalled();
+    expect(page.failure()).toContain('telefoonnummer');
+  });
+  it('submits free country text and optional delivery notes', () => {
+    const { page, api } = setup();
+    page.countryCode = 'Suriname';
+    page.phoneNumber = '+597 123456';
+    page.notes = ' Bel bij aankomst. ';
+    page.submit();
+    expect(api.place).toHaveBeenCalledWith(
+      expect.objectContaining({
+        countryCode: 'Suriname',
+        phoneNumber: '+597 123456',
+        notes: 'Bel bij aankomst.',
+      }),
+    );
+  });
+  it('rejects oversized notes', () => {
+    const { page, api } = setup();
+    page.notes = 'x'.repeat(1001);
+    page.submit();
+    expect(api.place).not.toHaveBeenCalled();
+    expect(page.failure()).toContain('opmerkingen');
   });
   it.each([0, 21])('rejects cart length %s', (length) => {
     const { fixture, page, api } = setup();
@@ -143,7 +173,7 @@ describe('Checkout validation', () => {
     const inputs = Array.from(
       fixture.nativeElement.querySelectorAll('input'),
     ) as HTMLInputElement[];
-    expect(inputs).toHaveLength(6);
+    expect(inputs).toHaveLength(7);
     expect(inputs.every((input) => input.disabled)).toBe(true);
     operation.error(new Error('Offline'));
     fixture.detectChanges();

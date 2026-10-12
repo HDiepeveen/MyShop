@@ -9,11 +9,11 @@ internal sealed class CustomerProfileRepository(MyShopDbContext context) : ICust
     public Task<CustomerProfileSnapshot?> GetAsync(string userId, CancellationToken cancellationToken) =>
         context.CustomerProfiles.AsNoTracking().Where(profile => profile.UserId == userId)
             .Select(profile => new CustomerProfileSnapshot(profile.UserId, profile.Name, profile.AddressLine,
-                profile.PostalCode, profile.City, profile.CountryCode, profile.Version))
+                profile.PostalCode, profile.City, profile.CountryCode, profile.Version, profile.PhoneNumber, profile.Notes))
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<CustomerProfileSnapshot?> SaveAsync(string userId, string name, string addressLine,
-        string postalCode, string city, string countryCode, Guid? expectedRevision, CancellationToken cancellationToken)
+        string postalCode, string city, string countryCode, Guid? expectedRevision, CancellationToken cancellationToken, string phoneNumber = "", string notes = "")
     {
         var replacement = Guid.NewGuid();
         if (expectedRevision is null)
@@ -21,7 +21,7 @@ internal sealed class CustomerProfileRepository(MyShopDbContext context) : ICust
             if (await context.CustomerProfiles.AnyAsync(profile => profile.UserId == userId, cancellationToken)) return null;
             context.CustomerProfiles.Add(new CustomerProfilePersistence { Id = Guid.NewGuid(), UserId = userId, Name = name,
                 AddressLine = addressLine, PostalCode = postalCode, City = city, CountryCode = countryCode,
-                Version = replacement });
+                PhoneNumber = phoneNumber, Notes = notes, Version = replacement });
             try { await context.SaveChangesAsync(cancellationToken); }
             catch (DbUpdateException) { return null; }
         }
@@ -34,9 +34,10 @@ internal sealed class CustomerProfileRepository(MyShopDbContext context) : ICust
                     .SetProperty(profile => profile.PostalCode, postalCode)
                     .SetProperty(profile => profile.City, city)
                     .SetProperty(profile => profile.CountryCode, countryCode)
+                    .SetProperty(profile => profile.PhoneNumber, phoneNumber).SetProperty(profile => profile.Notes, notes)
                     .SetProperty(profile => profile.Version, replacement), cancellationToken);
             if (changed == 0) return null;
         }
-        return new(userId, name, addressLine, postalCode, city, countryCode, replacement);
+        return new(userId, name, addressLine, postalCode, city, countryCode, replacement, phoneNumber, notes);
     }
 }

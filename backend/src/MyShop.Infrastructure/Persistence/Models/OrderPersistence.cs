@@ -12,6 +12,8 @@ internal sealed class OrderPersistence
     public string AddressLine { get; set; } = null!;
     public string PostalCode { get; set; } = null!;
     public string City { get; set; } = null!;
+    public string PhoneNumber { get; set; } = "";
+    public string Notes { get; set; } = "";
     public string CountryCode { get; set; } = null!;
     public Guid? DeliveryMethodId { get; set; }
     public string? DeliveryMethodName { get; set; }

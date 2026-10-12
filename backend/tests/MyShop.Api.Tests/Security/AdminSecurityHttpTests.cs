@@ -199,11 +199,14 @@ public sealed class AdminSecurityHttpTests
         var saved = await host.Client.PutAsJsonAsync("/api/customer/profile", new
         {
             name = "Ada Lovelace", addressLine = "Straat 1", postalCode = "1234 AB",
-            city = "Utrecht", countryCode = "nl", revision = (Guid?)null
+            city = "Utrecht", countryCode = " Suriname ", phoneNumber = " +597 123456 ",
+            notes = " Bij de zijdeur. ", revision = (Guid?)null
         });
         Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
         var profile = await saved.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal("NL", profile.GetProperty("countryCode").GetString());
+        Assert.Equal("Suriname", profile.GetProperty("countryCode").GetString());
+        Assert.Equal("+597 123456", profile.GetProperty("phoneNumber").GetString());
+        Assert.Equal("Bij de zijdeur.", profile.GetProperty("notes").GetString());
         Assert.NotEqual(Guid.Empty, profile.GetProperty("revision").GetGuid());
         Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PostAsJsonAsync(
             "/api/customer/auth/register", new { email = "customer@example.com", password = SecurityHost.Password })).StatusCode);
@@ -215,6 +218,8 @@ public sealed class AdminSecurityHttpTests
             "/api/customer/auth/login", new { email = "customer@example.com", password = SecurityHost.Password })).StatusCode);
         var loaded = await host.Client.GetFromJsonAsync<JsonElement>("/api/customer/profile");
         Assert.Equal("Ada Lovelace", loaded.GetProperty("name").GetString());
+        Assert.Equal("+597 123456", loaded.GetProperty("phoneNumber").GetString());
+        Assert.Equal("Bij de zijdeur.", loaded.GetProperty("notes").GetString());
         await host.Csrf();
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync("/api/auth/password",
             new { currentPassword = SecurityHost.Password, newPassword = "New-Customer-Password42!" })).StatusCode);

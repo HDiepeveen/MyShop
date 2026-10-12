@@ -15,6 +15,8 @@ const profile: Profile = {
   postalCode: '1234 AB',
   city: 'Utrecht',
   countryCode: 'NL',
+  phoneNumber: '0301234567',
+  notes: '',
   revision: null,
 };
 const product = {
@@ -75,14 +77,16 @@ describe('Customer page recovery', () => {
     const inputs = Array.from(
       fixture.nativeElement.querySelectorAll('input'),
     ) as HTMLInputElement[];
-    expect(inputs.length).toBe(6);
+    expect(inputs.length).toBe(7);
     expect(inputs.every((input) => input.disabled)).toBe(true);
     expect(api.update).toHaveBeenCalledWith({
       name: 'Ada Byron',
       addressLine: profile.addressLine,
       postalCode: profile.postalCode,
       city: profile.city,
-      countryCode: profile.countryCode,
+      countryCode: 'Nederland',
+      phoneNumber: profile.phoneNumber,
+      notes: profile.notes,
       revision: profile.revision,
     });
     saved.error(new Error('Offline'));
@@ -202,7 +206,10 @@ describe('Customer page recovery', () => {
       imports: [CustomerOrderDetail],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) },
+        },
         { provide: CustomerOrderApi, useValue: api },
       ],
     });
@@ -237,7 +244,10 @@ describe('Customer page recovery', () => {
       imports: [CustomerOrderDetail],
       providers: [
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) },
+        },
         { provide: CustomerOrderApi, useValue: api },
       ],
     });
@@ -270,7 +280,13 @@ describe('Customer page recovery', () => {
         imports: [CustomerOrderDetail],
         providers: [
           provideRouter([]),
-          { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
+          {
+            provide: ActivatedRoute,
+            useValue: {
+              paramMap: params,
+              queryParamMap: new BehaviorSubject(convertToParamMap({})),
+            },
+          },
           { provide: CustomerOrderApi, useValue: api },
         ],
       });

@@ -9,7 +9,7 @@ public sealed record StartOnlinePaymentLine(Guid ProductId, Guid VariantId, int 
     decimal ExpectedAmount, string ExpectedCurrency);
 public sealed record StartOnlinePaymentCommand(Guid CheckoutToken, Guid DeliveryMethodId,
     string CustomerName, string Email, string AddressLine, string PostalCode, string City,
-    string CountryCode, IReadOnlyList<StartOnlinePaymentLine> Lines, string? CustomerUserId = null);
+    string CountryCode, IReadOnlyList<StartOnlinePaymentLine> Lines, string? CustomerUserId = null, string? PhoneNumber = null, string? Notes = null);
 public enum StartOnlinePaymentFailure { CheckoutDisabled, CartUnavailable, PaymentUnavailable, DeliveryUnavailable }
 public sealed record OnlinePaymentStart(Guid CheckoutToken, string ProviderName, string PaymentReference,
     string ProviderPaymentId, Uri CheckoutUrl, IReadOnlyList<OrderTotalSnapshot> Totals,
@@ -65,7 +65,7 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
 
         var customer = OrderCustomer.Create(command.CustomerName, command.Email);
         var address = DeliveryAddress.Create(command.AddressLine, command.PostalCode,
-            command.City, command.CountryCode);
+            command.City, command.CountryCode, command.PhoneNumber, command.Notes);
         var expectedPrices = command.Lines.Select(line =>
             Money.Create(line.ExpectedAmount, line.ExpectedCurrency)).ToArray();
         var quote = await quoteCart.ExecuteAsync(new(command.Lines.Select(line =>
@@ -90,7 +90,7 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         var payment = new OnlinePaymentStartRecord(command.CheckoutToken, onlineStatus.ProviderName,
             paymentReference, providerStart.ProviderPaymentId, providerStart.CheckoutUrl,
             new(customer.Name, customer.Email), new(address.AddressLine, address.PostalCode,
-                address.City, address.CountryCode),
+                address.City, address.CountryCode, address.PhoneNumber, address.Notes),
             quote.Lines.Select(line => new OnlinePaymentStartLineSnapshot(line.ProductId,
                 line.VariantId, line.Name!, line.Variant!, line.Quantity, line.Amount!.Value,
                 line.Currency!, line.Total!.Value, line.VatRate, line.VatExempt)).ToArray(), totals, deliverySnapshot,

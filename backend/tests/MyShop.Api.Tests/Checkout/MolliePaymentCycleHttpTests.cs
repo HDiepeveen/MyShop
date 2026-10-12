@@ -55,7 +55,7 @@ public sealed class MolliePaymentCycleHttpTests
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync("/api/customer/auth/register", new { email = "mollie-client@example.test", password = SecurityHost.Password })).StatusCode);
         await host.Csrf();
         var token = Guid.NewGuid();
-        var input = new { checkoutToken = token, deliveryMethodId = delivery.GetProperty("id").GetGuid(), customerName = "Ada", email = "mollie-client@example.test", addressLine = "Buyer street 2", postalCode = "2345 BC", city = "Amsterdam", countryCode = "NL", lines = new[] { new { productId, variantId, quantity = 2, expectedAmount = "12.10", expectedCurrency = "EUR" } } };
+        var input = new { checkoutToken = token, deliveryMethodId = delivery.GetProperty("id").GetGuid(), customerName = "Ada", email = "mollie-client@example.test", addressLine = "Buyer street 2", postalCode = "2345 BC", city = "Amsterdam", countryCode = "Nederland", phoneNumber = "0301234567", notes = "Bel bij aankomst.", lines = new[] { new { productId, variantId, quantity = 2, expectedAmount = "12.10", expectedCurrency = "EUR" } } };
         var started = await host.Client.PostAsJsonAsync("/api/shop/online-payments", input);
         Assert.Equal(HttpStatusCode.OK, started.StatusCode);
         var payment = await started.Content.ReadFromJsonAsync<JsonElement>();
@@ -109,6 +109,8 @@ public sealed class MolliePaymentCycleHttpTests
         }
         await host.Csrf(); Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode); await host.Csrf();
         var order = await host.Client.GetFromJsonAsync<JsonElement>($"/api/orders/{orderId}");
+        Assert.Equal("0301234567", order.GetProperty("deliveryAddress").GetProperty("phoneNumber").GetString());
+        Assert.Equal("Bel bij aankomst.", order.GetProperty("deliveryAddress").GetProperty("notes").GetString());
         var invoiceResponse = await host.Client.PostAsJsonAsync($"/api/orders/{orderId}/invoice", new { orderRevision = order.GetProperty("revision").GetGuid(), supplyDate = DateOnly.FromDateTime(DateTime.UtcNow), buyer = new { name = "Ada", addressLine = "Buyer street 2", postalCode = "2345 BC", city = "Amsterdam", countryCode = "NL" }, taxReviewed = true, taxStatement = "" });
         Assert.Equal(HttpStatusCode.OK, invoiceResponse.StatusCode);
         var invoice = await invoiceResponse.Content.ReadFromJsonAsync<JsonElement>();

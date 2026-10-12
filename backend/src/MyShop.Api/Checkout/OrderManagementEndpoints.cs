@@ -216,7 +216,7 @@ public static class OrderManagementEndpoints
         order.Number,
         order.PlacedAt,
         new(order.CustomerName, order.Email),
-        new(order.AddressLine, order.PostalCode, order.City, order.CountryCode),
+        new(order.AddressLine, order.PostalCode, order.City, order.CountryCode, order.PhoneNumber, order.Notes),
         PaymentMethod(order.PaymentMethod),
         order.PaymentInstructions,
         Status(order.Status),
@@ -335,7 +335,7 @@ public sealed record OrderDetailResponse(
     IReadOnlyList<OrderTotalResponse> Totals,
     OrderDeliveryMethodResponse? DeliveryMethod = null);
 public sealed record OrderCustomerResponse(string Name, string Email);
-public sealed record OrderAddressResponse(string AddressLine, string PostalCode, string City, string CountryCode);
+public sealed record OrderAddressResponse(string AddressLine, string PostalCode, string City, string CountryCode, string PhoneNumber = "", string Notes = "");
 public sealed record OrderLineResponse(
     Guid ProductId,
     Guid VariantId,

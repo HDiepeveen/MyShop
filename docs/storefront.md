@@ -75,3 +75,9 @@ Bij de variantkeuze kan de bezoeker een heel aantal van 1 tot en met 99 invullen
 De productpagina toont het bestaande aantal van de gekozen variant in de winkelmand. Succes toont een link naar de mand; validatie- en limietfouten worden afzonderlijk als fout getoond. Wijzigen van variant of aantal wist oude feedback. Uitverkochte varianten worden ook in de actie zelf geblokkeerd, evenals ontbrekende of nog niet opgehaalde prijzen.
 
 De gekozen variant en hoeveelheid blijven behouden wanneer hetzelfde product of de prijs wordt vernieuwd. Een verdwenen of uitverkochte variant valt terug op een beschikbare variant; wanneer alle varianten uitverkocht zijn blijft toevoegen geblokkeerd. Een ander product begint bij aantal één en de eerste beschikbare variant. Voorraad en actuele prijzen worden verder gecontroleerd in winkelmand en checkout; deze invoer reserveert geen voorraad. Er is geen nieuwe serveropslag of migratie.
+
+## Telefoonnummer, land en opmerkingen
+
+Het klantprofiel en de winkelmand hebben een verplicht telefoonnummer (maximaal 50 tekens), een vrij in te vullen verplicht Land (maximaal 100 tekens) en optionele Opmerkingen (maximaal 1000 tekens). Land begint bij een nieuw adres leeg. Bestaande NL- en SR-adressen worden als Nederland en Suriname getoond.
+
+De winkelmand neemt telefoonnummer en opmerkingen over uit het profiel; de klant kan ze voor deze bestelling aanpassen. Deze wijziging past het profiel niet aan. Zowel later betalen als iDEAL bewaart de gegevens als onderdeel van de bestelling. Ze staan in de besteldetails van klant en beheerder. De migratie DeliveryContactDetails behoudt bestaande adressen, bestellingen en betaalpogingen; oudere gegevens zonder telefoon blijven leesbaar, maar een nieuw profiel opslaan of een nieuwe bestelling plaatsen vereist een telefoonnummer.

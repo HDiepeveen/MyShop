@@ -13,6 +13,8 @@ const profile = {
   postalCode: '1234 AB',
   city: 'Utrecht',
   countryCode: 'NL',
+  phoneNumber: '0301234567',
+  notes: '',
   revision: 'r',
 };
 describe('Profile input validation', () => {
@@ -48,12 +50,12 @@ describe('Profile input validation', () => {
       },
     );
   }
-  it.each(['', 'N', 'NLD', '12'])('rejects country code %s', (country) => {
+  it.each(['', '  ', 'x'.repeat(101)])('rejects country code %s', (country) => {
     const { page, api } = setup();
     page.countryCode = country;
     page.save();
     expect(api.update).not.toHaveBeenCalled();
-    expect(page.failure()).toContain('landcode');
+    expect(page.failure()).toContain('land');
   });
   it('trims names and address details and normalizes country without changing the revision', () => {
     const { page, api } = setup();
@@ -61,14 +63,18 @@ describe('Profile input validation', () => {
     page.addressLine = ' Street 1 ';
     page.postalCode = ' 1234 AB ';
     page.city = ' Utrecht ';
-    page.countryCode = ' be ';
+    page.phoneNumber = '0301234567';
+    page.countryCode = 'Nederland';
+    page.countryCode = ' Suriname ';
     page.save();
     expect(api.update).toHaveBeenCalledWith({
       name: 'Ada',
       addressLine: 'Street 1',
       postalCode: '1234 AB',
       city: 'Utrecht',
-      countryCode: 'BE',
+      countryCode: 'Suriname',
+      phoneNumber: '0301234567',
+      notes: '',
       revision: 'r',
     });
   });
@@ -80,6 +86,13 @@ describe('Profile input validation', () => {
     page.city = 'x'.repeat(100);
     page.save();
     expect(api.update).toHaveBeenCalledOnce();
+  });
+  it.each(['', 'abc'])('requires a phone when saving the profile: %s', (phone) => {
+    const { page, api } = setup();
+    page.phoneNumber = phone;
+    page.save();
+    expect(api.update).not.toHaveBeenCalled();
+    expect(page.failure()).toContain('telefoonnummer');
   });
 });
 describe('Customer management paging boundaries', () => {

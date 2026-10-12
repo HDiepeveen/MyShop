@@ -9,7 +9,7 @@ public sealed record PlaceOrderLine(Guid ProductId, Guid VariantId, int Quantity
     decimal ExpectedAmount, string ExpectedCurrency);
 public sealed record PlaceOrderCommand(Guid CheckoutToken, string PaymentMethod, string CustomerName,
     string Email, string AddressLine, string PostalCode, string City, string CountryCode,
-    IReadOnlyList<PlaceOrderLine> Lines, string? CustomerUserId = null, Guid DeliveryMethodId = default);
+    IReadOnlyList<PlaceOrderLine> Lines, string? CustomerUserId = null, Guid DeliveryMethodId = default, string? PhoneNumber = null, string? Notes = null);
 public enum PlaceOrderFailure { CheckoutDisabled, CartUnavailable, PaymentUnavailable, OnlinePaymentRequired, DeliveryUnavailable }
 public sealed record PlaceOrderResult(OrderReceipt? Receipt, PlaceOrderFailure? Failure)
 {
@@ -59,7 +59,7 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
 
         var customer = OrderCustomer.Create(command.CustomerName, command.Email);
         var address = DeliveryAddress.Create(command.AddressLine, command.PostalCode,
-            command.City, command.CountryCode);
+            command.City, command.CountryCode, command.PhoneNumber, command.Notes);
         var expectedPrices = command.Lines.Select(line =>
             Money.Create(line.ExpectedAmount, line.ExpectedCurrency)).ToArray();
         var at = DateTimeOffset.UtcNow;

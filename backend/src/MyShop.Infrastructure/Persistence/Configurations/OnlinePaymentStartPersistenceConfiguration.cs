@@ -21,7 +21,9 @@ internal sealed class OnlinePaymentStartPersistenceConfiguration : IEntityTypeCo
         builder.Property(payment => payment.AddressLine).IsRequired().HasMaxLength(200);
         builder.Property(payment => payment.PostalCode).IsRequired().HasMaxLength(32);
         builder.Property(payment => payment.City).IsRequired().HasMaxLength(100);
-        builder.Property(payment => payment.CountryCode).IsRequired().HasMaxLength(2).IsFixedLength();
+        builder.Property(payment => payment.CountryCode).IsRequired().HasMaxLength(100);
+        builder.Property(x => x.PhoneNumber).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Notes).HasMaxLength(1000).IsRequired();
         builder.Property(payment => payment.CreatedAt).IsRequired();
         builder.Property(payment => payment.DeliveryMethodName).IsRequired().HasMaxLength(100);
         builder.Property(payment => payment.DeliveryDescription).HasMaxLength(500);

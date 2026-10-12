@@ -67,7 +67,8 @@ public sealed class PlaceOrderHttpTests
         {
             checkoutToken = Guid.NewGuid(), paymentMethod = "payLater", customerName = "Ada Lovelace",
             email = "ada@example.com", addressLine = "Main street 1", postalCode = "1234 AB",
-            city = "Amsterdam", countryCode = "NL",
+            city = "Amsterdam", countryCode = "Nederland", phoneNumber = "0301234567",
+            notes = "Bel bij aankomst.",
             deliveryMethodId = delivery.GetProperty("id").GetGuid(),
             lines = new[] { new { productId, variantId, quantity = 2, expectedAmount = "12.50", expectedCurrency = "EUR" } }
         };
@@ -77,6 +78,8 @@ public sealed class PlaceOrderHttpTests
         visitor.DefaultRequestHeaders.Add("X-XSRF-TOKEN",
             cookies.GetCookies(visitor.BaseAddress!)["XSRF-TOKEN"]!.Value);
 
+        Assert.Equal(HttpStatusCode.BadRequest,
+            (await visitor.PostAsJsonAsync("/api/shop/orders", request with { phoneNumber = "" })).StatusCode);
         var firstResponse = await visitor.PostAsJsonAsync("/api/shop/orders", request);
         Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
         var first = await firstResponse.Content.ReadFromJsonAsync<JsonElement>();
@@ -101,6 +104,9 @@ public sealed class PlaceOrderHttpTests
             .GetProperty("code").GetString());
         var order = await host.Client.GetFromJsonAsync<JsonElement>(
             $"/api/orders/{first.GetProperty("id").GetGuid()}");
+        Assert.Equal("Nederland", order.GetProperty("deliveryAddress").GetProperty("countryCode").GetString());
+        Assert.Equal("0301234567", order.GetProperty("deliveryAddress").GetProperty("phoneNumber").GetString());
+        Assert.Equal("Bel bij aankomst.", order.GetProperty("deliveryAddress").GetProperty("notes").GetString());
         Assert.Equal("Pakketdienst", order.GetProperty("deliveryMethod").GetProperty("name").GetString());
         Assert.Equal("4.95", order.GetProperty("deliveryMethod").GetProperty("amount").GetString());
         Assert.Equal("29.95", Assert.Single(order.GetProperty("totals").EnumerateArray())

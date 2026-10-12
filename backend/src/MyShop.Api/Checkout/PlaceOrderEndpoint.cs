@@ -34,7 +34,7 @@ public static class PlaceOrderEndpoint
                 request.CustomerName, request.Email, request.AddressLine, request.PostalCode,
                 request.City, request.CountryCode, lines,
                 context.User.IsInRole(AdminSecurity.CustomerRole) ? users.GetUserId(context.User) : null,
-                request.DeliveryMethodId),
+                request.DeliveryMethodId, MyShop.Domain.Checkout.DeliveryAddress.NormalizePhone(request.PhoneNumber, true), request.Notes),
                 cancellationToken);
             return result.Failure switch
             {
@@ -90,7 +90,7 @@ public static class PlaceOrderEndpoint
 
 public sealed record PlaceOrderRequest(Guid CheckoutToken, string PaymentMethod, string CustomerName,
     string Email, string AddressLine, string PostalCode, string City, string CountryCode,
-    Guid DeliveryMethodId, IReadOnlyList<PlaceOrderLineRequest?> Lines);
+    Guid DeliveryMethodId, IReadOnlyList<PlaceOrderLineRequest?> Lines, string? PhoneNumber = null, string? Notes = null);
 public sealed record PlaceOrderLineRequest(Guid ProductId, Guid VariantId, int Quantity,
     string ExpectedAmount, string ExpectedCurrency);
 public sealed record PlaceOrderResponse(Guid Id, string Number, DateTimeOffset PlacedAt,

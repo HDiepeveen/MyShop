@@ -24,6 +24,8 @@ describe('Customer profile', () => {
       postalCode: '1234 AB',
       city: 'Utrecht',
       countryCode: 'NL',
+      phoneNumber: '0301234567',
+      notes: '',
       revision: '11111111-1111-1111-1111-111111111111',
     });
     fixture.detectChanges();
@@ -36,6 +38,8 @@ describe('Customer profile', () => {
     fixture.componentInstance.addressLine = 'Second street 2';
     fixture.componentInstance.postalCode = '5678 CD';
     fixture.componentInstance.city = 'Amsterdam';
+    fixture.componentInstance.phoneNumber = '0301234567';
+    fixture.componentInstance.countryCode = 'Nederland';
     fixture.componentInstance.countryCode = 'be';
     fixture.componentInstance.save();
 
@@ -46,7 +50,9 @@ describe('Customer profile', () => {
       addressLine: 'Second street 2',
       postalCode: '5678 CD',
       city: 'Amsterdam',
-      countryCode: 'BE',
+      countryCode: 'be',
+      phoneNumber: '0301234567',
+      notes: '',
       revision: '11111111-1111-1111-1111-111111111111',
     });
     request.flush({

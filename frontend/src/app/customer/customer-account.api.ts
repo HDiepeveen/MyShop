@@ -9,6 +9,8 @@ export interface CustomerProfile {
   postalCode: string | null;
   city: string | null;
   countryCode: string | null;
+  phoneNumber?: string | null;
+  notes?: string | null;
   revision: string | null;
 }
 

@@ -1,3 +1,4 @@
+import { countryName } from './country-name';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -34,6 +35,25 @@ import { errorMessage } from '../catalog/error-message';
           >Naam<input name="name" [disabled]="busy()" [(ngModel)]="name" maxlength="200" required
         /></label>
         <label
+          >Telefoonnummer<input
+            name="phoneNumber"
+            type="tel"
+            autocomplete="tel"
+            [(ngModel)]="phoneNumber"
+            maxlength="50"
+            required
+            [disabled]="busy()"
+        /></label>
+        <label
+          >Opmerkingen<textarea
+            name="notes"
+            [(ngModel)]="notes"
+            maxlength="1000"
+            rows="3"
+            [disabled]="busy()"
+          ></textarea>
+        </label>
+        <label
           >Adres<input
             name="address"
             [disabled]="busy()"
@@ -53,12 +73,11 @@ import { errorMessage } from '../catalog/error-message';
           >Plaats<input name="city" [disabled]="busy()" [(ngModel)]="city" maxlength="100" required
         /></label>
         <label
-          >Landcode<input
+          >Land<input
             name="country"
             [disabled]="busy()"
             [(ngModel)]="countryCode"
-            minlength="2"
-            maxlength="2"
+            maxlength="100"
             required
         /></label>
         @if (message()) {
@@ -85,7 +104,9 @@ export class CustomerProfile {
   addressLine = '';
   postalCode = '';
   city = '';
-  countryCode = 'NL';
+  countryCode = '';
+  phoneNumber = '';
+  notes = '';
   revision: string | null = null;
   constructor() {
     this.load();
@@ -97,7 +118,9 @@ export class CustomerProfile {
     this.addressLine = profile.addressLine ?? '';
     this.postalCode = profile.postalCode ?? '';
     this.city = profile.city ?? '';
-    this.countryCode = profile.countryCode ?? 'NL';
+    this.countryCode = countryName(profile.countryCode);
+    this.phoneNumber = profile.phoneNumber ?? '';
+    this.notes = profile.notes ?? '';
     this.revision = profile.revision;
   }
   load() {
@@ -128,8 +151,16 @@ export class CustomerProfile {
       return 'Vul een postcode van maximaal 32 tekens in.';
     if (!this.city.trim() || this.city.trim().length > 100)
       return 'Vul een plaats van maximaal 100 tekens in.';
-    if (!/^[a-zA-Z]{2}$/.test(this.countryCode.trim()))
-      return 'Gebruik een landcode van twee letters.';
+    if (!this.countryCode.trim() || this.countryCode.trim().length > 100)
+      return 'Vul een land in van maximaal 100 tekens.';
+    if (
+      !this.phoneNumber.trim() ||
+      this.phoneNumber.length > 50 ||
+      !/[0-9]/.test(this.phoneNumber) ||
+      !new RegExp('^[+0-9 ()./-]+$').test(this.phoneNumber)
+    )
+      return 'Vul een geldig telefoonnummer in.';
+    if (this.notes.length > 1000) return 'Gebruik maximaal 1000 tekens voor opmerkingen.';
     return '';
   }
   save() {
@@ -149,7 +180,9 @@ export class CustomerProfile {
         addressLine: this.addressLine.trim(),
         postalCode: this.postalCode.trim(),
         city: this.city.trim(),
-        countryCode: this.countryCode.trim().toUpperCase(),
+        countryCode: this.countryCode.trim(),
+        phoneNumber: this.phoneNumber.trim(),
+        notes: this.notes.trim(),
         revision: this.revision,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))

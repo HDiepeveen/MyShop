@@ -99,7 +99,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
             AddressLine = order.DeliveryAddress.AddressLine,
             PostalCode = order.DeliveryAddress.PostalCode,
             City = order.DeliveryAddress.City,
-            CountryCode = order.DeliveryAddress.CountryCode,
+            CountryCode = order.DeliveryAddress.CountryCode, PhoneNumber = order.DeliveryAddress.PhoneNumber, Notes = order.DeliveryAddress.Notes,
             DeliveryMethodId = order.DeliveryMethod?.Id,
             DeliveryMethodName = order.DeliveryMethod?.Name,
             DeliveryDescription = order.DeliveryMethod?.Description,
@@ -255,7 +255,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 line.TotalAmount, line.VatRate, line.VatExempt, line.NetAmount, line.VatAmount)).ToArray(),
             order.Totals.OrderBy(total => total.Currency).Select(total =>
                 new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(),
-            Delivery(order));
+            Delivery(order), order.PhoneNumber, order.Notes);
     }
 
     public async Task<CustomerOrderPage> ListAsync(string customerUserId, int offset, int limit,
@@ -305,7 +305,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 line.ProductId, line.VariantId, line.ProductName, line.VariantName, line.Quantity,
                 line.UnitAmount, line.Currency, line.TotalAmount, line.VatRate, line.VatExempt, line.NetAmount, line.VatAmount)).ToArray(),
             order.Totals.OrderBy(total => total.Currency).Select(total =>
-                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(), Delivery(order));
+                new OrderTotalSnapshot(total.Currency, total.Amount)).ToArray(), Delivery(order), order.PhoneNumber, order.Notes);
     }
 
     private static OrderDeliveryMethodSnapshot? Delivery(OrderPersistence order) =>
