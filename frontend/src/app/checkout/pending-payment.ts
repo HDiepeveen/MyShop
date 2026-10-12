@@ -17,6 +17,14 @@ export class PendingPayment {
       /* Status retrieval still works without browser storage. */
     }
   }
+  token(): string | null {
+    try {
+      const stored = JSON.parse(localStorage.getItem(key) ?? 'null');
+      return typeof stored?.token === 'string' && typeof stored.signature === 'string'
+        && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(stored.token)
+        && stored.token !== '00000000-0000-0000-0000-000000000000' ? stored.token : null;
+    } catch { return null; }
+  }
   matches(token: string, lines: readonly CartLine[]) {
     try {
       const stored = JSON.parse(localStorage.getItem(key) ?? 'null');

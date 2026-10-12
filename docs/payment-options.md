@@ -80,3 +80,13 @@ daadwerkelijk wordt afgeleverd: daarvoor blijft een echte testbetaling nodig.
 De migratie ManagedMollieSettings moet voor een serverupdate toegepast worden.
 Het exportpakket wist de Mollie-sleutel en schakelt online betalen uit in de
 hostingkopie; configureer de koppeling daar opnieuw. De lokale gegevens blijven staan.
+
+## Winkelmand heropenen na betaling (0.2.7)
+
+Bij het heropenen controleert MyShop een in deze browser bewaarde betaalstart.
+Na bevestiging wordt alleen een nog overeenkomende winkelmand leeggemaakt.
+Wijzigingen na de betaalstart blijven behouden. Bij mislukt, geannuleerd of verlopen
+blijft de winkelmand staan en wordt de eerdere betaalstart vrijgegeven. Bij een
+onzekere status blijft opnieuw afrekenen geblokkeerd; de klant kan de eerdere
+betaling controleren via de betaalpagina. Een late response van een verlaten
+pagina of een andere betaalstart verwijdert geen nieuwe winkelmand.

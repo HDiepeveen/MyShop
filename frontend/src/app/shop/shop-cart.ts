@@ -1,8 +1,10 @@
 import { DatePipe } from '@angular/common';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { PendingPayment } from '../checkout/pending-payment';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 
 import { BehaviorSubject, combineLatest, map, of, switchMap } from 'rxjs';
 import { Cart, CartLine } from './cart';
@@ -10,7 +12,7 @@ import { ShopApi } from './shop.api';
 import { loadState } from '../catalog/load-state';
 import { PaymentOptionsApi } from '../checkout/payment-options.api';
 import { ShopCheckout } from '../checkout/shop-checkout';
-import { OrderReceipt } from '../checkout/order.api';
+import { OrderApi, OrderReceipt } from '../checkout/order.api';
 import { Auth } from '../auth/auth';
 import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
 
@@ -23,6 +25,11 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
       <p>Bestellen is momenteel uitgeschakeld. Je kunt het assortiment bekijken.</p>
     } @else {
     <h1>Winkelmand</h1>
+    @if (recoveringPayment()) { <p role="status">Eerdere betaalstatus controleren…</p> }
+    @if (unresolvedPayment(); as token) {
+      <p role="status">Er is een eerdere betaling waarvan de status nog niet is bevestigd. Controleer deze voordat je opnieuw afrekent.</p>
+      <a routerLink="/winkel/betaling" [queryParams]="{ checkoutToken: token }">Eerdere betaling controleren</a>
+    }
     @if (cart.warning()) {
       <p role="status">{{ cart.warning() }}</p>
     }
@@ -192,7 +199,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
             <p role="alert">Er is momenteel geen betaaloptie beschikbaar.</p>
           }
         </section>
-        @if (selectedPayment() && selectedDelivery()) {
+        @if (selectedPayment() && selectedDelivery() && !unresolvedPayment()) {
           <app-shop-checkout
             [lines]="checkoutLines()"
             [paymentMethod]="selectedPayment()"
@@ -221,6 +228,11 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
   `,
 })
 export class ShopCart {
+  private readonly pending = inject(PendingPayment);
+  private readonly orderApi = inject(OrderApi);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly recoveringPayment = signal(false);
+  readonly unresolvedPayment = signal<string | null>(null);
   readonly cart = inject(Cart);
   readonly auth = inject(Auth);
   private readonly api = inject(ShopApi);
@@ -290,6 +302,7 @@ export class ShopCart {
       this.totals().length > 0,
   );
   constructor() {
+    this.recoverPayment();
     effect(() => {
       const items = this.paymentOptions()?.data?.items ?? [];
       if (!items.some((option) => option.code === this.selectedPayment()))
@@ -299,6 +312,27 @@ export class ShopCart {
       const methods = this.deliveryMethods()?.data ?? [];
       if (!methods.some((method) => method.id === this.selectedDelivery()))
         this.selectedDelivery.set(methods[0]?.id ?? '');
+    });
+  }
+  private recoverPayment() {
+    const token = this.pending.token(); if (!token) return;
+    this.unresolvedPayment.set(token); this.recoveringPayment.set(true); this.checkoutBusy.set(true);
+    this.orderApi.completeOnlinePayment(token).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: receipt => {
+        const matching = this.pending.matches(token, this.cart.lines());
+        if (matching) { this.cart.clear(); this.undoItems.set([]); this.orderReceipt.set(receipt); }
+        else this.notice.set('Bestelling ' + receipt.number + ' is betaald. Je gewijzigde winkelmand is behouden.');
+        this.pending.clear(token); this.unresolvedPayment.set(this.pending.token());
+        this.recoveringPayment.set(false); this.checkoutBusy.set(false);
+      },
+      error: (error: unknown) => {
+        const code = error instanceof HttpErrorResponse ? error.error?.code : undefined;
+        if (['paymentFailed', 'paymentCanceled', 'paymentExpired'].includes(code)) {
+          this.pending.clear(token); this.unresolvedPayment.set(this.pending.token());
+          this.notice.set('De eerdere betaling is niet geslaagd. Je winkelmand is behouden.');
+        }
+        this.recoveringPayment.set(false); this.checkoutBusy.set(false);
+      },
     });
   }
   amount(value: string | null) {
