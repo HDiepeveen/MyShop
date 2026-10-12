@@ -19,6 +19,10 @@ internal sealed class PaymentOptionsPersistenceConfiguration : IEntityTypeConfig
         builder.Property(options => options.OnlinePaymentEnabled).IsRequired();
         builder.Property(options => options.PayLaterInstructions).HasMaxLength(2000);
         builder.Property(options => options.Version).IsRequired().ValueGeneratedNever().IsConcurrencyToken();
+        builder.Property(x => x.ProtectedMollieKey).HasMaxLength(2000);
+        builder.Property(x => x.MollieReturnUrl).HasMaxLength(2000);
+        builder.Property(x => x.MollieWebhookUrl).HasMaxLength(2000);
+        builder.Property(x => x.MollieRevision).ValueGeneratedNever();
         builder.HasData(new PaymentOptionsPersistence
         {
             Id = SingletonId,

@@ -16,6 +16,14 @@ internal sealed class OnlinePaymentAvailability : IOnlinePaymentAvailability
             : Normalize(configuration[ProviderKey]);
     }
 
+    private MollieSettingsStore? managed;
+    internal OnlinePaymentAvailability(IConfiguration configuration, MollieSettingsStore managed) : this(configuration) { this.managed = managed; }
+    public async Task<OnlinePaymentAvailabilitySnapshot> GetAsync(CancellationToken ct)
+    {
+        if (managed is null) return new(ProviderName);
+        var settings = await managed.RuntimeAsync(ct);
+        return new(settings.Public.Managed ? settings.Runtime.IsConfigured ? "Mollie" : null : ProviderName);
+    }
     public bool IsConfigured => ProviderName is not null;
     public string? ProviderName { get; }
 

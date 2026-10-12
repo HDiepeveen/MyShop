@@ -18,11 +18,24 @@ public sealed class MolliePaymentCycleHttpTests
         await using var host = await SecurityHost.Create(new()
         {
             ["Payments:Online:Provider"] = "Mollie",
-            ["Payments:Mollie:ApiKey"] = "test_abcdefghijklmnopqrstuvwxyz",
             ["Payments:Mollie:ReturnUrl"] = "http://localhost:4200/winkel/betaling",
             ["Payments:Mollie:WebhookUrl"] = "https://shop.example.test/api/payments/mollie/webhook"
         }, services => services.AddHttpClient("Mollie").ConfigurePrimaryHttpMessageHandler(() => mollie));
         await host.Csrf(); Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode); await host.Csrf();
+        var mollieSettings = await host.Client.GetFromJsonAsync<JsonElement>("/api/payment-options/mollie");
+        var savedMollie = await host.Client.PutAsJsonAsync("/api/payment-options/mollie", new { returnUrl = "http://localhost:4200/winkel/betaling", webhookUrl = "https://shop.example.test/api/payments/mollie/webhook", apiKey = "test_abcdefghijklmnopqrstuvwxyz", clearKey = false, revision = mollieSettings.GetProperty("revision").GetGuid() });
+        Assert.Equal(HttpStatusCode.OK, savedMollie.StatusCode);
+        Assert.DoesNotContain("test_abcdefghijklmnopqrstuvwxyz", await savedMollie.Content.ReadAsStringAsync());
+        var savedSettings = await savedMollie.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(savedSettings.GetProperty("keyConfigured").GetBoolean());
+        var connectionCheck = await host.Client.PostAsJsonAsync("/api/payment-options/mollie/check", new { revision = savedSettings.GetProperty("revision").GetGuid() });
+        Assert.Equal(HttpStatusCode.OK, connectionCheck.StatusCode);
+        Assert.True((await connectionCheck.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("idealAvailable").GetBoolean());
+        await using (var scope = host.App.Services.CreateAsyncScope())
+        {
+            var stored = await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.SqlQueryRaw<string>("SELECT ProtectedMollieKey AS Value FROM PaymentOptions").SingleAsync();
+            Assert.NotNull(stored); Assert.DoesNotContain("test_abcdefghijklmnopqrstuvwxyz", stored);
+        }
         var type = await (await host.Client.PostAsJsonAsync("/api/product-types", new { name = "Mollie test" })).Content.ReadFromJsonAsync<JsonElement>();
         var product = await (await host.Client.PostAsJsonAsync("/api/products", new { productTypeId = type.GetProperty("id").GetGuid(), name = "Test product", initialVariantName = "Default" })).Content.ReadFromJsonAsync<JsonElement>();
         var productId = product.GetProperty("id").GetGuid();
@@ -103,6 +116,7 @@ public sealed class MolliePaymentCycleHttpTests
         private const string Id = "tr_cycle123";
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage message, CancellationToken cancellationToken)
         {
+            if (message.RequestUri!.AbsoluteUri == "https://api.mollie.com/v2/methods") return new(HttpStatusCode.OK) { Content = new StringContent("{\"_embedded\":{\"methods\":[{\"id\":\"ideal\"}]}}", Encoding.UTF8, "application/json") };
             if (message.Method == HttpMethod.Post)
             {
                 Starts++; request = JsonSerializer.Deserialize<JsonElement>(await message.Content!.ReadAsStringAsync(cancellationToken));

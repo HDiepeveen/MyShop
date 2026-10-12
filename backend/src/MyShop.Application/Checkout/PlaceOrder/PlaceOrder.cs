@@ -32,6 +32,7 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(command.Lines);
         cancellationToken.ThrowIfCancellationRequested();
+        var onlineStatus = await onlinePayment.GetAsync(cancellationToken);
         if (command.CheckoutToken == Guid.Empty)
             throw new ArgumentException("Checkout token is required.", nameof(command));
         if (command.Lines.Any(line => line is null))
@@ -50,7 +51,7 @@ public sealed class PlaceOrder(QuoteStorefrontCart quoteCart, IPaymentOptionsRep
             return PlaceOrderResult.Failed(PlaceOrderFailure.DeliveryUnavailable);
 
         if (command.PaymentMethod == "online")
-            return settings.OnlinePaymentEnabled && onlinePayment.IsConfigured
+            return settings.OnlinePaymentEnabled && onlineStatus.IsConfigured
                 ? PlaceOrderResult.Failed(PlaceOrderFailure.OnlinePaymentRequired)
                 : PlaceOrderResult.Failed(PlaceOrderFailure.PaymentUnavailable);
         if (command.PaymentMethod != "payLater" || !settings.PayLaterEnabled)

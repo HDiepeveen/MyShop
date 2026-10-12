@@ -9,6 +9,7 @@ public static class PaymentOptionsEndpoints
 {
     public static void MapPaymentOptions(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapMollieSettings();
         endpoints.MapGet("/api/shop/payment-options", async ([FromServices] GetPaymentOptions useCase,
             CancellationToken cancellationToken) => Results.Ok(await useCase.ExecuteAsync(cancellationToken)))
             .AllowAnonymous();

@@ -61,3 +61,22 @@ Automatische tests controleren deze parameters en de betaalcyclus met gesimuleer
 Mollie-antwoorden. Een eigen account is nog nodig voor de daadwerkelijke Mollie-test.
 Live-sleutels blijven geblokkeerd. Voorraadreservering, automatische refunds en
 betaalreconciliatie zijn vervolgstappen voordat de webshop productiegeschikt wordt verklaard.
+
+## Beheerbare Mollie-instellingen (0.2.6)
+
+Open Beheer > Betaalopties > Mollie instellen. Vul een nieuwe test-API-sleutel,
+het terugkeeradres (/winkel/betaling) en het publieke HTTPS-meldingsadres
+(/api/payments/mollie/webhook) in. De sleutel wordt met ASP.NET Data Protection
+versleuteld in de database opgeslagen en wordt niet via de API teruggegeven.
+Een leeg sleutelveld behoudt de huidige sleutel; wissen vereist een expliciete keuze.
+Alleen testsleutels worden geaccepteerd. Bij onleesbare encryptie blijft betalen
+onbeschikbaar. Bewaar de Data Protection-sleutels van de hosting (App_Data/keys).
+
+De instellingen zijn direct actief zonder herstart. Tot de eerste beheersave
+blijft de oude serverconfiguratie leidend; daarna overschrijft deze een gewiste
+sleutel niet meer. De controleknop controleert de opgeslagen sleutel en de
+beschikbaarheid van iDEAL, zonder betaling. Hij controleert niet of de webhook
+daadwerkelijk wordt afgeleverd: daarvoor blijft een echte testbetaling nodig.
+De migratie ManagedMollieSettings moet voor een serverupdate toegepast worden.
+Het exportpakket wist de Mollie-sleutel en schakelt online betalen uit in de
+hostingkopie; configureer de koppeling daar opnieuw. De lokale gegevens blijven staan.

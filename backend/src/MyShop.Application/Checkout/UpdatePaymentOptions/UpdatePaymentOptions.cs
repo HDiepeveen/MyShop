@@ -20,10 +20,11 @@ public sealed class UpdatePaymentOptions(IPaymentOptionsRepository repository, I
     {
         ArgumentNullException.ThrowIfNull(command);
         cancellationToken.ThrowIfCancellationRequested();
+        var onlineStatus = await online.GetAsync(cancellationToken);
         if (command.Revision == Guid.Empty) throw new ArgumentException("Revision is required.", nameof(command));
         if (command.CheckoutEnabled && !command.PayLaterEnabled && !command.OnlinePaymentEnabled)
             throw new ArgumentException("At least one payment option must be enabled.", nameof(command));
-        if (command.CheckoutEnabled && command.OnlinePaymentEnabled && !online.IsConfigured)
+        if (command.CheckoutEnabled && command.OnlinePaymentEnabled && !onlineStatus.IsConfigured)
             return UpdatePaymentOptionsResult.Failed(UpdatePaymentOptionsFailure.OnlinePaymentNotConfigured);
         var payLaterInstructions = string.IsNullOrWhiteSpace(command.PayLaterInstructions)
             ? null

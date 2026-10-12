@@ -21,8 +21,9 @@ public sealed class GetAdminPaymentOptions(
     public async Task<AdminPaymentOptions> ExecuteAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var onlineStatus = await online.GetAsync(cancellationToken);
         var settings = await repository.GetAsync(cancellationToken);
         return new(settings.PayLaterEnabled, settings.OnlinePaymentEnabled,
-            settings.PayLaterInstructions, online.IsConfigured, online.ProviderName, settings.Revision) { CheckoutEnabled = settings.CheckoutEnabled };
+            settings.PayLaterInstructions, onlineStatus.IsConfigured, onlineStatus.ProviderName, settings.Revision) { CheckoutEnabled = settings.CheckoutEnabled };
     }
 }

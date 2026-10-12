@@ -39,6 +39,7 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         ArgumentNullException.ThrowIfNull(command);
         ArgumentNullException.ThrowIfNull(command.Lines);
         cancellationToken.ThrowIfCancellationRequested();
+        var onlineStatus = await onlinePayment.GetAsync(cancellationToken);
         if (command.CheckoutToken == Guid.Empty)
             throw new ArgumentException("Checkout token is required.", nameof(command));
         if (command.Lines.Any(line => line is null))
@@ -55,7 +56,7 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         if (command.DeliveryMethodId == Guid.Empty)
             return StartOnlinePaymentResult.Failed(StartOnlinePaymentFailure.DeliveryUnavailable);
 
-        if (!settings.OnlinePaymentEnabled || !onlinePayment.IsConfigured || onlinePayment.ProviderName is null)
+        if (!settings.OnlinePaymentEnabled || !onlineStatus.IsConfigured || onlineStatus.ProviderName is null)
             return StartOnlinePaymentResult.Failed(StartOnlinePaymentFailure.PaymentUnavailable);
 
         var delivery = await deliveryMethods.GetAsync(command.DeliveryMethodId, cancellationToken);
@@ -84,9 +85,9 @@ public sealed class StartOnlinePayment(QuoteStorefrontCart quoteCart, IPaymentOp
         var deliverySnapshot = new OrderDeliveryMethodSnapshot(delivery.Id, delivery.Name,
             delivery.Description, delivery.Amount, delivery.Currency);
         var paymentReference = PaymentReference(command.CheckoutToken);
-        var providerStart = await onlinePaymentProvider.StartAsync(new(onlinePayment.ProviderName,
+        var providerStart = await onlinePaymentProvider.StartAsync(new(onlineStatus.ProviderName,
             command.CheckoutToken, paymentReference, totals), cancellationToken);
-        var payment = new OnlinePaymentStartRecord(command.CheckoutToken, onlinePayment.ProviderName,
+        var payment = new OnlinePaymentStartRecord(command.CheckoutToken, onlineStatus.ProviderName,
             paymentReference, providerStart.ProviderPaymentId, providerStart.CheckoutUrl,
             new(customer.Name, customer.Email), new(address.AddressLine, address.PostalCode,
                 address.City, address.CountryCode),

@@ -15,6 +15,9 @@ public sealed record PaymentOptionsSnapshot(bool PayLaterEnabled, bool OnlinePay
 
 public interface IOnlinePaymentAvailability
 {
+    Task<OnlinePaymentAvailabilitySnapshot> GetAsync(CancellationToken ct) { ct.ThrowIfCancellationRequested(); return Task.FromResult(new OnlinePaymentAvailabilitySnapshot(ProviderName) { IsConfigured = this.IsConfigured }); }
     bool IsConfigured { get; }
     string? ProviderName { get; }
 }
+
+public sealed record OnlinePaymentAvailabilitySnapshot(string? ProviderName) { public bool IsConfigured { get; init; } = ProviderName is not null; }

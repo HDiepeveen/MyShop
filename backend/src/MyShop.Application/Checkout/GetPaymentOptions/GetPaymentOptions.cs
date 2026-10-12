@@ -16,16 +16,17 @@ public sealed class GetPaymentOptions(IPaymentOptionsRepository repository, IOnl
     public async Task<PublicPaymentOptions> ExecuteAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var onlineStatus = await online.GetAsync(cancellationToken);
         var settings = await repository.GetAsync(cancellationToken);
         if (!settings.CheckoutEnabled) return new([]) { CheckoutEnabled = false };
         var items = new List<PaymentOption>();
         if (settings.PayLaterEnabled)
             items.Add(new("payLater", "Later betalen", settings.PayLaterInstructions));
-        if (settings.OnlinePaymentEnabled && online.IsConfigured)
-            items.Add(new("online", online.ProviderName == "Mollie" ? "iDEAL" : "Direct online betalen",
-                online.ProviderName == "Mollie" ? "iDEAL-testbetaling via Mollie. Er wordt geen echt geld afgeschreven." : online.ProviderName is null
+        if (settings.OnlinePaymentEnabled && onlineStatus.IsConfigured)
+            items.Add(new("online", onlineStatus.ProviderName == "Mollie" ? "iDEAL" : "Direct online betalen",
+                onlineStatus.ProviderName == "Mollie" ? "iDEAL-testbetaling via Mollie. Er wordt geen echt geld afgeschreven." : onlineStatus.ProviderName is null
                     ? "Je wordt doorgestuurd naar de betaalprovider."
-                    : $"Je wordt doorgestuurd naar {online.ProviderName}."));
+                    : $"Je wordt doorgestuurd naar {onlineStatus.ProviderName}."));
         return new(items);
     }
 }

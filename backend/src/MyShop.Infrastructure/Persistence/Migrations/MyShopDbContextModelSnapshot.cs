@@ -1067,6 +1067,20 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("MollieManaged")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("MollieReturnUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("MollieRevision")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("MollieWebhookUrl")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
                     b.Property<bool>("OnlinePaymentEnabled")
                         .HasColumnType("bit");
 
@@ -1074,6 +1088,10 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("PayLaterInstructions")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("ProtectedMollieKey")
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
@@ -1090,6 +1108,8 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         {
                             Id = new Guid("5d484f50-9c6e-4e67-b5e0-3615cdb869eb"),
                             CheckoutEnabled = true,
+                            MollieManaged = false,
+                            MollieRevision = new Guid("00000000-0000-0000-0000-000000000000"),
                             OnlinePaymentEnabled = false,
                             PayLaterEnabled = true,
                             Version = new Guid("7732cb95-5f60-4f20-82f7-499a020a9d3e")

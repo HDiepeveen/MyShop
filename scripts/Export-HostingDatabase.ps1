@@ -70,6 +70,7 @@ try {
         if ($taskIdentity) { $taskWriter.WriteLine("SET IDENTITY_INSERT $taskQualified OFF;") }
     }
     $taskWriter.WriteLine("UPDATE EmailSettings SET Enabled=0,ProtectedPassword=NULL,PublicBaseUrl=@PublicBaseUrl,Version=NEWID() WHERE Id='13c5dc48-ce9a-44ef-9fb4-5c6d369cfeb6'; IF @@ROWCOUNT <> 1 THROW 50002, 'Email settings missing.', 1;")
+    $taskWriter.WriteLine("UPDATE PaymentOptions SET MollieManaged=1,ProtectedMollieKey=NULL,OnlinePaymentEnabled=0,MollieReturnUrl=@PublicBaseUrl+'/winkel/betaling',MollieWebhookUrl=@PublicBaseUrl+'/api/payments/mollie/webhook',MollieRevision=NEWID(),Version=NEWID();")
     foreach ($taskTable in $taskTables.Rows) {
         $taskQualified = (Quote-Identifier $taskTable.SchemaName) + '.' + (Quote-Identifier $taskTable.name)
         $taskWriter.WriteLine("ALTER TABLE $taskQualified WITH CHECK CHECK CONSTRAINT ALL;")

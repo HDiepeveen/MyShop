@@ -71,10 +71,13 @@ public static class InfrastructureServiceCollectionExtensions
             new PaymentOptionsRepository(provider.GetRequiredService<MyShopDbContext>()));
         services.AddScoped<IDeliveryMethodRepository>(provider =>
             new DeliveryMethodRepository(provider.GetRequiredService<MyShopDbContext>()));
-        services.AddScoped<IOnlinePaymentAvailability>(_ => new OnlinePaymentAvailability(configuration));
+        services.AddScoped<MollieSettingsStore>();
+        services.AddScoped<MyShop.Application.Checkout.MollieSettings.IMollieSettingsStore>(p => p.GetRequiredService<MollieSettingsStore>());
+        services.AddScoped<MyShop.Application.Checkout.MollieSettings.ManageMollieSettings>();
+        services.AddScoped<IOnlinePaymentAvailability>(p => new OnlinePaymentAvailability(configuration, p.GetRequiredService<MollieSettingsStore>()));
         services.AddHttpClient("Mollie", client => client.Timeout = TimeSpan.FromSeconds(20))
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
-        services.AddScoped<OnlinePaymentProvider>(provider => new(provider.GetRequiredService<IHttpClientFactory>(), configuration));
+        services.AddScoped<OnlinePaymentProvider>(provider => new(provider.GetRequiredService<IHttpClientFactory>(), configuration, provider.GetRequiredService<MollieSettingsStore>()));
         services.AddScoped<IOnlinePaymentProvider>(provider => provider.GetRequiredService<OnlinePaymentProvider>());
         services.AddScoped<IOnlinePaymentStatusReader>(provider => provider.GetRequiredService<OnlinePaymentProvider>());
         services.AddScoped<IOnlinePaymentStartRepository, OnlinePaymentStartRepository>();

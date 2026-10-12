@@ -3,26 +3,26 @@ using MyShop.Application.Checkout.Abstractions;
 
 namespace MyShop.Infrastructure.Payments;
 
-internal sealed class OnlinePaymentProvider(IHttpClientFactory http, IConfiguration configuration)
+internal sealed class OnlinePaymentProvider(IHttpClientFactory http, IConfiguration configuration, MollieSettingsStore? managed = null)
     : IOnlinePaymentProvider, IOnlinePaymentStatusReader
 {
-    public Task<OnlinePaymentProviderStart> StartAsync(OnlinePaymentProviderRequest request, CancellationToken cancellationToken) =>
+    public async Task<OnlinePaymentProviderStart> StartAsync(OnlinePaymentProviderRequest request, CancellationToken cancellationToken) =>
         request.ProviderName switch
         {
-            "TestPay" => new TestOnlinePaymentProvider().StartAsync(request, cancellationToken),
-            "Mollie" => Mollie().StartAsync(request, cancellationToken),
+            "TestPay" => await new TestOnlinePaymentProvider().StartAsync(request, cancellationToken),
+            "Mollie" => await (await Mollie(cancellationToken)).StartAsync(request, cancellationToken),
             _ => throw new OnlinePaymentProviderException()
         };
 
-    public Task<OnlinePaymentVerification> VerifyAsync(OnlinePaymentStartRecord payment, CancellationToken cancellationToken)
+    public async Task<OnlinePaymentVerification> VerifyAsync(OnlinePaymentStartRecord payment, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (payment.ProviderName == "Mollie") return Mollie().VerifyAsync(payment, cancellationToken);
+        if (payment.ProviderName == "Mollie") return await (await Mollie(cancellationToken)).VerifyAsync(payment, cancellationToken);
         if (payment.ProviderName == "TestPay")
-            return Task.FromResult(new OnlinePaymentVerification(OnlinePaymentStatus.Paid,
-                payment.ProviderPaymentId == $"test_{payment.CheckoutToken:N}"));
+            return new OnlinePaymentVerification(OnlinePaymentStatus.Paid,
+                payment.ProviderPaymentId == $"test_{payment.CheckoutToken:N}");
         throw new OnlinePaymentProviderException();
     }
 
-    private MollieOnlinePaymentProvider Mollie() => new(http.CreateClient("Mollie"), new(configuration));
+    private async Task<MollieOnlinePaymentProvider> Mollie(CancellationToken ct) => new(http.CreateClient("Mollie"), managed is null ? new(configuration) : (await managed.RuntimeAsync(ct)).Runtime);
 }
