@@ -101,7 +101,7 @@ describe('Cart reopening after payment', () => {
   it('does not show old payment details as the details of a changed basket', () => {
     const { response, fixture, cart } = setup(); cart.setQuantity(line, 3);
     response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending', payment: { providerName: 'Mollie', paymentReference: 'OLD' } } }));
-    fixture.detectChanges(); expect(fixture.nativeElement.querySelector('[aria-label="Voorbereide online betaling"]')).toBeNull();
+    fixture.detectChanges(); expect(fixture.nativeElement.querySelector('[aria-label="Openstaande online betaling"]')).toBeNull();
   });
   it('rechecks the restored payment without starting a new payment', () => {
     const { response, complete, page, cart } = setup();

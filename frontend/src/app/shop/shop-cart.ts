@@ -35,8 +35,8 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
       <a routerLink="/winkel/betaling" [queryParams]="{ checkoutToken: token }">Eerdere betaling controleren</a>
     }
     @if (currentPreparedPayment(); as payment) {
-      <section class="panel" aria-label="Voorbereide online betaling">
-        <h2>Voorbereide online betaling</h2>
+      <section class="panel" aria-label="Openstaande online betaling">
+        <h2>Openstaande online betaling</h2>
         <p>Betaalprovider: {{ payment.providerName }}</p>
         <p>Betalingskenmerk: {{ payment.paymentReference }}</p>
         @if (payment.providerName === 'Mollie') { <p>iDEAL via Mollie · Testmodus: er wordt geen echt geld afgeschreven.</p> }

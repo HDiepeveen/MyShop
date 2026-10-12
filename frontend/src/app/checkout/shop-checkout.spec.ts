@@ -1,6 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { MollieNavigation } from './mollie-navigation';
+import { PendingPayment } from './pending-payment';
 import { ShopCheckout } from './shop-checkout';
 
 const line = {
@@ -15,14 +17,35 @@ describe('Shop checkout', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
+    localStorage.removeItem('myshop.pending-payment.v1');
     TestBed.configureTestingModule({
       imports: [ShopCheckout],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MollieNavigation, useValue: { open: vi.fn(() => { throw new Error('Blocked navigation'); }) } }],
     });
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => { http.verify(); localStorage.removeItem('myshop.pending-payment.v1'); });
+
+  it('saves the payment before redirecting directly and blocks duplicate clicks during navigation', () => {
+    const fixture = TestBed.createComponent(ShopCheckout);
+    fixture.componentRef.setInput('lines', [line]); fixture.componentRef.setInput('paymentMethod', 'online');
+    fixture.componentRef.setInput('deliveryMethodId', '40000000-0000-0000-0000-000000000001');
+    const page = fixture.componentInstance;
+    page.customerName = 'Ada'; page.email = 'ada@example.test'; page.addressLine = 'Street 1'; page.postalCode = '1234 AB'; page.city = 'Utrecht';
+    const placed = vi.fn(); page.placed.subscribe(placed);
+    const navigation = vi.spyOn(TestBed.inject(MollieNavigation), 'open').mockImplementation(() => {
+      expect(TestBed.inject(PendingPayment).token()).not.toBeNull();
+      expect(TestBed.inject(PendingPayment).matches(TestBed.inject(PendingPayment).token()!, [line])).toBe(true);
+    });
+    page.submit(); page.submit(); http.expectOne('/api/auth/csrf').flush(null);
+    const start = http.expectOne('/api/shop/online-payments');
+    start.flush({ checkoutToken: start.request.body.checkoutToken, providerName: 'Mollie', checkoutUrl: 'https://www.mollie.com/checkout/test', paymentReference: 'OP-TEST', providerPaymentId: 'tr_test', totals: [], deliveryMethod: {} });
+    expect(navigation).toHaveBeenCalledWith('https://www.mollie.com/checkout/test');
+    expect(page.redirecting()).toBe(true); expect(page.busy()).toBe(true); expect(placed).not.toHaveBeenCalled();
+    page.submit(); http.expectNone('/api/auth/csrf'); http.expectNone('/api/shop/online-payments');
+    fixture.detectChanges(); expect(fixture.nativeElement.querySelector('[aria-label="Online betaling"]')).toBeNull();
+  });
 
   it('prepares CSRF and submits only customer input, the choice and cart identifiers', () => {
     const fixture = TestBed.createComponent(ShopCheckout);
@@ -118,7 +141,7 @@ describe('Shop checkout', () => {
     const placed = vi.fn();
     page.placed.subscribe(placed);
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Online betaling voorbereiden');
+    expect(fixture.nativeElement.textContent).toContain('Betalen met iDEAL');
 
     page.submit();
     http.expectOne('/api/auth/csrf').flush(null);
@@ -151,10 +174,11 @@ describe('Shop checkout', () => {
         currency: 'EUR',
       },
     });
-    expect(page.notice()).toBe('De online betaalprovider is klaar om gekoppeld te worden.');
+    expect(TestBed.inject(MollieNavigation).open).toHaveBeenCalledWith('https://payments.example.test/test_123');
+    expect(page.notice()).toContain('Automatisch doorsturen lukte niet');
     fixture.detectChanges();
     const content = fixture.nativeElement.textContent;
-    expect(content).toContain('De online betaalprovider is klaar om gekoppeld te worden.');
+    expect(content).toContain('Automatisch doorsturen lukte niet');
     expect(content).toContain('Betaalprovider: Mollie');
     expect(content).toContain('Betalingskenmerk: OP-123');
     expect(content).not.toContain('Providerbetaling:');

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CheckoutOrderLine, OnlinePaymentStart, OrderApi, OrderReceipt } from './order.api';
 import { errorMessage } from '../catalog/error-message';
+import { MollieNavigation } from './mollie-navigation';
 import { PendingPayment } from './pending-payment';
 import { Auth } from '../auth/auth';
 import { CustomerAccountApi, CustomerProfile } from '../customer/customer-account.api';
@@ -101,8 +102,8 @@ import { CustomerAccountApi, CustomerProfile } from '../customer/customer-accoun
             Je bestelling wordt gecontroleerd voordat de betaalprovider wordt gestart.
           </p>
         }
-        @if (onlinePayment(); as payment) {
-          <section class="notice" aria-label="Online betaalstart">
+        @if (!redirecting() && onlinePayment(); as payment) {
+          <section class="notice" aria-label="Online betaling">
             <p>Betaalprovider: {{ payment.providerName }}</p>
             <p>Betalingskenmerk: {{ payment.paymentReference }}</p>
             @if (payment.providerName === 'TestPay') {
@@ -132,6 +133,8 @@ import { CustomerAccountApi, CustomerProfile } from '../customer/customer-accoun
 })
 export class ShopCheckout {
   private readonly api = inject(OrderApi);
+  private readonly navigation = inject(MollieNavigation);
+  readonly redirecting = signal(false);
   private readonly pending = inject(PendingPayment);
   private readonly destroyRef = inject(DestroyRef);
   private readonly auth = inject(Auth);
@@ -292,6 +295,15 @@ export class ShopCheckout {
             this.notice.set(payment.message);
             this.onlinePayment.set(payment);
             this.pending.save(payment.checkoutToken, request.lines);
+            if (payment.providerName === 'Mollie') {
+              this.redirecting.set(true); this.busy.set(true); this.busyChanged.emit(true);
+              this.notice.set('Je wordt doorgestuurd naar Mollie voor iDEAL…');
+              try { this.navigation.open(payment.checkoutUrl); }
+              catch {
+                this.redirecting.set(false); this.busy.set(false); this.busyChanged.emit(false);
+                this.notice.set('Automatisch doorsturen lukte niet. Open hieronder de bestaande iDEAL-betaalpagina.');
+              }
+            }
           },
           error: (error) => this.showFailure(error),
         });
@@ -354,9 +366,9 @@ export class ShopCheckout {
 
   buttonText() {
     if (this.busy())
-      return this.paymentMethod() === 'online' ? 'Betaling voorbereiden…' : 'Bestelling plaatsen…';
+      return this.paymentMethod() === 'online' ? 'Doorsturen naar iDEAL…' : 'Bestelling plaatsen…';
     return this.paymentMethod() === 'online'
-      ? 'Online betaling voorbereiden'
+      ? 'Betalen met iDEAL'
       : 'Bestelling plaatsen';
   }
 }

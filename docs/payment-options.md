@@ -107,3 +107,10 @@ winkelmand hersteld vanuit de geverifieerde betaalstart op de server. Het
 betalingskenmerk, provider, totalen en bezorging blijven zichtbaar. Alleen een
 open betaling krijgt de oorspronkelijke betaallink. Herstellen start geen nieuwe
 betaling en toont geen klantnaam, e-mailadres of adres in de publieke statusrespons.
+
+Vanaf 0.2.11 klikt de klant op Betalen met iDEAL. Na controle en het bewaren van
+de betaalstart stuurt MyShop direct in hetzelfde venster door naar Mollie; de
+tussenstap met een aparte knop om de betaalpagina te openen vervalt. Tijdens het
+doorsturen zijn dubbele klikken geblokkeerd. Lukt navigeren niet, dan blijft
+dezelfde betaalstart beschikbaar via een handmatige link. De bankstatus blijft
+leidend voor de bestelbevestiging; doorsturen alleen plaatst geen bestelling.
