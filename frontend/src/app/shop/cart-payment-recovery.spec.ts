@@ -76,4 +76,13 @@ describe('Cart reopening after payment', () => {
     response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending' } }));
     expect(page.blocksCheckout()).toBe(true); expect(cart.count()).toBe(3);
   });
+  it('does not tell an empty basket that it can pay a new order', () => {
+    const { cart, response, fixture, page } = setup(); cart.clear();
+    response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending' } }));
+    fixture.detectChanges();
+    expect(page.unresolvedPayment()).toBe(token);
+    expect(fixture.nativeElement.textContent).toContain('Je winkelmand is leeg.');
+    expect(fixture.nativeElement.textContent).not.toContain('nieuwe winkelmand afrekenen');
+    expect(fixture.nativeElement.querySelector('a[href*="checkoutToken"]')).toBeNull();
+  });
 });

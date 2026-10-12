@@ -26,7 +26,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
     } @else {
     <h1>Winkelmand</h1>
     @if (recoveringPayment()) { <p role="status">Eerdere betaalstatus controleren…</p> }
-    @if (unresolvedPayment(); as token) {
+    @if (cart.lines().length > 0 && unresolvedPayment(); as token) {
       @if (blocksCheckout()) {
         <p role="status">Er is een eerdere betaling voor artikelen in deze winkelmand waarvan de status nog niet is bevestigd. Controleer deze voordat je opnieuw afrekent.</p>
       } @else {

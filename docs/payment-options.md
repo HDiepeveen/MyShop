@@ -96,3 +96,8 @@ overlap in dezelfde productvarianten. Een nieuwe winkelmand met andere artikelen
 kan wel afrekenen. Een door Mollie geverifieerde open betaling krijgt op de
 betaalstatuspagina een link naar de oorspronkelijke betaalpagina; dit start geen
 tweede betaling. Voor pending/authorized wordt geen betaalpagina aangeboden.
+
+Vanaf 0.2.9 toont een lege winkelmand geen melding meer dat een nieuwe winkelmand
+kan worden afgerekend vanwege een oude betaalpoging. Een bestelling met Later
+betalen gaat niet naar Mollie en is na de bevestigingsmail nog niet betaald.
+Kies iDEAL om de online betaalcyclus te doorlopen.
