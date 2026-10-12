@@ -27,7 +27,11 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
     <h1>Winkelmand</h1>
     @if (recoveringPayment()) { <p role="status">Eerdere betaalstatus controleren…</p> }
     @if (unresolvedPayment(); as token) {
-      <p role="status">Er is een eerdere betaling waarvan de status nog niet is bevestigd. Controleer deze voordat je opnieuw afrekent.</p>
+      @if (blocksCheckout()) {
+        <p role="status">Er is een eerdere betaling voor artikelen in deze winkelmand waarvan de status nog niet is bevestigd. Controleer deze voordat je opnieuw afrekent.</p>
+      } @else {
+        <p role="status">Er is nog een eerdere betaalpoging voor andere artikelen. Je kunt deze nieuwe winkelmand afrekenen.</p>
+      }
       <a routerLink="/winkel/betaling" [queryParams]="{ checkoutToken: token }">Eerdere betaling controleren</a>
     }
     @if (cart.warning()) {
@@ -199,7 +203,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
             <p role="alert">Er is momenteel geen betaaloptie beschikbaar.</p>
           }
         </section>
-        @if (selectedPayment() && selectedDelivery() && !unresolvedPayment()) {
+        @if (selectedPayment() && selectedDelivery() && !blocksCheckout()) {
           <app-shop-checkout
             [lines]="checkoutLines()"
             [paymentMethod]="selectedPayment()"
@@ -234,6 +238,7 @@ export class ShopCart {
   readonly recoveringPayment = signal(false);
   readonly unresolvedPayment = signal<string | null>(null);
   readonly cart = inject(Cart);
+  readonly blocksCheckout = computed(() => { const token = this.unresolvedPayment(); return !!token && this.pending.overlaps(token, this.cart.lines()); });
   readonly auth = inject(Auth);
   private readonly api = inject(ShopApi);
   private readonly paymentApi = inject(PaymentOptionsApi);

@@ -90,3 +90,9 @@ blijft de winkelmand staan en wordt de eerdere betaalstart vrijgegeven. Bij een
 onzekere status blijft opnieuw afrekenen geblokkeerd; de klant kan de eerdere
 betaling controleren via de betaalpagina. Een late response van een verlaten
 pagina of een andere betaalstart verwijdert geen nieuwe winkelmand.
+
+Vanaf 0.2.8 blokkeert een onbevestigde betaalpoging alleen een winkelmand met
+overlap in dezelfde productvarianten. Een nieuwe winkelmand met andere artikelen
+kan wel afrekenen. Een door Mollie geverifieerde open betaling krijgt op de
+betaalstatuspagina een link naar de oorspronkelijke betaalpagina; dit start geen
+tweede betaling. Voor pending/authorized wordt geen betaalpagina aangeboden.

@@ -63,4 +63,17 @@ describe('Cart reopening after payment', () => {
     const { fixture, cart, pending, response } = setup(); fixture.destroy(); response.next(receipt);
     expect(cart.lines()).toEqual([line]); expect(pending.token()).toBe(token);
   });
+  it('allows a new basket containing different products while an old payment is open', () => {
+    const { cart, response, page, fixture } = setup();
+    cart.clear(); cart.add('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002');
+    response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending' } }));
+    fixture.detectChanges();
+    expect(page.unresolvedPayment()).toBe(token); expect(page.blocksCheckout()).toBe(false);
+    expect(cart.count()).toBe(1); expect(fixture.nativeElement.textContent).toContain('nieuwe winkelmand afrekenen');
+  });
+  it('still blocks a repeated payment for the same variant after changing its quantity', () => {
+    const { cart, response, page } = setup(); cart.setQuantity(line, 3);
+    response.error(new HttpErrorResponse({ status: 409, error: { code: 'paymentPending' } }));
+    expect(page.blocksCheckout()).toBe(true); expect(cart.count()).toBe(3);
+  });
 });

@@ -73,7 +73,10 @@ public sealed class MolliePaymentCycleHttpTests
             mollie.Status = status;
             var check = await host.Client.GetAsync(completion);
             Assert.Equal(HttpStatusCode.Conflict, check.StatusCode);
-            Assert.Equal(code, (await check.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+            var statusBody = await check.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(code, statusBody.GetProperty("code").GetString());
+            if (status == "open") Assert.Equal("https://www.mollie.com/checkout/test", statusBody.GetProperty("checkoutUrl").GetString());
+            else if (code == "paymentPending") Assert.Equal(JsonValueKind.Null, statusBody.GetProperty("checkoutUrl").ValueKind);
             Assert.Equal(HttpStatusCode.OK, (await callback.PostAsync(webhook, Form(id))).StatusCode);
         }
         mollie.Status = "paid"; mollie.AmountOverride = "0.01";

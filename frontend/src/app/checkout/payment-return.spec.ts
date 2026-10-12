@@ -89,6 +89,20 @@ describe('Mollie payment return', () => {
     http.expectOne('/api/shop/online-payments/' + token + '/complete').flush(receipt);
     expect(page.receipt()).not.toBeNull();
   });
+  it('reopens the existing unpaid checkout instead of preparing a second payment', () => {
+    const { fixture, page, request } = start();
+    request.flush({ code: 'paymentPending', checkoutUrl: 'https://www.mollie.com/checkout/existing' }, { status: 409, statusText: 'Conflict' });
+    fixture.detectChanges();
+    expect(page.resumeUrl()).toBe('https://www.mollie.com/checkout/existing');
+    expect(fixture.nativeElement.querySelector('a[href="https://www.mollie.com/checkout/existing"]')?.textContent).toContain('Eerdere betaling');
+    expect(page.receipt()).toBeNull();
+    http.expectNone('/api/shop/online-payments');
+  });
+  it('does not turn an unsafe provider URL into a link', () => {
+    const { page, request } = start();
+    request.flush({ code: 'paymentPending', checkoutUrl: 'javascript:alert(1)' }, { status: 409, statusText: 'Conflict' });
+    expect(page.resumeUrl()).toBeNull();
+  });
   for (const code of ['paymentFailed', 'paymentCanceled', 'paymentExpired'])
     it('preserves cart for ' + code, () => {
       const cart = TestBed.inject(Cart);

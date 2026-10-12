@@ -29,6 +29,7 @@ import { PendingPayment } from './pending-payment';
       @if (message()) {
         <p role="status">{{ message() }}</p>
       }
+      @if (resumeUrl()) { <p><a [href]="resumeUrl()">Eerdere betaling openen en afronden</a></p> }
       @if (validToken && !terminal()) {
         <button type="button" [disabled]="busy()" (click)="check()">
           Betaalstatus opnieuw controleren
@@ -53,6 +54,7 @@ export class PaymentReturn implements OnInit {
   private readonly cancel = new Subject<void>();
   private token = '';
   validToken = false;
+  readonly resumeUrl = signal<string | null>(null);
   readonly busy = signal(false);
   readonly terminal = signal(false);
   readonly message = signal('');
@@ -61,6 +63,7 @@ export class PaymentReturn implements OnInit {
   ngOnInit() {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.cancel.next();
+      this.resumeUrl.set(null);
       this.busy.set(false);
       this.receipt.set(null);
       this.terminal.set(false);
@@ -77,6 +80,7 @@ export class PaymentReturn implements OnInit {
     if (!this.validToken || this.busy() || this.receipt() || this.terminal()) return;
     this.busy.set(true);
     this.message.set('');
+    this.resumeUrl.set(null);
     this.api
       .completeOnlinePayment(this.token)
       .pipe(takeUntil(this.cancel), takeUntilDestroyed(this.destroyRef))
@@ -94,6 +98,12 @@ export class PaymentReturn implements OnInit {
         error: (error: unknown) => {
           this.busy.set(false);
           const code = error instanceof HttpErrorResponse ? error.error?.code : undefined;
+          if (code === 'paymentPending' && error instanceof HttpErrorResponse) {
+            try {
+              const url = new URL(error.error?.checkoutUrl);
+              if (url.protocol === 'https:' && !url.username && !url.password) this.resumeUrl.set(url.href);
+            } catch {}
+          }
           this.terminal.set(['paymentFailed', 'paymentCanceled', 'paymentExpired'].includes(code));
           if (this.terminal()) this.pending.clear(this.token);
           const messages: Record<string, string> = {
@@ -109,7 +119,7 @@ export class PaymentReturn implements OnInit {
               'Je betaling kon nog niet worden verwerkt in een bestelling. Neem contact op met de webshop en betaal niet nogmaals.',
           };
           this.message.set(
-            messages[code] ??
+            (this.resumeUrl() ? 'Deze betaling staat nog open. Open de eerdere betaalpagina om deze af te ronden.' : messages[code]) ??
               'De betaalstatus kon niet worden opgehaald. Controleer opnieuw; betaal niet nogmaals.',
           );
         },

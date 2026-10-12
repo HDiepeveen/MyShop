@@ -8,6 +8,7 @@ public sealed record CompleteOnlinePaymentCommand(Guid CheckoutToken, string? Pr
 public enum CompleteOnlinePaymentFailure { PaymentNotFound, PaymentMismatch, CartUnavailable, PaymentPending, PaymentFailed, PaymentCanceled, PaymentExpired }
 public sealed record CompleteOnlinePaymentResult(OrderReceipt? Receipt, CompleteOnlinePaymentFailure? Failure)
 {
+    public Uri? CheckoutUrl { get; init; }
     public static CompleteOnlinePaymentResult Failed(CompleteOnlinePaymentFailure failure) => new(null, failure);
 }
 
@@ -42,7 +43,7 @@ public sealed class CompleteOnlinePayment(IOnlinePaymentStartRepository paymentS
                 OnlinePaymentStatus.Canceled => CompleteOnlinePaymentFailure.PaymentCanceled,
                 OnlinePaymentStatus.Expired => CompleteOnlinePaymentFailure.PaymentExpired,
                 _ => CompleteOnlinePaymentFailure.PaymentPending
-            });
+            }) with { CheckoutUrl = verified.Status == OnlinePaymentStatus.Open ? payment.CheckoutUrl : null };
 
         var customer = OrderCustomer.Create(payment.Customer.Name, payment.Customer.Email);
         var address = DeliveryAddress.Create(payment.Address.AddressLine, payment.Address.PostalCode,

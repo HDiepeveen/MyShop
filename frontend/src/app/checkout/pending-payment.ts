@@ -33,6 +33,15 @@ export class PendingPayment {
       return false;
     }
   }
+  overlaps(token: string, lines: readonly CartLine[]): boolean {
+    try {
+      const stored = JSON.parse(localStorage.getItem(key) ?? 'null');
+      if (stored?.token !== token) return false;
+      const original: unknown = JSON.parse(stored.signature);
+      if (!Array.isArray(original)) return true;
+      return original.some(item => lines.some(line => item?.productId === line.productId && item?.variantId === line.variantId));
+    } catch { return true; }
+  }
   clear(token: string) {
     try {
       if (JSON.parse(localStorage.getItem(key) ?? 'null')?.token === token)
