@@ -14,7 +14,6 @@ const profile = {
   city: 'Utrecht',
   countryCode: 'NL',
   phoneNumber: '0301234567',
-  notes: '',
   revision: 'r',
 };
 describe('Profile input validation', () => {
@@ -74,7 +73,6 @@ describe('Profile input validation', () => {
       city: 'Utrecht',
       countryCode: 'Suriname',
       phoneNumber: '0301234567',
-      notes: '',
       revision: 'r',
     });
   });

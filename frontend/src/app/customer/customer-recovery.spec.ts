@@ -16,7 +16,6 @@ const profile: Profile = {
   city: 'Utrecht',
   countryCode: 'NL',
   phoneNumber: '0301234567',
-  notes: '',
   revision: null,
 };
 const product = {
@@ -86,7 +85,6 @@ describe('Customer page recovery', () => {
       city: profile.city,
       countryCode: 'Nederland',
       phoneNumber: profile.phoneNumber,
-      notes: profile.notes,
       revision: profile.revision,
     });
     saved.error(new Error('Offline'));

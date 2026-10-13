@@ -257,7 +257,6 @@ export class ShopCheckout {
                 this.countryCode = countryName(profile.countryCode);
               if (!this.phoneNumber && !this.editedFields.has('phoneNumber'))
                 this.phoneNumber = profile.phoneNumber ?? '';
-              if (!this.notes && !this.editedFields.has('notes')) this.notes = profile.notes ?? '';
             },
             error: () => {
               if (this.auth.session() === session && !this.busy() && !this.onlinePayment())

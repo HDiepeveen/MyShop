@@ -45,15 +45,6 @@ import { errorMessage } from '../catalog/error-message';
             [disabled]="busy()"
         /></label>
         <label
-          >Opmerkingen<textarea
-            name="notes"
-            [(ngModel)]="notes"
-            maxlength="1000"
-            rows="3"
-            [disabled]="busy()"
-          ></textarea>
-        </label>
-        <label
           >Adres<input
             name="address"
             [disabled]="busy()"
@@ -106,7 +97,6 @@ export class CustomerProfile {
   city = '';
   countryCode = '';
   phoneNumber = '';
-  notes = '';
   revision: string | null = null;
   constructor() {
     this.load();
@@ -120,7 +110,6 @@ export class CustomerProfile {
     this.city = profile.city ?? '';
     this.countryCode = countryName(profile.countryCode);
     this.phoneNumber = profile.phoneNumber ?? '';
-    this.notes = profile.notes ?? '';
     this.revision = profile.revision;
   }
   load() {
@@ -160,7 +149,6 @@ export class CustomerProfile {
       !new RegExp('^[+0-9 ()./-]+$').test(this.phoneNumber)
     )
       return 'Vul een geldig telefoonnummer in.';
-    if (this.notes.length > 1000) return 'Gebruik maximaal 1000 tekens voor opmerkingen.';
     return '';
   }
   save() {
@@ -182,7 +170,6 @@ export class CustomerProfile {
         city: this.city.trim(),
         countryCode: this.countryCode.trim(),
         phoneNumber: this.phoneNumber.trim(),
-        notes: this.notes.trim(),
         revision: this.revision,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))

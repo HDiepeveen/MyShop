@@ -9,11 +9,11 @@ internal sealed class CustomerProfileRepository(MyShopDbContext context) : ICust
     public Task<CustomerProfileSnapshot?> GetAsync(string userId, CancellationToken cancellationToken) =>
         context.CustomerProfiles.AsNoTracking().Where(profile => profile.UserId == userId)
             .Select(profile => new CustomerProfileSnapshot(profile.UserId, profile.Name, profile.AddressLine,
-                profile.PostalCode, profile.City, profile.CountryCode, profile.Version, profile.PhoneNumber, profile.Notes))
+                profile.PostalCode, profile.City, profile.CountryCode, profile.Version, profile.PhoneNumber))
             .SingleOrDefaultAsync(cancellationToken);
 
     public async Task<CustomerProfileSnapshot?> SaveAsync(string userId, string name, string addressLine,
-        string postalCode, string city, string countryCode, Guid? expectedRevision, CancellationToken cancellationToken, string phoneNumber = "", string notes = "")
+        string postalCode, string city, string countryCode, Guid? expectedRevision, CancellationToken cancellationToken, string phoneNumber = "")
     {
         var replacement = Guid.NewGuid();
         if (expectedRevision is null)
@@ -21,7 +21,7 @@ internal sealed class CustomerProfileRepository(MyShopDbContext context) : ICust
             if (await context.CustomerProfiles.AnyAsync(profile => profile.UserId == userId, cancellationToken)) return null;
             context.CustomerProfiles.Add(new CustomerProfilePersistence { Id = Guid.NewGuid(), UserId = userId, Name = name,
                 AddressLine = addressLine, PostalCode = postalCode, City = city, CountryCode = countryCode,
-                PhoneNumber = phoneNumber, Notes = notes, Version = replacement });
+                PhoneNumber = phoneNumber, Version = replacement });
             try { await context.SaveChangesAsync(cancellationToken); }
             catch (DbUpdateException) { return null; }
         }
@@ -34,10 +34,10 @@ internal sealed class CustomerProfileRepository(MyShopDbContext context) : ICust
                     .SetProperty(profile => profile.PostalCode, postalCode)
                     .SetProperty(profile => profile.City, city)
                     .SetProperty(profile => profile.CountryCode, countryCode)
-                    .SetProperty(profile => profile.PhoneNumber, phoneNumber).SetProperty(profile => profile.Notes, notes)
+                    .SetProperty(profile => profile.PhoneNumber, phoneNumber)
                     .SetProperty(profile => profile.Version, replacement), cancellationToken);
             if (changed == 0) return null;
         }
-        return new(userId, name, addressLine, postalCode, city, countryCode, replacement, phoneNumber, notes);
+        return new(userId, name, addressLine, postalCode, city, countryCode, replacement, phoneNumber);
     }
 }

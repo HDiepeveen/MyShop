@@ -14,10 +14,9 @@ public sealed class CustomerProfileTests
             "user", "Ada", "Street 1", "1234 AB", "Paramaribo", "Suriname", null), default));
         var result = await useCase.ExecuteAsync(new(
             "user", "Ada", "Street 1", "1234 AB", "Paramaribo", " Suriname ", null,
-            " +597 123456 ", " Bij de zijdeur. "), default);
+            " +597 123456 "), default);
         Assert.Equal("Suriname", result.Profile!.CountryCode);
         Assert.Equal("+597 123456", result.Profile.PhoneNumber);
-        Assert.Equal("Bij de zijdeur.", result.Profile.Notes);
     }
 
     [Fact]
@@ -50,9 +49,9 @@ public sealed class CustomerProfileTests
         private CustomerProfileSnapshot? profile;
         public Task<CustomerProfileSnapshot?> GetAsync(string userId, CancellationToken cancellationToken) => Task.FromResult(profile);
         public Task<CustomerProfileSnapshot?> SaveAsync(string userId, string name, string addressLine,
-            string postalCode, string city, string countryCode, Guid? expectedRevision, CancellationToken cancellationToken, string phoneNumber = "", string notes = "")
+            string postalCode, string city, string countryCode, Guid? expectedRevision, CancellationToken cancellationToken, string phoneNumber = "")
         {
-            profile = Reject ? null : new(userId, name, addressLine, postalCode, city, countryCode, Guid.NewGuid(), phoneNumber, notes);
+            profile = Reject ? null : new(userId, name, addressLine, postalCode, city, countryCode, Guid.NewGuid(), phoneNumber);
             return Task.FromResult(profile);
         }
     }

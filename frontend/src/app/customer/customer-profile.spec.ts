@@ -25,7 +25,6 @@ describe('Customer profile', () => {
       city: 'Utrecht',
       countryCode: 'NL',
       phoneNumber: '0301234567',
-      notes: '',
       revision: '11111111-1111-1111-1111-111111111111',
     });
     fixture.detectChanges();
@@ -52,7 +51,6 @@ describe('Customer profile', () => {
       city: 'Amsterdam',
       countryCode: 'be',
       phoneNumber: '0301234567',
-      notes: '',
       revision: '11111111-1111-1111-1111-111111111111',
     });
     request.flush({

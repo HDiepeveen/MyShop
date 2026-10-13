@@ -220,7 +220,6 @@ describe('Storefront recovery', () => {
     city: 'Utrecht',
     countryCode: 'NL',
     phoneNumber: '0301234567',
-    notes: '',
     revision: null,
   };
 
@@ -270,14 +269,15 @@ describe('Storefront recovery', () => {
     );
     expect(profile.addressLine).toBe('Straat 1');
   });
-  it('prefills contacts and submits edited notes without changing the saved account address', () => {
+  it('keeps notes specific to the order even when a legacy profile contains notes', () => {
     const { fixture, response, orders } = checkoutFixture();
     const page = fixture.componentInstance;
     expect(page.countryCode).toBe('');
-    response.next({ ...profile, notes: 'Bel even.' });
+    const legacyProfile = { ...profile, notes: 'Bel even.' };
+    response.next(legacyProfile);
     expect(page.countryCode).toBe('Nederland');
     expect(page.phoneNumber).toBe('0301234567');
-    expect(page.notes).toBe('Bel even.');
+    expect(page.notes).toBe('');
     page.phoneNumber = '+597 123456';
     page.notes = 'Gebruik de zijdeur.';
     page.submit();
