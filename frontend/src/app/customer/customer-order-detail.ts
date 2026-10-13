@@ -102,9 +102,9 @@ import {
             <strong>{{ line.currency }} {{ amount(line.totalAmount) }}</strong>
           </p>
         }
-        @for (total of item.totals; track total.currency) {
+        @for (total of articleTotals(item); track total.currency) {
           <p>
-            <strong>Totaal {{ total.currency }} {{ amount(total.amount) }}</strong>
+            <strong>Subtotaal artikelen {{ total.currency }} {{ amount(total.amount) }}</strong>
           </p>
         }
       </section>
@@ -120,6 +120,13 @@ import {
           }
         </section>
       }
+      <section class="panel">
+        <h2>Totaal bestelling</h2>
+        @for (total of item.totals; track total.currency) {
+          <p><strong>{{ total.currency }} {{ amount(total.amount) }}</strong></p>
+        }
+        <p>Inclusief bezorgkosten.</p>
+      </section>
       <section class="panel">
         <h2>Bezorgadres</h2>
         <p>
@@ -228,6 +235,18 @@ export class CustomerOrderDetail {
   }
   amount(value: string) {
     return value.replace('.', ',');
+  }
+  articleTotals(order: Detail) {
+    const totals = new Map<string, bigint>();
+    for (const line of order.lines) {
+      const [whole, fraction = ''] = line.totalAmount.split('.');
+      const cents = BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0'));
+      totals.set(line.currency, (totals.get(line.currency) ?? 0n) + cents);
+    }
+    return Array.from(totals, ([currency, cents]) => ({
+      currency,
+      amount: `${cents / 100n}.${(cents % 100n).toString().padStart(2, '0')}`,
+    }));
   }
   timeline(order: Detail) {
     const events: { label: string; at: string; note?: string }[] = [

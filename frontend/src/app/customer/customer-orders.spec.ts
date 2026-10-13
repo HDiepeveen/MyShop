@@ -26,6 +26,52 @@ describe('Customer orders', () => {
     vi.restoreAllMocks();
   });
 
+  it.each(['2.00', '0.00', null])('separates article totals from delivery costs %s', (deliveryAmount) => {
+    TestBed.configureTestingModule({
+      imports: [CustomerOrderDetail],
+      providers: [
+        provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
+        { provide: ActivatedRoute, useValue: {
+          paramMap: new BehaviorSubject(convertToParamMap({ id })),
+          queryParamMap: new BehaviorSubject(convertToParamMap({})),
+        } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(CustomerOrderDetail);
+    const total = deliveryAmount === '2.00' ? '47.98' : '45.98';
+    http.expectOne('/api/customer/orders/' + id).flush({
+      ...summary,
+      customer: { name: 'Hans', email: 'hans@example.test' },
+      deliveryAddress: { addressLine: 'Straat 1', postalCode: '1234 AB', city: 'Utrecht', countryCode: 'NL' },
+      totals: [{ currency: 'EUR', amount: total }, { currency: 'USD', amount: '0.30' }],
+      deliveryMethod: deliveryAmount === null ? null : {
+        id, name: 'Standaardbezorging', amount: deliveryAmount, currency: 'EUR',
+      },
+      lines: [
+        { productId: id, variantId: '1', productName: 'Espresso normal roast', variantName: 'Bonen / 100 gram', quantity: 1, unitAmount: '9.68', currency: 'EUR', totalAmount: '9.68' },
+        { productId: id, variantId: '2', productName: 'Espresso Extra Dark Roast', variantName: 'Hele bonen / 250 gram', quantity: 3, unitAmount: '12.10', currency: 'EUR', totalAmount: '36.30' },
+        { productId: id, variantId: '3', productName: 'Extra', variantName: 'A', quantity: 1, unitAmount: '0.10', currency: 'USD', totalAmount: '0.10' },
+        { productId: id, variantId: '4', productName: 'Extra', variantName: 'B', quantity: 1, unitAmount: '0.20', currency: 'USD', totalAmount: '0.20' },
+      ],
+    });
+    fixture.detectChanges();
+    const panels = Array.from(fixture.nativeElement.querySelectorAll('section')) as HTMLElement[];
+    const articles = panels.find((panel) => panel.querySelector('h2')?.textContent === 'Artikelen')!;
+    const grandTotal = panels.find((panel) => panel.querySelector('h2')?.textContent === 'Totaal bestelling')!;
+    expect(articles.textContent).toContain('Subtotaal artikelen EUR 45,98');
+    expect(articles.textContent).toContain('Subtotaal artikelen USD 0,30');
+    expect(articles.textContent).not.toContain('47,98');
+    expect(grandTotal.textContent).toContain('EUR ' + total.replace('.', ','));
+    expect(grandTotal.textContent).toContain('USD 0,30');
+    expect(grandTotal.textContent).toContain('Inclusief bezorgkosten.');
+    expect(panels.indexOf(grandTotal)).toBeGreaterThan(panels.indexOf(articles));
+    if (deliveryAmount !== null) {
+      const delivery = panels.find((panel) => panel.querySelector('h2')?.textContent === 'Bezorgoptie')!;
+      expect(panels.indexOf(grandTotal)).toBe(panels.indexOf(delivery) + 1);
+    }
+  });
+
   it('shows only the account order page and requests the next page', () => {
     TestBed.configureTestingModule({
       imports: [CustomerOrderList],
