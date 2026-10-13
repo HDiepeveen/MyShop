@@ -78,6 +78,9 @@ interface AppearanceSettings {
             </article>
           </section>
           <button [disabled]="!valid()">Kleuren opslaan</button>
+          <button type="button" class="secondary" (click)="resetColors()">
+            Originele kleuren herstellen
+          </button>
         </fieldset>
       </form>
     }
@@ -147,6 +150,14 @@ export class AppearanceSettingsPage {
   choose(name: string) {
     const theme = this.themes.find((item) => item.name === name);
     if (theme) this.colors = { ...theme.colors };
+  }
+  resetColors() {
+    if (this.busy() || this.loading() || !this.revision) return;
+    this.colors = { ...defaultColors };
+    this.error.set('');
+    this.notice.set(
+      'Originele kleuren hersteld in het voorbeeld. Klik op Kleuren opslaan om ze toe te passen.',
+    );
   }
   load() {
     if (this.loading() || this.busy()) return;

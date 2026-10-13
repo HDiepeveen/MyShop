@@ -14,6 +14,37 @@ describe('Appearance settings', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('resets all colors in the preview and applies them only after saving', () => {
+    const fixture = TestBed.createComponent(AppearanceSettingsPage);
+    const page = fixture.componentInstance;
+    const branding = TestBed.inject(ShopBranding);
+    branding.colors.set({ ...shopThemes[2].colors });
+    http
+      .expectOne('/api/shop-appearance')
+      .flush({ colors: shopThemes[2].colors, revision: 'revision-1' });
+    fixture.detectChanges();
+    const reset = Array.from(
+      fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
+    ).find((button) => button.textContent?.includes('Originele kleuren herstellen'))!;
+    reset.click();
+    fixture.detectChanges();
+    expect(page.colors).toEqual(defaultColors);
+    expect(page.selectedTheme()).toBe('Standaard');
+    expect(page.warnings()).toEqual([]);
+    expect(branding.colors()).toEqual(shopThemes[2].colors);
+    http.expectNone('/api/auth/csrf');
+    expect(page.notice()).toContain('Klik op Kleuren opslaan');
+    page.save();
+    page.resetColors();
+    expect(page.busy()).toBe(true);
+    http.expectOne('/api/auth/csrf').flush(null);
+    const save = http.expectOne('/api/shop-appearance');
+    expect(save.request.body).toEqual({ colors: defaultColors, revision: 'revision-1' });
+    save.flush(null);
+    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance: defaultColors });
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-2' });
+    expect(branding.colors()).toEqual(defaultColors);
+  });
   it('previews without applying and saves once with CSRF and the current revision', () => {
     const fixture = TestBed.createComponent(AppearanceSettingsPage);
     const page = fixture.componentInstance;

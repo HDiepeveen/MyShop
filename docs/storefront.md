@@ -87,3 +87,5 @@ De winkelmand neemt het telefoonnummer over uit het profiel; de klant kan dit vo
 Onder Beheer → Vormgeving kan de beheerder Standaard, Licht, Donker, Blauw of Groen kiezen, of eigen kleuren voor hoofdkleur, achtergrond, panelen en tekst. De voorbeeldweergave verandert meteen; pas na opslaan gelden de kleuren voor de klantomgeving. De beheeromgeving behoudt haar kleuren.
 
 Knoppen krijgen automatisch zwarte of witte tekst. Bij onvoldoende contrast tussen tekst/links en achtergrond/panelen verschijnt een waarschuwing. Kleuren worden gevalideerd als #RRGGBB en opgeslagen met een revisiecontrole die gelijktijdige wijzigingen aan webshopteksten beschermt. Bestellingen en facturen blijven op papier zwart op wit. De migratie ShopAppearance voegt de kleurinstellingen toe met de bestaande standaardkleuren.
+
+Met Originele kleuren herstellen worden alle vier basiskleuren en de afgeleide kleuren in het voorbeeld teruggezet naar de oorspronkelijke MyShop-kleuren. Pas met Kleuren opslaan wordt dit toegepast op de winkel.
