@@ -81,12 +81,15 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             @if (order.deliveryAddress.phoneNumber) {
               <br />Telefoonnummer: {{ order.deliveryAddress.phoneNumber }}
             }
-            @if (order.deliveryAddress.notes) {
-              <p class="preserve-lines">Opmerkingen: {{ order.deliveryAddress.notes }}</p>
-            }
           </address>
         </section>
       </div>
+      @if (order.deliveryAddress.notes?.trim()) {
+        <section class="panel">
+          <h2>Opmerkingen</h2>
+          <p class="preserve-lines">{{ order.deliveryAddress.notes }}</p>
+        </section>
+      }
       <section class="panel">
         <h2>Tijdlijn</h2>
         <ol class="timeline">

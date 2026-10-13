@@ -65,6 +65,20 @@ const actions = [
 ] as const;
 
 describe('Order management recovery', () => {
+  it.each(['Bel bij aankomst.\nAchterdeur gebruiken.', '', '   '])('shows a separate delivery notes panel only when filled: %s', (notes) => {
+    const { fixture, response } = setup();
+    response.next({ ...order, deliveryAddress: { ...order.deliveryAddress, notes } });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const panel = Array.from(root.querySelectorAll('section')).find(section => section.querySelector('h2')?.textContent === 'Opmerkingen');
+    if (notes.trim()) {
+      expect(panel?.querySelector('.preserve-lines')?.textContent).toBe(notes);
+      expect(panel?.previousElementSibling?.classList.contains('grid')).toBe(true);
+      expect(root.querySelector('address')?.textContent).not.toContain(notes);
+    } else {
+      expect(panel).toBeUndefined();
+    }
+  });
   function setup(status: OrderDetail['status'] = 'awaitingPayment') {
     const params = new BehaviorSubject(convertToParamMap({ id: order.id }));
     const response = new Subject<OrderDetail>();
