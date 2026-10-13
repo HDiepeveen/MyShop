@@ -262,6 +262,11 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("BackgroundColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
                     b.Property<string>("CompanyAddress")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -306,6 +311,16 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<string>("PanelColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<string>("PrimaryColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
                     b.Property<string>("SeoTitle")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -315,6 +330,11 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TextColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
 
                     b.Property<Guid>("Version")
                         .IsConcurrencyToken()
@@ -333,12 +353,16 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("a178498a-a53f-48fb-9650-d0f3d3108322"),
+                            BackgroundColor = "#f6f7f1",
                             CompanyHeading = "Over ons en contact",
                             FooterText = "Ontdek wat bij je past.",
                             Heading = "Ontdek ons assortiment",
                             Introduction = "Bekijk onze producten en kies de variant die bij je past.",
+                            PanelColor = "#fffefa",
+                            PrimaryColor = "#1d5543",
                             SeoTitle = "Assortiment · MyShop",
                             ShopName = "MyShop",
+                            TextColor = "#223c33",
                             Version = new Guid("5509887c-93b7-4d70-93db-8151db89fa01"),
                             WelcomeText = "Welkom bij MyShop"
                         });

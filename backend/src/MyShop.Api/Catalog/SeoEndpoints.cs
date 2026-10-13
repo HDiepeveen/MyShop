@@ -15,6 +15,20 @@ public static class SeoEndpoints
             try { return Map(await useCase.SaveTypeHeadingsAsync(new(id, request.AboutHeading, request.AttributesHeading, request.Revision), ct)); }
             catch (ArgumentException ex) { return Results.BadRequest(new { code = "invalidSeo", message = ex.Message }); }
         });
+        endpoints.MapGet("/api/shop-appearance", async ([FromServices] ManageSeo useCase, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            return Results.Ok(new ShopAppearanceSettings(settings.Appearance, settings.Revision));
+        });
+        endpoints.MapPut("/api/shop-appearance", async (ShopAppearanceSettings request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await useCase.SaveAppearanceAsync(request, ct);
+                return result.Failure is null ? Results.NoContent() : (IResult)Results.Conflict(new { code = "concurrency", message = "De webshopinstellingen zijn gewijzigd. Haal de gegevens opnieuw op." });
+            }
+            catch (ArgumentException ex) { return Results.BadRequest(new { code = "invalidAppearance", message = ex.Message }); }
+        });
         endpoints.MapGet("/api/seo-settings", async ([FromServices] ManageSeo useCase, CancellationToken ct) => Results.Ok(await useCase.GetSettingsAsync(ct)));
         endpoints.MapPut("/api/seo-settings", async (ShopSeoSettings request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {

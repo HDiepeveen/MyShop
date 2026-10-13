@@ -81,3 +81,9 @@ De gekozen variant en hoeveelheid blijven behouden wanneer hetzelfde product of 
 Het klantprofiel en de winkelmand hebben een verplicht telefoonnummer (maximaal 50 tekens) en een vrij in te vullen verplicht Land (maximaal 100 tekens). Alleen de winkelmand heeft optionele Opmerkingen (maximaal 1000 tekens) voor de bestelling. Land begint bij een nieuw adres leeg. Bestaande NL- en SR-adressen worden als Nederland en Suriname getoond.
 
 De winkelmand neemt het telefoonnummer over uit het profiel; de klant kan dit voor deze bestelling aanpassen. Opmerkingen beginnen leeg en worden per bestelling ingevuld. Deze wijziging past het profiel niet aan. Zowel later betalen als iDEAL bewaart de gegevens als onderdeel van de bestelling. Ze staan in de besteldetails van klant en beheerder. De migratie DeliveryContactDetails behoudt bestaande adressen, bestellingen en betaalpogingen; oudere gegevens zonder telefoon blijven leesbaar, maar een nieuw profiel opslaan of een nieuwe bestelling plaatsen vereist een telefoonnummer.
+
+## Kleurenschema
+
+Onder Beheer → Vormgeving kan de beheerder Standaard, Licht, Donker, Blauw of Groen kiezen, of eigen kleuren voor hoofdkleur, achtergrond, panelen en tekst. De voorbeeldweergave verandert meteen; pas na opslaan gelden de kleuren voor de klantomgeving. De beheeromgeving behoudt haar kleuren.
+
+Knoppen krijgen automatisch zwarte of witte tekst. Bij onvoldoende contrast tussen tekst/links en achtergrond/panelen verschijnt een waarschuwing. Kleuren worden gevalideerd als #RRGGBB en opgeslagen met een revisiecontrole die gelijktijdige wijzigingen aan webshopteksten beschermt. Bestellingen en facturen blijven op papier zwart op wit. De migratie ShopAppearance voegt de kleurinstellingen toe met de bestaande standaardkleuren.

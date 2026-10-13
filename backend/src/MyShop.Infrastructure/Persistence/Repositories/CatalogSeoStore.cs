@@ -19,7 +19,17 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id, ct);
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours));
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor) };
+    }
+    public async Task<SeoResult> SaveAppearanceAsync(ShopAppearanceSettings value, CancellationToken ct)
+    {
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.PrimaryColor, value.Colors.PrimaryColor)
+                .SetProperty(x => x.BackgroundColor, value.Colors.BackgroundColor)
+                .SetProperty(x => x.PanelColor, value.Colors.PanelColor)
+                .SetProperty(x => x.TextColor, value.Colors.TextColor)
+                .SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        return new(changed == 1 ? null : SeoFailure.Conflict);
     }
     public async Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
     {

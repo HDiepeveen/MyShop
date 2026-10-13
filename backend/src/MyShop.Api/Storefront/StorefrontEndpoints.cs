@@ -17,7 +17,7 @@ public static class StorefrontEndpoints
         endpoints.MapGet("/api/shop/settings", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            return Results.Ok(new { settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText });
+            return Results.Ok(new { settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance });
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/company", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {

@@ -12,14 +12,14 @@ import { Component, effect, input, signal } from '@angular/core';
         width: 100%;
         height: 280px;
         object-fit: contain;
-        background: #f3f5ed;
+        background: var(--shop-background, #f3f5ed);
         border-radius: 10px;
       }
       .placeholder {
         display: grid;
         place-items: center;
         padding: 16px;
-        color: #62716b;
+        color: var(--shop-text, #62716b);
       }
       :host(.large) img,
       :host(.large) .placeholder {

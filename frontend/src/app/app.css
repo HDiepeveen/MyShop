@@ -24,7 +24,7 @@
   letter-spacing: -1px;
 }
 .brand-icon {
-  background: #d9edaa;
+  background: var(--shop-primary, #d9edaa);
   color: #163c37;
   border-radius: 11px;
   width: 40px;
@@ -55,7 +55,7 @@
   color: white;
 }
 .sidebar nav a.active {
-  box-shadow: inset 3px 0 #d9edaa;
+  box-shadow: inset 3px 0 var(--shop-primary, #d9edaa);
 }
 .sidebar-footer {
   margin-top: auto;
@@ -67,7 +67,7 @@
   display: inline-block;
   width: 7px;
   height: 7px;
-  background: #d9edaa;
+  background: var(--shop-primary, #d9edaa);
   border-radius: 50%;
   margin-right: 7px;
 }
@@ -78,14 +78,14 @@
   min-height: 78px;
   flex-wrap: wrap;
   gap: 12px;
-  border-bottom: 1px solid #e2e6de;
+  border-bottom: 1px solid var(--shop-border, #e2e6de);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 42px;
   font-size: 13px;
-  color: #62716b;
-  background: #fffefa;
+  color: var(--shop-text, #62716b);
+  background: var(--shop-panel, #fffefa);
 }
 .divider {
   margin: 0 12px;
@@ -94,13 +94,13 @@
 .avatar {
   display: grid;
   place-items: center;
-  background: #ebefe5;
-  border: 1px solid #dce1d4;
+  background: var(--shop-background, #ebefe5);
+  border: 1px solid var(--shop-border, #dce1d4);
   border-radius: 50%;
   width: 34px;
   height: 34px;
   font-weight: 650;
-  color: #31574b;
+  color: var(--shop-primary, #31574b);
 }
 main {
   padding: 38px 42px;
@@ -110,7 +110,7 @@ main {
 }
 footer {
   padding: 16px 42px;
-  color: #718077;
+  color: var(--shop-text, #718077);
   font-size: 12px;
   display: flex;
   justify-content: space-between;
@@ -169,6 +169,9 @@ footer {
 }
 
 .workspace.shop {
+  color-scheme: var(--shop-color-scheme, light);
+  background: var(--shop-background);
+  color: var(--shop-text);
   grid-template-columns: 1fr;
 }
 .shop-brand {

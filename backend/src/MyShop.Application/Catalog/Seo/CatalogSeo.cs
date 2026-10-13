@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company);
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; };
 public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours);
 public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
 public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeading, string? AttributesHeading, Guid Revision);
@@ -24,6 +24,7 @@ public interface ICatalogSeoStore
 {
     Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken cancellationToken);
     Task<SeoResult> SaveTypeHeadingsAsync(ProductTypeHeadings headings, CancellationToken cancellationToken);
+    Task<SeoResult> SaveAppearanceAsync(ShopAppearanceSettings settings, CancellationToken cancellationToken);
     Task<ShopSeoSettings> GetSettingsAsync(CancellationToken cancellationToken);
     Task<SeoResult> SaveSettingsAsync(ShopSeoSettings settings, CancellationToken cancellationToken);
     Task<ProductSeoInfo?> GetProductAsync(Guid productId, CancellationToken cancellationToken);
@@ -73,6 +74,12 @@ public sealed class ManageSeo(ICatalogSeoStore store)
         if (headings.ProductTypeId == Guid.Empty) throw new ArgumentException("Producttype ontbreekt.");
         return store.SaveTypeHeadingsAsync(headings with { AboutHeading = SeoText.Optional(headings.AboutHeading, 200),
             AttributesHeading = SeoText.Optional(headings.AttributesHeading, 200) }, ct);
+    }
+    public Task<SeoResult> SaveAppearanceAsync(ShopAppearanceSettings value, CancellationToken ct)
+    {
+        if (value.Revision == Guid.Empty) throw new ArgumentException("Vernieuw de instellingen.");
+        if (value.Colors is null) throw new ArgumentException("Kies een kleurenschema.");
+        return store.SaveAppearanceAsync(value with { Colors = value.Colors.Normalize() }, ct);
     }
     public Task<ShopSeoSettings> GetSettingsAsync(CancellationToken cancellationToken) => store.GetSettingsAsync(cancellationToken);
     public Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken cancellationToken) => store.GetProductAsync(id, cancellationToken);

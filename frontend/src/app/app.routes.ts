@@ -2,7 +2,17 @@ import { Routes } from '@angular/router';
 import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
-  { path: 'instellingen/seo', loadComponent: () => import('./seo/seo-settings').then(m => m.SeoSettings), title: 'Webshop en SEO · MyShop' },
+  {
+    path: 'instellingen/vormgeving',
+    loadComponent: () =>
+      import('./settings/appearance-settings').then((m) => m.AppearanceSettingsPage),
+    title: 'Vormgeving · MyShop',
+  },
+  {
+    path: 'instellingen/seo',
+    loadComponent: () => import('./seo/seo-settings').then((m) => m.SeoSettings),
+    title: 'Webshop en SEO · MyShop',
+  },
   {
     path: 'instellingen/facturatie',
     loadComponent: () => import('./billing/billing-settings').then((m) => m.BillingSettings),
@@ -105,7 +115,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'informatie/bedrijf',
-        loadComponent: () => import('./shop/shop-company').then(m => m.ShopCompany),
+        loadComponent: () => import('./shop/shop-company').then((m) => m.ShopCompany),
         title: 'Over ons en contact · MyShop',
       },
       {

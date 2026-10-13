@@ -1,3 +1,5 @@
+import { NgStyle } from '@angular/common';
+import { themeStyles } from './settings/shop-theme';
 import { ShopBranding } from './shop/shop-branding';
 import { StorefrontSeo } from './shop/storefront-seo';
 import webshopVersion from '../../../version.json';
@@ -12,22 +14,28 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [NgStyle, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
 export class App {
+  readonly themeStyles = themeStyles;
   readonly branding = inject(ShopBranding);
   readonly version = webshopVersion.version;
   private readonly seo = inject(StorefrontSeo);
   readonly shopSettings = inject(ShopSettings);
   constructor() {
     this.branding.refresh();
-    this.router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed()).subscribe(() => {
-      this.seo.reset(this.router.url);
-      this.branding.refresh();
-      if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
-    });
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.seo.reset(this.router.url);
+        this.branding.refresh();
+        if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
+      });
     if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
   }
   readonly auth = inject(Auth);

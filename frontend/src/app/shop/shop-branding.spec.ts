@@ -7,6 +7,24 @@ import { TitleStrategy, provideRouter, Router } from '@angular/router';
 import { ShopBranding } from './shop-branding';
 import { App } from '../app';
 describe('Webshop name', () => {
+  it('applies saved colors only to the storefront and removes them when returning to management', async () => {
+    const fixture = TestBed.createComponent(App);
+    const appearance = { primaryColor: '#a7d9ff', backgroundColor: '#111827', panelColor: '#1f2937', textColor: '#f3f4f6' };
+    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
+    await TestBed.inject(Router).navigateByUrl('/winkel');
+    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
+    fixture.detectChanges();
+    const workspace = fixture.nativeElement.querySelector('.workspace') as HTMLElement;
+    expect(workspace.style.getPropertyValue('--shop-background')).toBe('#111827');
+    expect(workspace.style.getPropertyValue('--shop-button-text')).toBe('#000000');
+    await TestBed.inject(Router).navigateByUrl('/inloggen');
+    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
+    fixture.detectChanges();
+    expect(workspace.classList.contains('shop')).toBe(false);
+    expect(workspace.style.getPropertyValue('--shop-background')).toBe('');
+  });
+
   let http: HttpTestingController;
   beforeEach(() => { TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TitleStrategy, useClass: ShopTitleStrategy }, provideRouter([{ path: 'winkel', children: [] }, { path: 'inloggen', children: [], title: 'Inloggen · MyShop' }])] }); http = TestBed.inject(HttpTestingController); });
   afterEach(() => { http.match('/api/auth/session').forEach(r => r.flush({ authenticated: false })); http.verify(); });

@@ -2,6 +2,10 @@ namespace MyShop.Infrastructure.Persistence.Models;
 internal sealed class CatalogSeoSettingsPersistence
 {
     public Guid Id { get; set; }
+    public string PrimaryColor { get; set; } = "#1d5543";
+    public string BackgroundColor { get; set; } = "#f6f7f1";
+    public string PanelColor { get; set; } = "#fffefa";
+    public string TextColor { get; set; } = "#223c33";
     public string ShopName { get; set; } = "MyShop";
     public string WelcomeText { get; set; } = "Welkom bij MyShop";
     public string Introduction { get; set; } = "Bekijk onze producten en kies de variant die bij je past.";

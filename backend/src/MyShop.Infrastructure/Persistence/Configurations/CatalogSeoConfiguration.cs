@@ -9,6 +9,10 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
     {
         builder.ToTable("CatalogSeoSettings"); builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.PrimaryColor).HasMaxLength(7).IsRequired();
+        builder.Property(x => x.BackgroundColor).HasMaxLength(7).IsRequired();
+        builder.Property(x => x.PanelColor).HasMaxLength(7).IsRequired();
+        builder.Property(x => x.TextColor).HasMaxLength(7).IsRequired();
         builder.Property(x => x.ShopName).HasMaxLength(100).IsRequired();
         builder.Property(x => x.WelcomeText).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Introduction).HasMaxLength(1000).IsRequired();
