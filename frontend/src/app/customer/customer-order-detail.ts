@@ -112,8 +112,8 @@ import {
         <section class="panel">
           <h2>Bezorgoptie</h2>
           <p>
-            <strong>{{ delivery.name }}</strong> · {{ delivery.currency }}
-            {{ delivery.amount.replace('.', ',') }}
+            {{ delivery.name }} ·
+            <strong>{{ delivery.currency }} {{ delivery.amount.replace('.', ',') }}</strong>
           </p>
           @if (delivery.description) {
             <p class="preserve-lines">{{ delivery.description }}</p>
