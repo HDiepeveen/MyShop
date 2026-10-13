@@ -65,6 +65,27 @@ const actions = [
 ] as const;
 
 describe('Order management recovery', () => {
+  it.each(['0612345678', ''])('shows delivery phone %s with the customer and places the address next', (phoneNumber) => {
+    const { fixture, response } = setup();
+    response.next({
+      ...order,
+      deliveryAddress: { ...order.deliveryAddress, phoneNumber },
+      deliveryMethod: { id: 'post', name: 'Post', description: null, amount: '2.00', currency: 'EUR' },
+    });
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const panels = Array.from(root.querySelectorAll('.grid > section'));
+    expect(panels.map(panel => panel.querySelector('h2')?.textContent)).toEqual(['Klant', 'Bezorgadres', 'Bezorgoptie']);
+    expect(panels[1].textContent).toContain('Straat 1');
+    expect(panels[1].textContent).not.toContain('Telefoonnummer');
+    if (phoneNumber) {
+      expect(panels[0].textContent).toContain('Telefoonnummer');
+      expect(panels[0].textContent).toContain(phoneNumber);
+      expect(panels[1].textContent).not.toContain(phoneNumber);
+    } else {
+      expect(panels[0].textContent).not.toContain('Telefoonnummer');
+    }
+  });
   it.each(['Bel bij aankomst.\nAchterdeur gebruiken.', '', '   '])('shows a separate delivery notes panel only when filled: %s', (notes) => {
     const { fixture, response } = setup();
     response.next({ ...order, deliveryAddress: { ...order.deliveryAddress, notes } });

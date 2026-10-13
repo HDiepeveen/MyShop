@@ -57,7 +57,20 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dd>
               <a [href]="'mailto:' + order.customer.email">{{ order.customer.email }}</a>
             </dd>
+            @if (order.deliveryAddress.phoneNumber) {
+              <dt>Telefoonnummer</dt>
+              <dd>{{ order.deliveryAddress.phoneNumber }}</dd>
+            }
           </dl>
+        </section>
+        <section class="panel">
+          <h2>Bezorgadres</h2>
+          <address>
+            {{ order.deliveryAddress.addressLine }}<br />{{ order.deliveryAddress.postalCode }}
+            {{ order.deliveryAddress.city }}<br />{{
+              countryName(order.deliveryAddress.countryCode)
+            }}
+          </address>
         </section>
         @if (order.deliveryMethod; as delivery) {
           <section class="panel">
@@ -71,18 +84,6 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             }
           </section>
         }
-        <section class="panel">
-          <h2>Bezorgadres</h2>
-          <address>
-            {{ order.deliveryAddress.addressLine }}<br />{{ order.deliveryAddress.postalCode }}
-            {{ order.deliveryAddress.city }}<br />{{
-              countryName(order.deliveryAddress.countryCode)
-            }}
-            @if (order.deliveryAddress.phoneNumber) {
-              <br />Telefoonnummer: {{ order.deliveryAddress.phoneNumber }}
-            }
-          </address>
-        </section>
       </div>
       @if (order.deliveryAddress.notes?.trim()) {
         <section class="panel">
