@@ -187,6 +187,9 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
             <p role="alert">Er is momenteel geen bezorgoptie beschikbaar.</p>
           }
         </section>
+        @for (total of orderTotals(); track total.currency) {
+          <p><strong>Totaal {{ total.currency }}: {{ amount(total.amount) }}</strong></p>
+        }
         <section class="panel">
           <h2>Hoe wil je betalen?</h2>
           @if (paymentOptions()?.loading) {
@@ -305,6 +308,19 @@ export class ShopCart {
       })) ?? [],
   );
   readonly totals = computed(() => this.quote()?.totals ?? []);
+  readonly orderTotals = computed(() => {
+    const delivery = this.deliveryMethods()?.data?.find(method => method.id === this.selectedDelivery());
+    if (!delivery || !this.complete()) return [];
+    const totals = new Map<string, bigint>();
+    for (const total of [...this.totals(), delivery]) {
+      const [whole, fraction = ''] = total.amount.split('.');
+      totals.set(total.currency, (totals.get(total.currency) ?? 0n) + BigInt(whole) * 100n + BigInt(fraction.padEnd(2, '0')));
+    }
+    return Array.from(totals, ([currency, cents]) => ({
+      currency,
+      amount: `${cents / 100n}.${(cents % 100n).toString().padStart(2, '0')}`,
+    }));
+  });
   readonly checkoutLines = computed(
     () =>
       this.quote()?.lines.map((line) => ({
