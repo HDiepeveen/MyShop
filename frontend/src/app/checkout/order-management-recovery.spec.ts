@@ -65,6 +65,35 @@ const actions = [
 ] as const;
 
 describe('Order management recovery', () => {
+  afterEach(() => vi.restoreAllMocks());
+  it.each(['payment', 'shipping'] as const)('confirms %s corrections, blocks duplicate clicks and refreshes the order', actionName => {
+    const { fixture, current, response, action, api } = setup(actionName === 'payment' ? 'paid' : 'shipped');
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    fixture.componentInstance.correct(current, actionName);
+    expect(api.correct).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    fixture.componentInstance.correct(current, actionName);
+    fixture.componentInstance.correct(current, actionName);
+    expect(api.correct).toHaveBeenCalledExactlyOnceWith(current.id, current.revision, actionName);
+    expect(fixture.componentInstance.saving()).toBe(true);
+    action.next();
+    expect(api.get).toHaveBeenCalledTimes(2);
+    response.next({ ...current, status: actionName === 'payment' ? 'awaitingPayment' : 'paid' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('De foutieve registratie is teruggedraaid.');
+  });
+  it('protects online payments and stale snapshots from correction', () => {
+    const { fixture, current, response, api } = setup('paid');
+    const online = { ...current, paymentMethod: 'online' as const };
+    response.next(online);
+    fixture.detectChanges();
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    fixture.componentInstance.correct(online, 'payment');
+    fixture.componentInstance.correct(current, 'payment');
+    expect(confirm).not.toHaveBeenCalled();
+    expect(api.correct).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).not.toContain('Betalingsregistratie terugdraaien');
+  });
   it.each(['0612345678', ''])('shows delivery phone %s with the customer and places the address next', (phoneNumber) => {
     const { fixture, response } = setup();
     response.next({
@@ -110,6 +139,7 @@ describe('Order management recovery', () => {
       markShipped: vi.fn(() => action),
       cancel: vi.fn(() => action),
       refund: vi.fn(() => action),
+      correct: vi.fn(() => action),
     };
     TestBed.configureTestingModule({
       imports: [OrderDetailComponent],
@@ -184,7 +214,7 @@ describe('Order management recovery', () => {
       expect(button.disabled).toBe(false);
     });
   }
-  it('offers copy controls for the stored administrator references', () => {
+  it('shows stored administrator references without copy controls', () => {
     const { fixture, current, response } = setup();
     response.next({
       ...current,
@@ -200,11 +230,8 @@ describe('Order management recovery', () => {
     const controls = Array.from(
       fixture.nativeElement.querySelectorAll('app-copy-text'),
     ) as HTMLElement[];
-    expect(controls).toHaveLength(4);
-    expect(controls.map((control) => control.textContent).join(' ')).toContain(
-      'Terugbetalingskenmerk',
-    );
-    expect(controls.every((control) => control.classList.contains('print-hide'))).toBe(true);
+    expect(controls).toHaveLength(0);
+    expect(fixture.nativeElement.textContent).toContain('REFUND-1');
   });
   it('prints the loaded admin order and blocks stale snapshots or pending writes', () => {
     const { fixture, current } = setup();

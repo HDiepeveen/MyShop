@@ -1,4 +1,5 @@
 using Microsoft.Data.SqlClient;
+using MyShop.Application.Checkout.CorrectOrderStatus;
 using Microsoft.EntityFrameworkCore;
 using MyShop.Application.Checkout.Abstractions;
 using MyShop.Application.Customers.Abstractions;
@@ -8,7 +9,7 @@ using MyShop.Infrastructure.Persistence.Models;
 namespace MyShop.Infrastructure.Persistence.Repositories;
 
 internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, IOrderStatusRepository,
-    ICustomerOrderReadRepository, ICustomerOrderCancellationRepository
+    ICustomerOrderReadRepository, ICustomerOrderCancellationRepository, IOrderCorrectionRepository
 {
     private readonly MyShopDbContext context;
 
@@ -329,6 +330,30 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
                 .SetProperty(order => order.PaymentReference, paymentReference)
                 .SetProperty(order => order.Version, replacement), cancellationToken);
         return changed == 0 ? null : replacement;
+    }
+
+    public async Task<bool> CorrectAsync(Guid id, Guid revision, OrderCorrection correction,
+        CancellationToken cancellationToken)
+    {
+        if (!Enum.IsDefined(correction)) throw new ArgumentOutOfRangeException(nameof(correction));
+        var orders = context.Orders.Where(order => order.Id == id && order.Version == revision);
+        var replacement = Guid.NewGuid();
+        var changed = correction == OrderCorrection.Payment
+            ? await orders.Where(order => order.Status == (int)OrderStatus.Paid
+                && order.PaymentMethod == (int)OrderPaymentMethod.PayLater)
+                .ExecuteUpdateAsync(update => update
+                    .SetProperty(order => order.Status, (int)OrderStatus.AwaitingPayment)
+                    .SetProperty(order => order.PaidAt, (DateTimeOffset?)null)
+                    .SetProperty(order => order.PaymentReference, (string?)null)
+                    .SetProperty(order => order.Version, replacement), cancellationToken)
+            : await orders.Where(order => order.Status == (int)OrderStatus.Shipped)
+                .ExecuteUpdateAsync(update => update
+                    .SetProperty(order => order.Status, (int)OrderStatus.Paid)
+                    .SetProperty(order => order.ShippedAt, (DateTimeOffset?)null)
+                    .SetProperty(order => order.ShippingCarrier, (string?)null)
+                    .SetProperty(order => order.TrackingCode, (string?)null)
+                    .SetProperty(order => order.Version, replacement), cancellationToken);
+        return changed == 1;
     }
 
     public async Task<OrderStatusSnapshot?> GetStatusAsync(Guid id, CancellationToken cancellationToken) =>

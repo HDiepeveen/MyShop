@@ -1,4 +1,5 @@
 using MyShop.Domain.Catalog;
+using MyShop.Application.Checkout.CorrectOrderStatus;
 using MyShop.Domain.Checkout;
 using MyShop.Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,71 @@ namespace MyShop.Infrastructure.Tests.Integration;
 [Collection(SqlServerCollection.Name)]
 public sealed class SqlServerOrderReadTests(SqlServerDatabase database)
 {
+    [SqlServerFact]
+    public async Task CorrectsManualRegistrationsWithRevisionGuardsAndPreservesOrderAmounts()
+    {
+        await using var context = database.CreateContext();
+        var repository = new OrderRepository(context);
+        var item = CreateOrder(DateTimeOffset.UtcNow, "Correction customer");
+        await repository.AddAsync(item, Guid.NewGuid(), null, [], CancellationToken.None);
+        var detail = (await repository.GetAsync(item.Id, CancellationToken.None))!;
+        var correct = new CorrectOrderStatus(repository, repository);
+        Assert.Equal(CorrectionResult.NotFound, await correct.ExecuteAsync(Guid.NewGuid(), detail.Revision, OrderCorrection.Payment, CancellationToken.None));
+        Assert.Equal(CorrectionResult.InvalidTransition, await correct.ExecuteAsync(item.Id, detail.Revision, OrderCorrection.Payment, CancellationToken.None));
+        var paid = (await repository.MarkPaidAsync(item.Id, detail.Revision, DateTimeOffset.UtcNow, "mistake", CancellationToken.None))!.Value;
+        var shipped = (await repository.MarkShippedAsync(item.Id, paid, DateTimeOffset.UtcNow, "Post", "TRACK", CancellationToken.None))!.Value;
+        Assert.Equal(CorrectionResult.InvalidTransition, await correct.ExecuteAsync(item.Id, shipped, OrderCorrection.Payment, CancellationToken.None));
+        Assert.False(await repository.CorrectAsync(item.Id, paid, OrderCorrection.Shipping, CancellationToken.None));
+        Assert.Equal(CorrectionResult.Success, await correct.ExecuteAsync(item.Id, shipped, OrderCorrection.Shipping, CancellationToken.None));
+        var restored = (await repository.GetAsync(item.Id, CancellationToken.None))!;
+        Assert.Equal(OrderStatus.Paid, restored.Status);
+        Assert.Null(restored.ShippedAt);
+        Assert.Null(restored.ShippingCarrier);
+        Assert.Null(restored.TrackingCode);
+        Assert.NotNull(restored.PaidAt);
+        Assert.Equal("mistake", restored.PaymentReference);
+        Assert.Equal(CorrectionResult.ConcurrencyConflict, await correct.ExecuteAsync(item.Id, shipped, OrderCorrection.Shipping, CancellationToken.None));
+        Assert.Equal(CorrectionResult.Success, await correct.ExecuteAsync(item.Id, restored.Revision, OrderCorrection.Payment, CancellationToken.None));
+        var unpaid = (await repository.GetAsync(item.Id, CancellationToken.None))!;
+        Assert.Equal(OrderStatus.AwaitingPayment, unpaid.Status);
+        Assert.Null(unpaid.PaidAt);
+        Assert.Null(unpaid.PaymentReference);
+        Assert.Equal(detail.Lines, unpaid.Lines);
+        Assert.Equal(detail.Totals, unpaid.Totals);
+        Assert.NotEqual(restored.Revision, unpaid.Revision);
+        Assert.False(await repository.CorrectAsync(item.Id, unpaid.Revision, OrderCorrection.Shipping, CancellationToken.None));
+        var cancelled = (await repository.CancelAsync(item.Id, unpaid.Revision, DateTimeOffset.UtcNow, "Cancelled", CancellationToken.None))!.Value;
+        Assert.Equal(CorrectionResult.InvalidTransition, await correct.ExecuteAsync(item.Id, cancelled, OrderCorrection.Payment, CancellationToken.None));
+        Assert.Equal(CorrectionResult.InvalidTransition, await correct.ExecuteAsync(item.Id, cancelled, OrderCorrection.Shipping, CancellationToken.None));
+    }
+
+    [SqlServerFact]
+    public async Task CannotUndoAnOnlinePaymentEvenWhenCallingTheRepositoryDirectly()
+    {
+        await using var context = database.CreateContext();
+        var repository = new OrderRepository(context);
+        var item = Order.Place(Guid.NewGuid(), DateTimeOffset.UtcNow,
+            OrderCustomer.Create("Online customer", "online@example.test"),
+            DeliveryAddress.Create("Teststraat 1", "1234 AB", "Utrecht", "NL"),
+            [(Guid.NewGuid(), Guid.NewGuid(), "Shirt", "Blauw", 1, Money.Create(10m, "EUR"))],
+            paymentMethod: OrderPaymentMethod.Online);
+        await repository.AddPaidAsync(item, Guid.NewGuid(), "MSP-CORRECTION", [], CancellationToken.None);
+        var detail = (await repository.GetAsync(item.Id, CancellationToken.None))!;
+        Assert.Equal(OrderStatus.Paid, detail.Status);
+        Assert.Equal(CorrectionResult.InvalidTransition, await new CorrectOrderStatus(repository, repository)
+            .ExecuteAsync(item.Id, detail.Revision, OrderCorrection.Payment, CancellationToken.None));
+        Assert.False(await repository.CorrectAsync(item.Id, detail.Revision, OrderCorrection.Payment, CancellationToken.None));
+        Assert.Equal(detail, (await repository.GetAsync(item.Id, CancellationToken.None))! with { Lines = detail.Lines, Totals = detail.Totals });
+        var shipped = (await repository.MarkShippedAsync(item.Id, detail.Revision, DateTimeOffset.UtcNow, "Post", "TRACK", CancellationToken.None))!.Value;
+        Assert.Equal(CorrectionResult.Success, await new CorrectOrderStatus(repository, repository)
+            .ExecuteAsync(item.Id, shipped, OrderCorrection.Shipping, CancellationToken.None));
+        var paid = (await repository.GetAsync(item.Id, CancellationToken.None))!;
+        Assert.Equal(detail.PaymentReference, paid.PaymentReference);
+        Assert.Equal(detail.PaidAt, paid.PaidAt);
+        var refunded = (await repository.RefundAsync(item.Id, paid.Revision, DateTimeOffset.UtcNow, "refund", "Done", CancellationToken.None))!.Value;
+        Assert.Equal(CorrectionResult.InvalidTransition, await new CorrectOrderStatus(repository, repository)
+            .ExecuteAsync(item.Id, refunded, OrderCorrection.Shipping, CancellationToken.None));
+    }
     [SqlServerFact]
     public async Task ListsNewestFirstAndReturnsTheRecordedOrderSnapshot()
     {

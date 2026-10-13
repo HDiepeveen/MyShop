@@ -70,17 +70,16 @@ describe('Ordering previous articles again', () => {
       params,
     };
   }
-  it('offers customer copy controls only for the order number and available tracking code', () => {
+  it('shows stored tracking information without copy controls', () => {
     const { fixture, page } = setup();
     page.order.set({ ...order, trackingCode: '3S-CURRENT' });
     fixture.detectChanges();
     const controls = fixture.nativeElement.querySelectorAll('app-copy-text');
-    expect(controls).toHaveLength(2);
-    expect(controls[0].textContent).toContain('Bestelnummer');
-    expect(controls[1].textContent).toContain('Trackingcode');
+    expect(controls).toHaveLength(0);
+    expect(fixture.nativeElement.textContent).toContain('3S-CURRENT');
     page.order.set(order);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('app-copy-text')).toHaveLength(1);
+    expect(fixture.nativeElement.querySelectorAll('app-copy-text')).toHaveLength(0);
   });
   it('prints the current snapshot only after loading and outside cancellation', () => {
     const { fixture, page } = setup();

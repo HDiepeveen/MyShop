@@ -19,6 +19,7 @@ public static class OrderManagementEndpoints
     public static IEndpointRouteBuilder MapOrderManagement(this IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
+        endpoints.MapOrderCorrections();
         endpoints.MapGet("/api/orders", ListAsync).WithName("ListOrders");
         endpoints.MapGet("/api/orders/export", ExportAsync).WithName("ExportOrders");
         endpoints.MapGet("/api/orders/{id:guid}", GetAsync).WithName("GetOrder");

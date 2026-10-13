@@ -23,9 +23,9 @@ public sealed class OrderManagementEndpointsTests
         var app = WebApplication.CreateBuilder().Build();
         Assert.Same(app, app.MapOrderManagement());
         var endpoints = ((IEndpointRouteBuilder)app).DataSources.SelectMany(source => source.Endpoints).Cast<RouteEndpoint>().ToArray();
-        Assert.Equal(["/api/orders", "/api/orders/export", "/api/orders/{id:guid}", "/api/orders/{id:guid}/status"],
+        Assert.Equal(["/api/orders/{id:guid}/correction", "/api/orders", "/api/orders/export", "/api/orders/{id:guid}", "/api/orders/{id:guid}/status"],
             endpoints.Select(item => item.RoutePattern.RawText));
-        Assert.Equal(["GET", "GET", "GET", "PUT"],
+        Assert.Equal(["POST", "GET", "GET", "GET", "PUT"],
             endpoints.Select(item => Assert.Single(item.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods)));
     }
 

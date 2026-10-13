@@ -96,6 +96,9 @@ export class OrderManagementApi {
   get(id: string) {
     return this.http.get<OrderDetail>('/api/orders/' + encodeURIComponent(id));
   }
+  correct(id: string, revision: string, action: 'payment' | 'shipping') {
+    return this.http.post<void>('/api/orders/' + encodeURIComponent(id) + '/correction', { revision, action });
+  }
   markPaid(id: string, revision: string, paymentReference: string) {
     return this.http.put<{
       status: 'paid';

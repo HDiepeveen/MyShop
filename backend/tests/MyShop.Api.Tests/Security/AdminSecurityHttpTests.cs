@@ -33,6 +33,21 @@ public sealed class SecuritySqlFactAttribute : FactAttribute
 public sealed class AdminSecurityHttpTests
 {
     [SecuritySqlFact]
+    public async Task OrderCorrectionsValidateRequestsAndRequireAnExistingOrder()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Login()).StatusCode);
+        await host.Csrf();
+        var path = "/api/orders/" + Guid.NewGuid() + "/correction";
+        Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PostAsJsonAsync(path,
+            new { revision = Guid.NewGuid(), action = "refund" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PostAsJsonAsync(path,
+            new { revision = Guid.Empty, action = "payment" })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.PostAsJsonAsync(path,
+            new { revision = Guid.NewGuid(), action = "payment" })).StatusCode);
+    }
+    [SecuritySqlFact]
     public async Task EveryCatalogWriteRequiresAntiforgeryEvenForAdministrator()
     {
         await using var host = await SecurityHost.Create();

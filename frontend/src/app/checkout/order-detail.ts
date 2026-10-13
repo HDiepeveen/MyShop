@@ -1,6 +1,5 @@
 import { countryName } from '../customer/country-name';
 import { ShopBranding } from '../shop/shop-branding';
-import { CopyText } from '../copy-text';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -11,7 +10,7 @@ import { errorMessage } from '../catalog/error-message';
 import { OrderDetail, OrderManagementApi } from './order-management.api';
 
 @Component({
-  imports: [RouterLink, DatePipe, CurrencyPipe, CopyText],
+  imports: [RouterLink, DatePipe, CurrencyPipe],
   host: { class: 'printable-order' },
   template: ` <p class="print-only">{{ branding.name() }} · Besteloverzicht</p>
     <a class="back print-hide" routerLink="/bestellingen" queryParamsHandling="preserve"
@@ -42,7 +41,6 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
       <div class="page-head">
         <div>
           <h1>{{ order.number }}</h1>
-          <app-copy-text [text]="order.number" label="Bestelnummer kopiëren" />
           <p class="muted">Geplaatst op {{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }}</p>
         </div>
         <span class="badge">{{ statusLabel(order.status) }}</span>
@@ -150,7 +148,6 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               <dt>Betalingskenmerk</dt>
               <dd>
                 {{ order.paymentReference }}
-                <app-copy-text [text]="order.paymentReference" label="Betalingskenmerk kopiëren" />
               </dd>
             }
           }
@@ -165,7 +162,6 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               <dt>Trackingcode</dt>
               <dd>
                 {{ order.trackingCode }}
-                <app-copy-text [text]="order.trackingCode" label="Trackingcode kopiëren" />
               </dd>
             }
           }
@@ -181,12 +177,6 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dt>Terugbetalingskenmerk</dt>
             <dd>
               {{ order.refundReference }}
-              @if (order.refundReference) {
-                <app-copy-text
-                  [text]="order.refundReference"
-                  label="Terugbetalingskenmerk kopiëren"
-                />
-              }
             </dd>
             <dt>Reden</dt>
             <dd class="preserve-lines">{{ order.refundReason }}</dd>
@@ -255,6 +245,16 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           </details>
         </section>
       }
+      @if (order.status === 'shipped' || (order.status === 'paid' && order.paymentMethod === 'payLater')) {
+        <section class="panel print-hide">
+          <h2>Foutieve registratie corrigeren</h2>
+          <p>Dit corrigeert de bestelstatus. Er wordt geen geld teruggestort en de voorraad blijft gelijk.</p>
+          <button type="button" class="secondary" [disabled]="saving()"
+            (click)="correct(order, order.status === 'shipped' ? 'shipping' : 'payment')">
+            {{ order.status === 'shipped' ? 'Verzendregistratie terugdraaien' : 'Betalingsregistratie terugdraaien' }}
+          </button>
+        </section>
+      }
       @if (order.status === 'paid') {
         <section class="panel print-hide">
           <h2>Verzending verwerken</h2>
@@ -263,7 +263,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           </p>
           <details>
             <summary>Bestelling als verzonden markeren</summary>
-            <p>De verzendstatus van {{ order.number }} wordt definitief bijgewerkt.</p>
+            <p>De verzendstatus van {{ order.number }} wordt bijgewerkt.</p>
             <label
               >Vervoerder
               <input
@@ -418,6 +418,29 @@ export class OrderDetailComponent {
   printOrder(order: OrderDetail) {
     if (this.state()?.data !== order || this.state()?.loading || this.saving()) return;
     window.print();
+  }
+  correct(order: OrderDetail, action: 'payment' | 'shipping') {
+    if (this.state()?.data !== order || this.state()?.loading || this.saving()) return;
+    if (action === 'payment' ? order.status !== 'paid' || order.paymentMethod !== 'payLater' : order.status !== 'shipped') return;
+    const message = action === 'shipping'
+      ? 'De foutieve verzendregistratie verwijderen? De bestelling wordt weer Betaald.'
+      : 'De foutieve betalingsregistratie verwijderen? De bestelling wordt weer Wacht op betaling. Er wordt geen geld teruggestort.';
+    if (!window.confirm(message)) return;
+    this.saving.set(true);
+    this.actionError.set('');
+    this.notice.set('');
+    this.api.correct(order.id, order.revision, action).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.saving.set(false);
+        if (this.state()?.data !== order) return;
+        this.notice.set('De foutieve registratie is teruggedraaid.');
+        this.retry();
+      },
+      error: error => {
+        this.saving.set(false);
+        if (this.state()?.data === order) this.actionError.set(errorMessage(error));
+      },
+    });
   }
   markPaid(order: OrderDetail, paymentReference: string) {
     paymentReference = paymentReference.trim();
