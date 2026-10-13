@@ -5,6 +5,7 @@ public static class SeoEndpoints
 {
     public static void MapSeo(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapShopIcon();
         endpoints.MapGet("/api/product-types/{id:guid}/section-headings", async (Guid id, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
             var headings = await useCase.GetTypeHeadingsAsync(id, ct);
@@ -18,7 +19,7 @@ public static class SeoEndpoints
         endpoints.MapGet("/api/shop-appearance", async ([FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            return Results.Ok(new ShopAppearanceSettings(settings.Appearance, settings.Revision));
+            return Results.Ok(new ShopAppearanceSettings(settings.Appearance, settings.Revision, settings.IconUrl));
         });
         endpoints.MapPut("/api/shop-appearance", async (ShopAppearanceSettings request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {

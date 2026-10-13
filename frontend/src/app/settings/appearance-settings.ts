@@ -19,6 +19,7 @@ import {
 interface AppearanceSettings {
   colors: ShopColors;
   revision: string;
+  iconUrl?: string | null;
 }
 @Component({
   imports: [FormsModule, NgStyle],
@@ -38,6 +39,57 @@ interface AppearanceSettings {
       </button>
     }
     @if (revision) {
+      <section class="panel">
+        <h2>Icoon voor de webshopnaam</h2>
+        <p>
+          Upload één JPEG- of PNG-afbeelding van maximaal 1 MB en 20 miljoen pixels. Een vierkante
+          PNG met transparante achtergrond werkt goed. Uploaden of verwijderen wordt direct
+          opgeslagen.
+        </p>
+        @if (iconUrl) {
+          <p class="icon-example"><img [src]="iconUrl" alt="" />{{ branding.name() }}</p>
+          @if (removingIcon()) {
+            <p>Het webshopicoon verwijderen?</p>
+            <button type="button" [disabled]="busy() || loading()" (click)="removeIcon()">
+              Ja, verwijderen
+            </button>
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="busy() || loading()"
+              (click)="removingIcon.set(false)"
+            >
+              Annuleren
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="secondary"
+              [disabled]="busy() || loading()"
+              (click)="removingIcon.set(true)"
+            >
+              Icoon verwijderen
+            </button>
+          }
+        } @else {
+          <p>Nog geen icoon ingesteld.</p>
+        }
+        <label
+          >Icoon kiezen<input
+            #iconInput
+            type="file"
+            accept="image/png,image/jpeg"
+            [disabled]="busy() || loading()"
+            (change)="chooseIcon(iconInput)"
+        /></label>
+        <button
+          type="button"
+          [disabled]="busy() || loading() || !iconFile"
+          (click)="uploadIcon(iconInput)"
+        >
+          Icoon uploaden
+        </button>
+      </section>
       <form class="panel" (ngSubmit)="save()">
         <fieldset [disabled]="busy() || loading()">
           <legend>Kleurenschema</legend>
@@ -108,12 +160,24 @@ interface AppearanceSettings {
       border-radius: 12px;
       margin: 20px 0;
     }
+    .icon-example {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 26px;
+      font-weight: 700;
+    }
+    .icon-example img {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+    }
   `,
 })
 export class AppearanceSettingsPage {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(Auth);
-  private readonly branding = inject(ShopBranding);
+  readonly branding = inject(ShopBranding);
   private readonly destroyRef = inject(DestroyRef);
   readonly themes = shopThemes;
   readonly fields: { key: keyof ShopColors; label: string }[] = [
@@ -124,6 +188,9 @@ export class AppearanceSettingsPage {
   ];
   colors = { ...defaultColors };
   revision = '';
+  iconUrl: string | null = null;
+  iconFile: File | null = null;
+  readonly removingIcon = signal(false);
   readonly loading = signal(false);
   readonly busy = signal(false);
   readonly error = signal('');
@@ -159,7 +226,63 @@ export class AppearanceSettingsPage {
       'Originele kleuren hersteld in het voorbeeld. Klik op Kleuren opslaan om ze toe te passen.',
     );
   }
-  load() {
+  chooseIcon(input: HTMLInputElement) {
+    this.iconFile = null;
+    this.error.set('');
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.size || file.size > 1024 * 1024 || !/\.(png|jpe?g)$/i.test(file.name)) {
+      this.error.set('Kies een JPEG- of PNG-afbeelding van maximaal 1 MB.');
+      input.value = '';
+      return;
+    }
+    this.iconFile = file;
+  }
+  uploadIcon(input: HTMLInputElement) {
+    if (this.busy() || this.loading() || !this.revision || !this.iconFile) return;
+    const form = new FormData();
+    form.append('revision', this.revision);
+    form.append('file', this.iconFile, this.iconFile.name);
+    this.changeIcon(
+      () => this.http.post('/api/shop-icon', form),
+      () => {
+        input.value = '';
+        this.iconFile = null;
+        this.notice.set('Webshopicoon opgeslagen.');
+      },
+    );
+  }
+  removeIcon() {
+    if (this.busy() || this.loading() || !this.revision || !this.removingIcon()) return;
+    this.changeIcon(
+      () => this.http.delete('/api/shop-icon', { body: { revision: this.revision } }),
+      () => {
+        this.removingIcon.set(false);
+        this.notice.set('Webshopicoon verwijderd.');
+      },
+    );
+  }
+  private changeIcon(action: () => import('rxjs').Observable<unknown>, success: () => void) {
+    this.busy.set(true);
+    this.error.set('');
+    this.notice.set('');
+    this.auth
+      .prepare()
+      .pipe(switchMap(action), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          success();
+          this.branding.refresh();
+          this.load(true);
+        },
+        error: (error) => {
+          this.busy.set(false);
+          this.error.set(errorMessage(error));
+        },
+      });
+  }
+  load(keepColors = false) {
     if (this.loading() || this.busy()) return;
     this.loading.set(true);
     this.error.set('');
@@ -168,7 +291,8 @@ export class AppearanceSettingsPage {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (settings) => {
-          this.colors = { ...settings.colors };
+          if (!keepColors) this.colors = { ...settings.colors };
+          this.iconUrl = settings.iconUrl ?? null;
           this.revision = settings.revision;
           this.loading.set(false);
         },

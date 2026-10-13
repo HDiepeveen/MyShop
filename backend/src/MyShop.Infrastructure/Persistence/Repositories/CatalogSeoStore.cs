@@ -17,9 +17,23 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     }
     public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
     {
-        var row = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id, ct);
+        var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
+            .Select(x => new { x.Heading, x.SeoTitle, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
+                x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours,
+                x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, HasIcon = x.IconBytes != null }).SingleAsync(ct);
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor) };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+    }
+    public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct) =>
+        context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.IconBytes != null)
+            .Select(x => new MyShop.Application.Catalog.Abstractions.ProductImageContent(x.IconBytes!, x.IconContentType!)).SingleOrDefaultAsync(ct);
+    public async Task<SeoResult> SaveIconAsync(MyShop.Application.Catalog.Abstractions.ProductImageUpload? icon, Guid revision, CancellationToken ct)
+    {
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.IconBytes, icon == null ? null : icon.Bytes)
+                .SetProperty(x => x.IconContentType, icon == null ? null : icon.ContentType)
+                .SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        return new(changed == 1 ? null : SeoFailure.Conflict);
     }
     public async Task<SeoResult> SaveAppearanceAsync(ShopAppearanceSettings value, CancellationToken ct)
     {

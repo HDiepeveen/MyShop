@@ -1,20 +1,35 @@
 import { ShopColors, defaultColors, validColors } from '../settings/shop-theme';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 @Injectable({ providedIn: 'root' })
 export class ShopBranding {
   private readonly http = inject(HttpClient);
   readonly colors = signal<ShopColors>({ ...defaultColors });
+  readonly iconUrl = signal<string | null>(null);
+  readonly iconFailed = signal(false);
+  readonly icon = computed(() => (this.iconFailed() ? null : this.iconUrl()));
   readonly name = signal('MyShop');
   readonly footerText = signal('Ontdek wat bij je past.');
   private requestVersion = 0;
   refresh() {
     const version = ++this.requestVersion;
     this.http
-      .get<{ shopName: string; footerText?: string; appearance?: ShopColors }>('/api/shop/settings')
+      .get<{
+        shopName: string;
+        footerText?: string;
+        appearance?: ShopColors;
+        iconUrl?: string | null;
+      }>('/api/shop/settings')
       .subscribe({
         next: (settings) => {
           if (version === this.requestVersion) {
+            const icon =
+              typeof settings.iconUrl === 'string' &&
+              /^\/api\/shop\/icon\?v=[0-9a-f-]{36}$/i.test(settings.iconUrl)
+                ? settings.iconUrl
+                : null;
+            if (icon !== this.iconUrl()) this.iconFailed.set(false);
+            this.iconUrl.set(icon);
             this.colors.set(
               validColors(settings.appearance) ? { ...settings.appearance } : { ...defaultColors },
             );

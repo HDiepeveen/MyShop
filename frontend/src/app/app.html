@@ -36,7 +36,12 @@
   <div class="body">
     <header class="topbar">
       @if (storefront()) {
-        <a routerLink="/winkel" class="shop-brand">{{ branding.name() }}</a>
+        <a routerLink="/winkel" class="shop-brand">
+          @if (branding.icon(); as icon) {
+            <img [src]="icon" alt="" (error)="branding.iconFailed.set(true)" />
+          }
+          {{ branding.name() }}
+        </a>
         <nav aria-label="Winkelnavigatie" class="actions">
           <a routerLink="/winkel">Assortiment</a>
           @if (shopSettings.checkoutEnabled()) {

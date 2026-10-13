@@ -14,6 +14,68 @@ describe('Appearance settings', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('uploads an icon with CSRF and preserves unsaved color choices', () => {
+    const page = TestBed.createComponent(AppearanceSettingsPage).componentInstance;
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1' });
+    page.choose('Donker');
+    page.iconFile = new File(['png'], 'icon.png', { type: 'image/png' });
+    const input = document.createElement('input');
+    input.type = 'file';
+    page.uploadIcon(input);
+    page.uploadIcon(input);
+    http.expectOne('/api/auth/csrf').flush(null);
+    const upload = http.expectOne('/api/shop-icon');
+    const form = upload.request.body as FormData;
+    expect(form.get('revision')).toBe('revision-1');
+    expect((form.get('file') as File).name).toBe('icon.png');
+    upload.flush(null);
+    http
+      .expectOne('/api/shop/settings')
+      .flush({
+        shopName: 'MyShop',
+        iconUrl: '/api/shop/icon?v=11111111-1111-1111-1111-111111111111',
+      });
+    http
+      .expectOne('/api/shop-appearance')
+      .flush({
+        colors: defaultColors,
+        revision: 'revision-2',
+        iconUrl: '/api/shop/icon?v=11111111-1111-1111-1111-111111111111',
+      });
+    expect(page.colors).toEqual(shopThemes[2].colors);
+    expect(page.revision).toBe('revision-2');
+    expect(page.iconFile).toBeNull();
+    expect(page.iconUrl).toContain('/api/shop/icon');
+    page.removeIcon();
+    http.expectNone('/api/auth/csrf');
+    page.removingIcon.set(true);
+    page.removeIcon();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const removal = http.expectOne('/api/shop-icon');
+    expect(removal.request.method).toBe('DELETE');
+    expect(removal.request.body).toEqual({ revision: 'revision-2' });
+    removal.flush(null);
+    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', iconUrl: null });
+    http
+      .expectOne('/api/shop-appearance')
+      .flush({ colors: defaultColors, revision: 'revision-3', iconUrl: null });
+    expect(page.iconUrl).toBeNull();
+    expect(page.colors).toEqual(shopThemes[2].colors);
+  });
+  it('rejects oversized icon files without starting an upload', () => {
+    const page = TestBed.createComponent(AppearanceSettingsPage).componentInstance;
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1' });
+    const input = document.createElement('input');
+    input.type = 'file';
+    Object.defineProperty(input, 'files', {
+      value: [new File([new Uint8Array(1024 * 1024 + 1)], 'icon.png')],
+    });
+    page.chooseIcon(input);
+    page.uploadIcon(input);
+    expect(page.iconFile).toBeNull();
+    expect(page.error()).toContain('1 MB');
+    http.expectNone('/api/auth/csrf');
+  });
   it('resets all colors in the preview and applies them only after saving', () => {
     const fixture = TestBed.createComponent(AppearanceSettingsPage);
     const page = fixture.componentInstance;

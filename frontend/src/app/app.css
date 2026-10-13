@@ -175,9 +175,18 @@ footer {
   grid-template-columns: 1fr;
 }
 .shop-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   font-size: 26px;
   font-weight: 750;
   text-decoration: none;
+}
+.shop-brand img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .workspace.no-sidebar {

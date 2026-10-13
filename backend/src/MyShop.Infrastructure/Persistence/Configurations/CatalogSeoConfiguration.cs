@@ -14,6 +14,7 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
         builder.Property(x => x.PanelColor).HasMaxLength(7).IsRequired();
         builder.Property(x => x.TextColor).HasMaxLength(7).IsRequired();
         builder.Property(x => x.ShopName).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.IconContentType).HasMaxLength(20);
         builder.Property(x => x.WelcomeText).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Introduction).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.FooterText).HasMaxLength(200).IsRequired();

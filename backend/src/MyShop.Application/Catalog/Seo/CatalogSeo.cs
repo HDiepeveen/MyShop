@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; };
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } }
 public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours);
 public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
 public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeading, string? AttributesHeading, Guid Revision);
@@ -22,6 +22,8 @@ public enum SeoFailure { NotFound, Conflict, AddressInUse }
 public sealed record SeoResult(SeoFailure? Failure);
 public interface ICatalogSeoStore
 {
+    Task<SeoResult> SaveIconAsync(MyShop.Application.Catalog.Abstractions.ProductImageUpload? icon, Guid revision, CancellationToken ct);
+    Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct);
     Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken cancellationToken);
     Task<SeoResult> SaveTypeHeadingsAsync(ProductTypeHeadings headings, CancellationToken cancellationToken);
     Task<SeoResult> SaveAppearanceAsync(ShopAppearanceSettings settings, CancellationToken cancellationToken);
@@ -68,6 +70,15 @@ public static class SeoText
 }
 public sealed class ManageSeo(ICatalogSeoStore store)
 {
+    public const int MaximumIconBytes = 1024 * 1024;
+    public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct) => store.GetIconAsync(ct);
+    public Task<SeoResult> SaveIconAsync(byte[]? bytes, string fileName, Guid revision, CancellationToken ct)
+    {
+        if (revision == Guid.Empty) throw new ArgumentException("Vernieuw de instellingen.");
+        if (bytes?.Length > MaximumIconBytes) throw new ArgumentException("Kies een icoon van maximaal 1 MB.");
+        var icon = bytes is null ? null : MyShop.Application.Catalog.Abstractions.ProductImageUpload.Create(bytes, "Webshopicoon", fileName);
+        return store.SaveIconAsync(icon, revision, ct);
+    }
     public Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken ct) => store.GetTypeHeadingsAsync(id, ct);
     public Task<SeoResult> SaveTypeHeadingsAsync(ProductTypeHeadings headings, CancellationToken ct)
     {

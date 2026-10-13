@@ -306,6 +306,13 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<byte[]>("IconBytes")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("IconContentType")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("Introduction")
                         .IsRequired()
                         .HasMaxLength(1000)
