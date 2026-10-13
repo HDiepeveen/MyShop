@@ -204,6 +204,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               >Betalingskenmerk
               <input
                 #paymentReference
+                (input)="actionError.set('')"
                 [disabled]="saving()"
                 maxlength="100"
                 required
@@ -231,7 +232,14 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <summary>Onbetaalde bestelling annuleren</summary>
             <label>
               Reden voor annulering
-              <textarea #reason [disabled]="saving()" rows="3" maxlength="500" required></textarea>
+              <textarea
+                #reason
+                (input)="actionError.set('')"
+                [disabled]="saving()"
+                rows="3"
+                maxlength="500"
+                required
+              ></textarea>
             </label>
             <button
               type="button"
@@ -256,6 +264,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               >Vervoerder
               <input
                 #carrier
+                (input)="actionError.set('')"
                 [disabled]="saving()"
                 maxlength="100"
                 required
@@ -265,6 +274,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               >Trackingcode
               <input
                 #trackingCode
+                (input)="actionError.set('')"
                 [disabled]="saving()"
                 maxlength="100"
                 required
@@ -296,6 +306,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               >Terugbetalingskenmerk
               <input
                 #refundReference
+                (input)="actionError.set('')"
                 [disabled]="saving()"
                 maxlength="100"
                 required
@@ -305,6 +316,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
               Reden voor terugbetaling
               <textarea
                 #refundReason
+                (input)="actionError.set('')"
                 [disabled]="saving()"
                 rows="3"
                 maxlength="500"

@@ -90,6 +90,65 @@ describe('Order management recovery', () => {
     return { fixture, params, response, action, api, current };
   }
 
+  for (const operation of [
+    {
+      status: 'awaitingPayment',
+      heading: 'Betaling verwerken',
+      method: 'markPaid',
+      values: ['bank-1'],
+    },
+    {
+      status: 'awaitingPayment',
+      heading: 'Bestelling annuleren',
+      method: 'cancel',
+      values: ['Klant ziet af'],
+    },
+    {
+      status: 'paid',
+      heading: 'Verzending verwerken',
+      method: 'markShipped',
+      values: ['PostNL', '3S123'],
+    },
+    {
+      status: 'paid',
+      heading: 'Terugbetaling registreren',
+      method: 'refund',
+      values: ['refund-1', 'Dubbele betaling'],
+    },
+  ] as const) {
+    it('updates the button after typing for ' + operation.heading, async () => {
+      const { fixture, api, action } = setup(operation.status);
+      fixture.detectChanges();
+      const panel = Array.from(
+        fixture.nativeElement.querySelectorAll('section') as NodeListOf<HTMLElement>,
+      ).find((section) => section.querySelector('h2')?.textContent?.trim() === operation.heading)!;
+      const inputs = Array.from(panel.querySelectorAll('input, textarea')) as (
+        HTMLInputElement | HTMLTextAreaElement
+      )[];
+      const button = panel.querySelector('button')!;
+      expect(button.disabled).toBe(true);
+      for (const [index, value] of operation.values.entries()) {
+        inputs[index].value = value;
+        inputs[index].dispatchEvent(new Event('input', { bubbles: true }));
+        await fixture.whenStable();
+      }
+      expect(button.disabled).toBe(false);
+      inputs[0].value = ' ';
+      inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+      await fixture.whenStable();
+      expect(button.disabled).toBe(true);
+      inputs[0].value = operation.values[0];
+      inputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+      await fixture.whenStable();
+      button.click();
+      await fixture.whenStable();
+      expect(api[operation.method]).toHaveBeenCalledOnce();
+      expect(button.disabled).toBe(true);
+      action.error(new Error('Offline'));
+      await fixture.whenStable();
+      expect(button.disabled).toBe(false);
+    });
+  }
   it('offers copy controls for the stored administrator references', () => {
     const { fixture, current, response } = setup();
     response.next({
