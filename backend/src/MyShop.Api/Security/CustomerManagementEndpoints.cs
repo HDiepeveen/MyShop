@@ -8,8 +8,7 @@ public static class CustomerManagementEndpoints
 {
     public static void MapCustomerManagementEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/customers")
-            .RequireAuthorization(policy => policy.RequireRole(AdminSecurity.Role));
+        var group = endpoints.MapGroup("/api/customers");
         group.MapGet("", ListAsync);
         group.MapGet("/{id}", GetAsync);
         group.MapPut("/{id}/access", SetAccessAsync);

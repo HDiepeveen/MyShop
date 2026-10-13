@@ -28,6 +28,7 @@ public static class InfrastructureServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         services.AddScoped<MyShop.Application.Catalog.Seo.ICatalogSeoStore, CatalogSeoStore>();
+        services.AddScoped<MyShop.Application.Security.ICompanyAccess, MyShop.Infrastructure.Security.CompanyAccess>();
         services.AddDbContext<MyShopDbContext>(options =>
             options.UseSqlServer(connectionString));
         services.AddScoped<IProductImages>(provider => new ProductImagesRepository(provider.GetRequiredService<MyShopDbContext>()));

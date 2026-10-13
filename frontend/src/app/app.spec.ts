@@ -5,6 +5,20 @@ import { Auth } from './auth/auth';
 import { App } from './app';
 import webshopVersion from '../../../version.json';
 
+it('shows only assigned management menu items to company administrators', async () => {
+  TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([]), provideHttpClient()] });
+  const fixture = TestBed.createComponent(App);
+  const auth = TestBed.inject(Auth);
+  auth.session.set({ authenticated: true, administrator: false, businessAdministrator: true, permissions: ['orders', 'products'], customer: false, name: 'Staff' });
+  await fixture.whenStable();
+  const links = Array.from(fixture.nativeElement.querySelectorAll('aside nav a')) as HTMLAnchorElement[];
+  expect(links.map(link => link.textContent?.trim())).toEqual(['Producten', 'Bestellingen']);
+  expect(auth.canOpen('/instellingen/bedrijfsbeheerders')).toBe(false);
+  expect(auth.canOpen('/producten/123')).toBe(true);
+  expect(auth.canOpen('/klanten')).toBe(false);
+  expect(auth.landingPage()).toBe('/producten');
+});
+
 it('offers accessible navigation and a skip link', async () => {
   TestBed.configureTestingModule({
     imports: [App],
@@ -15,7 +29,7 @@ it('offers accessible navigation and a skip link', async () => {
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   expect(element.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
-  expect(element.querySelectorAll('nav a').length).toBe(12);
+  expect(element.querySelectorAll('nav a').length).toBe(13);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');
   expect(element.querySelector('.sidebar-footer .webshop-version')?.textContent).toContain(webshopVersion.version);
   expect(element.querySelector('footer .webshop-version')).toBeNull();

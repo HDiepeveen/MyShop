@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
+using MyShop.Application.Security;
 
 namespace MyShop.Api.Security;
 
@@ -11,6 +12,7 @@ public static class AdminEndpoints
 
     public static void MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapCompanyAccess();
         app.MapGet("/api/auth/csrf", (HttpContext context, IAntiforgery antiforgery) =>
         {
             var tokens = antiforgery.GetAndStoreTokens(context);
@@ -20,13 +22,16 @@ public static class AdminEndpoints
             });
             return Results.NoContent();
         }).AllowAnonymous();
-        app.MapGet("/api/auth/session", (HttpContext context) => Results.Ok(new
+        app.MapGet("/api/auth/session", async (HttpContext context, [Microsoft.AspNetCore.Mvc.FromServices] ICompanyAccess access) => Results.Ok(new
         {
             authenticated = context.User.Identity?.IsAuthenticated == true,
             name = context.User.IsInRole(AdminSecurity.CustomerRole) && !context.User.IsInRole(AdminSecurity.Role)
                 ? context.User.FindFirstValue(ClaimTypes.Email) ?? context.User.Identity?.Name
                 : context.User.Identity?.Name,
             administrator = context.User.IsInRole(AdminSecurity.Role),
+            businessAdministrator = context.User.IsInRole(CompanyPermissions.EmployeeRole),
+            permissions = context.User.FindFirstValue(ClaimTypes.NameIdentifier) is string id
+                ? await access.PermissionsAsync(id, context.RequestAborted) : [],
             customer = context.User.IsInRole(AdminSecurity.CustomerRole)
         })).AllowAnonymous();
         app.MapPost("/api/auth/login", Login).AllowAnonymous().RequireRateLimiting("admin-login");
@@ -63,7 +68,8 @@ public static class AdminEndpoints
             return Results.Unauthorized();
         }
         var result = await signIn.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
-        if (!result.Succeeded || user.TwoFactorEnabled || !await users.IsInRoleAsync(user, AdminSecurity.Role)) return Results.Unauthorized();
+        if (!result.Succeeded || user.TwoFactorEnabled || !(await users.IsInRoleAsync(user, AdminSecurity.Role)
+            || await users.IsInRoleAsync(user, CompanyPermissions.EmployeeRole))) return Results.Unauthorized();
         await signIn.SignInAsync(user, isPersistent: false);
         return Results.NoContent();
     }

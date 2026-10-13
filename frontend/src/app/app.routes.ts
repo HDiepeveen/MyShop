@@ -3,6 +3,11 @@ import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
+    path: 'instellingen/bedrijfsbeheerders',
+    loadComponent: () => import('./auth/company-access').then(m => m.CompanyAccessPage),
+    title: 'Bedrijfsbeheerders en rollen · MyShop',
+  },
+  {
     path: 'instellingen/vormgeving',
     loadComponent: () =>
       import('./settings/appearance-settings').then((m) => m.AppearanceSettingsPage),

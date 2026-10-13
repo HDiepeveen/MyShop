@@ -8,6 +8,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Cart } from './shop/cart';
 import { Component, inject, signal } from '@angular/core';
 import { Auth } from './auth/auth';
+import { managementMenu } from './auth/management-menu';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -19,6 +20,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
   styleUrl: './app.css',
 })
 export class App {
+  readonly managementMenu = managementMenu;
   readonly themeStyles = themeStyles;
   readonly branding = inject(ShopBranding);
   readonly version = webshopVersion.version;

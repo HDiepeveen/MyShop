@@ -88,8 +88,9 @@ export class Login {
           this.password = '';
           this.busy.set(false);
           void this.router.navigateByUrl(
-            session.administrator
-              ? safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'))
+            session.administrator || session.businessAdministrator
+              ? (this.auth.canOpen(safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')))
+                  ? safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')) : this.auth.landingPage())
               : '/geen-toegang',
           );
         },

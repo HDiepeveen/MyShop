@@ -28,7 +28,7 @@ public sealed class AdminSecurityOptionsTests
         Assert.Equal(CookieSecurePolicy.Always, csrf.Cookie.SecurePolicy);
         Assert.Equal("X-XSRF-TOKEN", csrf.HeaderName);
         var policy = provider.GetRequiredService<IOptions<AuthorizationOptions>>().Value.FallbackPolicy!;
-        var role = Assert.Single(policy.Requirements.OfType<Microsoft.AspNetCore.Authorization.Infrastructure.RolesAuthorizationRequirement>());
-        Assert.Equal(AdminSecurity.Role, Assert.Single(role.AllowedRoles));
+        Assert.Single(policy.Requirements.OfType<ManagementRequirement>());
+        Assert.Single(policy.Requirements.OfType<Microsoft.AspNetCore.Authorization.Infrastructure.DenyAnonymousAuthorizationRequirement>());
     }
 }

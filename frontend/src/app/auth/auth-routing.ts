@@ -11,7 +11,8 @@ export const adminGuard: CanActivateFn = (_, state) => {
     switchMap((session) => {
       if (!session.authenticated)
         return of(router.createUrlTree(['/inloggen'], { queryParams: { returnUrl: state.url } }));
-      if (!session.administrator) return of(router.createUrlTree(['/geen-toegang']));
+      if (!auth.isManagement()) return of(router.createUrlTree(['/geen-toegang']));
+      if (!auth.canOpen(state.url)) return of(router.createUrlTree([state.url === '/' ? auth.landingPage() : '/geen-toegang']));
       return auth.prepare().pipe(map(() => true));
     }),
     catchError(() =>

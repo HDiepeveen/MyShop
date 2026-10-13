@@ -44,9 +44,10 @@ public static class AdminSecurity
         services.AddAuthorization(options =>
         {
             options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser().RequireRole(Role).Build();
+                .RequireAuthenticatedUser().AddRequirements(new ManagementRequirement()).Build();
             options.AddPolicy(CustomerPolicy, policy => policy.RequireRole(CustomerRole));
         });
+        services.AddScoped<IAuthorizationHandler, ManagementAuthorization>();
         services.AddAntiforgery(options =>
         {
             options.HeaderName = "X-XSRF-TOKEN";

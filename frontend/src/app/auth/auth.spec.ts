@@ -15,6 +15,15 @@ class Protected {}
 class Forbidden {}
 
 describe('Admin authentication', () => {
+  it.each([true, false])('enforces delegated product route access: %s', async allowed => {
+    const harness = await RouterTestingHarness.create();
+    const navigation = harness.navigateByUrl('/producten');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    http.expectOne('/api/auth/session').flush({ authenticated: true, administrator: false, businessAdministrator: true, customer: false, name: 'Staff', permissions: allowed ? ['products'] : ['orders'] });
+    if (allowed) http.expectOne('/api/auth/csrf').flush(null);
+    await navigation;
+    expect(TestBed.inject(Router).url).toBe(allowed ? '/producten' : '/geen-toegang');
+  });
   let http: HttpTestingController;
   beforeEach(() => {
     TestBed.configureTestingModule({

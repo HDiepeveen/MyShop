@@ -1,10 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, of, switchMap, tap, throwError } from 'rxjs';
+import { managementMenu, managementPermission } from './management-menu';
 
 export interface AdminSession {
   authenticated: boolean;
   administrator: boolean;
+  businessAdministrator?: boolean;
+  permissions?: readonly string[];
   customer: boolean;
   name: string | null;
 }
@@ -12,6 +15,21 @@ export interface AdminSession {
 export class Auth {
   private readonly http = inject(HttpClient);
   readonly session = signal<AdminSession | null>(null);
+  isManagement() {
+    return !!this.session()?.authenticated && !!(this.session()?.administrator || this.session()?.businessAdministrator);
+  }
+  canUse(permission: string) {
+    return this.isManagement() && (!!this.session()?.administrator || (permission !== 'companyAccess' && !!this.session()?.permissions?.includes(permission)));
+  }
+  canOpen(url: string) {
+    if (!this.isManagement()) return false;
+    if (url.split(/[?#]/)[0] === '/account') return true;
+    const permission = managementPermission(url);
+    return !!this.session()?.administrator || !!permission && this.canUse(permission);
+  }
+  landingPage() {
+    return managementMenu.find(item => this.canUse(item.code))?.path ?? '/account';
+  }
   load() {
     return this.http
       .get<AdminSession>('/api/auth/session')

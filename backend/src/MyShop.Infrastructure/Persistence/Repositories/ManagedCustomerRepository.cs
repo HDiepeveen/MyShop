@@ -7,7 +7,10 @@ internal sealed class ManagedCustomerRepository(MyShopDbContext context) : IMana
 {
     private IQueryable<Microsoft.AspNetCore.Identity.IdentityUser> Customers() =>
         context.Users.Where(user => context.UserRoles.Any(userRole => userRole.UserId == user.Id
-            && context.Roles.Any(role => role.Id == userRole.RoleId && role.NormalizedName == "CUSTOMER")));
+            && context.Roles.Any(role => role.Id == userRole.RoleId && role.NormalizedName == "CUSTOMER"))
+            && !context.UserRoles.Any(userRole => userRole.UserId == user.Id
+                && context.Roles.Any(role => role.Id == userRole.RoleId
+                    && (role.NormalizedName == "ADMINISTRATOR" || role.NormalizedName == "BUSINESSADMINISTRATOR"))));
 
     public async Task<ManagedCustomerPage> ListAsync(int offset, int limit, string? search,
         DateTimeOffset now, CancellationToken cancellationToken)

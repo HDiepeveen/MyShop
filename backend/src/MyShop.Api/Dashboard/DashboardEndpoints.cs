@@ -10,8 +10,7 @@ public static class DashboardEndpoints
 {
     public static IEndpointRouteBuilder MapDashboard(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/dashboard", GetAsync).WithName("GetDashboard")
-            .RequireAuthorization(policy => policy.RequireRole(AdminSecurity.Role));
+        endpoints.MapGet("/api/dashboard", GetAsync).WithName("GetDashboard");
         return endpoints;
     }
 
