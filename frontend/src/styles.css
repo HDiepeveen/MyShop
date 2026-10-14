@@ -543,12 +543,14 @@ textarea:disabled {
   }
 }
 
-label:has(> input[type='checkbox']) {
+label:has(> input[type='checkbox']),
+label:has(> input[type='radio']) {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-label > input[type='checkbox'] {
+label > input[type='checkbox'],
+label > input[type='radio'] {
   flex: 0 0 auto;
   width: auto;
   margin: 0;
