@@ -16,7 +16,8 @@
   flex-direction: column;
   position: sticky;
   top: 0;
-  height: 100vh;
+  align-self: start;
+  min-height: 100vh;
 }
 .brand {
   display: flex;
@@ -139,7 +140,7 @@ footer {
   }
   .sidebar {
     position: static;
-    height: auto;
+    min-height: 0;
     padding: 18px;
   }
   .brand {
