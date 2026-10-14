@@ -3,6 +3,11 @@
   grid-template-columns: 230px 1fr;
   min-height: 100vh;
 }
+@media (min-width: 761px) {
+  .workspace:not(.shop):not(.no-sidebar) {
+    background: linear-gradient(to right, #163c37 230px, transparent 230px);
+  }
+}
 .sidebar {
   background: #163c37;
   color: #dfebe7;
