@@ -4,6 +4,24 @@ import { provideRouter, Router } from '@angular/router';
 import { Auth } from './auth/auth';
 import { App } from './app';
 import webshopVersion from '../../../version.json';
+import { ShopBranding } from './shop/shop-branding';
+
+it.each([false, true])('shows optional management navigation without granting access for customer=%s', async customer => {
+  TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([]), provideHttpClient()] });
+  const fixture = TestBed.createComponent(App);
+  const auth = TestBed.inject(Auth);
+  const branding = TestBed.inject(ShopBranding);
+  auth.session.set({ authenticated: customer, administrator: false, customer, name: null });
+  await fixture.whenStable();
+  expect(fixture.nativeElement.querySelector('aside')).toBeNull();
+  branding.showManagementMenuWithoutLogin.set(true);
+  await fixture.whenStable();
+  expect(fixture.nativeElement.querySelectorAll('aside nav a').length).toBe(13);
+  expect(auth.canOpen('/bestellingen')).toBe(false);
+  auth.session.set({ authenticated: true, administrator: false, businessAdministrator: true, customer: false, name: 'Staff', permissions: ['orders'] });
+  await fixture.whenStable();
+  expect(fixture.nativeElement.querySelectorAll('aside nav a').length).toBe(1);
+});
 
 it('shows only assigned management menu items to company administrators', async () => {
   TestBed.configureTestingModule({ imports: [App], providers: [provideRouter([]), provideHttpClient()] });

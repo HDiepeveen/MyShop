@@ -17,12 +17,13 @@ public sealed class ShopAppearanceHttpTests
         Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.PutAsJsonAsync("/api/shop-appearance", new { })).StatusCode);
         var defaults = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
         Assert.Equal("#1d5543", defaults.GetProperty("appearance").GetProperty("primaryColor").GetString());
+        Assert.False(defaults.GetProperty("showManagementMenuWithoutLogin").GetBoolean());
 
         await host.Csrf(); await host.Login(); await host.Csrf();
         var seo = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
         var initial = await host.Client.GetFromJsonAsync<JsonElement>("/api/shop-appearance");
         var revision = initial.GetProperty("revision").GetGuid();
-        var input = new { revision, colors = new { primaryColor = "#A7D9FF", backgroundColor = "#111827", panelColor = "#1f2937", textColor = "#f3f4f6" } };
+        var input = new { revision, showManagementMenuWithoutLogin = true, colors = new { primaryColor = "#A7D9FF", backgroundColor = "#111827", panelColor = "#1f2937", textColor = "#f3f4f6" } };
         host.Client.DefaultRequestHeaders.Remove("X-XSRF-TOKEN");
         Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/shop-appearance", input)).StatusCode);
         await host.Csrf();
@@ -44,6 +45,8 @@ public sealed class ShopAppearanceHttpTests
         var publicSettings = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
         Assert.Equal("#111827", publicSettings.GetProperty("appearance").GetProperty("backgroundColor").GetString());
         Assert.False(publicSettings.TryGetProperty("revision", out _));
+        Assert.True(publicSettings.GetProperty("showManagementMenuWithoutLogin").GetBoolean());
+        Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/orders")).StatusCode);
 
         await host.Client.PostAsJsonAsync("/api/auth/logout", new { });
         await host.Csrf();

@@ -338,6 +338,9 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("ShowManagementMenuWithoutLogin")
+                        .HasColumnType("bit");
+
                     b.Property<string>("TextColor")
                         .IsRequired()
                         .HasMaxLength(7)
@@ -369,6 +372,7 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                             PrimaryColor = "#1d5543",
                             SeoTitle = "Assortiment · MyShop",
                             ShopName = "MyShop",
+                            ShowManagementMenuWithoutLogin = false,
                             TextColor = "#223c33",
                             Version = new Guid("5509887c-93b7-4d70-93db-8151db89fa01"),
                             WelcomeText = "Welkom bij MyShop"

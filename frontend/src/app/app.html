@@ -3,17 +3,17 @@
   class="workspace"
   [class.shop]="storefront()"
   [ngStyle]="storefront() ? themeStyles(branding.colors()) : null"
-  [class.no-sidebar]="!auth.isManagement()"
+  [class.no-sidebar]="!showManagementMenu()"
 >
-  @if (!storefront() && auth.isManagement()) {
+  @if (showManagementMenu()) {
     <aside class="sidebar">
-      <a [routerLink]="auth.landingPage()" class="brand" [attr.aria-label]="branding.name() + ' startpagina'"
+      <a [routerLink]="auth.isManagement() ? auth.landingPage() : '/'" class="brand" [attr.aria-label]="branding.name() + ' startpagina'"
         ><span class="brand-icon">m.</span> {{ branding.name() }}</a
       >
       <p class="nav-label">WERKRUIMTE</p>
       <nav aria-label="Hoofdnavigatie">
         @for (item of managementMenu; track item.code) {
-          @if (auth.canUse(item.code)) {
+          @if (auth.canUse(item.code) || !auth.isManagement()) {
             <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/' }">{{ item.name }}</a>
           }
         }

@@ -20,9 +20,9 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
         var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
             .Select(x => new { x.Heading, x.SeoTitle, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
                 x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours,
-                x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, HasIcon = x.IconBytes != null }).SingleAsync(ct);
+                x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasIcon = x.IconBytes != null }).SingleAsync(ct);
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
     }
     public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct) =>
         context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.IconBytes != null)
@@ -42,6 +42,7 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
                 .SetProperty(x => x.BackgroundColor, value.Colors.BackgroundColor)
                 .SetProperty(x => x.PanelColor, value.Colors.PanelColor)
                 .SetProperty(x => x.TextColor, value.Colors.TextColor)
+                .SetProperty(x => x.ShowManagementMenuWithoutLogin, value.ShowManagementMenuWithoutLogin)
                 .SetProperty(x => x.Version, Guid.NewGuid()), ct);
         return new(changed == 1 ? null : SeoFailure.Conflict);
     }

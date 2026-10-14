@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } }
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
 public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours);
 public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
 public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeading, string? AttributesHeading, Guid Revision);

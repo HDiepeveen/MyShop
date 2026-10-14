@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 export class ShopBranding {
   private readonly http = inject(HttpClient);
   readonly colors = signal<ShopColors>({ ...defaultColors });
+  readonly showManagementMenuWithoutLogin = signal(false);
   readonly iconUrl = signal<string | null>(null);
   readonly iconFailed = signal(false);
   readonly icon = computed(() => (this.iconFailed() ? null : this.iconUrl()));
@@ -19,10 +20,12 @@ export class ShopBranding {
         footerText?: string;
         appearance?: ShopColors;
         iconUrl?: string | null;
+        showManagementMenuWithoutLogin?: boolean;
       }>('/api/shop/settings')
       .subscribe({
         next: (settings) => {
           if (version === this.requestVersion) {
+            this.showManagementMenuWithoutLogin.set(settings.showManagementMenuWithoutLogin === true);
             const icon =
               typeof settings.iconUrl === 'string' &&
               /^\/api\/shop\/icon\?v=[0-9a-f-]{36}$/i.test(settings.iconUrl)

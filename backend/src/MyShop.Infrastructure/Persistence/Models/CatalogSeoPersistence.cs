@@ -2,6 +2,7 @@ namespace MyShop.Infrastructure.Persistence.Models;
 internal sealed class CatalogSeoSettingsPersistence
 {
     public Guid Id { get; set; }
+    public bool ShowManagementMenuWithoutLogin { get; set; }
     public byte[]? IconBytes { get; set; }
     public string? IconContentType { get; set; }
     public string PrimaryColor { get; set; } = "#1d5543";

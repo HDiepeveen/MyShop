@@ -19,7 +19,7 @@ public static class SeoEndpoints
         endpoints.MapGet("/api/shop-appearance", async ([FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            return Results.Ok(new ShopAppearanceSettings(settings.Appearance, settings.Revision, settings.IconUrl));
+            return Results.Ok(new ShopAppearanceSettings(settings.Appearance, settings.Revision, settings.IconUrl, settings.ShowManagementMenuWithoutLogin));
         });
         endpoints.MapPut("/api/shop-appearance", async (ShopAppearanceSettings request, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {

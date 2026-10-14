@@ -20,6 +20,7 @@ interface AppearanceSettings {
   colors: ShopColors;
   revision: string;
   iconUrl?: string | null;
+  showManagementMenuWithoutLogin?: boolean;
 }
 @Component({
   imports: [FormsModule, NgStyle],
@@ -39,6 +40,14 @@ interface AppearanceSettings {
       </button>
     }
     @if (revision) {
+      <section class="panel">
+        <h2>Beheermenubalk</h2>
+        <label><input type="checkbox" name="showManagementMenuWithoutLogin" [(ngModel)]="showManagementMenuWithoutLogin" [disabled]="busy() || loading()" />
+          Beheermenu tonen zonder beheerderslogin</label>
+        <p>Toont de menulinks op beheerpagina’s aan bezoekers en klanten. Beheerpagina’s blijven beveiligd.
+          Bedrijfsbeheerders zien alleen hun toegewezen onderdelen.</p>
+        <button type="button" [disabled]="busy() || loading()" (click)="save()">Vormgeving opslaan</button>
+      </section>
       <section class="panel">
         <h2>Icoon voor de webshopnaam</h2>
         <p>
@@ -187,6 +196,7 @@ export class AppearanceSettingsPage {
     { key: 'textColor', label: 'Tekst en koppen' },
   ];
   colors = { ...defaultColors };
+  showManagementMenuWithoutLogin = false;
   revision = '';
   iconUrl: string | null = null;
   iconFile: File | null = null;
@@ -291,7 +301,10 @@ export class AppearanceSettingsPage {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (settings) => {
-          if (!keepColors) this.colors = { ...settings.colors };
+          if (!keepColors) {
+            this.colors = { ...settings.colors };
+            this.showManagementMenuWithoutLogin = settings.showManagementMenuWithoutLogin === true;
+          }
           this.iconUrl = settings.iconUrl ?? null;
           this.revision = settings.revision;
           this.loading.set(false);
@@ -315,14 +328,14 @@ export class AppearanceSettingsPage {
     this.auth
       .prepare()
       .pipe(
-        switchMap(() => this.http.put('/api/shop-appearance', { colors, revision: this.revision })),
+        switchMap(() => this.http.put('/api/shop-appearance', { colors, revision: this.revision, showManagementMenuWithoutLogin: this.showManagementMenuWithoutLogin })),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: () => {
           this.busy.set(false);
           this.branding.refresh();
-          this.notice.set('Kleurenschema opgeslagen.');
+          this.notice.set('Vormgeving opgeslagen.');
           this.load();
         },
         error: (error) => {

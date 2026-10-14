@@ -14,9 +14,27 @@ describe('Appearance settings', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('saves the management menu choice and refreshes its public visibility', async () => {
+    const fixture = TestBed.createComponent(AppearanceSettingsPage);
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
+    await fixture.whenStable();
+    const checkbox = fixture.nativeElement.querySelector('input[name="showManagementMenuWithoutLogin"]') as HTMLInputElement;
+    checkbox.click();
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    page.save();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const save = http.expectOne('/api/shop-appearance');
+    expect(save.request.body.showManagementMenuWithoutLogin).toBe(true);
+    save.flush(null);
+    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', showManagementMenuWithoutLogin: true });
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-2', showManagementMenuWithoutLogin: true });
+    expect(page.showManagementMenuWithoutLogin).toBe(true);
+    expect(TestBed.inject(ShopBranding).showManagementMenuWithoutLogin()).toBe(true);
+  });
   it('uploads an icon with CSRF and preserves unsaved color choices', () => {
     const page = TestBed.createComponent(AppearanceSettingsPage).componentInstance;
-    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1' });
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     page.choose('Donker');
     page.iconFile = new File(['png'], 'icon.png', { type: 'image/png' });
     const input = document.createElement('input');
@@ -64,7 +82,7 @@ describe('Appearance settings', () => {
   });
   it('rejects oversized icon files without starting an upload', () => {
     const page = TestBed.createComponent(AppearanceSettingsPage).componentInstance;
-    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1' });
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     const input = document.createElement('input');
     input.type = 'file';
     Object.defineProperty(input, 'files', {
@@ -83,7 +101,7 @@ describe('Appearance settings', () => {
     branding.colors.set({ ...shopThemes[2].colors });
     http
       .expectOne('/api/shop-appearance')
-      .flush({ colors: shopThemes[2].colors, revision: 'revision-1' });
+      .flush({ colors: shopThemes[2].colors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     fixture.detectChanges();
     const reset = Array.from(
       fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>,
@@ -101,7 +119,7 @@ describe('Appearance settings', () => {
     expect(page.busy()).toBe(true);
     http.expectOne('/api/auth/csrf').flush(null);
     const save = http.expectOne('/api/shop-appearance');
-    expect(save.request.body).toEqual({ colors: defaultColors, revision: 'revision-1' });
+    expect(save.request.body).toEqual({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     save.flush(null);
     http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance: defaultColors });
     http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-2' });
@@ -110,7 +128,7 @@ describe('Appearance settings', () => {
   it('previews without applying and saves once with CSRF and the current revision', () => {
     const fixture = TestBed.createComponent(AppearanceSettingsPage);
     const page = fixture.componentInstance;
-    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1' });
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     page.choose('Donker');
     fixture.detectChanges();
     expect(
@@ -124,7 +142,7 @@ describe('Appearance settings', () => {
     http.expectOne('/api/auth/csrf').flush(null);
     const save = http.expectOne('/api/shop-appearance');
     expect(save.request.method).toBe('PUT');
-    expect(save.request.body).toEqual({ colors: shopThemes[2].colors, revision: 'revision-1' });
+    expect(save.request.body).toEqual({ colors: shopThemes[2].colors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     save.flush(null);
     http
       .expectOne('/api/shop/settings')
@@ -137,7 +155,7 @@ describe('Appearance settings', () => {
   });
   it('retains custom colors after a save conflict', () => {
     const page = TestBed.createComponent(AppearanceSettingsPage).componentInstance;
-    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1' });
+    http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     page.choose('Blauw');
     page.save();
     http.expectOne('/api/auth/csrf').flush(null);

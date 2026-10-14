@@ -15,4 +15,4 @@ public sealed record ShopAppearance(string PrimaryColor, string BackgroundColor,
         return value.ToLowerInvariant();
     }
 }
-public sealed record ShopAppearanceSettings(ShopAppearance Colors, Guid Revision, string? IconUrl = null);
+public sealed record ShopAppearanceSettings(ShopAppearance Colors, Guid Revision, string? IconUrl = null, bool ShowManagementMenuWithoutLogin = false);

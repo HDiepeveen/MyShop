@@ -21,6 +21,9 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 })
 export class App {
   readonly managementMenu = managementMenu;
+  showManagementMenu() {
+    return !this.storefront() && (this.auth.isManagement() || this.branding.showManagementMenuWithoutLogin());
+  }
   readonly themeStyles = themeStyles;
   readonly branding = inject(ShopBranding);
   readonly version = webshopVersion.version;
