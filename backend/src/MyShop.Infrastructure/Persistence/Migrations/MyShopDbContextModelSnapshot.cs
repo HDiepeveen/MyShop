@@ -301,6 +301,10 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("HeaderText")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<string>("Heading")
                         .IsRequired()
                         .HasMaxLength(200)

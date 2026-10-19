@@ -20,6 +20,7 @@ internal sealed class CatalogSeoSettingsPersistence
     public string? CompanyAddress { get; set; }
     public string? CompanyEmail { get; set; }
     public string? CompanyPhone { get; set; }
+    public string? HeaderText { get; set; }
     public string? CompanyOpeningHours { get; set; }
     public string Heading { get; set; } = "Ontdek ons assortiment";
     public string SeoTitle { get; set; } = "Assortiment · MyShop";

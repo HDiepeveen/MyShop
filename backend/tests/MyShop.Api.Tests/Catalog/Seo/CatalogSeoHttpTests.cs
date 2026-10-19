@@ -111,11 +111,12 @@ public sealed class CatalogSeoHttpTests
             Assert.Contains("Bekijk onze occasions.", html);
             var branding = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
             Assert.Equal("Autohuis Hans", branding.GetProperty("shopName").GetString());
-            Assert.Equal(new[] { "appearance", "footerText", "homeEnabled", "homePages", "iconUrl", "introduction", "shopName", "showManagementMenuWithoutLogin", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
+            Assert.Equal(new[] { "appearance", "footerText", "headerText", "homeEnabled", "homePages", "iconUrl", "introduction", "shopName", "showManagementMenuWithoutLogin", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
             Assert.Equal("Welkom onderaan", branding.GetProperty("footerText").GetString());
             var company = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/company");
             Assert.Equal("Straat 1\n1234 AB Utrecht", company.GetProperty("address").GetString());
             Assert.Equal("contact@example.test", company.GetProperty("email").GetString());
+            Assert.Equal(System.Text.Json.JsonValueKind.Null, branding.GetProperty("headerText").ValueKind);
             var companyHtml = await visitor.GetStringAsync("/winkel/informatie/bedrijf");
             Assert.Contains("<h1>Over ons en contact</h1>", companyHtml);
             Assert.Contains("Autohuis &lt;Hans&gt;", companyHtml);

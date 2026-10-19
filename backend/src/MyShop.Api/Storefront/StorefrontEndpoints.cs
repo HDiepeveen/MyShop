@@ -18,7 +18,7 @@ public static class StorefrontEndpoints
         {
             var settings = await useCase.GetSettingsAsync(ct);
             var homePages = settings.Home.Enabled ? settings.Home.Normalize().Items.Select((item, index) => new { name = item.Title ?? $"Pagina {index + 1}", webAddress = item.WebAddress }).ToArray() : [];
-            return Results.Ok(new { homePages, settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
+            return Results.Ok(new { headerText = settings.HeaderText, homePages, settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/home", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {
@@ -34,7 +34,8 @@ public static class StorefrontEndpoints
         endpoints.MapGet("/api/shop/company", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            return Results.Ok(settings.Company with { Name = settings.Company.Name ?? settings.ShopName });
+            var company = settings.Company;
+            return Results.Ok(new { company.Heading, Name = company.Name ?? settings.ShopName, company.Description, company.Address, company.Email, company.Phone, company.OpeningHours });
         }).AllowAnonymous();
         endpoints.MapCartQuote();
         endpoints.MapPlaceOrder();

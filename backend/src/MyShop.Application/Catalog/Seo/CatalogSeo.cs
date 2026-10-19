@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
 public sealed record HomePageItem(string? Title, string Description)
 {
     public string? Place { get; init; }
@@ -179,6 +179,7 @@ public sealed class ManageSeo(ICatalogSeoStore store)
             WelcomeText = SeoText.Optional(value.WelcomeText, 200) ?? throw new ArgumentException("Vul een welkomsttekst in."),
             Introduction = SeoText.Optional(value.Introduction, 1000) ?? throw new ArgumentException("Vul een introductietekst in."),
             FooterText = SeoText.Optional(value.FooterText, 200) ?? "",
+            HeaderText = SeoText.Optional(value.HeaderText, 200),
             Company = company with
             {
                 Heading = SeoText.Optional(company.Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de bedrijfspagina in."),

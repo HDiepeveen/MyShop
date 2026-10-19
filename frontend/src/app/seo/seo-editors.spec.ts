@@ -17,7 +17,7 @@ describe('SEO editors', () => {
     page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop';
     page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
+    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
@@ -65,6 +65,26 @@ describe('SEO editors', () => {
     expect(request.request.body.home).toEqual(page.home);
     request.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.home.description).toBe('Welkom!\nSinds 2001.');
+  });
+  it('saves the independent header text while retaining the company phone', async () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    const page = fixture.componentInstance;
+    page.company.phone = '038 1234567';
+
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('[name="headerText"]') as HTMLInputElement;
+    await fixture.whenStable();
+    expect(input.value).toBe('');
+    input.value = 'Vandaag geopend';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    page.save();
+    const request = http.expectOne('/api/seo-settings');
+    expect(request.request.body.headerText).toBe('Vandaag geopend');
+    expect(request.request.body.company.phone).toBe('038 1234567');
+    request.flush({}, { status: 409, statusText: 'Conflict' });
+    expect(page.company.phone).toBe('038 1234567');
   });
   function product() {
     const fixture = TestBed.createComponent(ProductSeoEdit); fixture.componentRef.setInput('productId', 'p'); fixture.detectChanges();

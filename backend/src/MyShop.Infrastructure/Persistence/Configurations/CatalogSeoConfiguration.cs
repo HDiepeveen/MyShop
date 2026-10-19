@@ -23,6 +23,7 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
         builder.Property(x => x.CompanyDescription).HasMaxLength(4000);
         builder.Property(x => x.CompanyAddress).HasMaxLength(500);
         builder.Property(x => x.CompanyEmail).HasMaxLength(254);
+        builder.Property(x => x.HeaderText).HasMaxLength(200);
         builder.Property(x => x.CompanyPhone).HasMaxLength(100);
         builder.Property(x => x.CompanyOpeningHours).HasMaxLength(1000);
         builder.Property(x => x.Heading).HasMaxLength(200).IsRequired();

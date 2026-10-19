@@ -52,6 +52,7 @@
           }
         </nav>
         <div class="actions session-actions">
+          @if (branding.headerText(); as text) { <span class="header-extra-text">{{ text }}</span> }
           @if (!auth.session()?.authenticated) {
             <a routerLink="/inloggen">Beheer</a>
           }

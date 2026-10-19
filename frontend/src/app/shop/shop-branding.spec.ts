@@ -6,7 +6,27 @@ import { Title } from '@angular/platform-browser';
 import { TitleStrategy, provideRouter, Router } from '@angular/router';
 import { ShopBranding } from './shop-branding';
 import { App } from '../app';
+import { Auth } from '../auth/auth';
 describe('Webshop name', () => {
+  it('shows the configured independent header text before session actions and hides a blank text', async () => {
+    const fixture = TestBed.createComponent(App);
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
+    await TestBed.inject(Router).navigateByUrl('/winkel');
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
+    fixture.detectChanges();
+    const phone = fixture.nativeElement.querySelector('.session-actions .header-extra-text');
+    expect(phone.textContent.trim()).toBe('Vandaag geopend tot 17:00');
+    expect(phone.nextElementSibling.textContent.trim()).toBe('Beheer');
+    TestBed.inject(Auth).session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
+    fixture.detectChanges();
+    expect(phone.nextElementSibling.textContent.trim()).toBe('Uitloggen');
+    const branding = TestBed.inject(ShopBranding);
+    branding.refresh();
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', headerText: '  ' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.header-extra-text')).toBeNull();
+  });
   it('loads the checkout switch when the public home is opened at the base URL', async () => {
     const router = TestBed.inject(Router);
     router.resetConfig([{ path: '', children: [], data: { storefront: true } }]);

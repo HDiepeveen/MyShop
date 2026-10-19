@@ -15,6 +15,8 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
     <form class="panel" (ngSubmit)="save()">
       <label>Plaats website (optioneel)<input name="sitePlace" [(ngModel)]="home.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" [disabled]="busy()" /></label>
       <label>Webshopnaam<input name="shopName" [(ngModel)]="shopName" maxlength="100" required [disabled]="busy()" /></label>
+      <label>Extra tekst in titelbalk<input name="headerText" [(ngModel)]="headerText" maxlength="200" [disabled]="busy()" /></label>
+      <p>Laat leeg om geen extra tekst in de titelbalk te tonen.</p>
       <label>Welkomsttekst<input name="welcomeText" [(ngModel)]="welcomeText" maxlength="200" required [disabled]="busy()" /></label>
       <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" maxlength="200" required [disabled]="busy()" /></label>
       <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" maxlength="1000" required [disabled]="busy()"></textarea></label>
@@ -60,6 +62,7 @@ export class SeoSettings {
   readonly settings = signal<ShopSeoSettings | null>(null);
   readonly busy = signal(false); readonly loading = signal(false); readonly error = signal(''); readonly notice = signal('');
   heading = ''; seoTitle = ''; shopName = 'MyShop'; welcomeText = 'Welkom bij MyShop'; introduction = 'Bekijk onze producten en kies de variant die bij je past.';
+  headerText = '';
   footerText = 'Ontdek wat bij je past.';
   home: HomePageSettings = { enabled: false, heading: 'Welkom', items: [] };
   moveHomeItem(index: number, direction: number) { const target = index + direction; if (this.busy() || target < 0 || target >= this.home.items.length) return; [this.home.items[index], this.home.items[target]] = [this.home.items[target], this.home.items[index]]; }
@@ -69,7 +72,7 @@ export class SeoSettings {
     if (this.loading() || this.busy()) return;
     this.loading.set(true); this.error.set('');
     this.api.seoSettings().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: settings => { this.settings.set(settings); this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'MyShop'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij MyShop'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
+      next: settings => { this.settings.set(settings); this.headerText = settings.headerText ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'MyShop'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij MyShop'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
       error: error => { this.loading.set(false); this.error.set(errorMessage(error)); },
     });
   }
@@ -78,7 +81,7 @@ export class SeoSettings {
     if (!settings || this.busy() || this.loading() || !this.heading.trim() || !this.seoTitle.trim() || !this.shopName.trim() || !this.welcomeText.trim() || !this.introduction.trim() || !this.company.heading.trim()) return;
     if (!this.home.heading.trim() || this.home.items.some(item => !item.description.trim())) { this.error.set('Vul de koptekst en omschrijvingen in.'); return; }
     this.busy.set(true); this.error.set(''); this.notice.set('');
-    this.api.updateSeoSettings({ heading: this.heading, seoTitle: this.seoTitle, revision: settings.revision, shopName: this.shopName, welcomeText: this.welcomeText, introduction: this.introduction, footerText: this.footerText, company: this.company, home: this.home }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.updateSeoSettings({ heading: this.heading, seoTitle: this.seoTitle, revision: settings.revision, shopName: this.shopName, welcomeText: this.welcomeText, introduction: this.introduction, footerText: this.footerText, headerText: this.headerText, company: this.company, home: this.home }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.busy.set(false); this.notice.set('Webshopinstellingen opgeslagen.'); this.load(); },
       error: error => { this.busy.set(false); this.error.set(errorMessage(error)); },
     });
