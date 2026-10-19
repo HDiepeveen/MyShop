@@ -17,7 +17,7 @@ describe('SEO editors', () => {
     page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop';
     page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
+    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', seoDescription: '', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
@@ -111,6 +111,25 @@ describe('SEO editors', () => {
     removal.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.home.description).toBe('Nog niet opgeslagen');
     expect(page.error()).toBeTruthy();
+  });
+  it('sends optional metadata for home, extra pages and contact without changing visible texts', async () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    const page = fixture.componentInstance;
+    page.home = { enabled: true, heading: 'Home', description: 'Welkom', seoTitle: 'Garage Zwolle', seoDescription: 'Home SEO', items: [{ title: 'APK', description: 'Inhoud', seoTitle: 'APK Zwolle', seoDescription: 'APK SEO' }] };
+    page.company.seoTitle = 'Contact Ganpat'; page.company.seoDescription = '';
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('[name="homeSeoTitle"]')).not.toBeNull();
+    expect(Array.from(fixture.nativeElement.querySelectorAll('label') as NodeListOf<HTMLLabelElement>).find(label => label.textContent?.includes('SEO-titel (optioneel)'))?.querySelector('input')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[name="companySeoDescription"]')).not.toBeNull();
+    page.save();
+    const request = http.expectOne('/api/seo-settings');
+    expect(request.request.body.home).toEqual(page.home);
+    expect(request.request.body.company.seoTitle).toBe('Contact Ganpat');
+    expect(request.request.body.company.seoDescription).toBe('');
+    request.flush({}, { status: 409, statusText: 'Conflict' });
+    expect(page.home.seoTitle).toBe('Garage Zwolle');
   });
   function product() {
     const fixture = TestBed.createComponent(ProductSeoEdit); fixture.componentRef.setInput('productId', 'p'); fixture.detectChanges();

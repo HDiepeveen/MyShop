@@ -57,7 +57,7 @@ export class ShopHome {
   constructor() {
     effect(() => {
       const home = this.state()?.data;
-      if (home) this.seo.apply(home.heading + ' · ' + this.branding.name(), home.description?.replace(/\s+/g, ' ').slice(0, 200), '/');
+      if (home) this.seo.apply(home.seoTitle || home.heading + ' · ' + this.branding.name(), home.seoDescription || home.description?.replace(/\s+/g, ' ').slice(0, 200), '/');
       else if (this.state()?.error) this.seo.apply('Homepagina niet beschikbaar · ' + this.branding.name(), undefined, '/winkel/home');
     });
   }

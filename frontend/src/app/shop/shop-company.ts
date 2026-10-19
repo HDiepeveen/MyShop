@@ -36,8 +36,8 @@ export class ShopCompany {
   readonly state = toSignal(this.refresh.pipe(switchMap(() => loadState(this.api.company()))));
   constructor() {
     effect(() => { const company = this.state()?.data;
-      if (company) this.seo.apply(company.heading + ' · ' + this.branding.name(),
-        company.description?.replace(/\s+/g, ' ').slice(0, 200), '/winkel/informatie/bedrijf');
+      if (company) this.seo.apply(company.seoTitle || company.heading + ' · ' + this.branding.name(),
+        company.seoDescription || company.description?.replace(/\s+/g, ' ').slice(0, 200), '/winkel/informatie/bedrijf');
     });
   }
   retry() { if (!this.state()?.loading) this.refresh.next(this.refresh.value + 1); }

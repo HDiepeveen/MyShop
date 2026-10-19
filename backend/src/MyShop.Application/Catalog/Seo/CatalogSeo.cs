@@ -4,14 +4,20 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? HomeImageUrl { get; init; } public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? SeoDescription { get; init; } public string? HomeImageUrl { get; init; } public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
 public sealed record HomePageItem(string? Title, string Description)
 {
+    public string? SeoTitle { get; init; }
+    public string? SeoDescription { get; init; }
+
     public string? Place { get; init; }
     public string? WebAddress { get; init; }
 }
 public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyList<HomePageItem> Items)
 {
+    public string? SeoTitle { get; init; }
+    public string? SeoDescription { get; init; }
+
     public string? WelcomeText { get; init; }
     public string? ImageUrl { get; init; }
     public string? Place { get; init; }
@@ -21,6 +27,8 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
     {
         if (Items is null || Items.Count > 20) throw new ArgumentException("Gebruik maximaal 20 pagina’s.");
         return this with {
+            SeoTitle = SeoText.Optional(SeoTitle, 200),
+            SeoDescription = SeoText.Optional(SeoDescription, 500),
             Heading = SeoText.Optional(Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de homepagina in."),
             Place = SeoText.Optional(Place, 100),
             Description = string.IsNullOrWhiteSpace(Description) ? null : NormalizeDescription(Description),
@@ -43,7 +51,7 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
                 for (var suffix = 2; used.Contains(address); suffix++) address = stem + "-" + suffix;
             }
             if (!used.Add(address)) throw new ArgumentException("Elke pagina moet een uniek webadres hebben.");
-            result.Add(new(title, NormalizeDescription(item.Description)) { Place = place, WebAddress = address });
+            result.Add(new(title, NormalizeDescription(item.Description)) { Place = place, WebAddress = address, SeoTitle = SeoText.Optional(item.SeoTitle, 200), SeoDescription = SeoText.Optional(item.SeoDescription, 500) });
         }
         return result;
     }
@@ -74,7 +82,11 @@ public static class ServicePageAddress
         return address;
     }
 }
-public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours);
+public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours)
+{
+    public string? SeoTitle { get; init; }
+    public string? SeoDescription { get; init; }
+}
 public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
 public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeading, string? AttributesHeading, Guid Revision);
 public sealed record ProductSeoInfo(Guid ProductId, string Name, string Description, string? ImageUrl,
@@ -193,9 +205,11 @@ public sealed class ManageSeo(ICatalogSeoStore store)
             Introduction = SeoText.Optional(value.Introduction, 1000) ?? throw new ArgumentException("Vul een introductietekst in."),
             FooterText = SeoText.Optional(value.FooterText, 200) ?? "",
             HeaderText = SeoText.Optional(value.HeaderText, 200),
+            SeoDescription = SeoText.Optional(value.SeoDescription, 500),
             Company = company with
             {
                 Heading = SeoText.Optional(company.Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de bedrijfspagina in."),
+                SeoTitle = SeoText.Optional(company.SeoTitle, 200), SeoDescription = SeoText.Optional(company.SeoDescription, 500),
                 Name = SeoText.Optional(company.Name, 200), Description = Multiline(company.Description, 4000),
                 Address = Multiline(company.Address, 500), Email = email,
                 Phone = SeoText.Optional(company.Phone, 100), OpeningHours = Multiline(company.OpeningHours, 1000)

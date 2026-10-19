@@ -12,7 +12,7 @@ public sealed class CatalogSeoHttpTests
         await using var host = await SecurityHost.Create();
         var publicCompany = await host.Client.GetFromJsonAsync<JsonElement>("/api/shop/company");
         Assert.Equal("MyShop", publicCompany.GetProperty("name").GetString());
-        Assert.Equal(new[] { "address", "description", "email", "heading", "name", "openingHours", "phone" }, publicCompany.EnumerateObject().Select(x => x.Name).Order());
+        Assert.Equal(new[] { "address", "description", "email", "heading", "name", "openingHours", "phone", "seoDescription", "seoTitle" }, publicCompany.EnumerateObject().Select(x => x.Name).Order());
         await host.Csrf(); await host.Login(); await host.Csrf();
         var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
         foreach (var (field, value) in new[] { ("email", "not an email"), ("heading", " "), ("description", new string('a', 4001)), ("address", new string('a', 501)), ("openingHours", new string('a', 1001)), ("phone", new string('a', 101)), ("name", new string('a', 201)), ("footerText", new string('a', 201)) })

@@ -22,6 +22,14 @@ describe('Public company page', () => {
     expect(TestBed.inject(Title).getTitle()).toBe('Over ons en contact · Autohuis Hans');
     expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toContain('/winkel/informatie/bedrijf');
   });
+  it('uses custom contact metadata independently of the visible heading', () => {
+    const fixture = TestBed.createComponent(ShopCompany);
+    http.expectOne('/api/shop/company').flush({ ...company, heading: 'Contact', seoTitle: 'Ganpat bereiken in Zwolle', seoDescription: 'Adres en openingstijden.' });
+    fixture.detectChanges();
+    expect(TestBed.inject(Title).getTitle()).toBe('Ganpat bereiken in Zwolle');
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Adres en openingstijden.');
+    expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Contact');
+  });
   it('recovers from a failed read and hides empty contact fields', () => {
     const fixture = TestBed.createComponent(ShopCompany);
     http.expectOne('/api/shop/company').flush({}, { status: 503, statusText: 'Unavailable' });

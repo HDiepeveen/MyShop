@@ -25,6 +25,7 @@ public sealed record StorefrontPage(DateTimeOffset At, IReadOnlyList<StorefrontI
     public string WelcomeText { get; init; } = "Welkom bij MyShop";
     public string Introduction { get; init; } = "Bekijk onze producten en kies de variant die bij je past.";
     public string Heading { get; init; } = "Ontdek ons assortiment";
+    public string? SeoDescription { get; init; }
     public string SeoTitle { get; init; } = "Assortiment · MyShop";
 }
 public sealed record StorefrontCategory(Guid Id, string Name);

@@ -35,7 +35,7 @@ public static class StorefrontEndpoints
         {
             var settings = await useCase.GetSettingsAsync(ct);
             var company = settings.Company;
-            return Results.Ok(new { company.Heading, Name = company.Name ?? settings.ShopName, company.Description, company.Address, company.Email, company.Phone, company.OpeningHours });
+            return Results.Ok(new { company.Heading, Name = company.Name ?? settings.ShopName, company.Description, company.Address, company.Email, company.Phone, company.OpeningHours, company.SeoTitle, company.SeoDescription });
         }).AllowAnonymous();
         endpoints.MapCartQuote();
         endpoints.MapPlaceOrder();
@@ -73,7 +73,7 @@ public static class StorefrontEndpoints
                             new StorefrontPriceRangeResponse(price.Currency,
                                 price.MinimumAmount.ToString("F2", CultureInfo.InvariantCulture),
                                 price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()) { WebAddress = item.WebAddress })
-                        .ToList(), page.TotalCount, page.Offset, page.Limit) { WelcomeText = page.WelcomeText, Introduction = page.Introduction, Heading = page.Heading, SeoTitle = page.SeoTitle });
+                        .ToList(), page.TotalCount, page.Offset, page.Limit) { WelcomeText = page.WelcomeText, Introduction = page.Introduction, Heading = page.Heading, SeoTitle = page.SeoTitle, SeoDescription = page.SeoDescription });
             }
             catch (ArgumentException) { return (IResult)Results.BadRequest(); }
         }).AllowAnonymous();
@@ -97,6 +97,7 @@ public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<Sto
     public string WelcomeText { get; init; } = "Welkom bij MyShop";
     public string Introduction { get; init; } = "Bekijk onze producten en kies de variant die bij je past.";
     public string Heading { get; init; } = "Ontdek ons assortiment";
+    public string? SeoDescription { get; init; }
     public string SeoTitle { get; init; } = "Assortiment · MyShop";
 }
 public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,

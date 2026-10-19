@@ -11,6 +11,7 @@ export interface ShopItem {
   imageAlt: string;
 }
 export interface ShopPage {
+  seoDescription?: string | null;
   welcomeText?: string;
   introduction?: string;
   heading?: string;

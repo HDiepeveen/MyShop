@@ -19,6 +19,8 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
         builder.Property(x => x.WelcomeText).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Introduction).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.FooterText).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.CompanySeoTitle).HasMaxLength(200);
+        builder.Property(x => x.CompanySeoDescription).HasMaxLength(500);
         builder.Property(x => x.CompanyHeading).HasMaxLength(200).IsRequired();
         builder.Property(x => x.CompanyName).HasMaxLength(200);
         builder.Property(x => x.CompanyDescription).HasMaxLength(4000);
@@ -28,6 +30,7 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
         builder.Property(x => x.CompanyPhone).HasMaxLength(100);
         builder.Property(x => x.CompanyOpeningHours).HasMaxLength(1000);
         builder.Property(x => x.Heading).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.SeoDescription).HasMaxLength(500);
         builder.Property(x => x.SeoTitle).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Version).IsConcurrencyToken().ValueGeneratedNever();
         builder.HasData(new CatalogSeoSettingsPersistence { Id = Id, Version = Guid.Parse("5509887c-93b7-4d70-93db-8151db89fa01") });

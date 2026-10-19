@@ -158,7 +158,7 @@ public sealed class StorefrontHttpTests
         Assert.Equal(HttpStatusCode.OK, pageResponse.StatusCode);
         Assert.True(pageResponse.Headers.CacheControl?.NoStore);
         var page = await pageResponse.Content.ReadFromJsonAsync<JsonElement>();
-        Assert.Equal(new[] { "at", "heading", "introduction", "items", "limit", "offset", "seoTitle", "totalCount", "welcomeText" }, page.EnumerateObject()
+        Assert.Equal(new[] { "at", "heading", "introduction", "items", "limit", "offset", "seoDescription", "seoTitle", "totalCount", "welcomeText" }, page.EnumerateObject()
             .Select(property => property.Name).Order().ToArray());
         Assert.InRange(page.GetProperty("at").GetDateTimeOffset(), pageRequestedAt, DateTimeOffset.UtcNow);
         Assert.Equal(2, page.GetProperty("totalCount").GetInt32());

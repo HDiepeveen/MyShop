@@ -278,7 +278,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
 export class ShopList {
   private readonly branding = inject(ShopBranding);
   private readonly seo = inject(StorefrontSeo);
-  constructor() { effect(() => { const page = this.state()?.data; if (page) this.seo.apply(page.seoTitle || 'Assortiment · ' + this.branding.name(), undefined, '/winkel'); }); }
+  constructor() { effect(() => { const page = this.state()?.data; if (page) this.seo.apply(page.seoTitle || 'Assortiment · ' + this.branding.name(), page.seoDescription || page.introduction?.replace(/\s+/g, ' ').slice(0, 200), '/winkel'); }); }
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

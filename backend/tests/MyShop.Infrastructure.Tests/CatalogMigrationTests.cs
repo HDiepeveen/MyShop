@@ -11,7 +11,7 @@ public sealed class CatalogMigrationTests
     public void MigrationSnapshotMatchesCurrentSqlServerModel()
     {
         using var context = new MyShopDesignTimeDbContextFactory().CreateDbContext([]);
-        Assert.EndsWith("_HomePageImage", context.Database.GetMigrations().Last());
+        Assert.EndsWith("_ConfigurablePageSeo", context.Database.GetMigrations().Last());
         Assert.False(context.Database.HasPendingModelChanges());
     }
 

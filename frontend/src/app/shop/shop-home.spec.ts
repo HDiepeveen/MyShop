@@ -40,6 +40,15 @@ describe('Optional home page', () => {
     expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Welkom');
     expect(fixture.nativeElement.querySelector('.home-text').textContent).toBe('Ons bedrijf');
   });
+  it('uses custom home metadata while preserving the visible welcome', () => {
+    const fixture = TestBed.createComponent(ShopHome);
+    http.expectOne('/api/shop/home').flush({ enabled: true, heading: 'Home', welcomeText: 'Welkom bezoeker', description: 'Zichtbare inhoud', seoTitle: 'Garage Zwolle | Ganpat', seoDescription: 'Een eigen SEO-omschrijving.', items: [] });
+    fixture.detectChanges();
+    expect(document.title).toBe('Garage Zwolle | Ganpat');
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Een eigen SEO-omschrijving.');
+    expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Welkom bezoeker');
+    expect(fixture.nativeElement.textContent).toContain('Zichtbare inhoud');
+  });
   it('does not show draft content when disabled and can retry', () => {
     const fixture = TestBed.createComponent(ShopHome);
     http.expectOne('/api/shop/home').flush({}, { status: 404, statusText: 'Not found' });

@@ -33,7 +33,7 @@ export class ShopServicePage {
   constructor() {
     effect(() => {
       const page = this.state()?.data;
-      if (page) this.seo.apply((page.title || 'Meer informatie') + (page.place ? ' in ' + page.place : '') + ' · ' + this.branding.name(), page.description.replace(/\s+/g, ' ').slice(0, 200), '/' + page.webAddress);
+      if (page) this.seo.apply(page.seoTitle || (page.title || 'Meer informatie') + (page.place ? ' in ' + page.place : '') + ' · ' + this.branding.name(), page.seoDescription || page.description.replace(/\s+/g, ' ').slice(0, 200), '/' + page.webAddress);
       else if (this.state()?.error) { this.seo.apply('Pagina niet beschikbaar · ' + this.branding.name(), undefined, '/' + this.route.snapshot.paramMap.get('page')); this.seo.reset('/geen-toegang'); }
     });
   }

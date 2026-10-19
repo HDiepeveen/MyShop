@@ -43,7 +43,7 @@ describe('Public storefront', () => {
     http.expectNone((r) => r.url.startsWith('/api/auth'));
     http.expectOne('/api/shop/categories').flush([{ id: 'c1', name: 'Kleding' }]);
     http.expectOne('/api/shop/products?offset=20&limit=20&search=shirt&categoryId=c1').flush({
-      at: '2026-09-30T12:00:00Z', welcomeText: 'Welkom bij Hans', introduction: 'Onze geselecteerde occasions.',
+      at: '2026-09-30T12:00:00Z', welcomeText: 'Welkom bij Hans', introduction: 'Onze geselecteerde occasions.', seoTitle: 'Occasions Zwolle | Ganpat', seoDescription: 'Ons actuele aanbod in Zwolle.',
       items: [
         {
           ...product,
@@ -55,6 +55,8 @@ describe('Public storefront', () => {
       limit: 20,
     });
     harness.detectChanges();
+    expect(document.title).toBe('Occasions Zwolle | Ganpat');
+    expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Ons actuele aanbod in Zwolle.');
     expect(harness.routeNativeElement!.textContent).toContain('Welkom bij Hans');
     expect(harness.routeNativeElement!.textContent).toContain('Onze geselecteerde occasions.');
     expect(harness.routeNativeElement!.textContent).not.toContain('Welkom bij MyShop');

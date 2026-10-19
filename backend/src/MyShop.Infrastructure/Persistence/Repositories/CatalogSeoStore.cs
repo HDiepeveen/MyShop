@@ -19,8 +19,8 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
-            .Select(x => new { x.HomePageJson, x.Heading, x.SeoTitle, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
-                x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours, x.HeaderText,
+            .Select(x => new { x.HomePageJson, x.Heading, x.SeoTitle, x.SeoDescription, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
+                x.CompanySeoTitle, x.CompanySeoDescription, x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours, x.HeaderText,
                 x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasHomeImage = x.HomeImageBytes != null, HasIcon = x.IconBytes != null }).SingleAsync(ct);
         var home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!;
         if (home.Place is null)
@@ -29,7 +29,7 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
             if (legacyPlaces.Length == 1) home = home with { Place = legacyPlaces[0] };
         }
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, HeaderText = row.HeaderText, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, HeaderText = row.HeaderText, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
     }
     public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetHomeImageAsync(CancellationToken ct) =>
         context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.HomeImageBytes != null)
@@ -68,8 +68,9 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     {
         var homeJson = JsonSerializer.Serialize(value.Home);
         var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
-            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.HomePageJson, homeJson).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.SeoDescription, value.SeoDescription).SetProperty(x => x.HomePageJson, homeJson).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
                 .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.FooterText, value.FooterText)
+                .SetProperty(x => x.CompanySeoTitle, value.Company.SeoTitle).SetProperty(x => x.CompanySeoDescription, value.Company.SeoDescription)
                 .SetProperty(x => x.CompanyHeading, value.Company.Heading).SetProperty(x => x.CompanyName, value.Company.Name)
                 .SetProperty(x => x.CompanyDescription, value.Company.Description).SetProperty(x => x.CompanyAddress, value.Company.Address)
                 .SetProperty(x => x.CompanyEmail, value.Company.Email).SetProperty(x => x.CompanyPhone, value.Company.Phone).SetProperty(x => x.HeaderText, value.HeaderText)

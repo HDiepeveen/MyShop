@@ -13,7 +13,7 @@ internal static class SeoHtml
         if (path.TrimEnd('/') == "/winkel")
         {
             var settings = branding;
-            title = settings.SeoTitle; canonical = "/winkel"; index = true;
+            title = settings.SeoTitle; description = settings.SeoDescription ?? SeoText.Summary(settings.Introduction); canonical = "/winkel"; index = true;
             var catalog = context.RequestServices.GetRequiredService<IStorefrontCatalog>();
             var page = await catalog.ListAsync(0, 20, null, null, DateTimeOffset.UtcNow, context.RequestAborted);
             preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
@@ -22,13 +22,13 @@ internal static class SeoHtml
         else if (path == "/" && branding.Home.Enabled || path.TrimEnd('/') == "/winkel/home")
         {
             var home = branding.Home.Normalize();
-            title = home.Heading + " · " + branding.ShopName;
+            title = home.SeoTitle ?? home.Heading + " · " + branding.ShopName;
             if (!home.Enabled) { context.Response.StatusCode = 404; title = "Homepagina niet beschikbaar · " + branding.ShopName; }
             else
             {
                 if (path.TrimEnd('/') == "/winkel/home") { context.Response.Redirect("/" + context.Request.QueryString, permanent: true); return true; }
                 canonical = "/"; index = true;
-                description = home.Description is null ? null : SeoText.Summary(home.Description);
+                description = home.SeoDescription ?? (home.Description is null ? null : SeoText.Summary(home.Description));
                 preview = "<main><h1>" + E(branding.WelcomeText) + "</h1>" + (home.Description is null ? "" : "<section><p>" + E(home.Description) + "</p></section>") +
                     "<a href=\"/winkel\">Bekijk het assortiment</a></main>";
             }
@@ -36,7 +36,7 @@ internal static class SeoHtml
         else if (path.TrimEnd('/') == "/winkel/informatie/bedrijf")
         {
             var company = branding.Company;
-            title = company.Heading + " · " + branding.ShopName; description = company.Description is null ? null : SeoText.Summary(company.Description);
+            title = company.SeoTitle ?? company.Heading + " · " + branding.ShopName; description = company.SeoDescription ?? (company.Description is null ? null : SeoText.Summary(company.Description));
             canonical = "/winkel/informatie/bedrijf"; index = true;
             preview = "<main><h1>" + E(company.Heading) + "</h1><h2>" + E(company.Name ?? branding.ShopName) + "</h2><p>" + E(company.Description ?? "") + "</p><dl>" +
                 Contact("Adres", company.Address) + Contact("E-mailadres", company.Email) + Contact("Telefoonnummer", company.Phone) + Contact("Openingstijden", company.OpeningHours) + "</dl></main>";
@@ -69,10 +69,10 @@ internal static class SeoHtml
             if (page is null) { context.Response.StatusCode = 404; title = "Pagina niet beschikbaar · " + branding.ShopName; }
             else
             {
-                title = (page.Title ?? branding.Home.Heading) + (page.Place is null ? "" : " in " + page.Place) + " · " + branding.ShopName;
+                title = page.SeoTitle ?? (page.Title ?? branding.Home.Heading) + (page.Place is null ? "" : " in " + page.Place) + " · " + branding.ShopName;
                 canonical = "/" + page.WebAddress;
                 if (path != canonical) { context.Response.Redirect(canonical + context.Request.QueryString, permanent: true); return true; }
-                description = SeoText.Summary(page.Description); index = true;
+                description = page.SeoDescription ?? SeoText.Summary(page.Description); index = true;
                 preview = "<main><a href=\"/\">Home</a><h1>" + E(page.Title ?? branding.Home.Heading) + "</h1><p>" + E(page.Description) + "</p></main>";
             }
         }
