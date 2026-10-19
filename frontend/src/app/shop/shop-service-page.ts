@@ -14,7 +14,7 @@ import { StorefrontSeo } from './storefront-seo';
     @if (state()?.error) { <h1>Pagina niet beschikbaar</h1><p>Deze pagina bestaat niet of is niet gepubliceerd.</p> }
     @if (state()?.data; as page) {
       <article>
-        <p class="eyebrow">{{ branding.name() }}</p>
+        <div class="eyebrow">{{ branding.name() }}</div>
         <h1>{{ page.title || 'Meer informatie' }}</h1>
         <div class="page-content"><p>{{ page.description }}</p></div>
       </article>

@@ -1,4 +1,5 @@
-article { margin: 40px 0; }
-    h1 { font-size: clamp(1.75rem, 4vw, 3rem); line-height: 1.12; letter-spacing: -.035em; overflow-wrap: anywhere; }
-    .page-content { padding: clamp(24px, 4vw, 44px); border-radius: 20px; border: 1px solid var(--shop-border); background: var(--shop-panel); }
+:host { display: block; width: 100%; }
+article { margin: 0; width: 100%; }
+    h1 { overflow-wrap: anywhere; }
+    .page-content { width: 100%; box-sizing: border-box; padding: clamp(24px, 4vw, 44px); border-radius: 20px; border: 1px solid var(--shop-border); background: var(--shop-panel); }
     .page-content p { margin: 0; white-space: pre-wrap; line-height: 1.85; overflow-wrap: anywhere; }

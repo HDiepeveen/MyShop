@@ -11,7 +11,7 @@ import { loadState } from '../catalog/load-state';
   @if (state()?.error) { <p role="alert">{{ state()?.error }}</p><button type="button" (click)="retry()">Opnieuw proberen</button> }
   @if (state()?.data; as company) {
     <article>
-    <p class="eyebrow">{{ branding.name() }}</p>
+    <div class="eyebrow">{{ branding.name() }}</div>
     <h1>{{ company.heading }}</h1>
     <div class="page-content">
       <h2>{{ company.name }}</h2>
