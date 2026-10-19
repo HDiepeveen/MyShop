@@ -27,6 +27,19 @@ describe('Optional home page', () => {
     expect(root.textContent).toContain('<img src=x onerror=alert(1)>');
     expect(root.querySelector('.button')?.getAttribute('href')).toBe('/winkel');
   });
+  it('shows the configured hero background and recovers gracefully when the image cannot load', () => {
+    const fixture = TestBed.createComponent(ShopHome);
+    http.expectOne('/api/shop/home').flush({ enabled: true, heading: 'Welkom', description: 'Ons bedrijf', imageUrl: '/api/shop/home-image?v=123', items: [] });
+    fixture.detectChanges();
+    const image = fixture.nativeElement.querySelector('.home-hero img') as HTMLImageElement;
+    expect(image.getAttribute('src')).toBe('/api/shop/home-image?v=123');
+    expect(image.alt).toBe('');
+    expect(fixture.nativeElement.querySelector('.home-hero.with-image')).toBeTruthy();
+    image.dispatchEvent(new Event('error')); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.home-image')).toBeNull();
+    expect(fixture.nativeElement.querySelector('h1').textContent).toBe('Welkom');
+    expect(fixture.nativeElement.querySelector('.home-text').textContent).toBe('Ons bedrijf');
+  });
   it('does not show draft content when disabled and can retry', () => {
     const fixture = TestBed.createComponent(ShopHome);
     http.expectOne('/api/shop/home').flush({}, { status: 404, statusText: 'Not found' });

@@ -310,6 +310,13 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<byte[]>("HomeImageBytes")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("HomeImageContentType")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("HomePageJson")
                         .HasColumnType("nvarchar(max)");
 

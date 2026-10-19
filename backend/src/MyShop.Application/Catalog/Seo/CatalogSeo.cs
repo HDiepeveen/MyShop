@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? HomeImageUrl { get; init; } public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
 public sealed record HomePageItem(string? Title, string Description)
 {
     public string? Place { get; init; }
@@ -12,6 +12,7 @@ public sealed record HomePageItem(string? Title, string Description)
 }
 public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyList<HomePageItem> Items)
 {
+    public string? ImageUrl { get; init; }
     public string? Place { get; init; }
     public string? Description { get; init; }
     public static HomePageSettings Default => new(false, "Welkom", Array.Empty<HomePageItem>());
@@ -89,6 +90,8 @@ public enum SeoFailure { NotFound, Conflict, AddressInUse }
 public sealed record SeoResult(SeoFailure? Failure);
 public interface ICatalogSeoStore
 {
+    Task<SeoResult> SaveHomeImageAsync(MyShop.Application.Catalog.Abstractions.ProductImageUpload? image, Guid revision, CancellationToken ct);
+    Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetHomeImageAsync(CancellationToken ct);
     Task<SeoResult> SaveIconAsync(MyShop.Application.Catalog.Abstractions.ProductImageUpload? icon, Guid revision, CancellationToken ct);
     Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct);
     Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken cancellationToken);
@@ -137,6 +140,15 @@ public static class SeoText
 }
 public sealed class ManageSeo(ICatalogSeoStore store)
 {
+    public const int MaximumHomeImageBytes = 5 * 1024 * 1024;
+    public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetHomeImageAsync(CancellationToken ct) => store.GetHomeImageAsync(ct);
+    public Task<SeoResult> SaveHomeImageAsync(byte[]? bytes, string fileName, Guid revision, CancellationToken ct)
+    {
+        if (revision == Guid.Empty) throw new ArgumentException("Vernieuw de instellingen.");
+        if (bytes?.Length > MaximumHomeImageBytes) throw new ArgumentException("Kies een afbeelding van maximaal 5 MB.");
+        var image = bytes is null ? null : MyShop.Application.Catalog.Abstractions.ProductImageUpload.Create(bytes, "Homepagina", fileName);
+        return store.SaveHomeImageAsync(image, revision, ct);
+    }
     public const int MaximumIconBytes = 1024 * 1024;
     public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct) => store.GetIconAsync(ct);
     public Task<SeoResult> SaveIconAsync(byte[]? bytes, string fileName, Guid revision, CancellationToken ct)

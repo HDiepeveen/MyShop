@@ -1,3 +1,6 @@
+import { HttpClient } from '@angular/common/http';
+import { Auth } from '../auth/auth';
+import { switchMap } from 'rxjs';
 import { ShopBranding } from '../shop/shop-branding';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +31,14 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Homepagina inschakelen</label>
       <label>Koptekst homepagina<input name="homeHeading" [(ngModel)]="home.heading" maxlength="200" required [disabled]="busy()" /></label>
       <label>Tekst homepagina<textarea name="homeDescription" [(ngModel)]="home.description" maxlength="4000" rows="7" [disabled]="busy()"></textarea></label>
+      <fieldset [disabled]="busy() || loading()">
+        <legend>Achtergrondafbeelding homepagina</legend>
+        @if (settings()?.homeImageUrl; as image) { <img class="home-image-preview" [src]="image" alt="Huidige afbeelding homepagina" /> }
+        <label>Afbeelding kiezen<input #homeImageInput type="file" accept="image/jpeg,image/png" (change)="chooseHomeImage(homeImageInput)" /></label>
+        <p>JPEG of PNG, maximaal 5 MB en 20 miljoen pixels. De afbeelding vult de breedte achter de welkomsttekst en kan daarbij worden bijgesneden.</p>
+        <button type="button" [disabled]="!homeImageFile" (click)="changeHomeImage(homeImageInput)">Afbeelding uploaden</button>
+        @if (settings()?.homeImageUrl) { <button type="button" class="secondary" (click)="changeHomeImage(homeImageInput, true)">Afbeelding verwijderen</button> }
+      </fieldset>
       <h2>Extra pagina’s</h2>
       @for (item of home.items; track item; let i = $index) {
         <fieldset [disabled]="busy()">
@@ -54,8 +65,11 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
     </form>
   }
   @if (notice()) { <p role="status">{{ notice() }}</p> }
-` })
+`, styles: [`.home-image-preview { display: block; max-width: 300px; max-height: 180px; object-fit: contain; border-radius: 12px; }`] })
 export class SeoSettings {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(Auth);
+  homeImageFile: File | null = null;
   private readonly branding = inject(ShopBranding);
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
@@ -74,6 +88,27 @@ export class SeoSettings {
     this.api.seoSettings().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: settings => { this.settings.set(settings); this.headerText = settings.headerText ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'MyShop'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij MyShop'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
       error: error => { this.loading.set(false); this.error.set(errorMessage(error)); },
+    });
+  }
+  chooseHomeImage(input: HTMLInputElement) {
+    this.homeImageFile = null; this.error.set('');
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png'].includes(file.type) || file.size > 5 * 1024 * 1024) { this.error.set('Kies een JPEG- of PNG-afbeelding van maximaal 5 MB.'); input.value = ''; return; }
+    this.homeImageFile = file;
+  }
+  changeHomeImage(input: HTMLInputElement, remove = false) {
+    const settings = this.settings();
+    if (!settings || this.busy() || this.loading() || (!remove && !this.homeImageFile)) return;
+    const form = new FormData(); form.append('revision', settings.revision);
+    if (this.homeImageFile) form.append('file', this.homeImageFile, this.homeImageFile.name);
+    this.busy.set(true); this.error.set(''); this.notice.set('');
+    this.auth.prepare().pipe(
+      switchMap(() => remove ? this.http.delete('/api/home-image', { body: { revision: settings.revision } }) : this.http.post('/api/home-image', form)),
+      switchMap(() => this.api.seoSettings()), takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: stored => { this.settings.set(stored); this.homeImageFile = null; input.value = ''; this.busy.set(false); this.notice.set(remove ? 'Afbeelding verwijderd.' : 'Afbeelding opgeslagen.'); },
+      error: error => { this.busy.set(false); this.error.set(errorMessage(error)); },
     });
   }
   save() {

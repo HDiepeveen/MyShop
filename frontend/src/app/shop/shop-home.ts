@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -19,10 +19,15 @@ import { ShopBranding } from './shop-branding';
       <button type="button" class="secondary" (click)="retry()">Opnieuw proberen</button>
     }
     @if (state()?.data; as home) {
-      <section class="home-hero">
+      <section class="home-hero" [class.with-image]="home.imageUrl && !imageFailed()">
+        <div>
         <p class="eyebrow">{{ branding.name() }}</p>
         <h1>{{ home.heading }}</h1>
         <a class="button" routerLink="/winkel">Bekijk het assortiment <span aria-hidden="true">↗</span></a>
+        </div>
+        @if (home.imageUrl && !imageFailed()) {
+          <img class="home-image" aria-hidden="true" [src]="home.imageUrl" alt="" (error)="imageFailed.set(true)" />
+        }
       </section>
       @if (home.description) {
         <section class="home-text"><p>{{ home.description }}</p></section>
@@ -31,13 +36,19 @@ import { ShopBranding } from './shop-branding';
   `,
   styles: [`
     :host { display: block; }
-    .home-hero { padding: clamp(32px, 6vw, 80px) 0; max-width: 850px; }
+    .home-hero { position: relative; isolation: isolate; padding: clamp(32px, 6vw, 80px) 0; }
+    .home-hero > div { position: relative; z-index: 1; max-width: 850px; min-width: 0; }
+    .home-hero.with-image { width: 100vw; margin-inline: calc(50% - 50vw); margin-top: -38px; margin-bottom: 36px; padding-inline: max(42px, calc((100vw - 1316px) / 2)); }
+    .home-hero.with-image > div { background: var(--shop-background); color: var(--shop-text); border: 1px solid var(--shop-border); border-radius: 20px; padding: clamp(24px, 4vw, 44px); max-width: 740px; box-shadow: 0 12px 36px #0002; }
+    .home-image { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; }
+    @media (max-width: 760px) { .home-hero.with-image { margin-top: -24px; padding-inline: 20px; } }
     h1 { font-size: clamp(2.3rem, 5vw, 4.5rem); line-height: 1.08; letter-spacing: -.04em; margin: 0 0 28px; overflow-wrap: anywhere; }
     .home-text { background: var(--shop-panel); border: 1px solid var(--shop-border); border-radius: 20px; padding: clamp(24px, 4vw, 44px); max-width: 900px; margin: 0 auto 36px; overflow-wrap: anywhere; }
     .home-text p { white-space: pre-wrap; line-height: 1.85; margin: 0; }
   `],
 })
 export class ShopHome {
+  readonly imageFailed = signal(false);
   readonly branding = inject(ShopBranding);
   private readonly http = inject(HttpClient);
   private readonly seo = inject(StorefrontSeo);
@@ -50,5 +61,5 @@ export class ShopHome {
       else if (this.state()?.error) this.seo.apply('Homepagina niet beschikbaar · ' + this.branding.name(), undefined, '/winkel/home');
     });
   }
-  retry() { if (!this.state()?.loading) this.refresh.next(this.refresh.value + 1); }
+  retry() { if (!this.state()?.loading) { this.imageFailed.set(false); this.refresh.next(this.refresh.value + 1); } }
 }

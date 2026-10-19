@@ -6,6 +6,7 @@ public static class SeoEndpoints
     public static void MapSeo(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapShopIcon();
+        endpoints.MapHomeImage();
         endpoints.MapGet("/api/product-types/{id:guid}/section-headings", async (Guid id, [FromServices] ManageSeo useCase, CancellationToken ct) =>
         {
             var headings = await useCase.GetTypeHeadingsAsync(id, ct);

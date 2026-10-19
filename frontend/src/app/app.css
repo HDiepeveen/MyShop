@@ -93,9 +93,9 @@
   color: var(--shop-text, #62716b);
   background: var(--shop-panel, #fffefa);
 }
-.session-actions {
-  align-items: center;
-}
+.shop .session-actions { flex: 1; min-width: 180px; align-items: center; flex-wrap: wrap; }
+.header-extra-text { flex: 1; text-align: center; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; min-width: 0; }
+.session-actions { align-items: center; }
 .divider {
   margin: 0 12px;
   color: #b4bfb6;
@@ -183,6 +183,7 @@ footer {
   color: var(--shop-text);
   grid-template-columns: 1fr;
 }
+.shop .body { overflow-x: clip; }
 .shop-brand {
   display: inline-flex;
   align-items: center;

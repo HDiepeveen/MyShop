@@ -86,6 +86,32 @@ describe('SEO editors', () => {
     request.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.company.phone).toBe('038 1234567');
   });
+  it('uploads the home image with CSRF and keeps unsaved page text', () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    const page = fixture.componentInstance;
+    page.home.description = 'Nog niet opgeslagen';
+    page.homeImageFile = new File(['png'], 'home.png', { type: 'image/png' });
+    const input = document.createElement('input');
+    page.changeHomeImage(input);
+    http.expectOne('/api/auth/csrf').flush({});
+    const upload = http.expectOne('/api/home-image');
+    expect((upload.request.body as FormData).get('revision')).toBe(revision);
+    expect(((upload.request.body as FormData).get('file') as File).name).toBe('home.png');
+    upload.flush(null);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision: 'new', homeImageUrl: '/api/shop/home-image?v=new' });
+    expect(page.home.description).toBe('Nog niet opgeslagen');
+    expect(page.settings()?.revision).toBe('new');
+    expect(page.busy()).toBe(false);
+    page.changeHomeImage(input, true);
+    http.expectOne('/api/auth/csrf').flush({});
+    const removal = http.expectOne('/api/home-image');
+    expect(removal.request.method).toBe('DELETE');
+    expect(removal.request.body).toEqual({ revision: 'new' });
+    removal.flush({}, { status: 409, statusText: 'Conflict' });
+    expect(page.home.description).toBe('Nog niet opgeslagen');
+    expect(page.error()).toBeTruthy();
+  });
   function product() {
     const fixture = TestBed.createComponent(ProductSeoEdit); fixture.componentRef.setInput('productId', 'p'); fixture.detectChanges();
     http.expectNone('/api/products/p/seo');
