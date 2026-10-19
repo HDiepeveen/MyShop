@@ -33,7 +33,12 @@
           {{ branding.name() }}
         </a>
         <nav aria-label="Winkelnavigatie" class="actions">
-          @if (branding.homeEnabled()) { <a routerLink="/">Home</a> }
+          @if (branding.homeEnabled()) {
+            <a routerLink="/">Home</a>
+            @for (page of branding.homePages(); track page.webAddress) {
+              <a [routerLink]="'/' + page.webAddress">{{ page.name }}</a>
+            }
+          }
           <a routerLink="/winkel">Assortiment</a>
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>

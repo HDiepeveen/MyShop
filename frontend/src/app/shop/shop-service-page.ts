@@ -17,7 +17,7 @@ import { StorefrontSeo } from './storefront-seo';
     @if (state()?.data; as page) {
       <article>
         <p class="eyebrow">{{ branding.name() }}</p>
-        <h1>{{ page.title || 'Meer informatie' }}@if (page.place) { <span> in {{ page.place }}</span> }</h1>
+        <h1>{{ page.title || 'Meer informatie' }}</h1>
         <div class="page-content"><p>{{ page.description }}</p></div>
       </article>
     }

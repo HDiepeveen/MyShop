@@ -20,7 +20,8 @@ describe('Public home and service routes', () => {
     http.expectOne('/api/shop/home').flush({ enabled: true, heading: 'Garage abc', items: [{ title: 'APK', place: 'Zwolle', webAddress: 'apk-zwolle', description: 'Een veilige auto.' }] });
     harness.detectChanges();
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toBe('Garage abc');
-    expect(harness.routeNativeElement?.querySelector('a[href="/apk-zwolle"]')).not.toBeNull();
+    expect(harness.routeNativeElement?.querySelector('.home-item a')).toBeNull();
+    expect(harness.routeNativeElement?.textContent).not.toContain('Lees meer');
     http.expectNone('/api/auth/session');
   });
   it('opens root-level service pages and safely renders their content', async () => {
@@ -28,7 +29,7 @@ describe('Public home and service routes', () => {
     await harness.navigateByUrl('/apk-zwolle');
     http.expectOne('/api/shop/pages/apk-zwolle').flush({ title: 'APK', place: 'Zwolle', webAddress: 'apk-zwolle', description: '<script>geen HTML</script>\nKeuring op afspraak.' });
     harness.detectChanges();
-    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain('APK in Zwolle');
+    expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toBe('APK');
     expect(harness.routeNativeElement?.querySelector('script')).toBeNull();
     expect(harness.routeNativeElement?.textContent).toContain('<script>geen HTML</script>');
     await harness.navigateByUrl('/autoreparatie-zwolle');

@@ -29,14 +29,20 @@ public sealed class HomePageHttpTests
         var root = await visitor.GetAsync("/");
         Assert.Equal(HttpStatusCode.OK, root.StatusCode);
         var html = await root.Content.ReadAsStringAsync();
-        Assert.Contains("href=\"/apk-zwolle\"", html);
+        var nav = html[html.IndexOf("<nav", StringComparison.Ordinal)..html.IndexOf("</nav>", StringComparison.Ordinal)];
+        Assert.True(nav.IndexOf(">Home</a>", StringComparison.Ordinal) < nav.IndexOf(">APK</a>", StringComparison.Ordinal));
+        Assert.True(nav.IndexOf(">APK</a>", StringComparison.Ordinal) < nav.IndexOf(">Assortiment</a>", StringComparison.Ordinal));
+        Assert.Contains("href=\"/apk-zwolle\"", nav);
+        Assert.DoesNotContain("<main><a href=\"/apk-zwolle\"", html);
+        var publicSettings = (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/settings"))!;
+        Assert.Equal("apk-zwolle", publicSettings["homePages"]![0]!["webAddress"]!.GetValue<string>());
         Assert.DoesNotContain("name=\"robots\" content=\"noindex\"", html);
         var oldHome = await visitor.GetAsync("/winkel/home");
         Assert.Equal(HttpStatusCode.MovedPermanently, oldHome.StatusCode);
         Assert.Equal("/", oldHome.Headers.Location!.OriginalString);
         var landing = await visitor.GetAsync("/apk-zwolle");
         Assert.Equal(HttpStatusCode.OK, landing.StatusCode);
-        Assert.Contains("<h1>APK in Zwolle</h1>", await landing.Content.ReadAsStringAsync());
+        Assert.Contains("<h1>APK</h1>", await landing.Content.ReadAsStringAsync());
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/onbekende-dienst")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/orders")).StatusCode);
         var home = (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/home"))!;
@@ -53,6 +59,7 @@ public sealed class HomePageHttpTests
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/api/shop/home")).StatusCode);
         var draft = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
         Assert.Equal(2, draft["home"]!["items"]!.AsArray().Count);
+        Assert.Empty((await visitor.GetFromJsonAsync<JsonObject>("/api/shop/settings"))!["homePages"]!.AsArray());
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/api/shop/pages/apk-zwolle")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/apk-zwolle")).StatusCode);
         } finally { Directory.Delete(folder, recursive: true); }

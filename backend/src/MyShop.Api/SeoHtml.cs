@@ -30,7 +30,7 @@ internal static class SeoHtml
                 canonical = "/"; index = true;
                 description = home.Items.FirstOrDefault() is { } first ? SeoText.Summary(first.Description) : null;
                 preview = "<main><h1>" + E(home.Heading) + "</h1>" + string.Concat(home.Items.Select(item =>
-                    "<section><h2><a href=\"/" + E(item.WebAddress!) + "\">" + E(item.Title ?? "Lees meer") + "</a></h2><p>" + E(SeoText.Summary(item.Description)) + "</p></section>")) +
+                    "<section>" + (item.Title is null ? "" : "<h2>" + E(item.Title) + "</h2>") + "<p>" + E(SeoText.Summary(item.Description)) + "</p></section>")) +
                     "<a href=\"/winkel\">Bekijk het assortiment</a></main>";
             }
         }
@@ -74,8 +74,14 @@ internal static class SeoHtml
                 canonical = "/" + page.WebAddress;
                 if (path != canonical) { context.Response.Redirect(canonical + context.Request.QueryString, permanent: true); return true; }
                 description = SeoText.Summary(page.Description); index = true;
-                preview = "<main><a href=\"/\">Home</a><h1>" + E(page.Title ?? branding.Home.Heading) + (page.Place is null ? "" : " in " + E(page.Place)) + "</h1><p>" + E(page.Description) + "</p></main>";
+                preview = "<main><a href=\"/\">Home</a><h1>" + E(page.Title ?? branding.Home.Heading) + "</h1><p>" + E(page.Description) + "</p></main>";
             }
+        }
+        if (index && branding.Home.Enabled)
+        {
+            var links = branding.Home.Normalize().Items.Select((item, position) =>
+                "<a href=\"/" + E(item.WebAddress!) + "\">" + E(item.Title ?? $"Pagina {position + 1}") + "</a>");
+            preview = "<nav aria-label=\"Winkelnavigatie\"><a href=\"/\">Home</a> " + string.Join(" ", links) + " <a href=\"/winkel\">Assortiment</a></nav>" + preview;
         }
         template = Regex.Replace(template, "<title>.*?</title>", _ => "<title>" + E(title) + "</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
         template = Regex.Replace(template, "<meta\\s+[^>]*name=[\"'](?:description|robots)[\"'][^>]*>", "", RegexOptions.IgnoreCase);

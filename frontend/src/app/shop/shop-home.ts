@@ -29,7 +29,6 @@ import { ShopBranding } from './shop-branding';
           <section class="home-item" [class.featured]="$first">
             @if (item.title) { <h2>{{ item.title }}</h2> }
             <p>{{ summary(item.description) }}</p>
-            <a [routerLink]="'/' + item.webAddress">Lees meer <span aria-hidden="true">→</span></a>
           </section>
         }
       </div>

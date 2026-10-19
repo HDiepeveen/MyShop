@@ -7,6 +7,23 @@ import { TitleStrategy, provideRouter, Router } from '@angular/router';
 import { ShopBranding } from './shop-branding';
 import { App } from '../app';
 describe('Webshop name', () => {
+  it('shows every published page between Home and Assortiment and hides them when disabled', async () => {
+    const fixture = TestBed.createComponent(App);
+    const settings = { homeEnabled: true, homePages: [{ name: 'APK', webAddress: 'apk-zwolle' }, { name: 'Autoreparatie', webAddress: 'autoreparatie-zwolle' }] };
+    http.expectOne('/api/shop/settings').flush(settings);
+    await TestBed.inject(Router).navigateByUrl('/winkel');
+    http.expectOne('/api/shop/settings').flush(settings);
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
+    fixture.detectChanges();
+    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav[aria-label="Winkelnavigatie"] a'));
+    expect(links.slice(0, 4).map(link => link.textContent?.trim())).toEqual(['Home', 'APK', 'Autoreparatie', 'Assortiment']);
+    expect(links[1].getAttribute('href')).toBe('/apk-zwolle');
+    const branding = TestBed.inject(ShopBranding);
+    branding.refresh();
+    http.expectOne('/api/shop/settings').flush({ ...settings, homeEnabled: false });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/apk-zwolle"]')).toBeNull();
+  });
   it('shows the uploaded icon before the shop name and hides an unavailable image', async () => {
     const fixture = TestBed.createComponent(App);
     const iconUrl = '/api/shop/icon?v=11111111-1111-1111-1111-111111111111';
