@@ -52,8 +52,8 @@
             <a routerLink="/winkel/inloggen">Inloggen</a>
           }
         </nav>
+        @if (branding.headerText(); as text) { <span class="header-extra-text">{{ text }}</span> }
         <div class="actions session-actions">
-          @if (branding.headerText(); as text) { <span class="header-extra-text">{{ text }}</span> }
           @if (auth.isManagement()) {
             <a [routerLink]="auth.landingPage()">Beheer</a>
           } @else if (!auth.session()?.authenticated) {

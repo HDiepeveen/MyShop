@@ -55,7 +55,6 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <h2>Bedrijfsinformatie</h2>
       <p>Deze informatie is openbaar op de bedrijfspagina. De bedrijfsgegevens voor facturen stel je apart in bij Facturatie en btw.</p>
       <label>Koptekst bedrijfspagina<input name="companyHeading" [(ngModel)]="company.heading" maxlength="200" required [disabled]="busy()" /></label>
-      <label>Bedrijfsnaam<input name="companyName" [(ngModel)]="company.name" maxlength="200" [disabled]="busy()" placeholder="Gebruik de webshopnaam als dit leeg blijft" /></label>
       <label>Over het bedrijf<textarea name="companyDescription" [(ngModel)]="company.description" maxlength="4000" rows="6" [disabled]="busy()"></textarea></label>
       <label>Adres<textarea name="companyAddress" [(ngModel)]="company.address" maxlength="500" rows="3" [disabled]="busy()"></textarea></label>
       <label>Contact e-mailadres<input name="companyEmail" type="email" [(ngModel)]="company.email" maxlength="254" [disabled]="busy()" /></label>

@@ -93,8 +93,13 @@
   color: var(--shop-text, #62716b);
   background: var(--shop-panel, #fffefa);
 }
-.shop .session-actions { flex: 1; min-width: 180px; align-items: center; flex-wrap: wrap; }
-.header-extra-text { flex: 1; text-align: center; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; min-width: 0; }
+.shop .topbar { column-gap: 32px; }
+.shop .topbar > * { min-width: 0; }
+.shop .topbar nav { max-width: 50%; }
+.shop .session-actions { flex: 0 0 auto; align-items: center; }
+.header-extra-text { max-width: 24rem; text-align: center; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .shop .topbar nav { max-width: 100%; } }
+
 .session-actions { align-items: center; }
 .divider {
   margin: 0 12px;
