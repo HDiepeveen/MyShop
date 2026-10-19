@@ -27,6 +27,9 @@ import { errorMessage } from '../error-message';
       }
       @if (section() !== 'rename') {
       <section class="panel">
+        @if (standardSale()) {
+          <button type="button" [disabled]="busy() || product().variants.length > 0" (click)="addVariant()">Verkoopgegevens toevoegen</button>
+        } @else {
         <h2>Variant toevoegen</h2>
         <form (ngSubmit)="addVariant()">
           <label class="field"
@@ -40,6 +43,7 @@ import { errorMessage } from '../error-message';
             Variant toevoegen
           </button>
         </form>
+        }
       </section>
       }
     </div>
@@ -48,6 +52,7 @@ import { errorMessage } from '../error-message';
     }`,
 })
 export class ProductEdit {
+  readonly standardSale = input(false);
   readonly section = input<'rename' | 'variant' | 'both'>('both');
   readonly product = input.required<Product>();
   readonly saved = output<string>();
@@ -91,13 +96,13 @@ export class ProductEdit {
       });
   }
   addVariant() {
-    if (this.busy() || !this.variantName.trim()) return;
+    if (this.busy() || (this.standardSale() ? this.product().variants.length > 0 : !this.variantName.trim())) return;
     this.busy.set(true);
     this.writing = true;
     const product = this.product();
     this.error.set('');
     this.api
-      .addVariant(this.product().id, this.variantName)
+      .addVariant(this.product().id, this.standardSale() ? 'Standaard' : this.variantName)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -105,7 +110,7 @@ export class ProductEdit {
           this.busy.set(false);
           if (this.product() !== product) return;
           this.variantName = '';
-          this.saved.emit('De variant is toegevoegd.');
+          this.saved.emit(this.standardSale() ? 'De verkoopgegevens zijn toegevoegd.' : 'De variant is toegevoegd.');
         },
         error: (error) => {
           this.writing = false;

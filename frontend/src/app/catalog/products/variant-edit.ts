@@ -13,7 +13,8 @@ import { errorMessage } from '../error-message';
   imports: [FormsModule],
   template: `
     <details (toggle)="loadVatRates($event)">
-      <summary>Variant bewerken: {{ variant().name }}</summary>
+      <summary>{{ simpleSale() ? 'Prijs, voorraad en artikelnummer bewerken' : 'Variant bewerken: ' + variant().name }}</summary>
+      @if (!simpleSale()) {
       <form (ngSubmit)="rename()">
         <label class="field"
           >Variantnaam<input name="variantName" [(ngModel)]="name" required [disabled]="busy()"
@@ -26,6 +27,7 @@ import { errorMessage } from '../error-message';
         </button>
       </form>
 
+      }
       <form (ngSubmit)="saveSku()">
         <label class="field"
           >Artikelnummer<input name="sku" [(ngModel)]="sku" maxlength="64" [disabled]="busy()" />
@@ -183,6 +185,7 @@ import { errorMessage } from '../error-message';
 export class VariantEdit {
   readonly productId = input.required<string>();
   readonly variant = input.required<Variant>();
+  readonly simpleSale = input(false);
   readonly variantCount = input(1);
   readonly saved = output<string>();
   readonly busy = inject(ProductEditState).busy;

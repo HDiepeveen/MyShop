@@ -67,8 +67,10 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
         <div>
           <h1>{{ detail.product.name }}</h1>
           <p class="muted">
+            @if (!simpleSale()) {
             {{ detail.product.variants.length }}
             {{ detail.product.variants.length === 1 ? 'variant' : 'varianten' }} ·
+            }
             {{ detail.product.categoryIds.length }}
             {{ detail.product.categoryIds.length === 1 ? 'categorie' : 'categorieën' }}
           </p>
@@ -82,9 +84,9 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
         <h2>Productgegevens</h2>
         @if (!detail.product.attributeValues.length) {
           @if (hasProductDefinitions()) {
-            <p class="muted">Er zijn nog geen kenmerken op productniveau ingevuld. Variantkenmerken staan bij de varianten.</p>
+            <p class="muted">Er zijn nog geen kenmerken op productniveau ingevuld. @if (hasVariantDefinitions()) { Variantkenmerken staan bij de varianten. }</p>
           } @else {
-            <p class="muted">Dit producttype heeft geen kenmerken op productniveau. Variantkenmerken staan bij de varianten.</p>
+            <p class="muted">Dit producttype heeft geen kenmerken op productniveau. @if (hasVariantDefinitions()) { Variantkenmerken staan bij de varianten. }</p>
           }
         }
         @for (definition of detail.type.attributeDefinitions; track definition.id) {
@@ -106,11 +108,6 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           }
         </dl>
       </section>
-      <app-product-delete
-        [productId]="detail.product.id"
-        [productName]="detail.product.name"
-        (removed)="onRemoved()"
-      />
       <app-orphan-values
         [productId]="detail.product.id"
         [values]="detail.product.attributeValues"
@@ -119,13 +116,18 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
       />
       <app-product-categories [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-validation [product]="detail.product" [type]="detail.type" />
-      <h2>Varianten</h2>
-      <app-product-edit section="variant" [product]="detail.product" (saved)="onSaved($event)" />
+      <h2>{{ simpleSale() ? 'Verkoopgegevens' : 'Varianten' }}</h2>
+      @if (!simpleSale() || !detail.product.variants.length) {
+      <app-product-edit section="variant" [standardSale]="simpleSale()" [product]="detail.product" (saved)="onSaved($event)" />
+      }
+      @if (hasVariantDefinitions()) {
       <app-variant-generator
         [product]="detail.product"
         [definitions]="detail.type.attributeDefinitions"
         (saved)="onSaved($event)"
       />
+      }
+      @if (!simpleSale()) {
       <form class="toolbar" (ngSubmit)="searchVariants()">
         <label
           >Zoek variant<input
@@ -173,14 +175,16 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
       } @else if (!visibleVariants(detail.product.variants).length) {
         <p>Geen varianten gevonden. Pas de zoekterm of voorraadselectie aan.</p>
       }
-      <div class="grid">
-        @for (variant of visibleVariants(detail.product.variants); track variant.id) {
+      }
+      <div [class.grid]="!simpleSale()">
+        @for (variant of simpleSale() ? detail.product.variants : visibleVariants(detail.product.variants); track variant.id) {
           <section class="panel">
-            <h3>{{ variant.name }}</h3>
+            @if (!simpleSale()) { <h3>{{ variant.name }}</h3> }
             <app-variant-edit
               [productId]="detail.product.id"
               [variant]="variant"
               [variantCount]="detail.product.variants.length"
+              [simpleSale]="simpleSale()"
               (saved)="onSaved($event)"
             />
             <app-price-rule-edit
@@ -263,6 +267,11 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           </section>
         }
       </div>
+      <app-product-delete
+        [productId]="detail.product.id"
+        [productName]="detail.product.name"
+        (removed)="onRemoved()"
+      />
     }`,
 })
 export class ProductDetail {
@@ -375,6 +384,10 @@ export class ProductDetail {
   attributeValue(id: string, values: AttributeValue[]) {
     return values.find((value) => value.attributeDefinitionId === id);
   }
+  hasVariantDefinitions() {
+    return this.state()?.data?.type.attributeDefinitions.some(definition => definition.scope === 'Variant') ?? false;
+  }
+  simpleSale() { return !this.hasVariantDefinitions() && (this.state()?.data?.product.variants.length ?? 0) <= 1; }
   hasProductDefinitions() {
     return this.state()?.data?.type.attributeDefinitions.some(definition => definition.scope === 'Product') ?? false;
   }

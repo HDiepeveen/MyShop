@@ -35,6 +35,21 @@ describe('ProductEdit', () => {
     request.flush(null);
     expect(saved).toHaveBeenCalledOnce();
   });
+  it('creates one standard sale without asking for a variant name', () => {
+    const fixture = setup();
+    fixture.componentRef.setInput('section', 'variant');
+    fixture.componentRef.setInput('standardSale', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[name="variant"]')).toBeNull();
+    fixture.componentInstance.addVariant(); fixture.componentInstance.addVariant();
+    const request = http.expectOne('/api/products/product/variants');
+    expect(request.request.body).toEqual({ name: 'Standaard' });
+    request.flush(null);
+    fixture.componentRef.setInput('product', { id: 'product', name: 'Original', variants: [{id:'v'}] });
+    fixture.detectChanges();
+    fixture.componentInstance.addVariant();
+    http.expectNone('/api/products/product/variants');
+  });
   it('keeps variant input and reports conflicts without a success event', () => {
     const fixture = setup();
     const saved = vi.fn();

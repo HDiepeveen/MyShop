@@ -89,7 +89,7 @@ describe('ProductDetail', () => {
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
   });
 
-  it('explains how to add variants to a newly created empty product', () => {
+  it('offers standard sale data for an empty product without variant definitions', () => {
     const fixture = TestBed.createComponent(ProductDetail);
     http.expectOne('/api/products/first').flush({
       id: 'first', name: 'Product', productTypeId: 'type',
@@ -101,11 +101,32 @@ describe('ProductDetail', () => {
     fixture.detectChanges();
     TestBed.tick();
     http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
-    expect(fixture.nativeElement.textContent).toContain('Dit product heeft nog geen varianten.');
+    expect(fixture.nativeElement.textContent).toContain('Verkoopgegevens toevoegen');
+    expect(fixture.nativeElement.querySelector('app-variant-generator')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[name="variant"]')).toBeNull();
     expect(fixture.nativeElement.textContent).not.toContain('Pas de zoekterm');
     expect(fixture.debugElement.query(By.directive(VariantEdit))).toBeNull();
   });
 
+  it.each([{ count: 1, features: false, simple: true }, { count: 2, features: false, simple: false }, { count: 1, features: true, simple: false }])('keeps sale editing available for %j', ({count, features, simple}) => {
+    const fixture = TestBed.createComponent(ProductDetail);
+    http.expectOne('/api/products/first').flush({ id: 'first', name: 'Auto', productTypeId: 'type', categoryIds: [], attributeValues: [], variants: Array.from({length: count}, (_, i) => ({id: 'v' + i, name: 'Uitvoering ' + i, sku: null, price: null, stockQuantity: 1, attributeValues: []})) });
+    http.expectOne('/api/product-types/type').flush({ id: 'type', name: 'Auto', attributeDefinitions: features ? [{id:'color',code:'color',displayName:'Kleur',scope:'Variant',dataType:'Text',isRequired:false,isFilterable:false}] : [] });
+    fixture.detectChanges(); TestBed.tick();
+    http.expectOne('/api/products/first/attribute-validation').flush({ isValid: true, issues: [] });
+    const root = fixture.nativeElement as HTMLElement;
+    expect(fixture.componentInstance.simpleSale()).toBe(simple);
+    expect(root.querySelectorAll('app-variant-edit')).toHaveLength(count);
+    expect(root.querySelector('app-variant-generator') !== null).toBe(features);
+    expect(root.querySelector('[name="variantName"]') === null).toBe(simple);
+    expect(root.querySelector('[name="sku"]')).not.toBeNull();
+    expect(root.querySelector('[name="amount"]')).not.toBeNull();
+    if (simple) {
+      expect(root.textContent).toContain('Verkoopgegevens');
+      expect(root.querySelector('[name="variantSearch"]')).toBeNull();
+      expect(root.textContent).not.toContain('Uitvoering 0');
+    }
+  });
   it('distinguishes variant values from unfilled product-level characteristics', () => {
     const fixture = TestBed.createComponent(ProductDetail);
     const variantDefinition = { id: 'year', code: 'year', name: 'Bouwjaar',
