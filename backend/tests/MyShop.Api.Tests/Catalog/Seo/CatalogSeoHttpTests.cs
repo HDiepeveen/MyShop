@@ -111,7 +111,7 @@ public sealed class CatalogSeoHttpTests
             Assert.Contains("Bekijk onze occasions.", html);
             var branding = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
             Assert.Equal("Autohuis Hans", branding.GetProperty("shopName").GetString());
-            Assert.Equal(new[] { "appearance", "footerText", "iconUrl", "introduction", "shopName", "showManagementMenuWithoutLogin", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
+            Assert.Equal(new[] { "appearance", "footerText", "homeEnabled", "iconUrl", "introduction", "shopName", "showManagementMenuWithoutLogin", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
             Assert.Equal("Welkom onderaan", branding.GetProperty("footerText").GetString());
             var company = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/company");
             Assert.Equal("Straat 1\n1234 AB Utrecht", company.GetProperty("address").GetString());

@@ -9,6 +9,7 @@ export class ShopBranding {
   readonly iconUrl = signal<string | null>(null);
   readonly iconFailed = signal(false);
   readonly icon = computed(() => (this.iconFailed() ? null : this.iconUrl()));
+  readonly homeEnabled = signal(false);
   readonly name = signal('MyShop');
   readonly footerText = signal('Ontdek wat bij je past.');
   private requestVersion = 0;
@@ -17,6 +18,7 @@ export class ShopBranding {
     this.http
       .get<{
         shopName: string;
+        homeEnabled?: boolean;
         footerText?: string;
         appearance?: ShopColors;
         iconUrl?: string | null;
@@ -25,6 +27,7 @@ export class ShopBranding {
       .subscribe({
         next: (settings) => {
           if (version === this.requestVersion) {
+            this.homeEnabled.set(settings.homeEnabled === true);
             this.showManagementMenuWithoutLogin.set(settings.showManagementMenuWithoutLogin === true);
             const icon =
               typeof settings.iconUrl === 'string' &&

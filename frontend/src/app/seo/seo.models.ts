@@ -1,4 +1,4 @@
-export interface ShopSeoSettings { heading: string; seoTitle: string; revision: string; shopName: string; welcomeText: string; introduction: string; footerText: string; company: CompanyPage; }
+export interface ShopSeoSettings { heading: string; seoTitle: string; revision: string; shopName: string; welcomeText: string; introduction: string; footerText: string; company: CompanyPage; home?: HomePageSettings; }
 export interface CompanyPage { heading: string; name: string | null; description: string | null; address: string | null; email: string | null; phone: string | null; openingHours: string | null; }
 export interface ProductSeoInfo {
   productId: string; name: string; revision: string;
@@ -12,3 +12,5 @@ export interface ProductTypeHeadings {
   attributesHeading: string | null;
   revision: string;
 }
+
+export interface HomePageSettings { enabled: boolean; heading: string; items: { title: string | null; description: string }[]; }

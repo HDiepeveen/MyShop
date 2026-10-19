@@ -1,13 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { SeoSettings } from './seo-settings';
 import { ProductSeoEdit } from './product-seo-edit';
 const revision = '10000000-0000-0000-0000-000000000001';
 const info = { productId: 'p', name: 'Opel Corsa', revision, values: { seoTitle: null, seoDescription: null, webAddress: null }, resolvedTitle: 'Opel Corsa · MyShop', resolvedDescription: 'Een auto.', resolvedAddress: 'opel-corsa-p' };
 describe('SEO editors', () => {
   let http: HttpTestingController;
-  beforeEach(() => { TestBed.configureTestingModule({ imports: [SeoSettings, ProductSeoEdit], providers: [provideHttpClient(), provideHttpClientTesting()] }); http = TestBed.inject(HttpTestingController); });
+  beforeEach(() => { TestBed.configureTestingModule({ imports: [SeoSettings, ProductSeoEdit], providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] }); http = TestBed.inject(HttpTestingController); });
   afterEach(() => http.verify());
   it('saves the assortment heading and title with revision and reloads the stored settings', () => {
     const fixture = TestBed.createComponent(SeoSettings);
@@ -16,7 +17,7 @@ describe('SEO editors', () => {
     page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop';
     page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
+    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
@@ -39,6 +40,17 @@ describe('SEO editors', () => {
     expect(request.request.body.company).toEqual(page.company); expect(request.request.body.footerText).toBe('');
     request.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.company.description).toBe('Eerste regel\nTweede regel'); expect(page.footerText).toBe('');
+  });
+  it('reorders home blocks, retains optional titles and sends their order when saving', () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: { enabled: true, heading: 'Garage abc', items: [{ title: 'Over ons', description: 'Al 20 jaar.' }, { title: null, description: 'ma - vr 8:00 - 17:00 uur' }] } });
+    const page = fixture.componentInstance;
+    page.moveHomeItem(1, -1); page.save();
+    const request = http.expectOne('/api/seo-settings');
+    expect(request.request.body.home.items[0].title).toBeNull();
+    expect(request.request.body.home.items[1].title).toBe('Over ons');
+    request.flush({}, { status: 409, statusText: 'Conflict' });
+    expect(page.home.items[0].description).toBe('ma - vr 8:00 - 17:00 uur');
   });
   function product() {
     const fixture = TestBed.createComponent(ProductSeoEdit); fixture.componentRef.setInput('productId', 'p'); fixture.detectChanges();

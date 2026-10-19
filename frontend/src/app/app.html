@@ -26,13 +26,14 @@
   <div class="body">
     <header class="topbar">
       @if (storefront()) {
-        <a routerLink="/winkel" class="shop-brand">
+        <a [routerLink]="branding.homeEnabled() ? '/winkel/home' : '/winkel'" class="shop-brand">
           @if (branding.icon(); as icon) {
             <img [src]="icon" alt="" (error)="branding.iconFailed.set(true)" />
           }
           {{ branding.name() }}
         </a>
         <nav aria-label="Winkelnavigatie" class="actions">
+          @if (branding.homeEnabled()) { <a routerLink="/winkel/home">Home</a> }
           <a routerLink="/winkel">Assortiment</a>
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>

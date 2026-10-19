@@ -306,6 +306,9 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("HomePageJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<byte[]>("IconBytes")
                         .HasColumnType("varbinary(max)");
 

@@ -4,7 +4,29 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
+public sealed record HomePageItem(string? Title, string Description);
+public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyList<HomePageItem> Items)
+{
+    public static HomePageSettings Default => new(false, "Welkom", Array.Empty<HomePageItem>());
+    public HomePageSettings Normalize()
+    {
+        if (Items is null || Items.Count > 20) throw new ArgumentException("Gebruik maximaal 20 tekstblokken.");
+        if (Enabled && Items.Count == 0) throw new ArgumentException("Voeg minstens één tekstblok toe voordat je de homepagina inschakelt.");
+        return this with {
+            Heading = SeoText.Optional(Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de homepagina in."),
+            Items = Items.Select(item => item is null ? throw new ArgumentException("Vul het tekstblok in.") : new HomePageItem(
+                SeoText.Optional(item.Title, 200), NormalizeDescription(item.Description))).ToArray()
+        };
+    }
+    private static string NormalizeDescription(string? value)
+    {
+        value = value?.Trim().Replace("\r\n", "\n");
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 4000 || value.Any(c => char.IsControl(c) && c is not ('\n' or '\t')))
+            throw new ArgumentException("Vul een omschrijving van maximaal 4000 tekens in.");
+        return value;
+    }
+}
 public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours);
 public sealed record ProductSeoValues(string? SeoTitle, string? SeoDescription, string? WebAddress);
 public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeading, string? AttributesHeading, Guid Revision);
@@ -36,7 +58,7 @@ public interface ICatalogSeoStore
 public static class SeoText
 {
     private static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
-    { "betaling", "account", "inloggen", "registreren", "winkelmand", "e-mail-bevestigen", "wachtwoord-herstellen", "wachtwoord-vergeten" };
+    { "home", "betaling", "account", "inloggen", "registreren", "winkelmand", "e-mail-bevestigen", "wachtwoord-herstellen", "wachtwoord-vergeten" };
     public static string? Optional(string? value, int limit)
     {
         if (string.IsNullOrWhiteSpace(value)) return null;
@@ -105,6 +127,7 @@ public sealed class ManageSeo(ICatalogSeoStore store)
             throw new ArgumentException("Vul een geldig e-mailadres in.");
         var settings = value with
         {
+            Home = (value.Home ?? throw new ArgumentException("Vul de homepagina in.")).Normalize(),
             Heading = SeoText.Optional(value.Heading, 200) ?? throw new ArgumentException("Vul een koptekst in."),
             SeoTitle = SeoText.Optional(value.SeoTitle, 200) ?? throw new ArgumentException("Vul een SEO-titel in."),
             ShopName = SeoText.Optional(value.ShopName, 100) ?? throw new ArgumentException("Vul een webshopnaam in."),

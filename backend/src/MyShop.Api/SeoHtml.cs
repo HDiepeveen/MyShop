@@ -19,6 +19,20 @@ internal static class SeoHtml
             preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
                 "<li><a href=\"/winkel/" + E(p.WebAddress ?? p.Id.ToString("D")) + "\">" + E(p.Name) + "</a></li>")) + "</ul></main>";
         }
+        else if (path.TrimEnd('/') == "/winkel/home")
+        {
+            var home = branding.Home;
+            title = home.Heading + " · " + branding.ShopName;
+            if (!home.Enabled) { context.Response.StatusCode = 404; title = "Homepagina niet beschikbaar · " + branding.ShopName; }
+            else
+            {
+                canonical = "/winkel/home"; index = true;
+                description = home.Items.FirstOrDefault() is { } first ? SeoText.Summary(first.Description) : null;
+                preview = "<main><h1>" + E(home.Heading) + "</h1>" + string.Concat(home.Items.Select(item =>
+                    "<section>" + (item.Title is null ? "" : "<h2>" + E(item.Title) + "</h2>") + "<p>" + E(item.Description) + "</p></section>")) +
+                    "<a href=\"/winkel\">Bekijk het assortiment</a></main>";
+            }
+        }
         else if (path.TrimEnd('/') == "/winkel/informatie/bedrijf")
         {
             var company = branding.Company;

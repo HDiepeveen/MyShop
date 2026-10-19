@@ -118,6 +118,7 @@ export const routes: Routes = [
   {
     path: 'winkel',
     children: [
+      { path: 'home', loadComponent: () => import('./shop/shop-home').then(m => m.ShopHome), title: 'Home · MyShop' },
       {
         path: 'informatie/bedrijf',
         loadComponent: () => import('./shop/shop-company').then((m) => m.ShopCompany),

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MyShop.Application.Catalog.Seo;
@@ -18,11 +19,11 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
-            .Select(x => new { x.Heading, x.SeoTitle, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
+            .Select(x => new { x.HomePageJson, x.Heading, x.SeoTitle, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
                 x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours,
                 x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasIcon = x.IconBytes != null }).SingleAsync(ct);
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { Home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
     }
     public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct) =>
         context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.IconBytes != null)
@@ -48,8 +49,9 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     }
     public async Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
     {
+        var homeJson = JsonSerializer.Serialize(value.Home);
         var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
-            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.HomePageJson, homeJson).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
                 .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.FooterText, value.FooterText)
                 .SetProperty(x => x.CompanyHeading, value.Company.Heading).SetProperty(x => x.CompanyName, value.Company.Name)
                 .SetProperty(x => x.CompanyDescription, value.Company.Description).SetProperty(x => x.CompanyAddress, value.Company.Address)
