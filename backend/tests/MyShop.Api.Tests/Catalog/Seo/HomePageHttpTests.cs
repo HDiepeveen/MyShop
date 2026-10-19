@@ -10,8 +10,12 @@ public sealed class HomePageHttpTests
     [SecuritySqlFact]
     public async Task Home_is_optional_validated_ordered_persistent_and_revision_protected()
     {
-        await using var host = await SecurityHost.Create();
-        using var visitor = new HttpClient { BaseAddress = host.Client.BaseAddress };
+        var folder = Path.Combine(Path.GetTempPath(), "MyShopPages_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        await File.WriteAllTextAsync(Path.Combine(folder, "index.html"), "<html><head><title>MyShop</title></head><body><app-root></app-root></body></html>");
+        try {
+        await using var host = await SecurityHost.Create(new() { ["Hosting:FrontendRoot"] = folder });
+        using var visitor = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/api/shop/home")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/seo-settings")).StatusCode);
         await host.Csrf(); await host.Login(); await host.Csrf();
@@ -19,9 +23,22 @@ public sealed class HomePageHttpTests
         var originalCompany = settings["company"]!.ToJsonString();
         settings["home"] = JsonNode.Parse("""{"enabled":true,"heading":"Garage abc","items":[]}""");
         Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
-        settings["home"]!["items"] = JsonNode.Parse("""[{"title":"Over Garage abc","description":"Al 20 jaar.\nReparaties en APK."},{"title":null,"description":"ma - vr 8:00 - 17:00 uur"}]""");
+        settings["home"]!["items"] = JsonNode.Parse("""[{"title":"APK","place":"Zwolle","description":"Al 20 jaar.\nReparaties en APK."},{"title":null,"description":"ma - vr 8:00 - 17:00 uur"}]""");
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
+        var root = await visitor.GetAsync("/");
+        Assert.Equal(HttpStatusCode.OK, root.StatusCode);
+        var html = await root.Content.ReadAsStringAsync();
+        Assert.Contains("href=\"/apk-zwolle\"", html);
+        Assert.DoesNotContain("name=\"robots\" content=\"noindex\"", html);
+        var oldHome = await visitor.GetAsync("/winkel/home");
+        Assert.Equal(HttpStatusCode.MovedPermanently, oldHome.StatusCode);
+        Assert.Equal("/", oldHome.Headers.Location!.OriginalString);
+        var landing = await visitor.GetAsync("/apk-zwolle");
+        Assert.Equal(HttpStatusCode.OK, landing.StatusCode);
+        Assert.Contains("<h1>APK in Zwolle</h1>", await landing.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/onbekende-dienst")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await visitor.GetAsync("/api/orders")).StatusCode);
         var home = (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/home"))!;
         Assert.Equal("Garage abc", home["heading"]!.GetValue<string>());
         Assert.Equal("Al 20 jaar.\nReparaties en APK.", home["items"]![0]!["description"]!.GetValue<string>());
@@ -36,5 +53,8 @@ public sealed class HomePageHttpTests
         Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/api/shop/home")).StatusCode);
         var draft = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
         Assert.Equal(2, draft["home"]!["items"]!.AsArray().Count);
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/api/shop/pages/apk-zwolle")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync("/apk-zwolle")).StatusCode);
+        } finally { Directory.Delete(folder, recursive: true); }
     }
 }

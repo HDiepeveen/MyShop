@@ -70,7 +70,7 @@ it('keeps the skip link on the current page and focuses main content', async () 
 it('lets an administrator return from the assortment to administration', async () => {
   TestBed.configureTestingModule({
     imports: [App],
-    providers: [provideRouter([{ path: 'winkel', children: [] }, { path: '', children: [] }]), provideHttpClient()],
+    providers: [provideRouter([{ path: 'winkel', children: [] }, { path: '', children: [] }, { path: 'beheer', children: [] }]), provideHttpClient()],
   });
   const fixture = TestBed.createComponent(App);
   TestBed.inject(Auth).session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
@@ -79,11 +79,11 @@ it('lets an administrator return from the assortment to administration', async (
   await fixture.whenStable();
   const link = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a'))
     .find(anchor => anchor.textContent?.trim() === 'Beheer');
-  expect(link?.getAttribute('href')).toBe('/');
+  expect(link?.getAttribute('href')).toBe('/beheer');
   expect(fixture.nativeElement.querySelector('.webshop-version')).toBeNull();
   link!.click();
   await fixture.whenStable();
-  expect(router.url).toBe('/');
+  expect(router.url).toBe('/beheer');
   expect(fixture.nativeElement.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
 });
 

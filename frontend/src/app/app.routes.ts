@@ -1,3 +1,6 @@
+import { HttpClient } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { catchError, map, of } from 'rxjs';
 import { Routes } from '@angular/router';
 import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
@@ -70,6 +73,7 @@ const protectedRoutes: Routes = [
     loadComponent: () => import('./auth/password').then((m) => m.Password),
     title: 'Wachtwoord wijzigen · MyShop',
   },
+  { path: 'beheer', component: Home, title: 'Overzicht · MyShop' },
   { path: '', component: Home, title: 'Overzicht · MyShop' },
   {
     path: 'producten/nieuw',
@@ -107,18 +111,14 @@ const protectedRoutes: Routes = [
     loadComponent: () => import('./catalog/types/type-list').then((m) => m.TypeList),
     title: 'Producttypen · MyShop',
   },
-  {
-    path: '**',
-    loadComponent: () => import('./not-found').then((m) => m.NotFound),
-    title: 'Pagina niet gevonden · MyShop',
-  },
-];
+ ];
 
 export const routes: Routes = [
+  { path: '', pathMatch: 'full', data: { storefront: true }, canMatch: [() => inject(HttpClient).get<{homeEnabled: boolean}>('/api/shop/settings').pipe(map(s => s.homeEnabled === true), catchError(() => of(false)))], loadComponent: () => import('./shop/shop-home').then(m => m.ShopHome), title: 'Home · MyShop' },
   {
     path: 'winkel',
     children: [
-      { path: 'home', loadComponent: () => import('./shop/shop-home').then(m => m.ShopHome), title: 'Home · MyShop' },
+      { path: 'home', redirectTo: '/', pathMatch: 'full' },
       {
         path: 'informatie/bedrijf',
         loadComponent: () => import('./shop/shop-company').then((m) => m.ShopCompany),
@@ -225,4 +225,6 @@ export const routes: Routes = [
     title: 'Geen toegang · MyShop',
   },
   ...protectedRoutes.map((route) => ({ ...route, canActivate: [adminGuard] })),
+  { path: ':page', data: { storefront: true }, loadComponent: () => import('./shop/shop-service-page').then(m => m.ShopServicePage), title: 'Pagina · MyShop' },
+  { path: '**', loadComponent: () => import('./not-found').then(m => m.NotFound), title: 'Pagina niet gevonden · MyShop' },
 ];

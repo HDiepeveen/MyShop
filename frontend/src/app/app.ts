@@ -52,7 +52,7 @@ export class App {
       map(() => this.router.url),
       startWith(this.router.url),
       map(
-        (url) => this.router.parseUrl(url).root.children['primary']?.segments[0]?.path === 'winkel',
+        (url) => this.router.parseUrl(url).root.children['primary']?.segments[0]?.path === 'winkel' || this.router.routerState.snapshot.root.firstChild?.data['storefront'] === true,
       ),
     ),
     { initialValue: false },

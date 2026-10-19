@@ -86,5 +86,5 @@ export function safeReturnUrl(value: string | null): string {
     ) &&
     !/[\\\r\n]/.test(value)
     ? value
-    : '/';
+    : '/beheer';
 }

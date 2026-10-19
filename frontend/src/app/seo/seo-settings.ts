@@ -20,21 +20,23 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label>SEO-titel assortiment<input name="seoTitle" [(ngModel)]="seoTitle" maxlength="200" required [disabled]="busy()" /></label>
       <label>Tekst onderaan de winkel<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
       <h2>Homepagina</h2>
-      @if (settings()?.home?.enabled) { <p><a routerLink="/winkel/home">Opgeslagen homepagina bekijken</a></p> }
-      <p>Een eigen startpagina met tekstblokken. De webshopnaam en de Home-link openen deze pagina wanneer hij is ingeschakeld.</p>
+      @if (settings()?.home?.enabled) { <p><a routerLink="/">Opgeslagen homepagina bekijken</a></p> }
+      <p>Een startpagina met links naar afzonderlijke pagina’s. Titel en plaats bepalen het webadres bij de eerste opslag; daarna blijft het adres behouden.</p>
       <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Homepagina inschakelen</label>
       <label>Koptekst homepagina<input name="homeHeading" [(ngModel)]="home.heading" maxlength="200" required [disabled]="busy()" /></label>
       @for (item of home.items; track item; let i = $index) {
         <fieldset [disabled]="busy()">
-          <legend>Tekstblok {{ i + 1 }}</legend>
+          <legend>Pagina {{ i + 1 }}</legend>
           <label>Titel (optioneel)<input [name]="'homeTitle' + i" [(ngModel)]="item.title" maxlength="200" /></label>
+          <label>Plaats (optioneel)<input [name]="'pagePlace' + i" [(ngModel)]="item.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" /></label>
+          @if (item.webAddress) { <p>Webadres: <a [routerLink]="'/' + item.webAddress">/{{ item.webAddress }}</a></p> }
           <label>Omschrijving<textarea [name]="'homeDescription' + i" [(ngModel)]="item.description" maxlength="4000" rows="5" required></textarea></label>
           <button type="button" class="secondary" [disabled]="i === 0" (click)="moveHomeItem(i, -1)">Omhoog</button>
           <button type="button" class="secondary" [disabled]="i === home.items.length - 1" (click)="moveHomeItem(i, 1)">Omlaag</button>
-          <button type="button" class="secondary" (click)="home.items.splice(i, 1)">Tekstblok verwijderen</button>
+          <button type="button" class="secondary" (click)="home.items.splice(i, 1)">Pagina verwijderen</button>
         </fieldset>
       }
-      <button type="button" class="secondary" [disabled]="busy() || home.items.length >= 20" (click)="home.items.push({title: '', description: ''})">Tekstblok toevoegen</button>
+      <button type="button" class="secondary" [disabled]="busy() || home.items.length >= 20" (click)="home.items.push({title: '', description: ''})">Pagina toevoegen</button>
       <h2>Bedrijfsinformatie</h2>
       <p>Deze informatie is openbaar op de bedrijfspagina. De bedrijfsgegevens voor facturen stel je apart in bij Facturatie en btw.</p>
       <label>Koptekst bedrijfspagina<input name="companyHeading" [(ngModel)]="company.heading" maxlength="200" required [disabled]="busy()" /></label>

@@ -5,7 +5,11 @@ using System.Text.RegularExpressions;
 namespace MyShop.Application.Catalog.Seo;
 
 public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
-public sealed record HomePageItem(string? Title, string Description);
+public sealed record HomePageItem(string? Title, string Description)
+{
+    public string? Place { get; init; }
+    public string? WebAddress { get; init; }
+}
 public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyList<HomePageItem> Items)
 {
     public static HomePageSettings Default => new(false, "Welkom", Array.Empty<HomePageItem>());
@@ -15,9 +19,29 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
         if (Enabled && Items.Count == 0) throw new ArgumentException("Voeg minstens één tekstblok toe voordat je de homepagina inschakelt.");
         return this with {
             Heading = SeoText.Optional(Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de homepagina in."),
-            Items = Items.Select(item => item is null ? throw new ArgumentException("Vul het tekstblok in.") : new HomePageItem(
-                SeoText.Optional(item.Title, 200), NormalizeDescription(item.Description))).ToArray()
+            Items = ResolveItems(Items)
         };
+    }
+    private static IReadOnlyList<HomePageItem> ResolveItems(IReadOnlyList<HomePageItem> items)
+    {
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<HomePageItem>();
+        foreach (var item in items)
+        {
+            if (item is null) throw new ArgumentException("Vul de pagina in.");
+            var title = SeoText.Optional(item.Title, 200);
+            var place = SeoText.Optional(item.Place, 100);
+            var address = item.WebAddress is null ? null : ServicePageAddress.Validate(item.WebAddress);
+            if (address is null)
+            {
+                var stem = ServicePageAddress.Generate(title ?? "pagina", place);
+                address = stem;
+                for (var suffix = 2; used.Contains(address); suffix++) address = stem + "-" + suffix;
+            }
+            if (!used.Add(address)) throw new ArgumentException("Elke pagina moet een uniek webadres hebben.");
+            result.Add(new(title, NormalizeDescription(item.Description)) { Place = place, WebAddress = address });
+        }
+        return result;
     }
     private static string NormalizeDescription(string? value)
     {
@@ -25,6 +49,25 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
         if (string.IsNullOrWhiteSpace(value) || value.Length > 4000 || value.Any(c => char.IsControl(c) && c is not ('\n' or '\t')))
             throw new ArgumentException("Vul een omschrijving van maximaal 4000 tekens in.");
         return value;
+    }
+}
+public static class ServicePageAddress
+{
+    private static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
+    { "api", "winkel", "beheer", "home", "inloggen", "geen-toegang", "producten", "producttypen", "categorieen", "bestellingen", "klanten", "instellingen", "account", "assets", "robots-txt", "sitemap-xml" };
+    public static string Generate(string title, string? place)
+    {
+        var plain = string.Concat((title + " " + place).Normalize(NormalizationForm.FormD).Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+        var stem = Regex.Replace(plain.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
+        if (stem.Length > 140) stem = stem[..140].TrimEnd('-');
+        if (stem.Length == 0) stem = "pagina";
+        return Reserved.Contains(stem) ? stem + "-pagina" : stem;
+    }
+    public static string Validate(string address)
+    {
+        if (address.Length > 160 || !Regex.IsMatch(address, "^[a-z0-9]+(?:-[a-z0-9]+)*$") || Reserved.Contains(address))
+            throw new ArgumentException("Gebruik een geldig, uniek pagina-adres.");
+        return address;
     }
 }
 public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours);

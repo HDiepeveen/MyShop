@@ -102,7 +102,7 @@ describe('Admin authentication', () => {
       .expectOne('/api/auth/session')
       .flush({ authenticated: true, administrator: true, name: 'admin' });
     expect(login.password).toBe('');
-    expect(navigate).toHaveBeenCalledWith('/');
+    expect(navigate).toHaveBeenCalledWith('/beheer');
     expect(TestBed.inject(Auth).session()?.name).toBe('admin');
   });
 
@@ -231,7 +231,7 @@ describe('Admin authentication', () => {
 it.each(['https://evil.test', '//evil.test', '/\\evil.test', '/inloggen', '/producten\n', null])(
   'rejects unsafe return path %s',
   (value) => {
-    expect(safeReturnUrl(value)).toBe('/');
+    expect(safeReturnUrl(value)).toBe('/beheer');
   },
 );
 it('preserves a local product detail return path', () => {

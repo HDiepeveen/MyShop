@@ -1,5 +1,5 @@
 export const managementMenu = [
-  { code: 'overview', name: 'Overzicht', path: '/' },
+  { code: 'overview', name: 'Overzicht', path: '/beheer' },
   { code: 'categories', name: 'Categorieën', path: '/categorieen' },
   { code: 'productTypes', name: 'Producttypen', path: '/producttypen' },
   { code: 'products', name: 'Producten', path: '/producten' },
@@ -15,5 +15,6 @@ export const managementMenu = [
 ] as const;
 export function managementPermission(url: string): string | null {
   const path = url.split(/[?#]/)[0];
-  return managementMenu.find(item => path === item.path || item.path !== '/' && path.startsWith(item.path + '/'))?.code ?? null;
+  if (path === '/') return 'overview';
+  return managementMenu.find(item => path === item.path || path.startsWith(item.path + '/'))?.code ?? null;
 }

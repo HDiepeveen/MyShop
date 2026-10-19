@@ -19,17 +19,18 @@ internal static class SeoHtml
             preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
                 "<li><a href=\"/winkel/" + E(p.WebAddress ?? p.Id.ToString("D")) + "\">" + E(p.Name) + "</a></li>")) + "</ul></main>";
         }
-        else if (path.TrimEnd('/') == "/winkel/home")
+        else if (path == "/" && branding.Home.Enabled || path.TrimEnd('/') == "/winkel/home")
         {
-            var home = branding.Home;
+            var home = branding.Home.Normalize();
             title = home.Heading + " · " + branding.ShopName;
             if (!home.Enabled) { context.Response.StatusCode = 404; title = "Homepagina niet beschikbaar · " + branding.ShopName; }
             else
             {
-                canonical = "/winkel/home"; index = true;
+                if (path.TrimEnd('/') == "/winkel/home") { context.Response.Redirect("/" + context.Request.QueryString, permanent: true); return true; }
+                canonical = "/"; index = true;
                 description = home.Items.FirstOrDefault() is { } first ? SeoText.Summary(first.Description) : null;
                 preview = "<main><h1>" + E(home.Heading) + "</h1>" + string.Concat(home.Items.Select(item =>
-                    "<section>" + (item.Title is null ? "" : "<h2>" + E(item.Title) + "</h2>") + "<p>" + E(item.Description) + "</p></section>")) +
+                    "<section><h2><a href=\"/" + E(item.WebAddress!) + "\">" + E(item.Title ?? "Lees meer") + "</a></h2><p>" + E(SeoText.Summary(item.Description)) + "</p></section>")) +
                     "<a href=\"/winkel\">Bekijk het assortiment</a></main>";
             }
         }
@@ -61,6 +62,19 @@ internal static class SeoHtml
                     preview = "<main><h1>" + E(product.Name) + "</h1><h2>" + E(product.ResolvedAboutHeading) + "</h2><p>" + E(product.Description) + "</p>" + ((detail?.Attributes.Count ?? 0) > 0 ? "<h3>" + E(product.ResolvedAttributesHeading) + "</h3>" : "") + "<dl>" +
                         string.Concat((detail?.Attributes ?? []).Select(a => "<dt>" + E(a.Name) + "</dt><dd>" + E(a.Value) + "</dd>")) + "</dl></main>";
                 }
+            }
+        }
+        if (path.Length > 1 && path.TrimEnd('/')[1..].IndexOf('/') < 0 && !new[] { "/inloggen", "/geen-toegang", "/beheer", "/producten", "/producttypen", "/categorieen", "/bestellingen", "/klanten", "/account", "/winkel" }.Contains(path.TrimEnd('/')))
+        {
+            var page = branding.Home.Enabled ? branding.Home.Normalize().Items.FirstOrDefault(item => "/" + item.WebAddress == path.TrimEnd('/')) : null;
+            if (page is null) { context.Response.StatusCode = 404; title = "Pagina niet beschikbaar · " + branding.ShopName; }
+            else
+            {
+                title = (page.Title ?? branding.Home.Heading) + (page.Place is null ? "" : " in " + page.Place) + " · " + branding.ShopName;
+                canonical = "/" + page.WebAddress;
+                if (path != canonical) { context.Response.Redirect(canonical + context.Request.QueryString, permanent: true); return true; }
+                description = SeoText.Summary(page.Description); index = true;
+                preview = "<main><a href=\"/\">Home</a><h1>" + E(page.Title ?? branding.Home.Heading) + (page.Place is null ? "" : " in " + E(page.Place)) + "</h1><p>" + E(page.Description) + "</p></main>";
             }
         }
         template = Regex.Replace(template, "<title>.*?</title>", _ => "<title>" + E(title) + "</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase);

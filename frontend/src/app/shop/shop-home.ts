@@ -28,7 +28,8 @@ import { ShopBranding } from './shop-branding';
         @for (item of home.items; track $index) {
           <section class="home-item" [class.featured]="$first">
             @if (item.title) { <h2>{{ item.title }}</h2> }
-            <p>{{ item.description }}</p>
+            <p>{{ summary(item.description) }}</p>
+            <a [routerLink]="'/' + item.webAddress">Lees meer <span aria-hidden="true">→</span></a>
           </section>
         }
       </div>
@@ -55,9 +56,10 @@ export class ShopHome {
   constructor() {
     effect(() => {
       const home = this.state()?.data;
-      if (home) this.seo.apply(home.heading + ' · ' + this.branding.name(), home.items[0]?.description.replace(/\s+/g, ' ').slice(0, 200), '/winkel/home');
+      if (home) this.seo.apply(home.heading + ' · ' + this.branding.name(), home.items[0]?.description.replace(/\s+/g, ' ').slice(0, 200), '/');
       else if (this.state()?.error) this.seo.apply('Homepagina niet beschikbaar · ' + this.branding.name(), undefined, '/winkel/home');
     });
   }
+  summary(value: string) { return value.length > 200 ? value.slice(0, 200).trimEnd() + '…' : value; }
   retry() { if (!this.state()?.loading) this.refresh.next(this.refresh.value + 1); }
 }

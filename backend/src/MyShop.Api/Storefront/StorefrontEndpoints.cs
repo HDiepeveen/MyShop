@@ -22,7 +22,13 @@ public static class StorefrontEndpoints
         endpoints.MapGet("/api/shop/home", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            return settings.Home.Enabled ? (IResult)Results.Ok(settings.Home) : Results.NotFound();
+            return settings.Home.Enabled ? (IResult)Results.Ok(settings.Home.Normalize()) : Results.NotFound();
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/pages/{address}", async (string address, [FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            var page = settings.Home.Enabled ? settings.Home.Normalize().Items.FirstOrDefault(item => item.WebAddress == address) : null;
+            return page is null ? (IResult)Results.NotFound() : Results.Ok(page);
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/company", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {

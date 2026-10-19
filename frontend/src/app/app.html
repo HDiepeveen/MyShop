@@ -7,14 +7,14 @@
 >
   @if (showManagementMenu()) {
     <aside class="sidebar">
-      <a [routerLink]="auth.isManagement() ? auth.landingPage() : '/'" class="brand" [attr.aria-label]="branding.name() + ' startpagina'"
+      <a [routerLink]="auth.isManagement() ? auth.landingPage() : '/beheer'" class="brand" [attr.aria-label]="branding.name() + ' startpagina'"
         ><span class="brand-icon">m.</span> {{ branding.name() }}</a
       >
       <p class="nav-label">WERKRUIMTE</p>
       <nav aria-label="Hoofdnavigatie">
         @for (item of managementMenu; track item.code) {
           @if (auth.canUse(item.code) || !auth.isManagement()) {
-            <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/' }">{{ item.name }}</a>
+            <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.code === 'overview' }">{{ item.name }}</a>
           }
         }
       </nav>
@@ -26,14 +26,14 @@
   <div class="body">
     <header class="topbar">
       @if (storefront()) {
-        <a [routerLink]="branding.homeEnabled() ? '/winkel/home' : '/winkel'" class="shop-brand">
+        <a [routerLink]="branding.homeEnabled() ? '/' : '/winkel'" class="shop-brand">
           @if (branding.icon(); as icon) {
             <img [src]="icon" alt="" (error)="branding.iconFailed.set(true)" />
           }
           {{ branding.name() }}
         </a>
         <nav aria-label="Winkelnavigatie" class="actions">
-          @if (branding.homeEnabled()) { <a routerLink="/winkel/home">Home</a> }
+          @if (branding.homeEnabled()) { <a routerLink="/">Home</a> }
           <a routerLink="/winkel">Assortiment</a>
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
