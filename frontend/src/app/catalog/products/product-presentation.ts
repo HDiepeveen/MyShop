@@ -38,7 +38,7 @@ import { ProductEditState } from './product-edit-state';
         }}</span>
       </p>
       <p class="muted">
-        Publiceren vereist een beschrijving en een hoofdafbeelding met alternatieve tekst. Dit
+        Publiceren vereist een beschrijving en een hoofdafbeelding. Dit
         bepaalt de selectie voor de toekomstige klantwinkel; het is geen controle van prijs of
         voorraad.
       </p>
@@ -52,31 +52,12 @@ import { ProductEditState } from './product-edit-state';
           ></textarea>
         </label>
         <p class="muted">Gewone tekst, maximaal 10.000 tekens. HTML wordt niet opgemaakt.</p>
-        <label class="field"
-          >Link naar hoofdafbeelding<input
-            name="imageUrl"
-            type="url"
-            [(ngModel)]="imageUrl"
-            maxlength="2048"
-            placeholder="https://…"
-            [disabled]="busy()"
-        /></label>
-        <label class="field"
-          >Alternatieve tekst<input
-            name="imageAlt"
-            [(ngModel)]="imageAlt"
-            maxlength="250"
-            [disabled]="busy()"
-        /></label>
-        <p class="muted">
-          Beschrijf wat op de afbeelding staat. Wis zowel de link als de alternatieve tekst om de
-          afbeelding te verwijderen.
-        </p>
+        <p class="muted">Kies je hoofdafbeelding bij Productafbeeldingen. De productnaam wordt automatisch als alternatieve tekst gebruikt.</p>
         <div class="actions">
           <button type="submit" class="secondary" [disabled]="busy()">Opslaan als concept</button>
           <button
             type="button"
-            [disabled]="busy() || !description.trim() || !imageUrl.trim() || !imageAlt.trim()"
+            [disabled]="busy() || !description.trim() || !imageUrl.trim()"
             (click)="save(true)"
           >
             Opslaan en publiceren
@@ -95,7 +76,7 @@ import { ProductEditState } from './product-edit-state';
           @if (!imageFailed()) {
             <img
               [src]="presentation.imageUrl"
-              [alt]="presentation.imageAlt"
+              [alt]="product().name"
               referrerpolicy="no-referrer"
               loading="lazy"
               (error)="imageFailed.set(true)"
@@ -122,7 +103,6 @@ export class ProductPresentationEdit {
   private readonly destroyRef = inject(DestroyRef);
   description = '';
   imageUrl = '';
-  imageAlt = '';
   private writing = false;
   constructor() {
     this.destroyRef.onDestroy(() => {
@@ -133,7 +113,6 @@ export class ProductPresentationEdit {
       const presentation = this.product().presentation;
       this.description = presentation?.description ?? '';
       this.imageUrl = presentation?.imageUrl ?? '';
-      this.imageAlt = presentation?.imageAlt ?? '';
       this.imageFailed.set(false);
     });
   }
@@ -142,7 +121,7 @@ export class ProductPresentationEdit {
     this.error.set('');
     const description = this.description.trim(),
       imageUrl = this.imageUrl.trim(),
-      imageAlt = this.imageAlt.trim();
+      imageAlt = imageUrl ? this.product().name.trim().slice(0, 250) : '';
     if (
       description.length > 10000 ||
       imageAlt.length > 250 ||
@@ -151,7 +130,7 @@ export class ProductPresentationEdit {
       (isPublished && (!description || !imageUrl))
     ) {
       this.error.set(
-        'Controleer de lengte en vul bij een afbeelding ook alternatieve tekst in. Publiceren vereist een beschrijving en afbeelding.',
+        'Controleer de lengte van de beschrijving en de afbeelding. Publiceren vereist een beschrijving en afbeelding.',
       );
       return;
     }

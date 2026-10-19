@@ -9,7 +9,8 @@ import { errorMessage } from '../error-message';
 @Component({
   selector: 'app-product-edit',
   imports: [FormsModule],
-  template: ` <div class="grid">
+  template: ` <div [class.grid]="section() === 'both'">
+      @if (section() !== 'variant') {
       <section class="panel">
         <h2>Productnaam wijzigen</h2>
         <form (ngSubmit)="rename()">
@@ -23,6 +24,8 @@ import { errorMessage } from '../error-message';
           </button>
         </form>
       </section>
+      }
+      @if (section() !== 'rename') {
       <section class="panel">
         <h2>Variant toevoegen</h2>
         <form (ngSubmit)="addVariant()">
@@ -38,12 +41,14 @@ import { errorMessage } from '../error-message';
           </button>
         </form>
       </section>
+      }
     </div>
     @if (error()) {
       <p class="error" role="alert">{{ error() }}</p>
     }`,
 })
 export class ProductEdit {
+  readonly section = input<'rename' | 'variant' | 'both'>('both');
   readonly product = input.required<Product>();
   readonly saved = output<string>();
   readonly busy = inject(ProductEditState).busy;

@@ -75,13 +75,9 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
         </div>
       </div>
       <app-product-seo [productId]="detail.product.id" />
+      <app-product-edit section="rename" [product]="detail.product" (saved)="onSaved($event)" />
+      <app-product-images [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-presentation [product]="detail.product" (saved)="onSaved($event)" />
-      <app-product-edit [product]="detail.product" (saved)="onSaved($event)" />
-      <app-product-delete
-        [productId]="detail.product.id"
-        [productName]="detail.product.name"
-        (removed)="onRemoved()"
-      />
       <section class="panel">
         <h2>Productgegevens</h2>
         @if (!detail.product.attributeValues.length) {
@@ -110,6 +106,11 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           }
         </dl>
       </section>
+      <app-product-delete
+        [productId]="detail.product.id"
+        [productName]="detail.product.name"
+        (removed)="onRemoved()"
+      />
       <app-orphan-values
         [productId]="detail.product.id"
         [values]="detail.product.attributeValues"
@@ -117,9 +118,9 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
         (saved)="onSaved($event)"
       />
       <app-product-categories [product]="detail.product" (saved)="onSaved($event)" />
-      <app-product-images [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-validation [product]="detail.product" [type]="detail.type" />
       <h2>Varianten</h2>
+      <app-product-edit section="variant" [product]="detail.product" (saved)="onSaved($event)" />
       <app-variant-generator
         [product]="detail.product"
         [definitions]="detail.type.attributeDefinitions"

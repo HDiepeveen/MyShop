@@ -28,15 +28,13 @@ interface Gallery { revision: string; mainImageUrl: string | null; images: Produ
           <label class="field">Foto’s kiezen<input #fileInput type="file" accept="image/jpeg,image/png" multiple
             [disabled]="busy() || loading()" (change)="choose(fileInput)" /></label>
           <p>{{ files().length }} foto’s geselecteerd</p>
-          <label class="field">Alternatieve tekst voor deze foto’s<input name="photoAlt" [(ngModel)]="alternativeText"
-            maxlength="250" required [disabled]="busy() || loading()" /></label>
-          <p class="muted">Beschrijf wat de foto’s tonen. De eerste upload wordt de hoofdafbeelding als er nog geen is.</p>
-          <button [disabled]="busy() || loading() || !files().length || !alternativeText.trim()">Foto’s uploaden</button>
+          <p class="muted">De productnaam wordt automatisch als alternatieve tekst gebruikt. De eerste upload wordt de hoofdafbeelding als er nog geen is.</p>
+          <button [disabled]="busy() || loading() || !files().length">Foto’s uploaden</button>
         </form>
         <div class="photos">
           @for (photo of photos.images; track photo.id) {
             <article class="photo">
-              <img [src]="photo.url" [alt]="photo.alternativeText" loading="lazy" />
+              <img [src]="photo.url" [alt]="product().name" loading="lazy" />
               <p>{{ photo.fileName }}</p>
               @if (photo.url === photos.mainImageUrl) { <p class="badge">Hoofdafbeelding</p> }
               @else { <button class="secondary" [disabled]="busy() || loading()" (click)="main(photo)">Als hoofdafbeelding</button> }
@@ -62,7 +60,6 @@ export class ProductImagesEdit {
   readonly loading = signal(false);
   readonly error = signal('');
   readonly removing = signal<string | null>(null);
-  alternativeText = '';
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
   private read?: Subscription;
@@ -71,7 +68,6 @@ export class ProductImagesEdit {
     effect(() => {
       const product = this.product(), opened = this.opened();
       untracked(() => {
-        this.alternativeText = product.name;
         this.files.set([]); this.removing.set(null); this.gallery.set(null);
         if (opened) this.load();
       });
@@ -97,9 +93,9 @@ export class ProductImagesEdit {
     this.files.set(files);
   }
   upload(input: HTMLInputElement) {
-    if (this.busy() || this.loading() || !this.files().length || !this.alternativeText.trim() || this.alternativeText.trim().length > 250) return;
+    if (this.busy() || this.loading() || !this.files().length) return;
     const form = new FormData();
-    form.set('revision', this.gallery()!.revision); form.set('alternativeText', this.alternativeText.trim());
+    form.set('revision', this.gallery()!.revision); form.set('alternativeText', this.product().name.trim().slice(0, 250));
     for (const file of this.files()) form.append('files', file, file.name);
     this.change(this.http.post<void>(this.url(), form), 'De productfoto’s zijn opgeslagen.', () => { input.value = ''; this.files.set([]); });
   }

@@ -26,7 +26,7 @@ describe('Product images', () => {
   it('uploads multiple files and metadata without allowing duplicate submissions', async () => {
     const fixture = await setup(), editor = fixture.componentInstance;
     const input = { files: [new File(['png'], 'front.png', { type: 'image/png' }), new File(['jpeg'], 'back.jpg', { type: 'image/jpeg' })], value: 'selected' } as unknown as HTMLInputElement;
-    editor.choose(input); editor.alternativeText = ' Blue shirt ';
+    editor.choose(input);
     const saved = vi.fn(); editor.saved.subscribe(saved);
     editor.upload(input); editor.upload(input);
     const request = http.expectOne('/api/products/p/images');
@@ -34,7 +34,8 @@ describe('Product images', () => {
     const body = request.request.body as FormData;
     expect(body.getAll('files')).toHaveLength(2);
     expect(body.get('revision')).toBe('gallery-revision');
-    expect(body.get('alternativeText')).toBe('Blue shirt');
+    expect(body.get('alternativeText')).toBe('Shirt');
+    expect(fixture.nativeElement.querySelector('[name="photoAlt"]')).toBeNull();
     request.flush(null); expect(input.value).toBe(''); expect(saved).toHaveBeenCalledOnce();
   });
   it('rejects oversized or unsupported files before sending and shows server validation errors', async () => {

@@ -39,11 +39,6 @@ import { attributeTypeLabel } from '../attribute-types';
       @if (notice()) {
         <p class="success" role="status">{{ notice() }}</p>
       }
-      <app-type-usage
-        [typeId]="type.id"
-        [typeName]="type.name"
-        [listSearch]="listQuery()?.search ?? ''"
-      />
       <app-type-edit [type]="type" (saved)="onRenamed()" />
       <app-type-headings [typeId]="type.id" />
       <app-definition-create [typeId]="type.id" (started)="notice.set('')" (saved)="onSaved()" />
@@ -74,6 +69,11 @@ import { attributeTypeLabel } from '../attribute-types';
           }
         </ul>
       </section>
+      <app-type-usage
+        [typeId]="type.id"
+        [typeName]="type.name"
+        [listSearch]="listQuery()?.search ?? ''"
+      />
     }
   `,
 })

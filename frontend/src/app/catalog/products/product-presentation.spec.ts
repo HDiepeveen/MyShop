@@ -39,7 +39,6 @@ describe('Product presentation editor', () => {
     editor.saved.subscribe(saved);
     editor.description = ' Description ';
     editor.imageUrl = 'https://example.com/a.jpg';
-    editor.imageAlt = ' Image ';
     editor.save(true);
     editor.save(true);
     const request = http.expectOne('/api/products/p/presentation');
@@ -47,7 +46,7 @@ describe('Product presentation editor', () => {
     expect(request.request.body).toEqual({
       description: 'Description',
       imageUrl: 'https://example.com/a.jpg',
-      imageAlt: 'Image',
+      imageAlt: 'Shirt',
       isPublished: true,
       revision: 'revision',
     });
@@ -77,7 +76,6 @@ describe('Product presentation editor', () => {
   ])('rejects unsafe image URL %s', async (imageUrl) => {
     const editor = (await setup()).componentInstance;
     editor.imageUrl = imageUrl;
-    editor.imageAlt = 'Image';
     editor.save(false);
     expect(editor.error()).toContain('HTTPS');
     http.expectNone('/api/products/p/presentation');
@@ -86,7 +84,6 @@ describe('Product presentation editor', () => {
     const editor = (await setup()).componentInstance;
     editor.description = 'Blue shirt';
     editor.imageUrl = '/api/shop/product-images/00e3952b-9eac-4f72-b27f-bf895c06af36';
-    editor.imageAlt = 'Front of blue shirt';
     editor.save(true);
     const request = http.expectOne('/api/products/p/presentation');
     expect(request.request.body.imageUrl).toBe(editor.imageUrl);
@@ -116,7 +113,9 @@ describe('Product presentation editor', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('.description')?.textContent).toBe('<script>alert(1)</script>');
     expect(element.querySelector('script')).toBeNull();
-    expect(element.querySelector('img')?.alt).toBe('A shirt');
+    expect(element.querySelector('img')?.alt).toBe('Shirt');
+    expect(element.querySelector('[name="imageAlt"]')).toBeNull();
+    expect(element.querySelector('[name="imageUrl"]')).toBeNull();
     element.querySelector('img')!.dispatchEvent(new Event('error'));
     fixture.detectChanges();
     expect(element.textContent).toContain('De afbeelding kon niet worden geladen');
