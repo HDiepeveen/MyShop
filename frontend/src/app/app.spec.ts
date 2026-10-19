@@ -47,7 +47,9 @@ it('offers accessible navigation and a skip link', async () => {
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   expect(element.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
-  expect(element.querySelectorAll('nav a').length).toBe(13);
+  expect(element.querySelectorAll('.sidebar nav a').length).toBe(13);
+  const websiteLinks = element.querySelectorAll('nav[aria-label="Website bekijken"] a');
+  expect(Array.from(websiteLinks, link => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([['Home', '/'], ['Assortiment', '/winkel']]);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');
   expect(element.querySelector('.sidebar-footer .webshop-version')?.textContent).toContain(webshopVersion.version);
   expect(element.querySelector('.sidebar-footer')?.textContent?.trim()).toBe('Catalogusbeheer ' + webshopVersion.version);

@@ -64,7 +64,10 @@
           }
         </div>
       } @else {
-        <a routerLink="/winkel">Bekijk winkel</a>
+        <nav class="actions" aria-label="Website bekijken">
+          <a routerLink="/">Home</a>
+          <a routerLink="/winkel">Assortiment</a>
+        </nav>
         <span>Mijn winkel <span class="divider">/</span> Beheer</span>
         @if (auth.session()?.authenticated) {
           <span>{{ auth.session()?.name }}</span>

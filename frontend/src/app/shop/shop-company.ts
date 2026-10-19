@@ -14,7 +14,6 @@ import { loadState } from '../catalog/load-state';
     <div class="eyebrow">{{ branding.name() }}</div>
     <h1>{{ company.heading }}</h1>
     <div class="page-content">
-      <h2>{{ company.name }}</h2>
       @if (company.description) { <p class="company-text">{{ company.description }}</p> }
       @if (!company.description && !company.address && !company.email && !company.phone && !company.openingHours) {
         <p>Bedrijfsinformatie wordt binnenkort toegevoegd.</p>
