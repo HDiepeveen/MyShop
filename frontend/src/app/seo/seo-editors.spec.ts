@@ -41,16 +41,55 @@ describe('SEO editors', () => {
     request.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.company.description).toBe('Eerste regel\nTweede regel'); expect(page.footerText).toBe('');
   });
-  it('reorders home blocks, retains optional titles and sends their order when saving', () => {
+  it('reorders home blocks, retains required titles and sends their order when saving', () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: { enabled: true, heading: 'Garage abc', items: [{ title: 'Over ons', description: 'Al 20 jaar.' }, { title: null, description: 'ma - vr 8:00 - 17:00 uur' }] } });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: { enabled: true, heading: 'Garage abc', items: [{ title: 'Over ons', description: 'Al 20 jaar.' }, { title: 'Openingstijden', description: 'ma - vr 8:00 - 17:00 uur' }] } });
     const page = fixture.componentInstance;
     page.moveHomeItem(1, -1); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body.home.items[0].title).toBeNull();
+    expect(request.request.body.home.items[0].title).toBe('Openingstijden');
     expect(request.request.body.home.items[1].title).toBe('Over ons');
     request.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.home.items[0].description).toBe('ma - vr 8:00 - 17:00 uur');
+  });
+  it('requires a title for every page, including old untitled pages', async () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: {enabled: true, heading: 'Home', items: [{title: null, description: 'Inhoud', webAddress: 'pagina'}]} });
+    fixture.detectChanges(); await fixture.whenStable();
+    const titleInput = Array.from(fixture.nativeElement.querySelectorAll('label') as NodeListOf<HTMLLabelElement>).find(label => label.textContent?.trim() === 'Titel')?.querySelector('input');
+    expect(titleInput?.required).toBe(true);
+    fixture.componentInstance.save();
+    http.expectNone(request => request.method === 'PUT');
+    expect(fixture.componentInstance.error()).toContain('titel');
+    fixture.componentInstance.home.items[0].title = 'Reparatie';
+    fixture.componentInstance.save();
+    const save = http.expectOne('/api/seo-settings');
+    expect(save.request.body.home.items[0].title).toBe('Reparatie');
+    save.flush({}, {status:409,statusText:'Conflict'});
+  });
+  it.each(['shopName', 'title', 'description'])('marks an empty required %s field after submitting and saves after correction', async field => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: {enabled: true, heading: 'Home', items: [{title: 'APK', description: 'Keuring'}]} });
+    const page = fixture.componentInstance;
+    if (field === 'shopName') page.shopName = '';
+    if (field === 'title') page.home.items[0].title = '   ';
+    if (field === 'description') page.home.items[0].description = '';
+    fixture.detectChanges(); await fixture.whenStable();
+    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+    expect(form.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
+    form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); fixture.detectChanges();
+    http.expectNone(request => request.method === 'PUT');
+    expect(page.error()).toContain('rood gemarkeerde');
+    expect(form.querySelector('[aria-invalid="true"]')).not.toBeNull();
+    const invalidInput = form.querySelector<HTMLInputElement | HTMLTextAreaElement>('[aria-invalid="true"]')!;
+    invalidInput.value = field === 'shopName' ? 'Garage' : field === 'title' ? 'APK' : 'Keuring';
+    invalidInput.dispatchEvent(new Event('input', {bubbles:true}));
+    await fixture.whenStable(); fixture.detectChanges();
+    expect(form.querySelector('[aria-invalid="true"]')).toBeNull();
+    form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true}));
+    const request = http.expectOne('/api/seo-settings');
+    expect(request.request.method).toBe('PUT');
+    request.flush({}, {status:409,statusText:'Conflict'});
   });
   it('saves one website place and an independent home text without requiring extra pages', () => {
     const fixture = TestBed.createComponent(SeoSettings);

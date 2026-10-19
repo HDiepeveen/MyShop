@@ -23,7 +23,7 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
     public string? Place { get; init; }
     public string? Description { get; init; }
     public static HomePageSettings Default => new(false, "Welkom", Array.Empty<HomePageItem>());
-    public HomePageSettings Normalize()
+    public HomePageSettings Normalize(bool forSaving = false)
     {
         if (Items is null || Items.Count > 20) throw new ArgumentException("Gebruik maximaal 20 pagina’s.");
         return this with {
@@ -32,10 +32,10 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
             Heading = SeoText.Optional(Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de homepagina in."),
             Place = SeoText.Optional(Place, 100),
             Description = string.IsNullOrWhiteSpace(Description) ? null : NormalizeDescription(Description),
-            Items = ResolveItems(Items, SeoText.Optional(Place, 100))
+            Items = ResolveItems(Items, SeoText.Optional(Place, 100), forSaving)
         };
     }
-    private static IReadOnlyList<HomePageItem> ResolveItems(IReadOnlyList<HomePageItem> items, string? place)
+    private static IReadOnlyList<HomePageItem> ResolveItems(IReadOnlyList<HomePageItem> items, string? place, bool forSaving)
     {
         var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var result = new List<HomePageItem>();
@@ -43,10 +43,11 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
         {
             if (item is null) throw new ArgumentException("Vul de pagina in.");
             var title = SeoText.Optional(item.Title, 200);
-            var address = item.WebAddress is null ? null : ServicePageAddress.Validate(item.WebAddress);
+            if (forSaving && title is null) throw new ArgumentException("Vul voor elke extra pagina een titel in.");
+            var address = forSaving || item.WebAddress is null ? null : ServicePageAddress.Validate(item.WebAddress);
             if (address is null)
             {
-                var stem = ServicePageAddress.Generate(title ?? "pagina", place);
+                var stem = ServicePageAddress.Generate(title ?? "pagina");
                 address = stem;
                 for (var suffix = 2; used.Contains(address); suffix++) address = stem + "-" + suffix;
             }
@@ -67,9 +68,9 @@ public static class ServicePageAddress
 {
     private static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
     { "api", "winkel", "beheer", "home", "inloggen", "geen-toegang", "producten", "producttypen", "categorieen", "bestellingen", "klanten", "instellingen", "account", "assets", "robots-txt", "sitemap-xml" };
-    public static string Generate(string title, string? place)
+    public static string Generate(string title)
     {
-        var plain = string.Concat((title + " " + place).Normalize(NormalizationForm.FormD).Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
+        var plain = string.Concat(title.Normalize(NormalizationForm.FormD).Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));
         var stem = Regex.Replace(plain.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
         if (stem.Length > 140) stem = stem[..140].TrimEnd('-');
         if (stem.Length == 0) stem = "pagina";
@@ -197,7 +198,7 @@ public sealed class ManageSeo(ICatalogSeoStore store)
             throw new ArgumentException("Vul een geldig e-mailadres in.");
         var settings = value with
         {
-            Home = (value.Home ?? throw new ArgumentException("Vul de homepagina in.")).Normalize(),
+            Home = (value.Home ?? throw new ArgumentException("Vul de homepagina in.")).Normalize(forSaving: true),
             Heading = SeoText.Optional(value.Heading, 200) ?? throw new ArgumentException("Vul een koptekst in."),
             SeoTitle = SeoText.Optional(value.SeoTitle, 200) ?? throw new ArgumentException("Vul een SEO-titel in."),
             ShopName = SeoText.Optional(value.ShopName, 100) ?? throw new ArgumentException("Vul een webshopnaam in."),

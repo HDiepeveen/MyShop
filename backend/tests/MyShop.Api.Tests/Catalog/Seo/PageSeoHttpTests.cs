@@ -43,7 +43,7 @@ public sealed class PageSeoHttpTests
                     Assert.Equal(custom ? "Eigen <SEO> & titel" : null, target["seoTitle"]?.GetValue<string>());
                     Assert.Equal(custom ? "Eigen omschrijving met \"aanhaling\" & tekst." : null, target["seoDescription"]?.GetValue<string>());
                 }
-                foreach (var (url, automaticTitle, text) in new[] { ("/winkel", "Assortiment · Garage", "Ons assortiment."), ("/", "Home kop · Garage", "Home inhoud."), ("/apk-zwolle", "APK in Zwolle · Garage", "APK inhoud."), ("/winkel/informatie/bedrijf", "Contact · Garage", "Contact inhoud.") })
+                foreach (var (url, automaticTitle, text) in new[] { ("/winkel", "Assortiment · Garage", "Ons assortiment."), ("/", "Home kop · Garage", "Home inhoud."), ("/apk", "APK in Zwolle · Garage", "APK inhoud."), ("/winkel/informatie/bedrijf", "Contact · Garage", "Contact inhoud.") })
                 {
                     var html = await visitor.GetStringAsync(url);
                     Assert.Contains("<title>" + WebUtility.HtmlEncode(custom ? "Eigen <SEO> & titel" : automaticTitle) + "</title>", html);
@@ -52,7 +52,7 @@ public sealed class PageSeoHttpTests
                     Assert.DoesNotContain("<h1>Eigen", html);
                 }
                 Assert.Equal(custom ? "Eigen <SEO> & titel" : null, (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/home"))!["seoTitle"]?.GetValue<string>());
-                Assert.Equal(custom ? "Eigen <SEO> & titel" : null, (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/pages/apk-zwolle"))!["seoTitle"]?.GetValue<string>());
+                Assert.Equal(custom ? "Eigen <SEO> & titel" : null, (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/pages/apk"))!["seoTitle"]?.GetValue<string>());
                 Assert.Equal(custom ? "Eigen <SEO> & titel" : null, (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/company"))!["seoTitle"]?.GetValue<string>());
             }
             foreach (var area in new[] { "home", "page", "company", "shop" })
