@@ -13,6 +13,7 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
   @if (error()) { <p role="alert">{{ error() }}</p><button type="button" [disabled]="busy() || loading()" (click)="load()">Opnieuw ophalen</button> }
   @if (settings()) {
     <form class="panel" (ngSubmit)="save()">
+      <label>Plaats website (optioneel)<input name="sitePlace" [(ngModel)]="home.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" [disabled]="busy()" /></label>
       <label>Webshopnaam<input name="shopName" [(ngModel)]="shopName" maxlength="100" required [disabled]="busy()" /></label>
       <label>Welkomsttekst<input name="welcomeText" [(ngModel)]="welcomeText" maxlength="200" required [disabled]="busy()" /></label>
       <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" maxlength="200" required [disabled]="busy()" /></label>
@@ -21,14 +22,15 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label>Tekst onderaan de winkel<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
       <h2>Homepagina</h2>
       @if (settings()?.home?.enabled) { <p><a routerLink="/">Opgeslagen homepagina bekijken</a></p> }
-      <p>Een startpagina met links naar afzonderlijke pagina’s. Titel en plaats bepalen het webadres bij de eerste opslag; daarna blijft het adres behouden.</p>
+      <p>Home toont de eigen tekst hieronder. Extra pagina’s staan in de titelbalk. Hun titel en de algemene websiteplaats bepalen het webadres bij de eerste opslag; daarna blijft het adres behouden.</p>
       <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Homepagina inschakelen</label>
       <label>Koptekst homepagina<input name="homeHeading" [(ngModel)]="home.heading" maxlength="200" required [disabled]="busy()" /></label>
+      <label>Tekst homepagina<textarea name="homeDescription" [(ngModel)]="home.description" maxlength="4000" rows="7" [disabled]="busy()"></textarea></label>
+      <h2>Extra pagina’s</h2>
       @for (item of home.items; track item; let i = $index) {
         <fieldset [disabled]="busy()">
           <legend>Pagina {{ i + 1 }}</legend>
           <label>Titel (optioneel)<input [name]="'homeTitle' + i" [(ngModel)]="item.title" maxlength="200" /></label>
-          <label>Plaats (optioneel)<input [name]="'pagePlace' + i" [(ngModel)]="item.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" /></label>
           @if (item.webAddress) { <p>Webadres: <a [routerLink]="'/' + item.webAddress">/{{ item.webAddress }}</a></p> }
           <label>Omschrijving<textarea [name]="'homeDescription' + i" [(ngModel)]="item.description" maxlength="4000" rows="5" required></textarea></label>
           <button type="button" class="secondary" [disabled]="i === 0" (click)="moveHomeItem(i, -1)">Omhoog</button>
@@ -74,7 +76,7 @@ export class SeoSettings {
   save() {
     const settings = this.settings();
     if (!settings || this.busy() || this.loading() || !this.heading.trim() || !this.seoTitle.trim() || !this.shopName.trim() || !this.welcomeText.trim() || !this.introduction.trim() || !this.company.heading.trim()) return;
-    if (!this.home.heading.trim() || (this.home.enabled && !this.home.items.length) || this.home.items.some(item => !item.description.trim())) { this.error.set('Vul de koptekst en omschrijvingen in. Een ingeschakelde homepagina heeft minstens één tekstblok nodig.'); return; }
+    if (!this.home.heading.trim() || this.home.items.some(item => !item.description.trim())) { this.error.set('Vul de koptekst en omschrijvingen in.'); return; }
     this.busy.set(true); this.error.set(''); this.notice.set('');
     this.api.updateSeoSettings({ heading: this.heading, seoTitle: this.seoTitle, revision: settings.revision, shopName: this.shopName, welcomeText: this.welcomeText, introduction: this.introduction, footerText: this.footerText, company: this.company, home: this.home }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.busy.set(false); this.notice.set('Webshopinstellingen opgeslagen.'); this.load(); },

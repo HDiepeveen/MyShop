@@ -12,8 +12,8 @@ public sealed class ServicePageSettingsTests
             new("APK", "Tweede dienst.") { Place = "Zwolle" },
             new(null, "Openingstijden\n8:00 - 17:00"),
             new("Inloggen", "Geen beheerpagina."),
-        ]).Normalize();
-        Assert.Equal(["apk-zwolle", "apk-zwolle-2", "pagina", "inloggen-pagina"], settings.Items.Select(x => x.WebAddress));
+        ]) { Place = "Zwolle" }.Normalize();
+        Assert.Equal(["apk-zwolle", "apk-zwolle-2", "pagina-zwolle", "inloggen-zwolle"], settings.Items.Select(x => x.WebAddress));
         Assert.Equal("Openingstijden\n8:00 - 17:00", settings.Items[2].Description);
         Assert.Null(settings.Items[2].Title);
     }
@@ -21,7 +21,7 @@ public sealed class ServicePageSettingsTests
     [Fact]
     public void Keeps_published_addresses_stable_when_title_or_place_changes()
     {
-        var settings = new HomePageSettings(true, "Welkom", [new("Nieuwe titel", "Nieuwe inhoud.") { Place = "Nieuwe plaats", WebAddress = "apk-zwolle" }]).Normalize();
+        var settings = new HomePageSettings(true, "Welkom", [new("Nieuwe titel", "Nieuwe inhoud.") { Place = "Nieuwe plaats", WebAddress = "apk-zwolle" }]) { Place = "Nieuwe plaats" }.Normalize();
         Assert.Equal("apk-zwolle", settings.Items[0].WebAddress);
         Assert.Equal("Nieuwe plaats", settings.Items[0].Place);
     }

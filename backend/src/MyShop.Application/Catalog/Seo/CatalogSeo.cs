@@ -12,17 +12,20 @@ public sealed record HomePageItem(string? Title, string Description)
 }
 public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyList<HomePageItem> Items)
 {
+    public string? Place { get; init; }
+    public string? Description { get; init; }
     public static HomePageSettings Default => new(false, "Welkom", Array.Empty<HomePageItem>());
     public HomePageSettings Normalize()
     {
-        if (Items is null || Items.Count > 20) throw new ArgumentException("Gebruik maximaal 20 tekstblokken.");
-        if (Enabled && Items.Count == 0) throw new ArgumentException("Voeg minstens één tekstblok toe voordat je de homepagina inschakelt.");
+        if (Items is null || Items.Count > 20) throw new ArgumentException("Gebruik maximaal 20 pagina’s.");
         return this with {
             Heading = SeoText.Optional(Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de homepagina in."),
-            Items = ResolveItems(Items)
+            Place = SeoText.Optional(Place, 100),
+            Description = string.IsNullOrWhiteSpace(Description) ? null : NormalizeDescription(Description),
+            Items = ResolveItems(Items, SeoText.Optional(Place, 100))
         };
     }
-    private static IReadOnlyList<HomePageItem> ResolveItems(IReadOnlyList<HomePageItem> items)
+    private static IReadOnlyList<HomePageItem> ResolveItems(IReadOnlyList<HomePageItem> items, string? place)
     {
         var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var result = new List<HomePageItem>();
@@ -30,7 +33,6 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
         {
             if (item is null) throw new ArgumentException("Vul de pagina in.");
             var title = SeoText.Optional(item.Title, 200);
-            var place = SeoText.Optional(item.Place, 100);
             var address = item.WebAddress is null ? null : ServicePageAddress.Validate(item.WebAddress);
             if (address is null)
             {

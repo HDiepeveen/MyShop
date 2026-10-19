@@ -39,9 +39,9 @@ export class App {
       .subscribe(() => {
         this.seo.reset(this.router.url);
         this.branding.refresh();
-        if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
+        if (this.storefront()) this.shopSettings.refresh();
       });
-    if (this.router.url.startsWith('/winkel')) this.shopSettings.refresh();
+    if (this.storefront()) this.shopSettings.refresh();
   }
   readonly auth = inject(Auth);
   readonly cart = inject(Cart);

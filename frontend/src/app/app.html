@@ -43,24 +43,22 @@
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
           }
-          @if (auth.isManagement()) {
-            <a [routerLink]="auth.landingPage()">Beheer</a>
-          }
           @if (auth.session()?.customer) {
             <a routerLink="/winkel/account/verlanglijst">Verlanglijst</a>
             <a routerLink="/winkel/account/bestellingen">Mijn bestellingen</a>
             <a routerLink="/winkel/account">Mijn account</a>
-          } @else {
+          } @else if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/inloggen">Inloggen</a>
           }
         </nav>
-        @if (auth.session()?.authenticated) {
-          <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">
-            Uitloggen
-          </button>
-        } @else {
-          <a routerLink="/inloggen">Beheer</a>
-        }
+        <div class="actions session-actions">
+          @if (!auth.session()?.authenticated) {
+            <a routerLink="/inloggen">Beheer</a>
+          }
+          @if (auth.session()?.authenticated) {
+            <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">Uitloggen</button>
+          }
+        </div>
       } @else {
         <a routerLink="/winkel">Bekijk winkel</a>
         <span>Mijn winkel <span class="divider">/</span> Beheer</span>

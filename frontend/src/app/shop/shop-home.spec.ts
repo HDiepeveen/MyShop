@@ -11,17 +11,18 @@ describe('Optional home page', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => { http.verify(); document.querySelector('link[rel="canonical"]')?.remove(); document.querySelector('meta[name="description"]')?.remove(); });
-  it('shows ordered text blocks, optional titles and safe multiline descriptions', () => {
+  it('shows only the independent home text and preserves safe multiline content', () => {
     const fixture = TestBed.createComponent(ShopHome);
-    http.expectOne('/api/shop/home').flush({ enabled: true, heading: 'Garage abc', items: [
+    http.expectOne('/api/shop/home').flush({ enabled: true, heading: 'Garage abc', description: 'Welkom!\n<img src=x onerror=alert(1)>', items: [
       { title: 'Over Garage abc', description: 'Al 20 jaar.\nReparaties en APK.' },
       { title: null, description: '<img src=x onerror=alert(1)>' },
     ] });
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('h1')?.textContent).toBe('Garage abc');
-    expect(root.querySelectorAll('.home-item h2').length).toBe(1);
-    expect(root.querySelectorAll('.home-item p')[0].textContent).toContain('Al 20 jaar.\nReparaties en APK.');
+    expect(root.querySelector('.home-item')).toBeNull();
+    expect(root.textContent).not.toContain('Al 20 jaar.');
+    expect(root.querySelector('.home-text p')?.textContent).toBe('Welkom!\n<img src=x onerror=alert(1)>');
     expect(root.querySelector('img')).toBeNull();
     expect(root.textContent).toContain('<img src=x onerror=alert(1)>');
     expect(root.querySelector('.button')?.getAttribute('href')).toBe('/winkel');

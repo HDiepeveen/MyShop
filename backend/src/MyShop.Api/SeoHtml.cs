@@ -28,9 +28,8 @@ internal static class SeoHtml
             {
                 if (path.TrimEnd('/') == "/winkel/home") { context.Response.Redirect("/" + context.Request.QueryString, permanent: true); return true; }
                 canonical = "/"; index = true;
-                description = home.Items.FirstOrDefault() is { } first ? SeoText.Summary(first.Description) : null;
-                preview = "<main><h1>" + E(home.Heading) + "</h1>" + string.Concat(home.Items.Select(item =>
-                    "<section>" + (item.Title is null ? "" : "<h2>" + E(item.Title) + "</h2>") + "<p>" + E(SeoText.Summary(item.Description)) + "</p></section>")) +
+                description = home.Description is null ? null : SeoText.Summary(home.Description);
+                preview = "<main><h1>" + E(home.Heading) + "</h1>" + (home.Description is null ? "" : "<section><p>" + E(home.Description) + "</p></section>") +
                     "<a href=\"/winkel\">Bekijk het assortiment</a></main>";
             }
         }

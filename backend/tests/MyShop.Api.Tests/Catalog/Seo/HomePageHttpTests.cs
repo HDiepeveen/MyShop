@@ -2,11 +2,44 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 using MyShop.Api.Tests.Security;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using MyShop.Infrastructure.Persistence;
 
 namespace MyShop.Api.Tests.Catalog.Seo;
 
 public sealed class HomePageHttpTests
 {
+    [SecuritySqlFact]
+    public async Task Common_legacy_place_is_adopted_and_global_changes_preserve_addresses()
+    {
+        await using var host = await SecurityHost.Create();
+        var legacy = """{"Enabled":true,"Heading":"Garage","Items":[{"Title":"APK","Place":"Zwolle","WebAddress":"apk-zwolle","Description":"Keuring."},{"Title":"Onderhoud","Place":"Zwolle","WebAddress":"onderhoud-zwolle","Description":"Onderhoud."}]}""";
+        await using (var scope = host.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MyShopDbContext>();
+            await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE CatalogSeoSettings SET HomePageJson={legacy}");
+        }
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var settings = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
+        Assert.Equal("Zwolle", settings["home"]!["place"]!.GetValue<string>());
+        settings["home"]!["place"] = "Utrecht";
+        settings["home"]!["description"] = "Onze eigen homepagina.";
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
+        var home = (await host.Client.GetFromJsonAsync<JsonObject>("/api/shop/home"))!;
+        Assert.Equal("Utrecht", home["place"]!.GetValue<string>());
+        Assert.Equal("Onze eigen homepagina.", home["description"]!.GetValue<string>());
+        Assert.All(home["items"]!.AsArray(), item => Assert.Equal("Utrecht", item!["place"]!.GetValue<string>()));
+        Assert.Equal("apk-zwolle", home["items"]![0]!["webAddress"]!.GetValue<string>());
+        settings = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
+        settings["home"]!["place"] = "";
+        settings["home"]!["items"] = new JsonArray();
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
+        var onlyHome = (await host.Client.GetFromJsonAsync<JsonObject>("/api/shop/home"))!;
+        Assert.Null(onlyHome["place"]);
+        Assert.Empty(onlyHome["items"]!.AsArray());
+    }
+
     [SecuritySqlFact]
     public async Task Home_is_optional_validated_ordered_persistent_and_revision_protected()
     {
@@ -21,8 +54,11 @@ public sealed class HomePageHttpTests
         await host.Csrf(); await host.Login(); await host.Csrf();
         var settings = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
         var originalCompany = settings["company"]!.ToJsonString();
-        settings["home"] = JsonNode.Parse("""{"enabled":true,"heading":"Garage abc","items":[]}""");
+        settings["home"] = JsonNode.Parse("""{"enabled":true,"heading":" ","items":[]}""");
         Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
+        settings["home"]!["heading"] = "Garage abc";
+        settings["home"]!["place"] = "Zwolle";
+        settings["home"]!["description"] = "Welkom bij onze garage.\nAl twintig jaar persoonlijke service.";
         settings["home"]!["items"] = JsonNode.Parse("""[{"title":"APK","place":"Zwolle","description":"Al 20 jaar.\nReparaties en APK."},{"title":null,"description":"ma - vr 8:00 - 17:00 uur"}]""");
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
@@ -36,6 +72,9 @@ public sealed class HomePageHttpTests
         Assert.DoesNotContain("<main><a href=\"/apk-zwolle\"", html);
         var publicSettings = (await visitor.GetFromJsonAsync<JsonObject>("/api/shop/settings"))!;
         Assert.Equal("apk-zwolle", publicSettings["homePages"]![0]!["webAddress"]!.GetValue<string>());
+        Assert.Contains("Welkom bij onze garage.", html);
+        Assert.DoesNotContain("ma - vr 8:00 - 17:00 uur", html);
+        Assert.DoesNotContain("Reparaties en APK.", html);
         Assert.DoesNotContain("name=\"robots\" content=\"noindex\"", html);
         var oldHome = await visitor.GetAsync("/winkel/home");
         Assert.Equal(HttpStatusCode.MovedPermanently, oldHome.StatusCode);

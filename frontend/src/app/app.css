@@ -93,6 +93,9 @@
   color: var(--shop-text, #62716b);
   background: var(--shop-panel, #fffefa);
 }
+.session-actions {
+  align-items: center;
+}
 .divider {
   margin: 0 12px;
   color: #b4bfb6;

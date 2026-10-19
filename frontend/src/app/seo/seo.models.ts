@@ -13,4 +13,4 @@ export interface ProductTypeHeadings {
   revision: string;
 }
 
-export interface HomePageSettings { enabled: boolean; heading: string; items: { title: string | null; place?: string | null; webAddress?: string | null; description: string }[]; }
+export interface HomePageSettings { place?: string | null; description?: string | null; enabled: boolean; heading: string; items: { title: string | null; place?: string | null; webAddress?: string | null; description: string }[]; }

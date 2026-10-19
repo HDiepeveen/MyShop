@@ -52,6 +52,20 @@ describe('SEO editors', () => {
     request.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.home.items[0].description).toBe('ma - vr 8:00 - 17:00 uur');
   });
+  it('saves one website place and an independent home text without requiring extra pages', () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    const page = fixture.componentInstance;
+    page.home = { enabled: true, heading: 'Garage abc', place: 'Zwolle', description: 'Welkom!\nSinds 2001.', items: [] };
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('[name="sitePlace"]').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('[name="pagePlace0"]')).toBeNull();
+    page.save();
+    const request = http.expectOne('/api/seo-settings');
+    expect(request.request.body.home).toEqual(page.home);
+    request.flush({}, { status: 409, statusText: 'Conflict' });
+    expect(page.home.description).toBe('Welkom!\nSinds 2001.');
+  });
   function product() {
     const fixture = TestBed.createComponent(ProductSeoEdit); fixture.componentRef.setInput('productId', 'p'); fixture.detectChanges();
     http.expectNone('/api/products/p/seo');

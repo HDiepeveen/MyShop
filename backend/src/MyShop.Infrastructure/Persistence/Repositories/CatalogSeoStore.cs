@@ -22,8 +22,14 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
             .Select(x => new { x.HomePageJson, x.Heading, x.SeoTitle, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
                 x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours,
                 x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasIcon = x.IconBytes != null }).SingleAsync(ct);
+        var home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!;
+        if (home.Place is null)
+        {
+            var legacyPlaces = home.Items.Select(item => SeoText.Optional(item.Place, 100)).Where(place => place is not null).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            if (legacyPlaces.Length == 1) home = home with { Place = legacyPlaces[0] };
+        }
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { Home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours)) { Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
     }
     public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct) =>
         context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.IconBytes != null)

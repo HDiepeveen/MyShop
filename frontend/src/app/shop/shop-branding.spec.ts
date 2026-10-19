@@ -7,6 +7,31 @@ import { TitleStrategy, provideRouter, Router } from '@angular/router';
 import { ShopBranding } from './shop-branding';
 import { App } from '../app';
 describe('Webshop name', () => {
+  it('loads the checkout switch when the public home is opened at the base URL', async () => {
+    const router = TestBed.inject(Router);
+    router.resetConfig([{ path: '', children: [], data: { storefront: true } }]);
+    const fixture = TestBed.createComponent(App);
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', homeEnabled: true });
+    await router.navigateByUrl('/');
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', homeEnabled: true });
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('a[href="/winkel/inloggen"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.shop-brand')).not.toBeNull();
+  });
+  it.each([false, true])('shows customer login only when checkout is enabled: %s', async enabled => {
+    const fixture = TestBed.createComponent(App);
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
+    await TestBed.inject(Router).navigateByUrl('/winkel');
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: enabled });
+    fixture.detectChanges();
+    expect(!!fixture.nativeElement.querySelector('a[href="/winkel/inloggen"]')).toBe(enabled);
+    expect(!!fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).toBe(enabled);
+    expect(fixture.nativeElement.querySelector('a[href="/inloggen"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.session-actions button')).toBeNull();
+  });
   it('shows every published page between Home and Assortiment and hides them when disabled', async () => {
     const fixture = TestBed.createComponent(App);
     const settings = { homeEnabled: true, homePages: [{ name: 'APK', webAddress: 'apk-zwolle' }, { name: 'Autoreparatie', webAddress: 'autoreparatie-zwolle' }] };
