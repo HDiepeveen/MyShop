@@ -23,7 +23,7 @@ import { StorefrontSeo } from './storefront-seo';
     }
   `,
   styles: [`
-    article { max-width: 900px; margin: 40px auto; }
+    article { margin: 40px 0; }
     h1 { font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1.12; letter-spacing: -.035em; overflow-wrap: anywhere; }
     .page-content { padding: clamp(24px, 4vw, 44px); border-radius: 20px; border: 1px solid var(--shop-border); background: var(--shop-panel); }
     .page-content p { margin: 0; white-space: pre-wrap; line-height: 1.85; overflow-wrap: anywhere; }

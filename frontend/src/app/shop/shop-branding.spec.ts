@@ -20,7 +20,9 @@ describe('Webshop name', () => {
     expect(phone.nextElementSibling.textContent.trim()).toBe('Beheer');
     TestBed.inject(Auth).session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
     fixture.detectChanges();
-    expect(phone.nextElementSibling.textContent.trim()).toBe('Uitloggen');
+    expect(phone.nextElementSibling.textContent.trim()).toBe('Beheer');
+    expect(phone.nextElementSibling.getAttribute('href')).toBe('/beheer');
+    expect(phone.nextElementSibling.nextElementSibling.textContent.trim()).toBe('Uitloggen');
     const branding = TestBed.inject(ShopBranding);
     branding.refresh();
     http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', headerText: '  ' });
@@ -173,7 +175,7 @@ describe('Webshop name', () => {
     expect(fixture.nativeElement.querySelector('footer').textContent).toContain(
       'Onze occasions wachten op je.',
     );
-    expect(fixture.nativeElement.querySelector('footer a').getAttribute('href')).toBe(
+    expect(fixture.nativeElement.querySelector('header a[href="/winkel/informatie/bedrijf"]').getAttribute('href')).toBe(
       '/winkel/informatie/bedrijf',
     );
     expect(fixture.nativeElement.querySelector('.shop-brand hans')).toBeNull();

@@ -40,6 +40,7 @@
             }
           }
           <a routerLink="/winkel">Assortiment</a>
+          <a routerLink="/winkel/informatie/bedrijf">Contact</a>
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
           }
@@ -53,7 +54,9 @@
         </nav>
         <div class="actions session-actions">
           @if (branding.headerText(); as text) { <span class="header-extra-text">{{ text }}</span> }
-          @if (!auth.session()?.authenticated) {
+          @if (auth.isManagement()) {
+            <a [routerLink]="auth.landingPage()">Beheer</a>
+          } @else if (!auth.session()?.authenticated) {
             <a routerLink="/inloggen">Beheer</a>
           }
           @if (auth.session()?.authenticated) {
@@ -79,9 +82,6 @@
     }
     <main #content id="content" tabindex="-1"><router-outlet /></main>
     <footer>
-      @if (storefront()) {
-        <a routerLink="/winkel/informatie/bedrijf">Over ons en contact</a>
-      }
       {{ branding.name() }}
       <span>{{
         storefront() ? branding.footerText() : 'Een goed assortiment begint bij de details.'

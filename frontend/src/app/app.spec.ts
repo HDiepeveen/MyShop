@@ -67,7 +67,7 @@ it('keeps the skip link on the current page and focuses main content', async () 
   expect(document.activeElement).toBe(fixture.nativeElement.querySelector('main'));
 });
 
-it('hides the management entry when an administrator is signed in and shows logout instead', async () => {
+it('shows the management return link and logout for an administrator', async () => {
   TestBed.configureTestingModule({
     imports: [App],
     providers: [provideRouter([{ path: 'winkel', children: [] }, { path: '', children: [] }]), provideHttpClient()],
@@ -77,9 +77,12 @@ it('hides the management entry when an administrator is signed in and shows logo
   await TestBed.inject(Router).navigateByUrl('/winkel');
   await fixture.whenStable();
   const group = (fixture.nativeElement as HTMLElement).querySelector('.session-actions')!;
-  expect(group.querySelector('a')).toBeNull();
+  expect(group.querySelector('a')?.getAttribute('href')).toBe('/beheer');
   expect(group.querySelector('button')?.textContent?.trim()).toBe('Uitloggen');
-  expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('header a')).some(a => a.textContent?.trim() === 'Beheer')).toBe(false);
+  const contact = fixture.nativeElement.querySelector('nav[aria-label="Winkelnavigatie"] a[href="/winkel/informatie/bedrijf"]');
+  expect(contact?.textContent.trim()).toBe('Contact');
+  expect(fixture.nativeElement.querySelector('footer a[href="/winkel/informatie/bedrijf"]')).toBeNull();
+  expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('header a')).some(a => a.textContent?.trim() === 'Beheer')).toBe(true);
 });
 
 it.each([true, false])('does not offer a direct admin return link to customer=%s', async customer => {
