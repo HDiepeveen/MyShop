@@ -23,7 +23,7 @@ public static class StorefrontEndpoints
         endpoints.MapGet("/api/shop/home", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            return settings.Home.Enabled ? (IResult)Results.Ok(settings.Home.Normalize() with { ImageUrl = settings.HomeImageUrl }) : Results.NotFound();
+            return settings.Home.Enabled ? (IResult)Results.Ok(settings.Home.Normalize() with { WelcomeText = settings.WelcomeText, ImageUrl = settings.HomeImageUrl }) : Results.NotFound();
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/pages/{address}", async (string address, [FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {

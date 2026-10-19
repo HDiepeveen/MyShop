@@ -29,7 +29,7 @@ internal static class SeoHtml
                 if (path.TrimEnd('/') == "/winkel/home") { context.Response.Redirect("/" + context.Request.QueryString, permanent: true); return true; }
                 canonical = "/"; index = true;
                 description = home.Description is null ? null : SeoText.Summary(home.Description);
-                preview = "<main><h1>" + E(home.Heading) + "</h1>" + (home.Description is null ? "" : "<section><p>" + E(home.Description) + "</p></section>") +
+                preview = "<main><h1>" + E(branding.WelcomeText) + "</h1>" + (home.Description is null ? "" : "<section><p>" + E(home.Description) + "</p></section>") +
                     "<a href=\"/winkel\">Bekijk het assortiment</a></main>";
             }
         }

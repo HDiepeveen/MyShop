@@ -13,13 +13,13 @@ describe('Optional home page', () => {
   afterEach(() => { http.verify(); document.querySelector('link[rel="canonical"]')?.remove(); document.querySelector('meta[name="description"]')?.remove(); });
   it('shows only the independent home text and preserves safe multiline content', () => {
     const fixture = TestBed.createComponent(ShopHome);
-    http.expectOne('/api/shop/home').flush({ enabled: true, heading: 'Garage abc', description: 'Welkom!\n<img src=x onerror=alert(1)>', items: [
+    http.expectOne('/api/shop/home').flush({ enabled: true, heading: 'Garage abc', welcomeText: 'Welkom bij onze zaak', description: 'Welkom!\n<img src=x onerror=alert(1)>', items: [
       { title: 'Over Garage abc', description: 'Al 20 jaar.\nReparaties en APK.' },
       { title: null, description: '<img src=x onerror=alert(1)>' },
     ] });
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
-    expect(root.querySelector('h1')?.textContent).toBe('Garage abc');
+    expect(root.querySelector('h1')?.textContent).toBe('Welkom bij onze zaak');
     expect(root.querySelector('.home-item')).toBeNull();
     expect(root.textContent).not.toContain('Al 20 jaar.');
     expect(root.querySelector('.home-text p')?.textContent).toBe('Welkom!\n<img src=x onerror=alert(1)>');

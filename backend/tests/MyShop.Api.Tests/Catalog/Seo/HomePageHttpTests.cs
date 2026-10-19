@@ -23,10 +23,13 @@ public sealed class HomePageHttpTests
         await host.Csrf(); await host.Login(); await host.Csrf();
         var settings = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
         Assert.Equal("Zwolle", settings["home"]!["place"]!.GetValue<string>());
+        settings["welcomeText"] = "Welkom bij onze zaak";
         settings["home"]!["place"] = "Utrecht";
         settings["home"]!["description"] = "Onze eigen homepagina.";
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
         var home = (await host.Client.GetFromJsonAsync<JsonObject>("/api/shop/home"))!;
+        Assert.Equal("Welkom bij onze zaak", home["welcomeText"]!.GetValue<string>());
+        Assert.Equal("Garage", home["heading"]!.GetValue<string>());
         Assert.Equal("Utrecht", home["place"]!.GetValue<string>());
         Assert.Equal("Onze eigen homepagina.", home["description"]!.GetValue<string>());
         Assert.All(home["items"]!.AsArray(), item => Assert.Equal("Utrecht", item!["place"]!.GetValue<string>()));

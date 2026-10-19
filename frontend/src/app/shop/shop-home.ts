@@ -22,7 +22,7 @@ import { ShopBranding } from './shop-branding';
       <section class="home-hero" [class.with-image]="home.imageUrl && !imageFailed()">
         <div>
         <p class="eyebrow">{{ branding.name() }}</p>
-        <h1>{{ home.heading }}</h1>
+        <h1>{{ home.welcomeText ?? home.heading }}</h1>
         <a class="button" routerLink="/winkel">Bekijk het assortiment <span aria-hidden="true">↗</span></a>
         </div>
         @if (home.imageUrl && !imageFailed()) {
@@ -39,10 +39,10 @@ import { ShopBranding } from './shop-branding';
     .home-hero { position: relative; isolation: isolate; padding: clamp(32px, 6vw, 80px) 0; }
     .home-hero > div { position: relative; z-index: 1; max-width: 850px; min-width: 0; }
     .home-hero.with-image { width: 100vw; margin-inline: calc(50% - 50vw); margin-top: -38px; margin-bottom: 36px; padding-inline: max(42px, calc((100vw - 1316px) / 2)); }
-    .home-hero.with-image > div { background: var(--shop-background); color: var(--shop-text); border: 1px solid var(--shop-border); border-radius: 20px; padding: clamp(24px, 4vw, 44px); max-width: 740px; box-shadow: 0 12px 36px #0002; }
+    .home-hero.with-image > div { background: var(--shop-background); color: var(--shop-text); border: 1px solid var(--shop-border); border-radius: 20px; padding: clamp(20px, 3vw, 32px); width: fit-content; max-width: min(740px, 100%); box-shadow: 0 12px 36px #0002; }
     .home-image { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; }
     @media (max-width: 760px) { .home-hero.with-image { margin-top: -24px; padding-inline: 20px; } }
-    h1 { font-size: clamp(2.3rem, 5vw, 4.5rem); line-height: 1.08; letter-spacing: -.04em; margin: 0 0 28px; overflow-wrap: anywhere; }
+    h1 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; letter-spacing: -.04em; margin: 0 0 28px; overflow-wrap: anywhere; }
     .home-text { background: var(--shop-panel); border: 1px solid var(--shop-border); border-radius: 20px; padding: clamp(24px, 4vw, 44px); max-width: 900px; margin: 0 auto 36px; overflow-wrap: anywhere; }
     .home-text p { white-space: pre-wrap; line-height: 1.85; margin: 0; }
   `],

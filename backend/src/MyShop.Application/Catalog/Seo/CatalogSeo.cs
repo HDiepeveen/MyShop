@@ -12,6 +12,7 @@ public sealed record HomePageItem(string? Title, string Description)
 }
 public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyList<HomePageItem> Items)
 {
+    public string? WelcomeText { get; init; }
     public string? ImageUrl { get; init; }
     public string? Place { get; init; }
     public string? Description { get; init; }
