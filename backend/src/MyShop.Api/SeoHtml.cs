@@ -29,6 +29,22 @@ internal static class SeoHtml
             preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
                 "<li><a href=\"/winkel/" + E(p.WebAddress ?? p.Id.ToString("D")) + "\">" + E(p.Name) + "</a></li>")) + "</ul></main>";
         }
+        else if (path.StartsWith("/assortiment/", StringComparison.Ordinal))
+        {
+            var navigation = context.RequestServices.GetRequiredService<MyShop.Application.Catalog.CategoryNavigation.ICategoryNavigationStore>();
+            var category = await navigation.ResolvePageAsync(path[13..].TrimEnd('/'), context.RequestAborted);
+            if (category is null) { context.Response.StatusCode = 404; preview = "<main><h1>Categorie niet beschikbaar</h1></main>"; }
+            else
+            {
+                canonical = "/assortiment/" + category.WebAddress;
+                if (path != canonical) { context.Response.Redirect(canonical + context.Request.QueryString, permanent: true); return true; }
+                title = category.SeoTitle ?? category.Name + " · " + branding.ShopName;
+                description = category.SeoDescription ?? branding.SeoDescription ?? SeoText.Summary(branding.Introduction); index = true;
+                var catalog = context.RequestServices.GetRequiredService<IStorefrontCatalog>();
+                var page = await catalog.ListAsync(0, 20, null, MyShop.Domain.Catalog.CategoryId.From(category.Id), DateTimeOffset.UtcNow, context.RequestAborted);
+                preview = "<main><h1>" + E(category.Name) + "</h1><ul>" + string.Concat(page.Items.Select(p => "<li><a href=\"/winkel/" + E(p.WebAddress ?? p.Id.ToString("D")) + "\">" + E(p.Name) + "</a></li>")) + "</ul></main>";
+            }
+        }
         else if (path == "/" && branding.Home.Enabled || path.TrimEnd('/') == "/winkel/home")
         {
             var home = branding.Home.Normalize();
@@ -93,7 +109,7 @@ internal static class SeoHtml
             var navigation = context.RequestServices.GetRequiredService<MyShop.Application.Catalog.CategoryNavigation.ICategoryNavigationStore>();
             var showAssortment = (await navigation.GetShopAsync(context.RequestAborted)).ShowAssortmentInMenu;
             var categories = await navigation.ListVisibleAsync(context.RequestAborted);
-            var categoryLinks = categories.Select(category => "<a href=\"/assortiment?categoryId=" + category.Id.ToString("D") + "\">" + E(category.Name) + "</a>");
+            var categoryLinks = categories.Select(category => "<a href=\"/assortiment/" + E(category.WebAddress ?? category.Id.ToString("D")) + "\">" + E(category.Name) + "</a>");
             preview = "<nav aria-label=\"Winkelnavigatie\">" + (branding.Home.Enabled ? "<a href=\"/\">Home</a> " : "") + string.Join(" ", links) + (showAssortment ? " <a href=\"/assortiment\">Assortiment</a> " : " ") + string.Join(" ", categoryLinks) + "</nav>" + preview;
         }
         template = Regex.Replace(template, "<title>.*?</title>", _ => "<title>" + E(title) + "</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase);

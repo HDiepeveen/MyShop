@@ -34,7 +34,7 @@ describe('Webshop name', () => {
   });
   it('links categories to a fresh filtered assortment and removes disabled links', async () => {
     const fixture = TestBed.createComponent(App);
-    const settings = { categoryLinks: [{ id: 'category-1', name: 'Banden en velgen' }] };
+    const settings = { categoryLinks: [{ id: 'category-1', name: 'Banden en velgen', webAddress: 'banden-en-velgen' }] };
     http.expectOne('/api/shop/settings').flush(settings);
     await TestBed.inject(Router).navigateByUrl('/assortiment?search=oud&offset=20');
     http.expectOne('/api/shop/settings').flush(settings);
@@ -43,7 +43,7 @@ describe('Webshop name', () => {
     const link = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a'),
     ).find((x) => x.textContent?.trim() === 'Banden en velgen')!;
-    expect(link.getAttribute('href')).toBe('/assortiment?categoryId=category-1');
+    expect(link.getAttribute('href')).toBe('/assortiment/banden-en-velgen');
     TestBed.inject(ShopBranding).refresh();
     http.expectOne('/api/shop/settings').flush({});
     fixture.detectChanges();

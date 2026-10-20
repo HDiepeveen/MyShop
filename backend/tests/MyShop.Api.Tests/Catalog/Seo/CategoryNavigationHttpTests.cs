@@ -49,7 +49,7 @@ public sealed class CategoryNavigationHttpTests
         var publicSettings = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
         var link = Assert.Single(publicSettings.GetProperty("categoryLinks").EnumerateArray());
         Assert.Equal(id, link.GetProperty("id").GetGuid());
-        Assert.Equal(new[] { "id", "name" }, link.EnumerateObject().Select(x => x.Name).Order());
+        Assert.Equal(new[] { "id", "name", "webAddress" }, link.EnumerateObject().Select(x => x.Name).Order());
         var categories = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/categories");
         Assert.Contains(categories.EnumerateArray(), x => x.GetProperty("id").GetGuid() == id);
         (await host.Client.PatchAsJsonAsync($"/api/categories/{id}/name", new { name = "Auto's" })).EnsureSuccessStatusCode();

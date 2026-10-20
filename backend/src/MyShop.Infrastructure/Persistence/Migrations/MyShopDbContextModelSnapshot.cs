@@ -428,12 +428,28 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ParentCategoryId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("SeoDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SeoTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<bool>("ShowInMenu")
                         .HasColumnType("bit");
+
+                    b.Property<string>("WebAddress")
+                        .HasMaxLength(160)
+                        .HasColumnType("nvarchar(160)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ParentCategoryId");
+
+                    b.HasIndex("WebAddress")
+                        .IsUnique()
+                        .HasFilter("[WebAddress] IS NOT NULL");
 
                     b.ToTable("Categories", (string)null);
                 });

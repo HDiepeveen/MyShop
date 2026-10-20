@@ -11,7 +11,7 @@ export class ShopBranding {
   readonly icon = computed(() => (this.iconFailed() ? null : this.iconUrl()));
   readonly homeEnabled = signal(false);
   readonly showAssortmentInMenu = signal(true);
-  readonly categoryLinks = signal<readonly { id: string; name: string }[]>([]);
+  readonly categoryLinks = signal<readonly { id: string; name: string; webAddress?: string }[]>([]);
   readonly homePages = signal<readonly { name: string; webAddress: string }[]>([]);
   readonly headerText = signal<string | null>(null);
   readonly name = signal('MyShop');
@@ -22,7 +22,7 @@ export class ShopBranding {
     this.http
       .get<{
         showAssortmentInMenu?: boolean;
-        categoryLinks?: { id: string; name: string }[];
+        categoryLinks?: { id: string; name: string; webAddress?: string }[];
         shopName: string;
         headerText?: string | null;
         homeEnabled?: boolean;

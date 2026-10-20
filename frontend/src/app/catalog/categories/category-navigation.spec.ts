@@ -33,9 +33,16 @@ describe('CategoryNavigation', () => {
       .expectOne('/api/categories/c/navigation')
       .flush({ categoryId: 'c', showInMenu: false, revision: 'r1' });
     editor.showInMenu = true;
+    editor.webAddress = ' occasions '; editor.seoTitle = ' Occasions Zwolle '; editor.seoDescription = ' Ons aanbod. ';
     editor.save();
     const request = http.expectOne('/api/categories/c/navigation');
-    expect(request.request.body).toEqual({ showInMenu: true, revision: 'r1' });
+    expect(request.request.body).toEqual({
+      showInMenu: true,
+      revision: 'r1',
+      webAddress: 'occasions',
+      seoTitle: 'Occasions Zwolle',
+      seoDescription: 'Ons aanbod.',
+    });
     expect(editor.busy()).toBe(true);
     request.flush(null);
     http.expectOne('/api/shop/settings').flush({ categoryLinks: [{ id: 'c', name: 'Occasions' }] });

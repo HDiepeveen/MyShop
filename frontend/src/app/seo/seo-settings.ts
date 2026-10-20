@@ -18,8 +18,8 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
     <form class="panel" #settingsForm="ngForm" (ngSubmit)="save(settingsForm)">
       <label>Plaats website (optioneel)<input name="sitePlace" [(ngModel)]="home.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" [disabled]="busy()" /></label>
       <label>Webshopnaam<input name="shopName" [(ngModel)]="shopName" [class.invalid-required]="submitted() && !shopName.trim()" [attr.aria-invalid]="submitted() && !shopName.trim() ? 'true' : null" maxlength="100" required [disabled]="busy()" /></label>
-      <label>Extra tekst in titelbalk<input name="headerText" [(ngModel)]="headerText" maxlength="200" [disabled]="busy()" /></label>
-      <p>Laat leeg om geen extra tekst in de titelbalk te tonen.</p>
+      <label>Extra tekst in menubalk<input name="headerText" [(ngModel)]="headerText" maxlength="200" [disabled]="busy()" /></label>
+      <p>Laat leeg om geen extra tekst in de menubalk te tonen.</p>
       <label>Welkomsttekst<input name="welcomeText" [(ngModel)]="welcomeText" [class.invalid-required]="submitted() && !welcomeText.trim()" [attr.aria-invalid]="submitted() && !welcomeText.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" [class.invalid-required]="submitted() && !heading.trim()" [attr.aria-invalid]="submitted() && !heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" [class.invalid-required]="submitted() && !introduction.trim()" [attr.aria-invalid]="submitted() && !introduction.trim() ? 'true' : null" maxlength="1000" required [disabled]="busy()"></textarea></label>
@@ -29,7 +29,7 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <h2>Homepagina</h2>
       <p>SEO-velden zijn optioneel. Leeg gebruikt de automatische titel of omschrijving. Een ingevulde SEO-titel wordt exact gebruikt, zonder automatische toevoegingen.</p>
       @if (settings()?.home?.enabled) { <p><a routerLink="/">Opgeslagen homepagina bekijken</a></p> }
-      <p>Home toont de eigen tekst hieronder. Extra pagina’s staan in de titelbalk. Hun verplichte titel bepaalt het webadres, zonder plaatsnaam. Na opslaan verandert het webadres mee als je de titel wijzigt. De websiteplaats blijft beschikbaar voor de automatische SEO-titel.</p>
+      <p>Home toont de eigen tekst hieronder. Extra pagina’s staan in de menubalk. Hun verplichte titel bepaalt het webadres, zonder plaatsnaam. Na opslaan verandert het webadres mee als je de titel wijzigt. De websiteplaats blijft beschikbaar voor de automatische SEO-titel.</p>
       <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Homepagina inschakelen</label>
       <label>Koptekst homepagina<input name="homeHeading" [(ngModel)]="home.heading" [class.invalid-required]="submitted() && !home.heading.trim()" [attr.aria-invalid]="submitted() && !home.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Tekst homepagina<textarea name="homeDescription" [(ngModel)]="home.description" maxlength="4000" rows="7" [disabled]="busy()"></textarea></label>

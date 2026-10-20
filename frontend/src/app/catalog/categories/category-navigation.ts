@@ -6,13 +6,20 @@ import { Category } from '../catalog.models';
 import { CategoryEditState } from './category-edit-state';
 import { ShopBranding } from '../../shop/shop-branding';
 import { errorMessage } from '../error-message';
-type Settings = { categoryId: string; showInMenu: boolean; revision: string };
+type Settings = {
+  categoryId: string;
+  showInMenu: boolean;
+  revision: string;
+  webAddress?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+};
 @Component({
   selector: 'app-category-navigation',
   imports: [FormsModule],
   template: `
     <section class="panel form-width">
-      <h2>Categorie in titelbalk</h2>
+      <h2>Categorie in menubalk</h2>
       <button type="button" class="secondary" (click)="load()" [disabled]="loading() || busy()">
         Instelling ophalen
       </button>
@@ -25,9 +32,34 @@ type Settings = { categoryId: string; showInMenu: boolean; revision: string };
               [(ngModel)]="showInMenu"
               [disabled]="busy() || loading()"
             />
-            In titelbalk tonen</label
+            Categorie in menubalk tonen</label
           >
           <p>De link opent het assortiment met deze categorie geselecteerd.</p>
+          <label class="field"
+            >Webadres<input
+              name="webAddress"
+              [(ngModel)]="webAddress"
+              maxlength="160"
+              [disabled]="busy() || loading()"
+              placeholder="bijvoorbeeld occasions"
+          /></label>
+          <p>Adres: /assortiment/{{ webAddress.trim() || category().id }}</p>
+          <label class="field"
+            >SEO-titel<input
+              name="seoTitle"
+              [(ngModel)]="seoTitle"
+              maxlength="200"
+              [disabled]="busy() || loading()"
+          /></label>
+          <label class="field"
+            >SEO-omschrijving<textarea
+              name="seoDescription"
+              [(ngModel)]="seoDescription"
+              maxlength="500"
+              [disabled]="busy() || loading()"
+            ></textarea>
+          </label>
+          <p>Laat de SEO-velden leeg om de categorienaam en standaardomschrijving te gebruiken.</p>
           <button [disabled]="busy() || loading()">Instelling opslaan</button>
         </form>
       }
@@ -48,6 +80,9 @@ export class CategoryNavigation {
   readonly error = signal('');
   readonly saved = signal(false);
   showInMenu = false;
+  webAddress = '';
+  seoTitle = '';
+  seoDescription = '';
   private readonly http = inject(HttpClient);
   private readonly branding = inject(ShopBranding);
   private readonly destroyRef = inject(DestroyRef);
@@ -79,6 +114,9 @@ export class CategoryNavigation {
           this.loading.set(false);
           this.settings.set(value);
           this.showInMenu = value.showInMenu;
+          this.webAddress = value.webAddress ?? '';
+          this.seoTitle = value.seoTitle ?? '';
+          this.seoDescription = value.seoDescription ?? '';
         },
         error: (error) => {
           if (this.category().id !== id) return;
@@ -99,6 +137,9 @@ export class CategoryNavigation {
       .put('/api/categories/' + id + '/navigation', {
         showInMenu: this.showInMenu,
         revision: settings.revision,
+        webAddress: this.webAddress.trim() || null,
+        seoTitle: this.seoTitle.trim() || null,
+        seoDescription: this.seoDescription.trim() || null,
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({

@@ -9,7 +9,7 @@ type Settings = { showAssortmentInMenu: boolean; revision: string };
   selector: 'app-shop-navigation',
   imports: [FormsModule],
   template: `<section class="panel form-width">
-    <h2>Titelbalk</h2>
+    <h2>Assortiment in menubalk</h2>
     <button type="button" class="secondary" (click)="load()" [disabled]="busy()">
       Instelling ophalen
     </button>
@@ -22,7 +22,7 @@ type Settings = { showAssortmentInMenu: boolean; revision: string };
             [(ngModel)]="showAssortmentInMenu"
             [disabled]="busy()"
           />
-          Assortiment in titelbalk tonen</label
+          Assortiment in menubalk tonen</label
         >
         <p>De afzonderlijke categorielinks blijven zichtbaar wanneer je Assortiment verbergt.</p>
         <button [disabled]="busy()">Instelling opslaan</button>

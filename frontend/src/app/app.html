@@ -54,9 +54,13 @@
             <a routerLink="/assortiment">Assortiment</a>
           }
           @for (category of branding.categoryLinks(); track category.id) {
-            <a routerLink="/assortiment" [queryParams]="{ categoryId: category.id }">{{
-              category.name
-            }}</a>
+            <a
+              [routerLink]="
+                category.webAddress ? ['/assortiment', category.webAddress] : ['/assortiment']
+              "
+              [queryParams]="category.webAddress ? {} : { categoryId: category.id }"
+              >{{ category.name }}</a
+            >
           }
           <a routerLink="/contact">Contact</a>
           @if (shopSettings.checkoutEnabled()) {

@@ -1,8 +1,9 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { CategoryPageInfo } from './category-page';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, distinctUntilChanged, map, switchMap } from 'rxjs';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { BehaviorSubject, combineLatest, distinctUntilChanged, map, switchMap } from 'rxjs';
 import { ShopBranding } from './shop-branding';
 import { StorefrontSeo } from './storefront-seo';
 import { ShopApi } from './shop.api';
@@ -11,6 +12,7 @@ import { loadState } from '../catalog/load-state';
 import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
 
 @Component({
+  selector: 'app-shop-list',
   imports: [FormsModule, RouterLink, ShopImage],
   styles: [
     `
@@ -31,8 +33,12 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
   ],
   template: `
     <div class="eyebrow">{{ state()?.data?.welcomeText || 'Welkom bij MyShop' }}</div>
-    <h1>{{ state()?.data?.heading || 'Ontdek ons assortiment' }}</h1>
-    <p class="muted">{{ state()?.data?.introduction || 'Bekijk onze producten en kies de variant die bij je past.' }}</p>
+    <h1>{{ categoryPage()?.name || state()?.data?.heading || 'Ontdek ons assortiment' }}</h1>
+    <p class="muted">
+      {{
+        state()?.data?.introduction || 'Bekijk onze producten en kies de variant die bij je past.'
+      }}
+    </p>
     @if (categories()?.loading) {
       <p role="status">Categorieën ophalen…</p>
     }
@@ -276,9 +282,26 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
   `,
 })
 export class ShopList {
+  readonly categoryPage = input<CategoryPageInfo | null>(null);
   private readonly branding = inject(ShopBranding);
   private readonly seo = inject(StorefrontSeo);
-  constructor() { effect(() => { const page = this.state()?.data; if (page) this.seo.apply(page.seoTitle || 'Assortiment · ' + this.branding.name(), page.seoDescription || page.introduction?.replace(/\s+/g, ' ').slice(0, 200), '/assortiment'); }); }
+  constructor() {
+    effect(() => {
+      const page = this.state()?.data;
+      if (page) {
+        const category = this.categoryPage();
+        this.seo.apply(
+          category
+            ? category.seoTitle || category.name + ' · ' + this.branding.name()
+            : page.seoTitle || 'Assortiment · ' + this.branding.name(),
+          category?.seoDescription ||
+            page.seoDescription ||
+            page.introduction?.replace(/\s+/g, ' ').slice(0, 200),
+          category ? '/assortiment/' + category.webAddress : '/assortiment',
+        );
+      }
+    });
+  }
   private readonly api = inject(ShopApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -300,8 +323,11 @@ export class ShopList {
     this.categoryRefresh.pipe(switchMap(() => loadState(this.api.categories()))),
   );
   readonly state = toSignal(
-    this.route.queryParamMap.pipe(
-      map(readShopQuery),
+    combineLatest([this.route.queryParamMap, toObservable(this.categoryPage)]).pipe(
+      map(([params, category]) => ({
+        ...readShopQuery(params),
+        ...(category ? { categoryId: category.id } : {}),
+      })),
       distinctUntilChanged(
         (a, b) =>
           a.offset === b.offset &&
@@ -378,7 +404,7 @@ export class ShopList {
     });
   }
   filterCategory(categoryId: string) {
-    void this.router.navigate([], {
+    void this.router.navigate(this.categoryPage() ? ['/assortiment'] : [], {
       relativeTo: this.route,
       queryParams: {
         ...this.contextQuery(),
@@ -424,7 +450,7 @@ export class ShopList {
   resetFilters() {
     this.searchText = '';
     this.searchError.set('');
-    void this.router.navigate([], {
+    void this.router.navigate(this.categoryPage() ? ['/assortiment'] : [], {
       relativeTo: this.route,
       queryParams: { ...(this.query().limit !== 20 ? { limit: this.query().limit } : {}) },
     });

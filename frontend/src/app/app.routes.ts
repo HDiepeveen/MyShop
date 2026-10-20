@@ -115,6 +115,7 @@ const protectedRoutes: Routes = [
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', data: { storefront: true }, canMatch: [() => inject(HttpClient).get<{homeEnabled: boolean}>('/api/shop/settings').pipe(map(s => s.homeEnabled === true), catchError(() => of(false)))], loadComponent: () => import('./shop/shop-home').then(m => m.ShopHome), title: 'Home · MyShop' },
+  { path: 'assortiment/:category', data: { storefront: true }, loadComponent: () => import('./shop/shop-category').then(m => m.ShopCategory), title: 'Categorie · MyShop' },
   { path: 'assortiment', data: { storefront: true }, loadComponent: () => import('./shop/shop-list').then(m => m.ShopList), title: 'Assortiment · MyShop' },
   {
     path: 'contact', data: { storefront: true }, loadComponent: () => import('./shop/shop-company').then(m => m.ShopCompany), title: 'Contact · MyShop',

@@ -24,6 +24,7 @@ for (const kind of ['shop', 'orders'] as const) {
       http = TestBed.inject(HttpTestingController);
       const fixture =
         kind === 'shop' ? TestBed.createComponent(ShopList) : TestBed.createComponent(OrderList);
+      fixture.detectChanges();
       const endpoint = kind === 'shop' ? '/api/shop/products' : '/api/orders';
       if (kind === 'shop') http.expectOne('/api/shop/categories').flush([]);
       const initial = http.expectOne((r) => r.url === endpoint);
@@ -82,6 +83,7 @@ describe('Storefront detail and category recovery', () => {
   afterEach(() => http.verify());
   it('retries failed categories once without reloading products or losing search', () => {
     const fixture = TestBed.createComponent(ShopList);
+    fixture.detectChanges();
     const page = fixture.componentInstance;
     const products = http.expectOne((r) => r.url === '/api/shop/products');
     const categories = http.expectOne('/api/shop/categories');
