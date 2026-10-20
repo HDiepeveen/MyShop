@@ -67,7 +67,7 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
 public static class ServicePageAddress
 {
     private static readonly HashSet<string> Reserved = new(StringComparer.OrdinalIgnoreCase)
-    { "api", "winkel", "beheer", "home", "inloggen", "geen-toegang", "producten", "producttypen", "categorieen", "bestellingen", "klanten", "instellingen", "account", "assets", "robots-txt", "sitemap-xml" };
+    { "api", "winkel", "assortiment", "contact", "beheer", "home", "inloggen", "geen-toegang", "producten", "producttypen", "categorieen", "bestellingen", "klanten", "instellingen", "account", "assets", "robots-txt", "sitemap-xml" };
     public static string Generate(string title)
     {
         var plain = string.Concat(title.Normalize(NormalizationForm.FormD).Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark));

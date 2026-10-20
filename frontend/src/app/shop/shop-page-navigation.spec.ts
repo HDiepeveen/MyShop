@@ -5,6 +5,7 @@ import { convertToParamMap, provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
 import { ShopList } from './shop-list';
+import { ShopCompany } from './shop-company';
 import { ShopDetail } from './shop-detail';
 import { readShopQuery, shopContextQuery } from './shop-query';
 
@@ -24,9 +25,26 @@ describe('Storefront page navigation', () => {
     http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('redirects the old contact address and preserves query parameters', async () => {
+    const harness = await RouterTestingHarness.create('/winkel/informatie/bedrijf?source=old');
+    http.expectOne('/api/shop/company').flush({ heading: 'Contact', description: 'Onze contactgegevens.' });
+    harness.detectChanges();
+    expect(harness.routeDebugElement?.componentInstance).toBeInstanceOf(ShopCompany);
+    expect(TestBed.inject(Router).url).toBe('/contact?source=old');
+  });
+  it('redirects old assortment links while preserving category and paging filters', async () => {
+    const harness = await RouterTestingHarness.create('/winkel?categoryId=c&search=auto&offset=20');
+    http.expectOne('/api/shop/categories').flush([{ id: 'c', name: 'Occasions' }]);
+    const request = http.expectOne(r => r.url === '/api/shop/products');
+    expect(request.request.params.get('categoryId')).toBe('c');
+    expect(request.request.params.get('search')).toBe('auto');
+    expect(request.request.params.get('offset')).toBe('20');
+    request.flush({ ...page, items: [], offset: 20 }); harness.detectChanges();
+    expect(TestBed.inject(Router).url).toBe('/assortiment?categoryId=c&search=auto&offset=20');
+  });
   async function setup() {
     const harness = await RouterTestingHarness.create(
-      '/winkel?limit=50&offset=50&search=shirt&categoryId=c&sort=nameDesc&availableOnly=true',
+      '/assortiment?limit=50&offset=50&search=shirt&categoryId=c&sort=nameDesc&availableOnly=true',
     );
     http.expectOne('/api/shop/categories').flush([{ id: 'c', name: 'Kleding' }]);
     const request = http.expectOne((r) => r.url === '/api/shop/products');
@@ -123,7 +141,7 @@ describe('Storefront page navigation', () => {
     harness.detectChanges();
     expect(list.hasFilters()).toBe(false);
     expect(list.searchText).toBe('');
-    expect(TestBed.inject(Router).url).toBe('/winkel?limit=50');
+    expect(TestBed.inject(Router).url).toBe('/assortiment?limit=50');
   });
   it('removes an individual category filter without losing the others or page size', async () => {
     const { harness, list } = await setup();

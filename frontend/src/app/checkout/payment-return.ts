@@ -24,7 +24,7 @@ import { PendingPayment } from './pending-payment';
       @if (cartNotice()) {
         <p>{{ cartNotice() }}</p>
       }
-      <a routerLink="/winkel">Verder winkelen</a>
+      <a routerLink="/assortiment">Verder winkelen</a>
     } @else {
       @if (message()) {
         <p role="status">{{ message() }}</p>

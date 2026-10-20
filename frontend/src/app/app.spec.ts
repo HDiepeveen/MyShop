@@ -49,7 +49,7 @@ it('offers accessible navigation and a skip link', async () => {
   expect(element.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
   expect(element.querySelectorAll('.sidebar nav a').length).toBe(13);
   const websiteLinks = element.querySelectorAll('nav[aria-label="Website bekijken"] a');
-  expect(Array.from(websiteLinks, link => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([['Home', '/'], ['Assortiment', '/winkel']]);
+  expect(Array.from(websiteLinks, link => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([['Home', '/'], ['Assortiment', '/assortiment']]);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');
   expect(element.querySelector('.sidebar-footer .webshop-version')?.textContent).toContain(webshopVersion.version);
   expect(element.querySelector('.sidebar-footer')?.textContent?.trim()).toBe('Catalogusbeheer ' + webshopVersion.version);
@@ -72,29 +72,29 @@ it('keeps the skip link on the current page and focuses main content', async () 
 it('shows the management return link and logout for an administrator', async () => {
   TestBed.configureTestingModule({
     imports: [App],
-    providers: [provideRouter([{ path: 'winkel', children: [] }, { path: '', children: [] }]), provideHttpClient()],
+    providers: [provideRouter([{ path: 'assortiment', children: [] }, { path: '', children: [] }]), provideHttpClient()],
   });
   const fixture = TestBed.createComponent(App);
   TestBed.inject(Auth).session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
-  await TestBed.inject(Router).navigateByUrl('/winkel');
+  await TestBed.inject(Router).navigateByUrl('/assortiment');
   await fixture.whenStable();
   const group = (fixture.nativeElement as HTMLElement).querySelector('.session-actions')!;
   expect(group.querySelector('a')?.getAttribute('href')).toBe('/beheer');
   expect(group.querySelector('button')?.textContent?.trim()).toBe('Uitloggen');
-  const contact = fixture.nativeElement.querySelector('nav[aria-label="Winkelnavigatie"] a[href="/winkel/informatie/bedrijf"]');
+  const contact = fixture.nativeElement.querySelector('nav[aria-label="Winkelnavigatie"] a[href="/contact"]');
   expect(contact?.textContent.trim()).toBe('Contact');
-  expect(fixture.nativeElement.querySelector('footer a[href="/winkel/informatie/bedrijf"]')).toBeNull();
+  expect(fixture.nativeElement.querySelector('footer a[href="/contact"]')).toBeNull();
   expect(Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('header a')).some(a => a.textContent?.trim() === 'Beheer')).toBe(true);
 });
 
 it.each([true, false])('does not offer a direct admin return link to customer=%s', async customer => {
   TestBed.configureTestingModule({
     imports: [App],
-    providers: [provideRouter([{ path: 'winkel', children: [] }]), provideHttpClient()],
+    providers: [provideRouter([{ path: 'assortiment', children: [] }]), provideHttpClient()],
   });
   const fixture = TestBed.createComponent(App);
   TestBed.inject(Auth).session.set({ authenticated: customer, administrator: false, customer, name: customer ? 'Customer' : null });
-  await TestBed.inject(Router).navigateByUrl('/winkel');
+  await TestBed.inject(Router).navigateByUrl('/assortiment');
   await fixture.whenStable();
   const nav = fixture.nativeElement.querySelector('nav[aria-label="Winkelnavigatie"]') as HTMLElement;
   expect(Array.from(nav.querySelectorAll('a')).some(anchor => anchor.textContent?.trim() === 'Beheer')).toBe(false);

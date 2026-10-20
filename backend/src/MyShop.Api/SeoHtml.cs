@@ -8,12 +8,22 @@ internal static class SeoHtml
     public static async Task<bool> WriteAsync(HttpContext context, string template, ICatalogSeoStore seo)
     {
         var path = context.Request.Path.Value ?? "/";
-        var branding = await seo.GetSettingsAsync(context.RequestAborted);
-        var title = branding.ShopName; string? description = null; string? canonical = null; var preview = ""; var index = false;
         if (path.TrimEnd('/') == "/winkel")
         {
+            context.Response.Redirect("/assortiment" + context.Request.QueryString, permanent: true);
+            return true;
+        }
+        if (path.TrimEnd('/') == "/winkel/informatie/bedrijf")
+        {
+            context.Response.Redirect("/contact" + context.Request.QueryString, permanent: true);
+            return true;
+        }
+        var branding = await seo.GetSettingsAsync(context.RequestAborted);
+        var title = branding.ShopName; string? description = null; string? canonical = null; var preview = ""; var index = false;
+        if (path.TrimEnd('/') == "/assortiment")
+        {
             var settings = branding;
-            title = settings.SeoTitle; description = settings.SeoDescription ?? SeoText.Summary(settings.Introduction); canonical = "/winkel"; index = true;
+            title = settings.SeoTitle; description = settings.SeoDescription ?? SeoText.Summary(settings.Introduction); canonical = "/assortiment"; index = true;
             var catalog = context.RequestServices.GetRequiredService<IStorefrontCatalog>();
             var page = await catalog.ListAsync(0, 20, null, null, DateTimeOffset.UtcNow, context.RequestAborted);
             preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
@@ -30,14 +40,14 @@ internal static class SeoHtml
                 canonical = "/"; index = true;
                 description = home.SeoDescription ?? (home.Description is null ? null : SeoText.Summary(home.Description));
                 preview = "<main><h1>" + E(branding.WelcomeText) + "</h1>" + (home.Description is null ? "" : "<section><p>" + E(home.Description) + "</p></section>") +
-                    "<a href=\"/winkel\">Bekijk het assortiment</a></main>";
+                    "<a href=\"/assortiment\">Bekijk het assortiment</a></main>";
             }
         }
-        else if (path.TrimEnd('/') == "/winkel/informatie/bedrijf")
+        else if (path.TrimEnd('/') == "/contact")
         {
             var company = branding.Company;
             title = company.SeoTitle ?? company.Heading + " · " + branding.ShopName; description = company.SeoDescription ?? (company.Description is null ? null : SeoText.Summary(company.Description));
-            canonical = "/winkel/informatie/bedrijf"; index = true;
+            canonical = "/contact"; index = true;
             preview = "<main><h1>" + E(company.Heading) + "</h1><h2>" + E(company.Name ?? branding.ShopName) + "</h2><p>" + E(company.Description ?? "") + "</p><dl>" +
                 Contact("Adres", company.Address) + Contact("E-mailadres", company.Email) + Contact("Telefoonnummer", company.Phone) + Contact("Openingstijden", company.OpeningHours) + "</dl></main>";
         }
@@ -63,7 +73,7 @@ internal static class SeoHtml
                 }
             }
         }
-        if (path.Length > 1 && path.TrimEnd('/')[1..].IndexOf('/') < 0 && !new[] { "/inloggen", "/geen-toegang", "/beheer", "/producten", "/producttypen", "/categorieen", "/bestellingen", "/klanten", "/account", "/winkel" }.Contains(path.TrimEnd('/')))
+        if (path.Length > 1 && path.TrimEnd('/')[1..].IndexOf('/') < 0 && !new[] { "/inloggen", "/geen-toegang", "/beheer", "/producten", "/producttypen", "/categorieen", "/bestellingen", "/klanten", "/account", "/assortiment", "/contact" }.Contains(path.TrimEnd('/')))
         {
             var page = branding.Home.Enabled ? branding.Home.Normalize().Items.FirstOrDefault(item => "/" + item.WebAddress == path.TrimEnd('/')) : null;
             if (page is null) { context.Response.StatusCode = 404; title = "Pagina niet beschikbaar · " + branding.ShopName; }
@@ -83,8 +93,8 @@ internal static class SeoHtml
             var navigation = context.RequestServices.GetRequiredService<MyShop.Application.Catalog.CategoryNavigation.ICategoryNavigationStore>();
             var showAssortment = (await navigation.GetShopAsync(context.RequestAborted)).ShowAssortmentInMenu;
             var categories = await navigation.ListVisibleAsync(context.RequestAborted);
-            var categoryLinks = categories.Select(category => "<a href=\"/winkel?categoryId=" + category.Id.ToString("D") + "\">" + E(category.Name) + "</a>");
-            preview = "<nav aria-label=\"Winkelnavigatie\">" + (branding.Home.Enabled ? "<a href=\"/\">Home</a> " : "") + string.Join(" ", links) + (showAssortment ? " <a href=\"/winkel\">Assortiment</a> " : " ") + string.Join(" ", categoryLinks) + "</nav>" + preview;
+            var categoryLinks = categories.Select(category => "<a href=\"/assortiment?categoryId=" + category.Id.ToString("D") + "\">" + E(category.Name) + "</a>");
+            preview = "<nav aria-label=\"Winkelnavigatie\">" + (branding.Home.Enabled ? "<a href=\"/\">Home</a> " : "") + string.Join(" ", links) + (showAssortment ? " <a href=\"/assortiment\">Assortiment</a> " : " ") + string.Join(" ", categoryLinks) + "</nav>" + preview;
         }
         template = Regex.Replace(template, "<title>.*?</title>", _ => "<title>" + E(title) + "</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
         template = Regex.Replace(template, "<meta\\s+[^>]*name=[\"'](?:description|robots)[\"'][^>]*>", "", RegexOptions.IgnoreCase);

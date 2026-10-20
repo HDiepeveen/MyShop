@@ -37,7 +37,7 @@
   <div class="body">
     <header class="topbar">
       @if (storefront()) {
-        <a [routerLink]="branding.homeEnabled() ? '/' : '/winkel'" class="shop-brand">
+        <a [routerLink]="branding.homeEnabled() ? '/' : '/assortiment'" class="shop-brand">
           @if (branding.icon(); as icon) {
             <img [src]="icon" alt="" (error)="branding.iconFailed.set(true)" />
           }
@@ -51,14 +51,14 @@
             }
           }
           @if (branding.showAssortmentInMenu()) {
-            <a routerLink="/winkel">Assortiment</a>
+            <a routerLink="/assortiment">Assortiment</a>
           }
           @for (category of branding.categoryLinks(); track category.id) {
-            <a routerLink="/winkel" [queryParams]="{ categoryId: category.id }">{{
+            <a routerLink="/assortiment" [queryParams]="{ categoryId: category.id }">{{
               category.name
             }}</a>
           }
-          <a routerLink="/winkel/informatie/bedrijf">Contact</a>
+          <a routerLink="/contact">Contact</a>
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
           }
@@ -88,7 +88,7 @@
       } @else {
         <nav class="actions" aria-label="Website bekijken">
           <a routerLink="/">Home</a>
-          <a routerLink="/winkel">Assortiment</a>
+          <a routerLink="/assortiment">Assortiment</a>
         </nav>
         <span>Mijn winkel <span class="divider">/</span> Beheer</span>
         @if (auth.session()?.authenticated) {

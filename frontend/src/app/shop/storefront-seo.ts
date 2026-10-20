@@ -11,7 +11,7 @@ export class StorefrontSeo {
     this.document.querySelector('link[rel="canonical"]')?.remove();
     const segment = path.split('?')[0].split('/')[2];
     const pathname = path.split('?')[0];
-    if (!(pathname === '/winkel' || pathname.startsWith('/winkel/')) || ['betaling', 'account', 'inloggen', 'registreren', 'winkelmand', 'e-mail-bevestigen', 'wachtwoord-herstellen', 'wachtwoord-vergeten'].includes(segment))
+    if (!(pathname === '/assortiment' || pathname.startsWith('/winkel/')) || ['betaling', 'account', 'inloggen', 'registreren', 'winkelmand', 'e-mail-bevestigen', 'wachtwoord-herstellen', 'wachtwoord-vergeten'].includes(segment))
       this.meta.updateTag({ name: 'robots', content: 'noindex' });
     else this.meta.removeTag('name="robots"');
   }

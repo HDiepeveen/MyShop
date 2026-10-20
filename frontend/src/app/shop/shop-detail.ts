@@ -30,7 +30,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
         >← Terug naar mijn verlanglijst</a
       >
     }
-    <a class="back" routerLink="/winkel" [queryParams]="contextQuery()"
+    <a class="back" routerLink="/assortiment" [queryParams]="contextQuery()"
       >← Terug naar het assortiment</a
     >
     @if (state()?.loading) {
@@ -60,7 +60,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
           @if (product.categories.length) {
             <nav aria-label="Productcategorieën" class="actions">
               @for (category of product.categories; track category.id) {
-                <a routerLink="/winkel" [queryParams]="categoryQuery(category.id)">{{
+                <a routerLink="/assortiment" [queryParams]="categoryQuery(category.id)">{{
                   category.name
                 }}</a>
               }

@@ -43,7 +43,7 @@ public sealed class PageSeoHttpTests
                     Assert.Equal(custom ? "Eigen <SEO> & titel" : null, target["seoTitle"]?.GetValue<string>());
                     Assert.Equal(custom ? "Eigen omschrijving met \"aanhaling\" & tekst." : null, target["seoDescription"]?.GetValue<string>());
                 }
-                foreach (var (url, automaticTitle, text) in new[] { ("/winkel", "Assortiment · Garage", "Ons assortiment."), ("/", "Home kop · Garage", "Home inhoud."), ("/apk", "APK in Zwolle · Garage", "APK inhoud."), ("/winkel/informatie/bedrijf", "Contact · Garage", "Contact inhoud.") })
+                foreach (var (url, automaticTitle, text) in new[] { ("/assortiment", "Assortiment · Garage", "Ons assortiment."), ("/", "Home kop · Garage", "Home inhoud."), ("/apk", "APK in Zwolle · Garage", "APK inhoud."), ("/contact", "Contact · Garage", "Contact inhoud.") })
                 {
                     var html = await visitor.GetStringAsync(url);
                     Assert.Contains("<title>" + WebUtility.HtmlEncode(custom ? "Eigen <SEO> & titel" : automaticTitle) + "</title>", html);

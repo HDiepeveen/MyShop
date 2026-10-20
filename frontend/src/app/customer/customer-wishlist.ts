@@ -141,7 +141,7 @@ import { ShopImage } from '../shop/shop-image';
           } @else {
             <p>Je verlanglijst is nog leeg.</p>
           }
-          <a routerLink="/winkel">Bekijk het assortiment</a>
+          <a routerLink="/assortiment">Bekijk het assortiment</a>
         </div>
       }
     }

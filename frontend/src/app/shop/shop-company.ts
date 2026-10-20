@@ -37,7 +37,7 @@ export class ShopCompany {
   constructor() {
     effect(() => { const company = this.state()?.data;
       if (company) this.seo.apply(company.seoTitle || company.heading + ' · ' + this.branding.name(),
-        company.seoDescription || company.description?.replace(/\s+/g, ' ').slice(0, 200), '/winkel/informatie/bedrijf');
+        company.seoDescription || company.description?.replace(/\s+/g, ' ').slice(0, 200), '/contact');
     });
   }
   retry() { if (!this.state()?.loading) this.refresh.next(this.refresh.value + 1); }

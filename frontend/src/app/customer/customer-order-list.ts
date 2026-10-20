@@ -98,7 +98,7 @@ import {
         } @else {
           <p>Je hebt met dit account nog geen bestellingen geplaatst.</p>
         }
-        <a routerLink="/winkel">Bekijk het assortiment</a>
+        <a routerLink="/assortiment">Bekijk het assortiment</a>
       }
       @for (order of result.items; track order.id) {
         <article class="panel">

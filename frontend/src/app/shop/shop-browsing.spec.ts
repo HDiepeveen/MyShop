@@ -26,7 +26,7 @@ describe('Storefront browsing options', () => {
   afterEach(() => http.verify());
   async function setup() {
     const harness = await RouterTestingHarness.create(
-      '/winkel?search=shirt&categoryId=c&offset=20&sort=nameDesc&availableOnly=true',
+      '/assortiment?search=shirt&categoryId=c&offset=20&sort=nameDesc&availableOnly=true',
     );
     http.expectOne('/api/shop/categories').flush([]);
     const request = http.expectOne((r) => r.url === '/api/shop/products');

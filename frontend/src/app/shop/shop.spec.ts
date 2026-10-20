@@ -38,7 +38,7 @@ describe('Public storefront', () => {
   afterEach(() => { http.match('/api/shop/settings').forEach(request => request.flush({ shopName: 'MyShop' })); http.verify(); });
   it('opens without authentication and preserves search/page when following product links', async () => {
     const harness = await RouterTestingHarness.create(
-      '/winkel?search=shirt&offset=20&categoryId=c1',
+      '/assortiment?search=shirt&offset=20&categoryId=c1',
     );
     http.expectNone((r) => r.url.startsWith('/api/auth'));
     http.expectOne('/api/shop/categories').flush([{ id: 'c1', name: 'Kleding' }]);
@@ -91,7 +91,7 @@ describe('Public storefront', () => {
       .flush({ items: [], totalCount: 0, offset: 0, limit: 20, at: '2026-09-30T12:00:00Z' });
   });
   it('uses the applied search while paging and cancels obsolete reads', async () => {
-    const harness = await RouterTestingHarness.create('/winkel?search=shirt');
+    const harness = await RouterTestingHarness.create('/assortiment?search=shirt');
     http.expectOne('/api/shop/categories').flush([]);
     const obsolete = http.expectOne('/api/shop/products?offset=0&limit=20&search=shirt');
     const list = harness.routeDebugElement!.componentInstance as ShopList;
@@ -237,7 +237,7 @@ describe('Public storefront', () => {
   });
   it('shows a public shell without administration navigation', async () => {
     const fixture = TestBed.createComponent(App);
-    await TestBed.inject(Router).navigateByUrl('/winkel');
+    await TestBed.inject(Router).navigateByUrl('/assortiment');
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true, items: [] });
     await fixture.whenStable();
     http.expectOne('/api/shop/categories').flush([]);
@@ -255,13 +255,13 @@ describe('Public storefront', () => {
   it('hides the cart link when checkout is disabled and restores it after navigation', async () => {
     const fixture = TestBed.createComponent(App);
     const router = TestBed.inject(Router);
-    await router.navigateByUrl('/winkel');
+    await router.navigateByUrl('/assortiment');
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false, items: [] });
     await fixture.whenStable();
     http.expectOne('/api/shop/categories').flush([]);
     http.expectOne('/api/shop/products?offset=0&limit=20').flush({ items: [], totalCount: 0 });
     expect(fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).toBeNull();
-    await router.navigateByUrl('/winkel?search=auto');
+    await router.navigateByUrl('/assortiment?search=auto');
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true, items: [] });
     await fixture.whenStable();
     http.expectOne('/api/shop/products?offset=0&limit=20&search=auto').flush({ items: [], totalCount: 0 });

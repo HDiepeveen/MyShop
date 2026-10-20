@@ -18,6 +18,6 @@ describe('Storefront SEO metadata', () => {
       expect(TestBed.inject(Meta).getTag('name="description"')).toBeNull();
       expect(TestBed.inject(Meta).getTag('name="robots"')?.content).toBe('noindex');
     }
-    service.reset('/winkel?search=auto'); expect(TestBed.inject(Meta).getTag('name="robots"')).toBeNull();
+    service.reset('/assortiment?search=auto'); expect(TestBed.inject(Meta).getTag('name="robots"')).toBeNull();
   });
 });

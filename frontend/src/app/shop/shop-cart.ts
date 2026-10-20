@@ -19,7 +19,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
 @Component({
   imports: [DatePipe, FormsModule, RouterLink, ShopCheckout],
   template: `
-    <a routerLink="/winkel">← Verder winkelen</a>
+    <a routerLink="/assortiment">← Verder winkelen</a>
     @if (paymentOptions()?.data?.checkoutEnabled === false) {
       <h1>Assortiment</h1>
       <p>Bestellen is momenteel uitgeschakeld. Je kunt het assortiment bekijken.</p>
@@ -94,7 +94,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
         @if (auth.session()?.customer) {
           <a [routerLink]="['/winkel/account/bestellingen', receipt.id]">Bestelling bekijken</a>
         } @else {
-          <a routerLink="/winkel">Verder winkelen</a>
+          <a routerLink="/assortiment">Verder winkelen</a>
         }
       </section>
     } @else if (!cart.lines().length) {

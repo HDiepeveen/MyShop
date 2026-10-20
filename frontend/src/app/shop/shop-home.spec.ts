@@ -25,7 +25,7 @@ describe('Optional home page', () => {
     expect(root.querySelector('.home-text p')?.textContent).toBe('Welkom!\n<img src=x onerror=alert(1)>');
     expect(root.querySelector('img')).toBeNull();
     expect(root.textContent).toContain('<img src=x onerror=alert(1)>');
-    expect(root.querySelector('.button')?.getAttribute('href')).toBe('/winkel');
+    expect(root.querySelector('.button')?.getAttribute('href')).toBe('/assortiment');
   });
   it('shows the configured hero background and recovers gracefully when the image cannot load', () => {
     const fixture = TestBed.createComponent(ShopHome);

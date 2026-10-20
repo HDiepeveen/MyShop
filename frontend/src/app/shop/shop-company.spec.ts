@@ -20,7 +20,7 @@ describe('Public company page', () => {
     expect(root.querySelector('script')).toBeNull();
     expect(root.querySelector('a[href^="mailto:"]')?.getAttribute('href')).toBe('mailto:contact%2Bshop%40example.test');
     expect(TestBed.inject(Title).getTitle()).toBe('Over ons en contact · Autohuis Hans');
-    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toContain('/winkel/informatie/bedrijf');
+    expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toContain('/contact');
   });
   it('uses custom contact metadata independently of the visible heading', () => {
     const fixture = TestBed.createComponent(ShopCompany);

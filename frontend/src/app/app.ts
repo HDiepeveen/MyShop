@@ -52,7 +52,7 @@ export class App {
       map(() => this.router.url),
       startWith(this.router.url),
       map(
-        (url) => this.router.parseUrl(url).root.children['primary']?.segments[0]?.path === 'winkel' || this.router.routerState.snapshot.root.firstChild?.data['storefront'] === true,
+        (url) => ['winkel', 'assortiment'].includes(this.router.parseUrl(url).root.children['primary']?.segments[0]?.path ?? '') || this.router.routerState.snapshot.root.firstChild?.data['storefront'] === true,
       ),
     ),
     { initialValue: false },
@@ -66,7 +66,7 @@ export class App {
     this.auth.logout().subscribe({
       next: () => {
         this.signingOut.set(false);
-        void this.router.navigate([this.storefront() ? '/winkel' : '/inloggen']);
+        void this.router.navigate([this.storefront() ? '/assortiment' : '/inloggen']);
       },
       error: () => {
         this.signingOut.set(false);

@@ -15,7 +15,7 @@ import { ShopBranding } from './shop-branding';
     @if (state()?.error) {
       <h1>Homepagina niet beschikbaar</h1>
       <p>Bekijk ons assortiment of probeer het opnieuw.</p>
-      <a routerLink="/winkel">Naar het assortiment</a>
+      <a routerLink="/assortiment">Naar het assortiment</a>
       <button type="button" class="secondary" (click)="retry()">Opnieuw proberen</button>
     }
     @if (state()?.data; as home) {
@@ -23,7 +23,7 @@ import { ShopBranding } from './shop-branding';
         <div>
         <p class="eyebrow">{{ branding.name() }}</p>
         <h1>{{ home.welcomeText ?? home.heading }}</h1>
-        <a class="button" routerLink="/winkel">Bekijk het assortiment <span aria-hidden="true">↗</span></a>
+        <a class="button" routerLink="/assortiment">Bekijk het assortiment <span aria-hidden="true">↗</span></a>
         </div>
         @if (home.imageUrl && !imageFailed()) {
           <img class="home-image" aria-hidden="true" [src]="home.imageUrl" alt="" (error)="imageFailed.set(true)" />

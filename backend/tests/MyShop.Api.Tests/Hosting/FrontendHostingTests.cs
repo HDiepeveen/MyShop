@@ -33,7 +33,7 @@ public sealed class FrontendHostingTests
             app.MapFrontend();
             await app.StartAsync();
             using var client = new HttpClient { BaseAddress = new Uri(app.Urls.Single()) };
-            foreach (var route in new[] { "/", "/winkel", "/winkel/registreren", "/producten/123" })
+            foreach (var route in new[] { "/", "/assortiment", "/winkel/registreren", "/producten/123" })
             {
                 var response = await client.GetAsync(route);
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);

@@ -15,7 +15,7 @@ describe('Webshop name', () => {
       categoryLinks: [{ id: 'c', name: 'Occasions' }],
     };
     http.expectOne('/api/shop/settings').flush(settings);
-    await TestBed.inject(Router).navigateByUrl('/winkel');
+    await TestBed.inject(Router).navigateByUrl('/assortiment');
     http.expectOne('/api/shop/settings').flush(settings);
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
     fixture.detectChanges();
@@ -36,14 +36,14 @@ describe('Webshop name', () => {
     const fixture = TestBed.createComponent(App);
     const settings = { categoryLinks: [{ id: 'category-1', name: 'Banden en velgen' }] };
     http.expectOne('/api/shop/settings').flush(settings);
-    await TestBed.inject(Router).navigateByUrl('/winkel?search=oud&offset=20');
+    await TestBed.inject(Router).navigateByUrl('/assortiment?search=oud&offset=20');
     http.expectOne('/api/shop/settings').flush(settings);
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
     fixture.detectChanges();
     const link = Array.from(
       (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a'),
     ).find((x) => x.textContent?.trim() === 'Banden en velgen')!;
-    expect(link.getAttribute('href')).toBe('/winkel?categoryId=category-1');
+    expect(link.getAttribute('href')).toBe('/assortiment?categoryId=category-1');
     TestBed.inject(ShopBranding).refresh();
     http.expectOne('/api/shop/settings').flush({});
     fixture.detectChanges();
@@ -54,7 +54,7 @@ describe('Webshop name', () => {
     http
       .expectOne('/api/shop/settings')
       .flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
-    await TestBed.inject(Router).navigateByUrl('/winkel');
+    await TestBed.inject(Router).navigateByUrl('/assortiment');
     http
       .expectOne('/api/shop/settings')
       .flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
@@ -97,7 +97,7 @@ describe('Webshop name', () => {
     async (enabled) => {
       const fixture = TestBed.createComponent(App);
       http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
-      await TestBed.inject(Router).navigateByUrl('/winkel');
+      await TestBed.inject(Router).navigateByUrl('/assortiment');
       http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
       http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: enabled });
       fixture.detectChanges();
@@ -117,7 +117,7 @@ describe('Webshop name', () => {
       ],
     };
     http.expectOne('/api/shop/settings').flush(settings);
-    await TestBed.inject(Router).navigateByUrl('/winkel');
+    await TestBed.inject(Router).navigateByUrl('/assortiment');
     http.expectOne('/api/shop/settings').flush(settings);
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
     fixture.detectChanges();
@@ -143,7 +143,7 @@ describe('Webshop name', () => {
     const fixture = TestBed.createComponent(App);
     const iconUrl = '/api/shop/icon?v=11111111-1111-1111-1111-111111111111';
     http.expectOne('/api/shop/settings').flush({ shopName: 'Autohuis Hans', iconUrl });
-    await TestBed.inject(Router).navigateByUrl('/winkel');
+    await TestBed.inject(Router).navigateByUrl('/assortiment');
     http.expectOne('/api/shop/settings').flush({ shopName: 'Autohuis Hans', iconUrl });
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
     fixture.detectChanges();
@@ -166,7 +166,7 @@ describe('Webshop name', () => {
       textColor: '#f3f4f6',
     };
     http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
-    await TestBed.inject(Router).navigateByUrl('/winkel');
+    await TestBed.inject(Router).navigateByUrl('/assortiment');
     http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
     fixture.detectChanges();
@@ -188,7 +188,7 @@ describe('Webshop name', () => {
         provideHttpClientTesting(),
         { provide: TitleStrategy, useClass: ShopTitleStrategy },
         provideRouter([
-          { path: 'winkel', children: [] },
+          { path: 'assortiment', children: [] },
           { path: 'inloggen', children: [], title: 'Inloggen · MyShop' },
         ]),
       ],
@@ -232,7 +232,7 @@ describe('Webshop name', () => {
     http
       .expectOne('/api/shop/settings')
       .flush({ shopName: 'Autohuis <Hans>', footerText: 'Onze occasions wachten op je.' });
-    await TestBed.inject(Router).navigateByUrl('/winkel');
+    await TestBed.inject(Router).navigateByUrl('/assortiment');
     http
       .expectOne('/api/shop/settings')
       .flush({ shopName: 'Autohuis <Hans>', footerText: 'Onze occasions wachten op je.' });
@@ -247,9 +247,9 @@ describe('Webshop name', () => {
     );
     expect(
       fixture.nativeElement
-        .querySelector('header a[href="/winkel/informatie/bedrijf"]')
+        .querySelector('header a[href="/contact"]')
         .getAttribute('href'),
-    ).toBe('/winkel/informatie/bedrijf');
+    ).toBe('/contact');
     expect(fixture.nativeElement.querySelector('.shop-brand hans')).toBeNull();
   });
 });

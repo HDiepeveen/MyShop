@@ -4,6 +4,6 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `<h1>Pagina niet gevonden</h1>
     <p>Deze pagina is niet beschikbaar.</p>
-    <a routerLink="/winkel">Naar het assortiment</a>`,
+    <a routerLink="/assortiment">Naar het assortiment</a>`,
 })
 export class ShopNotFound {}
