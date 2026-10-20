@@ -10,6 +10,8 @@ export class ShopBranding {
   readonly iconFailed = signal(false);
   readonly icon = computed(() => (this.iconFailed() ? null : this.iconUrl()));
   readonly homeEnabled = signal(false);
+  readonly showAssortmentInMenu = signal(true);
+  readonly categoryLinks = signal<readonly { id: string; name: string }[]>([]);
   readonly homePages = signal<readonly { name: string; webAddress: string }[]>([]);
   readonly headerText = signal<string | null>(null);
   readonly name = signal('MyShop');
@@ -19,6 +21,8 @@ export class ShopBranding {
     const version = ++this.requestVersion;
     this.http
       .get<{
+        showAssortmentInMenu?: boolean;
+        categoryLinks?: { id: string; name: string }[];
         shopName: string;
         headerText?: string | null;
         homeEnabled?: boolean;
@@ -31,10 +35,14 @@ export class ShopBranding {
       .subscribe({
         next: (settings) => {
           if (version === this.requestVersion) {
+            this.showAssortmentInMenu.set(settings.showAssortmentInMenu !== false);
+            this.categoryLinks.set(settings.categoryLinks ?? []);
             this.headerText.set(settings.headerText?.trim() || null);
             this.homeEnabled.set(settings.homeEnabled === true);
             this.homePages.set(settings.homeEnabled === true ? (settings.homePages ?? []) : []);
-            this.showManagementMenuWithoutLogin.set(settings.showManagementMenuWithoutLogin === true);
+            this.showManagementMenuWithoutLogin.set(
+              settings.showManagementMenuWithoutLogin === true,
+            );
             const icon =
               typeof settings.iconUrl === 'string' &&
               /^\/api\/shop\/icon\?v=[0-9a-f-]{36}$/i.test(settings.iconUrl)

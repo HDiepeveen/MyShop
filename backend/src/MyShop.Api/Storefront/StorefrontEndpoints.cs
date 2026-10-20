@@ -14,11 +14,11 @@ public static class StorefrontEndpoints
 {
     public static void MapStorefront(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapGet("/api/shop/settings", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
+        endpoints.MapGet("/api/shop/settings", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, MyShop.Application.Catalog.CategoryNavigation.ICategoryNavigationStore navigation, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
             var homePages = settings.Home.Enabled ? settings.Home.Normalize().Items.Select((item, index) => new { name = item.Title ?? $"Pagina {index + 1}", webAddress = item.WebAddress }).ToArray() : [];
-            return Results.Ok(new { headerText = settings.HeaderText, homePages, settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
+            return Results.Ok(new { showAssortmentInMenu = (await navigation.GetShopAsync(ct)).ShowAssortmentInMenu, categoryLinks = await navigation.ListVisibleAsync(ct), headerText = settings.HeaderText, homePages, settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/home", async ([FromServices] MyShop.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {

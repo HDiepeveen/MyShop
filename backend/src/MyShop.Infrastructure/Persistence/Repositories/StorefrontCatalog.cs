@@ -58,7 +58,7 @@ internal sealed class StorefrontCatalog(MyShopDbContext context) : IStorefrontCa
 
     public async Task<IReadOnlyList<StorefrontCategory>> ListCategoriesAsync(
         CancellationToken cancellationToken) => await context.Categories.AsNoTracking()
-        .Where(category => context.ProductCategories.Any(productCategory =>
+        .Where(category => category.ShowInMenu || context.ProductCategories.Any(productCategory =>
             productCategory.CategoryId == category.Id && productCategory.Product.IsPublished))
         .OrderBy(category => category.Name).ThenBy(category => category.Id)
         .Select(category => new StorefrontCategory(category.Id, category.Name))

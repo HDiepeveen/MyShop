@@ -27,6 +27,7 @@ public static class InfrastructureServiceCollectionExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
         ArgumentNullException.ThrowIfNull(configuration);
 
+        services.AddScoped<MyShop.Application.Catalog.CategoryNavigation.ICategoryNavigationStore, CategoryNavigationStore>();
         services.AddScoped<MyShop.Application.Catalog.Seo.ICatalogSeoStore, CatalogSeoStore>();
         services.AddScoped<MyShop.Application.Security.ICompanyAccess, MyShop.Infrastructure.Security.CompanyAccess>();
         services.AddDbContext<MyShopDbContext>(options =>

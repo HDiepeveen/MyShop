@@ -1,6 +1,8 @@
 namespace MyShop.Infrastructure.Persistence.Models;
 internal sealed class CatalogSeoSettingsPersistence
 {
+    public bool ShowAssortmentInMenu { get; set; } = true;
+    public Guid NavigationRevision { get; set; }
     public Guid Id { get; set; }
     public string? HomePageJson { get; set; }
     public bool ShowManagementMenuWithoutLogin { get; set; }

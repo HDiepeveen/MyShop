@@ -32,6 +32,10 @@ public static class CatalogEndpoints
         app.MapGetProductType();
         app.MapRenameProduct();
         app.MapRenameCategory();
+        app.MapGetCategoryNavigation();
+        app.MapSaveCategoryNavigation();
+        app.MapGetShopNavigation();
+        app.MapSaveShopNavigation();
         app.MapAddProductVariant();
         app.MapGenerateProductVariants();
         app.MapAddProductTypeAttribute();

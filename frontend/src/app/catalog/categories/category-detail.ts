@@ -1,3 +1,4 @@
+import { CategoryNavigation } from './category-navigation';
 import { CategoryEdit } from './category-edit';
 import { CategoryManagement } from './category-management';
 import { Component, effect, inject, signal } from '@angular/core';
@@ -19,7 +20,7 @@ import { loadState } from '../load-state';
 
 @Component({
   providers: [CategoryEditState],
-  imports: [RouterLink, CategoryEdit, CategoryManagement],
+  imports: [RouterLink, CategoryEdit, CategoryManagement, CategoryNavigation],
   template: `
     <a class="back" routerLink="/categorieen" [queryParams]="listQuery()"
       >← Terug naar categorieën</a
@@ -47,6 +48,7 @@ import { loadState } from '../load-state';
         >
       </p>
       <app-category-edit [category]="category" (saved)="onSaved()" />
+      <app-category-navigation [category]="category" />
       <app-category-management
         [category]="category"
         (saved)="onManaged($event)"
@@ -119,7 +121,8 @@ export class CategoryDetail {
     ),
   );
   retryParent() {
-    if (!this.editState.busy() && !this.parentState()?.loading) this.parentRefresh.next(this.parentRefresh.value + 1);
+    if (!this.editState.busy() && !this.parentState()?.loading)
+      this.parentRefresh.next(this.parentRefresh.value + 1);
   }
   onSaved() {
     this.notice.set('De categorienaam is bijgewerkt.');

@@ -1,3 +1,4 @@
+import { ShopNavigation } from './shop-navigation';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +10,7 @@ import { errorMessage } from '../error-message';
 import { loadState } from '../load-state';
 
 @Component({
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ShopNavigation],
   template: ` <div class="eyebrow">Structuur in je assortiment</div>
     <div class="page-head">
       <div>
@@ -17,6 +18,7 @@ import { loadState } from '../load-state';
         <p class="muted">Een heldere plek voor ieder product.</p>
       </div>
     </div>
+    <app-shop-navigation />
     <section class="panel">
       <h2>Nieuwe hoofdcategorie</h2>
       <form class="toolbar" (ngSubmit)="create()">

@@ -8,17 +8,67 @@ import { ShopBranding } from './shop-branding';
 import { App } from '../app';
 import { Auth } from '../auth/auth';
 describe('Webshop name', () => {
+  it('hides Assortiment independently of category links and restores the default', async () => {
+    const fixture = TestBed.createComponent(App);
+    const settings = {
+      showAssortmentInMenu: false,
+      categoryLinks: [{ id: 'c', name: 'Occasions' }],
+    };
+    http.expectOne('/api/shop/settings').flush(settings);
+    await TestBed.inject(Router).navigateByUrl('/winkel');
+    http.expectOne('/api/shop/settings').flush(settings);
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
+    fixture.detectChanges();
+    const texts = () =>
+      Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll(
+          'nav[aria-label="Winkelnavigatie"] a',
+        ),
+      ).map((x) => x.textContent?.trim());
+    expect(texts()).not.toContain('Assortiment');
+    expect(texts()).toContain('Occasions');
+    TestBed.inject(ShopBranding).refresh();
+    http.expectOne('/api/shop/settings').flush({});
+    fixture.detectChanges();
+    expect(texts()).toContain('Assortiment');
+  });
+  it('links categories to a fresh filtered assortment and removes disabled links', async () => {
+    const fixture = TestBed.createComponent(App);
+    const settings = { categoryLinks: [{ id: 'category-1', name: 'Banden en velgen' }] };
+    http.expectOne('/api/shop/settings').flush(settings);
+    await TestBed.inject(Router).navigateByUrl('/winkel?search=oud&offset=20');
+    http.expectOne('/api/shop/settings').flush(settings);
+    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
+    fixture.detectChanges();
+    const link = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav a'),
+    ).find((x) => x.textContent?.trim() === 'Banden en velgen')!;
+    expect(link.getAttribute('href')).toBe('/winkel?categoryId=category-1');
+    TestBed.inject(ShopBranding).refresh();
+    http.expectOne('/api/shop/settings').flush({});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Banden en velgen');
+  });
   it('shows the configured independent header text before session actions and hides a blank text', async () => {
     const fixture = TestBed.createComponent(App);
-    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
+    http
+      .expectOne('/api/shop/settings')
+      .flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
     await TestBed.inject(Router).navigateByUrl('/winkel');
-    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
+    http
+      .expectOne('/api/shop/settings')
+      .flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
     fixture.detectChanges();
     const phone = fixture.nativeElement.querySelector('.topbar > .header-extra-text');
     expect(phone.textContent.trim()).toBe('Vandaag geopend tot 17:00');
     expect(phone.nextElementSibling.querySelector('a').textContent.trim()).toBe('Beheer');
-    TestBed.inject(Auth).session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
+    TestBed.inject(Auth).session.set({
+      authenticated: true,
+      administrator: true,
+      customer: false,
+      name: 'Admin',
+    });
     fixture.detectChanges();
     expect(phone.nextElementSibling.querySelector('a').textContent.trim()).toBe('Beheer');
     expect(phone.nextElementSibling.querySelector('a').getAttribute('href')).toBe('/beheer');
@@ -42,28 +92,46 @@ describe('Webshop name', () => {
     expect(fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('.shop-brand')).not.toBeNull();
   });
-  it.each([false, true])('shows customer login only when checkout is enabled: %s', async enabled => {
-    const fixture = TestBed.createComponent(App);
-    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
-    await TestBed.inject(Router).navigateByUrl('/winkel');
-    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
-    http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: enabled });
-    fixture.detectChanges();
-    expect(!!fixture.nativeElement.querySelector('a[href="/winkel/inloggen"]')).toBe(enabled);
-    expect(!!fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).toBe(enabled);
-    expect(fixture.nativeElement.querySelector('a[href="/inloggen"]')).not.toBeNull();
-    expect(fixture.nativeElement.querySelector('.session-actions button')).toBeNull();
-  });
+  it.each([false, true])(
+    'shows customer login only when checkout is enabled: %s',
+    async (enabled) => {
+      const fixture = TestBed.createComponent(App);
+      http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
+      await TestBed.inject(Router).navigateByUrl('/winkel');
+      http.expectOne('/api/shop/settings').flush({ shopName: 'Garage' });
+      http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: enabled });
+      fixture.detectChanges();
+      expect(!!fixture.nativeElement.querySelector('a[href="/winkel/inloggen"]')).toBe(enabled);
+      expect(!!fixture.nativeElement.querySelector('a[href="/winkel/winkelmand"]')).toBe(enabled);
+      expect(fixture.nativeElement.querySelector('a[href="/inloggen"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.session-actions button')).toBeNull();
+    },
+  );
   it('shows every published page between Home and Assortiment and hides them when disabled', async () => {
     const fixture = TestBed.createComponent(App);
-    const settings = { homeEnabled: true, homePages: [{ name: 'APK', webAddress: 'apk-zwolle' }, { name: 'Autoreparatie', webAddress: 'autoreparatie-zwolle' }] };
+    const settings = {
+      homeEnabled: true,
+      homePages: [
+        { name: 'APK', webAddress: 'apk-zwolle' },
+        { name: 'Autoreparatie', webAddress: 'autoreparatie-zwolle' },
+      ],
+    };
     http.expectOne('/api/shop/settings').flush(settings);
     await TestBed.inject(Router).navigateByUrl('/winkel');
     http.expectOne('/api/shop/settings').flush(settings);
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
     fixture.detectChanges();
-    const links = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>('nav[aria-label="Winkelnavigatie"] a'));
-    expect(links.slice(0, 4).map(link => link.textContent?.trim())).toEqual(['Home', 'APK', 'Autoreparatie', 'Assortiment']);
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+        'nav[aria-label="Winkelnavigatie"] a',
+      ),
+    );
+    expect(links.slice(0, 4).map((link) => link.textContent?.trim())).toEqual([
+      'Home',
+      'APK',
+      'Autoreparatie',
+      'Assortiment',
+    ]);
     expect(links[1].getAttribute('href')).toBe('/apk-zwolle');
     const branding = TestBed.inject(ShopBranding);
     branding.refresh();
@@ -170,14 +238,18 @@ describe('Webshop name', () => {
       .flush({ shopName: 'Autohuis <Hans>', footerText: 'Onze occasions wachten op je.' });
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.shop-brand').textContent.trim()).toBe('Autohuis <Hans>');
+    expect(fixture.nativeElement.querySelector('.shop-brand').textContent.trim()).toBe(
+      'Autohuis <Hans>',
+    );
     expect(fixture.nativeElement.querySelector('footer').textContent).toContain('Autohuis <Hans>');
     expect(fixture.nativeElement.querySelector('footer').textContent).toContain(
       'Onze occasions wachten op je.',
     );
-    expect(fixture.nativeElement.querySelector('header a[href="/winkel/informatie/bedrijf"]').getAttribute('href')).toBe(
-      '/winkel/informatie/bedrijf',
-    );
+    expect(
+      fixture.nativeElement
+        .querySelector('header a[href="/winkel/informatie/bedrijf"]')
+        .getAttribute('href'),
+    ).toBe('/winkel/informatie/bedrijf');
     expect(fixture.nativeElement.querySelector('.shop-brand hans')).toBeNull();
   });
 });

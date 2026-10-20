@@ -23,6 +23,10 @@ public sealed class CatalogEndpointContractTests
         new("DeleteCategory", "DELETE", "/api/categories/{categoryId:guid}"),
         new("DeleteProduct", "DELETE", "/api/products/{productId:guid}"),
         new("DeleteProductType", "DELETE", "/api/product-types/{productTypeId:guid}"),
+        new("GetShopNavigation", "GET", "/api/categories/navigation-settings"),
+        new("SaveShopNavigation", "PUT", "/api/categories/navigation-settings"),
+        new("GetCategoryNavigation", "GET", "/api/categories/{categoryId:guid}/navigation"),
+        new("SaveCategoryNavigation", "PUT", "/api/categories/{categoryId:guid}/navigation"),
         new("GetCategory", "GET", "/api/categories/{categoryId:guid}"),
         new("GetProductAttributeValidation", "GET", "/api/products/{productId:guid}/attribute-validation"),
         new("GetProduct", "GET", "/api/products/{productId:guid}"),
@@ -169,6 +173,10 @@ public sealed class CatalogEndpointContractTests
         endpoints.MapDeleteProductType();
         endpoints.MapConfigureProductTypeAttribute();
         endpoints.MapGetCategory();
+        endpoints.MapGetCategoryNavigation();
+        endpoints.MapSaveCategoryNavigation();
+        endpoints.MapGetShopNavigation();
+        endpoints.MapSaveShopNavigation();
         endpoints.MapListCategories();
         endpoints.MapGetProduct();
         endpoints.MapGetProductAttributeValidation();

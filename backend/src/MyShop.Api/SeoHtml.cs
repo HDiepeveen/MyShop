@@ -76,11 +76,15 @@ internal static class SeoHtml
                 preview = "<main><a href=\"/\">Home</a><h1>" + E(page.Title ?? branding.Home.Heading) + "</h1><p>" + E(page.Description) + "</p></main>";
             }
         }
-        if (index && branding.Home.Enabled)
+        if (index)
         {
-            var links = branding.Home.Normalize().Items.Select((item, position) =>
+            var links = (branding.Home.Enabled ? branding.Home.Normalize().Items : []).Select((item, position) =>
                 "<a href=\"/" + E(item.WebAddress!) + "\">" + E(item.Title ?? $"Pagina {position + 1}") + "</a>");
-            preview = "<nav aria-label=\"Winkelnavigatie\"><a href=\"/\">Home</a> " + string.Join(" ", links) + " <a href=\"/winkel\">Assortiment</a></nav>" + preview;
+            var navigation = context.RequestServices.GetRequiredService<MyShop.Application.Catalog.CategoryNavigation.ICategoryNavigationStore>();
+            var showAssortment = (await navigation.GetShopAsync(context.RequestAborted)).ShowAssortmentInMenu;
+            var categories = await navigation.ListVisibleAsync(context.RequestAborted);
+            var categoryLinks = categories.Select(category => "<a href=\"/winkel?categoryId=" + category.Id.ToString("D") + "\">" + E(category.Name) + "</a>");
+            preview = "<nav aria-label=\"Winkelnavigatie\">" + (branding.Home.Enabled ? "<a href=\"/\">Home</a> " : "") + string.Join(" ", links) + (showAssortment ? " <a href=\"/winkel\">Assortiment</a> " : " ") + string.Join(" ", categoryLinks) + "</nav>" + preview;
         }
         template = Regex.Replace(template, "<title>.*?</title>", _ => "<title>" + E(title) + "</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
         template = Regex.Replace(template, "<meta\\s+[^>]*name=[\"'](?:description|robots)[\"'][^>]*>", "", RegexOptions.IgnoreCase);

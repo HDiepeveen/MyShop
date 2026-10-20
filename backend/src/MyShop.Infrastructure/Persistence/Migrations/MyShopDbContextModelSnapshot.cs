@@ -340,6 +340,9 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<Guid>("NavigationRevision")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("PanelColor")
                         .IsRequired()
                         .HasMaxLength(7)
@@ -363,6 +366,9 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("ShowAssortmentInMenu")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("ShowManagementMenuWithoutLogin")
                         .HasColumnType("bit");
@@ -394,10 +400,12 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                             FooterText = "Ontdek wat bij je past.",
                             Heading = "Ontdek ons assortiment",
                             Introduction = "Bekijk onze producten en kies de variant die bij je past.",
+                            NavigationRevision = new Guid("00000000-0000-0000-0000-000000000000"),
                             PanelColor = "#fffefa",
                             PrimaryColor = "#1d5543",
                             SeoTitle = "Assortiment · MyShop",
                             ShopName = "MyShop",
+                            ShowAssortmentInMenu = true,
                             ShowManagementMenuWithoutLogin = false,
                             TextColor = "#223c33",
                             Version = new Guid("5509887c-93b7-4d70-93db-8151db89fa01"),
@@ -414,8 +422,14 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid>("NavigationRevision")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("ParentCategoryId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("ShowInMenu")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 

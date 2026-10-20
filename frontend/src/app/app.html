@@ -7,19 +7,30 @@
 >
   @if (showManagementMenu()) {
     <aside class="sidebar">
-      <a [routerLink]="auth.isManagement() ? auth.landingPage() : '/beheer'" class="brand" [attr.aria-label]="branding.name() + ' startpagina'"
+      <a
+        [routerLink]="auth.isManagement() ? auth.landingPage() : '/beheer'"
+        class="brand"
+        [attr.aria-label]="branding.name() + ' startpagina'"
         ><span class="brand-icon">m.</span> {{ branding.name() }}</a
       >
       <p class="nav-label">WERKRUIMTE</p>
       <nav aria-label="Hoofdnavigatie">
         @for (item of managementMenu; track item.code) {
           @if (auth.canUse(item.code) || !auth.isManagement()) {
-            <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.code === 'overview' }">{{ item.name }}</a>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: item.code === 'overview' }"
+              >{{ item.name }}</a
+            >
           }
         }
       </nav>
       <div class="sidebar-footer">
-        <div><span class="status-dot"></span> Catalogusbeheer <span class="webshop-version">{{ version }}</span></div>
+        <div>
+          <span class="status-dot"></span> Catalogusbeheer
+          <span class="webshop-version">{{ version }}</span>
+        </div>
       </div>
     </aside>
   }
@@ -39,7 +50,14 @@
               <a [routerLink]="'/' + page.webAddress">{{ page.name }}</a>
             }
           }
-          <a routerLink="/winkel">Assortiment</a>
+          @if (branding.showAssortmentInMenu()) {
+            <a routerLink="/winkel">Assortiment</a>
+          }
+          @for (category of branding.categoryLinks(); track category.id) {
+            <a routerLink="/winkel" [queryParams]="{ categoryId: category.id }">{{
+              category.name
+            }}</a>
+          }
           <a routerLink="/winkel/informatie/bedrijf">Contact</a>
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
@@ -52,7 +70,9 @@
             <a routerLink="/winkel/inloggen">Inloggen</a>
           }
         </nav>
-        @if (branding.headerText(); as text) { <span class="header-extra-text">{{ text }}</span> }
+        @if (branding.headerText(); as text) {
+          <span class="header-extra-text">{{ text }}</span>
+        }
         <div class="actions session-actions">
           @if (auth.isManagement()) {
             <a [routerLink]="auth.landingPage()">Beheer</a>
@@ -60,7 +80,9 @@
             <a routerLink="/inloggen">Beheer</a>
           }
           @if (auth.session()?.authenticated) {
-            <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">Uitloggen</button>
+            <button type="button" class="secondary" [disabled]="signingOut()" (click)="logout()">
+              Uitloggen
+            </button>
           }
         </div>
       } @else {
