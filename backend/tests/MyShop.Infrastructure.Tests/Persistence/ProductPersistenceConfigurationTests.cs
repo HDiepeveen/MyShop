@@ -15,9 +15,9 @@ public sealed class ProductPersistenceConfigurationTests
         var types = context.Model.GetEntityTypes().Select(entity => entity.ClrType)
             .Where(type => type.Namespace == typeof(ProductPersistence).Namespace).ToHashSet();
 
-        Assert.Equal(31, types.Count);
+        Assert.Equal(32, types.Count);
         Assert.True(types.SetEquals([
-            typeof(CatalogSeoSettingsPersistence), typeof(ProductSeoPersistence), typeof(ProductWebAddressPersistence),
+            typeof(PageBackgroundPersistence), typeof(CatalogSeoSettingsPersistence), typeof(ProductSeoPersistence), typeof(ProductWebAddressPersistence),
             typeof(ProductTypePersistence), typeof(AttributeDefinitionPersistence),
             typeof(CategoryPersistence), typeof(ProductImagePersistence), typeof(ProductPersistence), typeof(ProductVariantPersistence),
             typeof(ProductCategoryPersistence), typeof(ProductAttributeValuePersistence),

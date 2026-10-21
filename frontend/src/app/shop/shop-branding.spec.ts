@@ -49,19 +49,22 @@ describe('Webshop name', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).not.toContain('Banden en velgen');
   });
-  it('shows the configured independent header text before session actions and hides a blank text', async () => {
+  it('shows Contact phone with independent icons and hides everything without a phone', async () => {
     const fixture = TestBed.createComponent(App);
     http
       .expectOne('/api/shop/settings')
-      .flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
+      .flush({ shopName: 'Garage', contactPhone: '038 1234567', showHeaderPhone: true, showHeaderWhatsapp: true });
     await TestBed.inject(Router).navigateByUrl('/assortiment');
     http
       .expectOne('/api/shop/settings')
-      .flush({ shopName: 'Garage', headerText: 'Vandaag geopend tot 17:00' });
+      .flush({ shopName: 'Garage', contactPhone: '038 1234567', showHeaderPhone: true, showHeaderWhatsapp: true });
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: false });
     fixture.detectChanges();
     const phone = fixture.nativeElement.querySelector('.topbar > .header-extra-text');
-    expect(phone.textContent.trim()).toBe('Vandaag geopend tot 17:00');
+    expect(phone.textContent.trim()).toBe('038 1234567');
+    expect(phone.querySelectorAll('svg')).toHaveLength(2);
+    TestBed.inject(ShopBranding).showHeaderPhone.set(false);fixture.detectChanges();expect(phone.querySelectorAll('svg')).toHaveLength(1);
+    TestBed.inject(ShopBranding).showHeaderWhatsapp.set(false);fixture.detectChanges();expect(phone.querySelectorAll('svg')).toHaveLength(0);
     expect(phone.nextElementSibling.querySelector('a').textContent.trim()).toBe('Beheer');
     TestBed.inject(Auth).session.set({
       authenticated: true,
@@ -75,7 +78,7 @@ describe('Webshop name', () => {
     expect(phone.nextElementSibling.querySelector('button').textContent.trim()).toBe('Uitloggen');
     const branding = TestBed.inject(ShopBranding);
     branding.refresh();
-    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', headerText: '  ' });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'Garage', contactPhone: '  ', headerText: 'Old text must not appear' });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.header-extra-text')).toBeNull();
   });

@@ -19,7 +19,7 @@ const protectedRoutes: Routes = [
   {
     path: 'instellingen/seo',
     loadComponent: () => import('./seo/seo-settings').then((m) => m.SeoSettings),
-    title: 'Webshop en SEO · MyShop',
+    title: 'Website en SEO · MyShop',
   },
   {
     path: 'instellingen/facturatie',

@@ -19,6 +19,8 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
         builder.Property(x => x.WelcomeText).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Introduction).HasMaxLength(1000).IsRequired();
         builder.Property(x => x.FooterText).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.AssortmentImageMode).HasMaxLength(10);
+        builder.Property(x => x.CompanyImageMode).HasMaxLength(10);
         builder.Property(x => x.CompanySeoTitle).HasMaxLength(200);
         builder.Property(x => x.CompanySeoDescription).HasMaxLength(500);
         builder.Property(x => x.CompanyHeading).HasMaxLength(200).IsRequired();
@@ -57,5 +59,16 @@ internal sealed class ProductWebAddressPersistenceConfiguration : IEntityTypeCon
         builder.Property(x => x.Address).HasMaxLength(160).ValueGeneratedNever();
         builder.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(x => x.ProductId);
+    }
+}
+
+internal sealed class PageBackgroundPersistenceConfiguration : IEntityTypeConfiguration<PageBackgroundPersistence>
+{
+    public void Configure(EntityTypeBuilder<PageBackgroundPersistence> builder)
+    {
+        builder.ToTable("PageBackgrounds"); builder.HasKey(x => x.PageId);
+        builder.Property(x => x.PageId).ValueGeneratedNever();
+        builder.Property(x => x.Bytes).IsRequired();
+        builder.Property(x => x.ContentType).HasMaxLength(20).IsRequired();
     }
 }

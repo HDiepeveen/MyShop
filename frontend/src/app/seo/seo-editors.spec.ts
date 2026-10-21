@@ -17,11 +17,19 @@ describe('SEO editors', () => {
     page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop';
     page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', seoDescription: '', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
+    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', seoDescription: '', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', showHeaderPhone: true, showHeaderWhatsapp: true, home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
     expect(page.busy()).toBe(false);
+  });
+  it('updates photo URLs and revision without discarding unsaved page edits', () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({heading:'Shop',seoTitle:'Shop',revision,company:{heading:'Contact'},home:{enabled:true,heading:'Home',items:[{pageId:'p',title:'APK',description:'Saved'}]}});
+    const page=fixture.componentInstance; page.home.items[0].description='Unsaved text';page.home.items[0].imageMode='cover';
+    page.backgroundStored({...page.settings()!,revision:'next',company:{...page.company,imageUrl:'/contact.png'},home:{...page.home,items:[{...page.home.items[0],description:'Saved',imageUrl:'/photo.png'}]}});
+    expect(page.home.items[0].description).toBe('Unsaved text');expect(page.home.items[0].imageMode).toBe('cover');
+    expect(page.home.items[0].imageUrl).toBe('/photo.png');expect(page.settings()?.revision).toBe('next');
   });
   it('keeps an edited heading when saving fails', () => {
     const fixture = TestBed.createComponent(SeoSettings);
@@ -105,24 +113,11 @@ describe('SEO editors', () => {
     request.flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.home.description).toBe('Welkom!\nSinds 2001.');
   });
-  it('saves the independent header text while retaining the company phone', async () => {
-    const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
-    const page = fixture.componentInstance;
-    page.company.phone = '038 1234567';
-
-    fixture.detectChanges();
-    const input = fixture.nativeElement.querySelector('[name="headerText"]') as HTMLInputElement;
-    await fixture.whenStable();
-    expect(input.value).toBe('');
-    input.value = 'Vandaag geopend';
-    input.dispatchEvent(new Event('input'));
-    await fixture.whenStable();
-    page.save();
-    const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body.headerText).toBe('Vandaag geopend');
-    expect(request.request.body.company.phone).toBe('038 1234567');
-    request.flush({}, { status: 409, statusText: 'Conflict' });
+  it('saves separate phone and WhatsApp choices with the Contact number', () => {
+    const fixture=TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({heading:'Assortiment',seoTitle:'MyShop',revision});
+    const page=fixture.componentInstance;page.company.phone='038 1234567';page.showHeaderPhone=false;page.showHeaderWhatsapp=true;page.save();
+    const request=http.expectOne('/api/seo-settings');expect(request.request.body.showHeaderPhone).toBe(false);expect(request.request.body.showHeaderWhatsapp).toBe(true);expect(request.request.body.company.phone).toBe('038 1234567');request.flush({}, {status:409,statusText:'Conflict'});
     expect(page.company.phone).toBe('038 1234567');
   });
   it('uploads the home image with CSRF and keeps unsaved page text', () => {

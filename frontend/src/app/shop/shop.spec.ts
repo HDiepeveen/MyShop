@@ -1,3 +1,4 @@
+import { ShopBranding } from './shop-branding';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -37,6 +38,9 @@ describe('Public storefront', () => {
   });
   afterEach(() => { http.match('/api/shop/settings').forEach(request => request.flush({ shopName: 'MyShop' })); http.verify(); });
   it('opens without authentication and preserves search/page when following product links', async () => {
+    TestBed.inject(ShopBranding).name.set('Autohuis Hans');
+    TestBed.inject(ShopBranding).assortmentImageUrl.set('/api/shop/page-images/assortment');
+    TestBed.inject(ShopBranding).assortmentImageMode.set('cover');
     const harness = await RouterTestingHarness.create(
       '/assortiment?search=shirt&offset=20&categoryId=c1',
     );
@@ -57,7 +61,8 @@ describe('Public storefront', () => {
     harness.detectChanges();
     expect(document.title).toBe('Occasions Zwolle | Ganpat');
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Ons actuele aanbod in Zwolle.');
-    expect(harness.routeNativeElement!.textContent).toContain('Welkom bij Hans');
+    expect(harness.routeNativeElement!.textContent).toContain('Autohuis Hans');
+    expect(harness.routeNativeElement!.classList.contains('assortment-photo')).toBe(true);
     expect(harness.routeNativeElement!.textContent).toContain('Onze geselecteerde occasions.');
     expect(harness.routeNativeElement!.textContent).not.toContain('Welkom bij MyShop');
     expect(harness.routeNativeElement!.textContent).toContain('EUR 12,50');

@@ -20,7 +20,7 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
             .Select(x => new { x.HomePageJson, x.Heading, x.SeoTitle, x.SeoDescription, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
-                x.CompanySeoTitle, x.CompanySeoDescription, x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours, x.HeaderText,
+                x.AssortmentImageMode, x.CompanyImageMode, x.CompanySeoTitle, x.CompanySeoDescription, x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours, x.HeaderText, x.ShowHeaderPhone, x.ShowHeaderWhatsapp,
                 x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasHomeImage = x.HomeImageBytes != null, HasIcon = x.IconBytes != null }).SingleAsync(ct);
         var home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!;
         if (home.Place is null)
@@ -28,8 +28,31 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
             var legacyPlaces = home.Items.Select(item => SeoText.Optional(item.Place, 100)).Where(place => place is not null).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             if (legacyPlaces.Length == 1) home = home with { Place = legacyPlaces[0] };
         }
+        var images = await context.PageBackgrounds.AsNoTracking().Select(x => x.PageId).ToListAsync(ct);
+        string? ImageUrl(Guid id) => images.Contains(id) ? $"/api/shop/page-images/{id:D}?v={row.Version:D}" : null;
+        home = home with { Items = home.Items.Select(item => item with { ImageUrl = ImageUrl(item.PageId) }).ToArray() };
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, HeaderText = row.HeaderText, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { ImageMode = row.CompanyImageMode, ImageUrl = ImageUrl(PageBackground.ContactId), SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, AssortmentImageUrl = ImageUrl(PageBackground.AssortmentId), AssortmentImageMode = row.AssortmentImageMode, HeaderText = row.HeaderText, ShowHeaderPhone = row.ShowHeaderPhone, ShowHeaderWhatsapp = row.ShowHeaderWhatsapp, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+    }
+    public async Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetPageImageAsync(Guid id, CancellationToken ct)
+    {
+        var settings = await GetSettingsAsync(ct);
+        if (id != PageBackground.ContactId && id != PageBackground.AssortmentId && (!settings.Home.Enabled || !settings.Home.Items.Any(x => x.PageId == id))) return null;
+        return await context.PageBackgrounds.AsNoTracking().Where(x => x.PageId == id)
+            .Select(x => new MyShop.Application.Catalog.Abstractions.ProductImageContent(x.Bytes, x.ContentType)).SingleOrDefaultAsync(ct);
+    }
+    public async Task<SeoResult> SavePageImageAsync(Guid id, MyShop.Application.Catalog.Abstractions.ProductImageUpload? image, Guid revision, CancellationToken ct)
+    {
+        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        if (changed != 1) return new(SeoFailure.Conflict);
+        var settings = await GetSettingsAsync(ct);
+        if (id != PageBackground.ContactId && id != PageBackground.AssortmentId && !settings.Home.Items.Any(x => x.PageId == id)) return new(SeoFailure.NotFound);
+        await context.PageBackgrounds.Where(x => x.PageId == id).ExecuteDeleteAsync(ct);
+        if (image is not null) context.PageBackgrounds.Add(new() { PageId = id, Bytes = image.Bytes, ContentType = image.ContentType });
+        await context.SaveChangesAsync(ct); await tx.CommitAsync(ct);
+        return new(null);
     }
     public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetHomeImageAsync(CancellationToken ct) =>
         context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.HomeImageBytes != null)
@@ -66,16 +89,22 @@ internal sealed class CatalogSeoStore(MyShopDbContext context) : ICatalogSeoStor
     }
     public async Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
     {
-        var homeJson = JsonSerializer.Serialize(value.Home);
+        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        var homeJson = JsonSerializer.Serialize(value.Home with { Items = value.Home.Items.Select(x => x with { ImageUrl = null }).ToArray() });
         var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
             .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.SeoDescription, value.SeoDescription).SetProperty(x => x.HomePageJson, homeJson).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
                 .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.FooterText, value.FooterText)
-                .SetProperty(x => x.CompanySeoTitle, value.Company.SeoTitle).SetProperty(x => x.CompanySeoDescription, value.Company.SeoDescription)
+                .SetProperty(x => x.AssortmentImageMode, value.AssortmentImageMode).SetProperty(x => x.CompanyImageMode, value.Company.ImageMode).SetProperty(x => x.CompanySeoTitle, value.Company.SeoTitle).SetProperty(x => x.CompanySeoDescription, value.Company.SeoDescription)
                 .SetProperty(x => x.CompanyHeading, value.Company.Heading).SetProperty(x => x.CompanyName, value.Company.Name)
                 .SetProperty(x => x.CompanyDescription, value.Company.Description).SetProperty(x => x.CompanyAddress, value.Company.Address)
+                .SetProperty(x => x.ShowHeaderPhone, value.ShowHeaderPhone).SetProperty(x => x.ShowHeaderWhatsapp, value.ShowHeaderWhatsapp)
                 .SetProperty(x => x.CompanyEmail, value.Company.Email).SetProperty(x => x.CompanyPhone, value.Company.Phone).SetProperty(x => x.HeaderText, value.HeaderText)
                 .SetProperty(x => x.CompanyOpeningHours, value.Company.OpeningHours).SetProperty(x => x.Version, Guid.NewGuid()), ct);
-        return new(changed == 1 ? null : SeoFailure.Conflict);
+        if (changed != 1) return new(SeoFailure.Conflict);
+        var ids = value.Home.Items.Select(x => x.PageId).Append(PageBackground.ContactId).Append(PageBackground.AssortmentId).ToArray();
+        await context.PageBackgrounds.Where(x => !ids.Contains(x.PageId)).ExecuteDeleteAsync(ct);
+        await tx.CommitAsync(ct);
+        return new(null);
     }
     public async Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken ct)
     {

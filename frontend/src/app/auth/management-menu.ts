@@ -10,7 +10,7 @@ export const managementMenu = [
   { code: 'email', name: 'E-mailinstellingen', path: '/instellingen/email' },
   { code: 'billing', name: 'Facturatie en btw', path: '/instellingen/facturatie' },
   { code: 'appearance', name: 'Vormgeving', path: '/instellingen/vormgeving' },
-  { code: 'seo', name: 'Webshop en SEO', path: '/instellingen/seo' },
+  { code: 'seo', name: 'Website en SEO', path: '/instellingen/seo' },
   { code: 'companyAccess', name: 'Bedrijfsbeheerders en rollen', path: '/instellingen/bedrijfsbeheerders' },
 ] as const;
 export function managementPermission(url: string): string | null {

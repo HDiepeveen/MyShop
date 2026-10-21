@@ -26,7 +26,7 @@ internal static class SeoHtml
             title = settings.SeoTitle; description = settings.SeoDescription ?? SeoText.Summary(settings.Introduction); canonical = "/assortiment"; index = true;
             var catalog = context.RequestServices.GetRequiredService<IStorefrontCatalog>();
             var page = await catalog.ListAsync(0, 20, null, null, DateTimeOffset.UtcNow, context.RequestAborted);
-            preview = "<main><p>" + E(settings.WelcomeText) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
+            preview = "<main><p>" + E(settings.ShopName) + "</p><h1>" + E(settings.Heading) + "</h1><p>" + E(settings.Introduction) + "</p><ul>" + string.Concat(page.Items.Select(p =>
                 "<li><a href=\"/winkel/" + E(p.WebAddress ?? p.Id.ToString("D")) + "\">" + E(p.Name) + "</a></li>")) + "</ul></main>";
         }
         else if (path.StartsWith("/assortiment/", StringComparison.Ordinal))
@@ -55,7 +55,7 @@ internal static class SeoHtml
                 if (path.TrimEnd('/') == "/winkel/home") { context.Response.Redirect("/" + context.Request.QueryString, permanent: true); return true; }
                 canonical = "/"; index = true;
                 description = home.SeoDescription ?? (home.Description is null ? null : SeoText.Summary(home.Description));
-                preview = "<main><h1>" + E(branding.WelcomeText) + "</h1>" + (home.Description is null ? "" : "<section><p>" + E(home.Description) + "</p></section>") +
+                preview = "<main><h1>" + E(home.Heading) + "</h1>" + (home.Description is null ? "" : "<section><p>" + E(home.Description) + "</p></section>") +
                     "<a href=\"/assortiment\">Bekijk het assortiment</a></main>";
             }
         }

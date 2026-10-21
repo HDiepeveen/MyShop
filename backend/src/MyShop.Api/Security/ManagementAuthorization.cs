@@ -25,6 +25,7 @@ public sealed class ManagementAuthorization(ICompanyAccess access) : Authorizati
     public static string? Permission(string route) => route switch
     {
         "/api/dashboard" => "overview",
+        "/api/page-images/{pageId:guid}" => "seo",
         "/api/seo-settings" or "/api/home-image" => "seo",
         "/api/shop-appearance" or "/api/shop-icon" => "appearance",
         _ when Segment(route, "/api/products") => "products",

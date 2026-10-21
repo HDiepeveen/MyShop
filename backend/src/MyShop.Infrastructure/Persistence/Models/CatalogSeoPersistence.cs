@@ -18,6 +18,8 @@ internal sealed class CatalogSeoSettingsPersistence
     public string WelcomeText { get; set; } = "Welkom bij MyShop";
     public string Introduction { get; set; } = "Bekijk onze producten en kies de variant die bij je past.";
     public string FooterText { get; set; } = "Ontdek wat bij je past.";
+    public string? AssortmentImageMode { get; set; }
+    public string? CompanyImageMode { get; set; }
     public string? CompanySeoTitle { get; set; }
     public string? CompanySeoDescription { get; set; }
     public string CompanyHeading { get; set; } = "Over ons en contact";
@@ -26,6 +28,8 @@ internal sealed class CatalogSeoSettingsPersistence
     public string? CompanyAddress { get; set; }
     public string? CompanyEmail { get; set; }
     public string? CompanyPhone { get; set; }
+    public bool ShowHeaderPhone { get; set; } = true;
+    public bool ShowHeaderWhatsapp { get; set; } = true;
     public string? HeaderText { get; set; }
     public string? CompanyOpeningHours { get; set; }
     public string Heading { get; set; } = "Ontdek ons assortiment";
@@ -47,4 +51,11 @@ internal sealed class ProductWebAddressPersistence
     public string Address { get; set; } = null!;
     public Guid ProductId { get; set; }
     public ProductPersistence Product { get; set; } = null!;
+}
+
+internal sealed class PageBackgroundPersistence
+{
+    public Guid PageId { get; set; }
+    public byte[] Bytes { get; set; } = [];
+    public string ContentType { get; set; } = null!;
 }

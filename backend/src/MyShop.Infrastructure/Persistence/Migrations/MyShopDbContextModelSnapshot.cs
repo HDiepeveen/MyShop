@@ -262,6 +262,10 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AssortmentImageMode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<string>("BackgroundColor")
                         .IsRequired()
                         .HasMaxLength(7)
@@ -283,6 +287,10 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("CompanyImageMode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("CompanyName")
                         .HasMaxLength(200)
@@ -370,6 +378,12 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                     b.Property<bool>("ShowAssortmentInMenu")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("ShowHeaderPhone")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("ShowHeaderWhatsapp")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("ShowManagementMenuWithoutLogin")
                         .HasColumnType("bit");
 
@@ -406,6 +420,8 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                             SeoTitle = "Assortiment · MyShop",
                             ShopName = "MyShop",
                             ShowAssortmentInMenu = true,
+                            ShowHeaderPhone = true,
+                            ShowHeaderWhatsapp = true,
                             ShowManagementMenuWithoutLogin = false,
                             TextColor = "#223c33",
                             Version = new Guid("5509887c-93b7-4d70-93db-8151db89fa01"),
@@ -1173,6 +1189,25 @@ namespace MyShop.Infrastructure.Persistence.Migrations
                     b.HasKey("OrderId", "Currency");
 
                     b.ToTable("OrderTotals", (string)null);
+                });
+
+            modelBuilder.Entity("MyShop.Infrastructure.Persistence.Models.PageBackgroundPersistence", b =>
+                {
+                    b.Property<Guid>("PageId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("Bytes")
+                        .IsRequired()
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("PageId");
+
+                    b.ToTable("PageBackgrounds", (string)null);
                 });
 
             modelBuilder.Entity("MyShop.Infrastructure.Persistence.Models.PaymentOptionsPersistence", b =>

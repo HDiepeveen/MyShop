@@ -12,7 +12,7 @@ public sealed class CatalogSeoHttpTests
         await using var host = await SecurityHost.Create();
         var publicCompany = await host.Client.GetFromJsonAsync<JsonElement>("/api/shop/company");
         Assert.Equal("MyShop", publicCompany.GetProperty("name").GetString());
-        Assert.Equal(new[] { "address", "description", "email", "heading", "name", "openingHours", "phone", "seoDescription", "seoTitle" }, publicCompany.EnumerateObject().Select(x => x.Name).Order());
+        Assert.Equal(new[] { "address", "description", "email", "heading", "imageMode", "imageUrl", "name", "openingHours", "phone", "seoDescription", "seoTitle" }, publicCompany.EnumerateObject().Select(x => x.Name).Order());
         await host.Csrf(); await host.Login(); await host.Csrf();
         var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/seo-settings");
         foreach (var (field, value) in new[] { ("email", "not an email"), ("heading", " "), ("description", new string('a', 4001)), ("address", new string('a', 501)), ("openingHours", new string('a', 1001)), ("phone", new string('a', 101)), ("name", new string('a', 201)), ("footerText", new string('a', 201)) })
@@ -111,11 +111,11 @@ public sealed class CatalogSeoHttpTests
             var html = await visitor.GetStringAsync("/assortiment");
             Assert.Contains("/assortiment\"", html);
             Assert.Contains("<h1>Occasions te koop</h1>", html);
-            Assert.Contains("Welkom bij Autohuis Hans", html);
+            Assert.Contains("<p>Autohuis Hans</p>", html);
             Assert.Contains("Bekijk onze occasions.", html);
             var branding = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/settings");
             Assert.Equal("Autohuis Hans", branding.GetProperty("shopName").GetString());
-            Assert.Equal(new[] { "appearance", "categoryLinks", "footerText", "headerText", "homeEnabled", "homePages", "iconUrl", "introduction", "shopName", "showAssortmentInMenu", "showManagementMenuWithoutLogin", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
+            Assert.Equal(new[] { "appearance", "assortmentImageMode", "assortmentImageUrl", "categoryLinks", "contactPhone", "footerText", "headerText", "homeEnabled", "homePages", "iconUrl", "introduction", "shopName", "showAssortmentInMenu", "showHeaderPhone", "showHeaderWhatsapp", "showManagementMenuWithoutLogin", "welcomeText" }, branding.EnumerateObject().Select(p => p.Name).Order().ToArray());
             Assert.Equal("Welkom onderaan", branding.GetProperty("footerText").GetString());
             var company = await visitor.GetFromJsonAsync<JsonElement>("/api/shop/company");
             Assert.Equal("Straat 1\n1234 AB Utrecht", company.GetProperty("address").GetString());

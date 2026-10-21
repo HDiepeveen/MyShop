@@ -1,3 +1,5 @@
+import { DestroyRef } from '@angular/core';
+import { PageBackdrop } from './page-backdrop';
 import { CategoryPageInfo } from './category-page';
 import { Component, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -13,9 +15,17 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
 
 @Component({
   selector: 'app-shop-list',
+  host: {'[class.assortment-photo]': '!!branding.assortmentImageUrl()'},
   imports: [FormsModule, RouterLink, ShopImage],
   styles: [
     `
+      :host { display: block; padding-top: 16px; }
+      @media (max-width: 760px) { :host { padding-top: 12px; } }
+      :host.assortment-photo { width: calc(100% + 84px); margin: -38px -42px; padding: 54px 42px 38px; box-sizing: border-box; background: #0009; color: #fff; min-height: calc(100vh - 140px); }
+      :host.assortment-photo .eyebrow, :host.assortment-photo .muted { color: inherit; }
+      :host.assortment-photo .product { background: var(--shop-panel); color: var(--shop-text); border-radius: 12px; padding: 20px; }
+      @media (max-width:760px) { :host.assortment-photo {width:calc(100% + 40px);margin:-24px -20px;padding:36px 20px 24px;} }
+      .assortment-content {max-width:1316px;margin-inline:auto;}
       .products {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
@@ -32,7 +42,8 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
     `,
   ],
   template: `
-    <div class="eyebrow">{{ state()?.data?.welcomeText || 'Welkom bij MyShop' }}</div>
+    <div class="assortment-content">
+    <div class="eyebrow">{{ branding.name() }}</div>
     <h1>{{ categoryPage()?.name || state()?.data?.heading || 'Ontdek ons assortiment' }}</h1>
     <p class="muted">
       {{
@@ -279,13 +290,17 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
         <p role="alert">{{ pageError() }}</p>
       }
     }
+    </div>
   `,
 })
 export class ShopList {
   readonly categoryPage = input<CategoryPageInfo | null>(null);
-  private readonly branding = inject(ShopBranding);
+  readonly branding = inject(ShopBranding);
   private readonly seo = inject(StorefrontSeo);
   constructor() {
+    const backdrop=inject(PageBackdrop),owner={};
+    inject(DestroyRef).onDestroy(()=>backdrop.clear(owner));
+    effect(()=>backdrop.show(owner,this.branding.assortmentImageUrl(),this.branding.assortmentImageMode()));
     effect(() => {
       const page = this.state()?.data;
       if (page) {

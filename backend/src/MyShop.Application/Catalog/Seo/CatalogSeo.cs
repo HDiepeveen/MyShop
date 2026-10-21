@@ -4,9 +4,12 @@ using System.Text.RegularExpressions;
 
 namespace MyShop.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? SeoDescription { get; init; } public string? HomeImageUrl { get; init; } public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? SeoDescription { get; init; } public string? HomeImageUrl { get; init; } public string? AssortmentImageUrl { get; init; } public string? AssortmentImageMode { get; init; } public bool ShowHeaderPhone { get; init; } = true; public bool ShowHeaderWhatsapp { get; init; } = true; public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
 public sealed record HomePageItem(string? Title, string Description)
 {
+    public Guid PageId { get; init; }
+    public string? ImageUrl { get; init; }
+    public string? ImageMode { get; init; }
     public string? SeoTitle { get; init; }
     public string? SeoDescription { get; init; }
 
@@ -18,6 +21,7 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
     public string? SeoTitle { get; init; }
     public string? SeoDescription { get; init; }
 
+    public string? ImageMode { get; init; }
     public string? WelcomeText { get; init; }
     public string? ImageUrl { get; init; }
     public string? Place { get; init; }
@@ -29,6 +33,7 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
         return this with {
             SeoTitle = SeoText.Optional(SeoTitle, 200),
             SeoDescription = SeoText.Optional(SeoDescription, 500),
+            ImageMode = PageBackground.Mode(ImageMode),
             Heading = SeoText.Optional(Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de homepagina in."),
             Place = SeoText.Optional(Place, 100),
             Description = string.IsNullOrWhiteSpace(Description) ? null : NormalizeDescription(Description),
@@ -39,9 +44,12 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
     {
         var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var result = new List<HomePageItem>();
+        var ids = new HashSet<Guid>();
         foreach (var item in items)
         {
             if (item is null) throw new ArgumentException("Vul de pagina in.");
+            var id = item.PageId == Guid.Empty && forSaving ? Guid.NewGuid() : item.PageId;
+            if (id == PageBackground.ContactId || id == PageBackground.AssortmentId || (id != Guid.Empty && !ids.Add(id))) throw new ArgumentException("Elke pagina moet een eigen identiteit hebben.");
             var title = SeoText.Optional(item.Title, 200);
             if (forSaving && title is null) throw new ArgumentException("Vul voor elke extra pagina een titel in.");
             var address = forSaving || item.WebAddress is null ? null : ServicePageAddress.Validate(item.WebAddress);
@@ -52,7 +60,7 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
                 for (var suffix = 2; used.Contains(address); suffix++) address = stem + "-" + suffix;
             }
             if (!used.Add(address)) throw new ArgumentException("Elke pagina moet een uniek webadres hebben.");
-            result.Add(new(title, NormalizeDescription(item.Description)) { Place = place, WebAddress = address, SeoTitle = SeoText.Optional(item.SeoTitle, 200), SeoDescription = SeoText.Optional(item.SeoDescription, 500) });
+            result.Add(new(title, NormalizeDescription(item.Description)) { PageId = id, ImageUrl = item.ImageUrl, ImageMode = PageBackground.Mode(item.ImageMode), Place = place, WebAddress = address, SeoTitle = SeoText.Optional(item.SeoTitle, 200), SeoDescription = SeoText.Optional(item.SeoDescription, 500) });
         }
         return result;
     }
@@ -85,6 +93,8 @@ public static class ServicePageAddress
 }
 public sealed record CompanyPage(string Heading, string? Name, string? Description, string? Address, string? Email, string? Phone, string? OpeningHours)
 {
+    public string? ImageUrl { get; init; }
+    public string? ImageMode { get; init; }
     public string? SeoTitle { get; init; }
     public string? SeoDescription { get; init; }
 }
@@ -104,6 +114,8 @@ public enum SeoFailure { NotFound, Conflict, AddressInUse }
 public sealed record SeoResult(SeoFailure? Failure);
 public interface ICatalogSeoStore
 {
+    Task<SeoResult> SavePageImageAsync(Guid pageId, MyShop.Application.Catalog.Abstractions.ProductImageUpload? image, Guid revision, CancellationToken ct);
+    Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetPageImageAsync(Guid pageId, CancellationToken ct);
     Task<SeoResult> SaveHomeImageAsync(MyShop.Application.Catalog.Abstractions.ProductImageUpload? image, Guid revision, CancellationToken ct);
     Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetHomeImageAsync(CancellationToken ct);
     Task<SeoResult> SaveIconAsync(MyShop.Application.Catalog.Abstractions.ProductImageUpload? icon, Guid revision, CancellationToken ct);
@@ -152,8 +164,22 @@ public static class SeoText
         return value[..(char.IsHighSurrogate(value[199]) ? 199 : 200)].TrimEnd();
     }
 }
+public static class PageBackground
+{
+    public static readonly Guid AssortmentId = Guid.Parse("d2f06ded-68a2-4936-9880-327d616d1a42");
+    public static readonly Guid ContactId = Guid.Parse("ac8107f2-a136-4b4f-9e85-b70f14860701");
+    public static string? Mode(string? value) => value switch { null or "" => null, "stretch" => "stretch", "cover" => "cover", _ => throw new ArgumentException("Kies een geldige afbeeldingsweergave.") };
+}
 public sealed class ManageSeo(ICatalogSeoStore store)
 {
+    public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetPageImageAsync(Guid pageId, CancellationToken ct) => store.GetPageImageAsync(pageId, ct);
+    public Task<SeoResult> SavePageImageAsync(Guid pageId, byte[]? bytes, string fileName, Guid revision, CancellationToken ct)
+    {
+        if (revision == Guid.Empty || pageId == Guid.Empty) throw new ArgumentException("Sla de pagina eerst op.");
+        if (bytes?.Length > MaximumHomeImageBytes) throw new ArgumentException("Kies een afbeelding van maximaal 5 MB.");
+        var image = bytes is null ? null : MyShop.Application.Catalog.Abstractions.ProductImageUpload.Create(bytes, "Pagina-achtergrond", fileName);
+        return store.SavePageImageAsync(pageId, image, revision, ct);
+    }
     public const int MaximumHomeImageBytes = 5 * 1024 * 1024;
     public Task<MyShop.Application.Catalog.Abstractions.ProductImageContent?> GetHomeImageAsync(CancellationToken ct) => store.GetHomeImageAsync(ct);
     public Task<SeoResult> SaveHomeImageAsync(byte[]? bytes, string fileName, Guid revision, CancellationToken ct)
@@ -206,9 +232,11 @@ public sealed class ManageSeo(ICatalogSeoStore store)
             Introduction = SeoText.Optional(value.Introduction, 1000) ?? throw new ArgumentException("Vul een introductietekst in."),
             FooterText = SeoText.Optional(value.FooterText, 200) ?? "",
             HeaderText = SeoText.Optional(value.HeaderText, 200),
+            AssortmentImageMode = PageBackground.Mode(value.AssortmentImageMode),
             SeoDescription = SeoText.Optional(value.SeoDescription, 500),
             Company = company with
             {
+                ImageMode = PageBackground.Mode(company.ImageMode),
                 Heading = SeoText.Optional(company.Heading, 200) ?? throw new ArgumentException("Vul een koptekst voor de bedrijfspagina in."),
                 SeoTitle = SeoText.Optional(company.SeoTitle, 200), SeoDescription = SeoText.Optional(company.SeoDescription, 500),
                 Name = SeoText.Optional(company.Name, 200), Description = Multiline(company.Description, 4000),

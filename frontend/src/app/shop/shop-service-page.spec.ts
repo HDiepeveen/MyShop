@@ -27,9 +27,13 @@ describe('Public home and service routes', () => {
   it('uses service page metadata without adding the place or shop name to an override', async () => {
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/apk-zwolle');
-    http.expectOne('/api/shop/pages/apk-zwolle').flush({ title: 'APK', place: 'Zwolle', webAddress: 'apk-zwolle', description: 'De inhoud.', seoTitle: 'Uw APK bij Ganpat', seoDescription: 'Keuring op afspraak in Zwolle.' });
+    http.expectOne('/api/shop/pages/apk-zwolle').flush({ title: 'APK', place: 'Zwolle', webAddress: 'apk-zwolle', description: 'De inhoud.', imageUrl: '/api/shop/page-images/test', imageMode: 'cover', seoTitle: 'Uw APK bij Ganpat', seoDescription: 'Keuring op afspraak in Zwolle.' });
     harness.detectChanges();
     expect(document.title).toBe('Uw APK bij Ganpat');
+    const image = harness.routeNativeElement?.querySelector('.page-background') as HTMLImageElement;
+    expect(image.style.objectFit).toBe('cover');
+    image.dispatchEvent(new Event('error')); harness.detectChanges();
+    expect(harness.routeNativeElement?.querySelector('.page-background')).toBeNull();
     expect(document.querySelector('meta[name="description"]')?.getAttribute('content')).toBe('Keuring op afspraak in Zwolle.');
     expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toBe('APK');
   });

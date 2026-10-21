@@ -97,7 +97,9 @@
 .shop .topbar > * { min-width: 0; }
 .shop .topbar nav { max-width: 50%; }
 .shop .session-actions { flex: 0 0 auto; align-items: center; }
-.header-extra-text { max-width: 24rem; text-align: center; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.header-contact-icons { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.header-contact-icons svg { width: 22px; height: 22px; }
+.header-extra-text { display: flex; align-items: center; justify-content: center; gap: 10px; max-width: 24rem; text-align: center; font-family: inherit; font-weight: 400; font-size: 18px; line-height: 1.5; overflow-wrap: anywhere; }
 @media (max-width: 760px) { .shop .topbar nav { max-width: 100%; } }
 
 .session-actions { align-items: center; }
@@ -207,3 +209,9 @@ footer {
 .workspace.no-sidebar {
   grid-template-columns: 1fr;
 }
+
+.body.with-page-photo { position: relative; isolation: isolate; }
+.whole-page-photo { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; object-position: center; }
+.with-page-photo .topbar, .with-page-photo footer { background: var(--photo-bar-background); color: var(--photo-bar-text); backdrop-filter: blur(12px);  }
+.with-page-photo .topbar a, .with-page-photo .topbar button { color: inherit; }
+.with-page-photo .topbar { border-bottom-color: #ffffff40; }

@@ -1,3 +1,4 @@
+import { PageBackdrop } from './shop/page-backdrop';
 import { NgStyle } from '@angular/common';
 import { themeStyles } from './settings/shop-theme';
 import { ShopBranding } from './shop/shop-branding';
@@ -25,6 +26,7 @@ export class App {
     return !this.storefront() && (this.auth.isManagement() || this.branding.showManagementMenuWithoutLogin());
   }
   readonly themeStyles = themeStyles;
+  readonly pageBackdrop = inject(PageBackdrop);
   readonly branding = inject(ShopBranding);
   readonly version = webshopVersion.version;
   private readonly seo = inject(StorefrontSeo);

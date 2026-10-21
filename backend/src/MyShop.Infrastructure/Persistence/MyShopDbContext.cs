@@ -7,6 +7,7 @@ namespace MyShop.Infrastructure.Persistence;
 
 public sealed class MyShopDbContext(DbContextOptions<MyShopDbContext> options) : IdentityDbContext<IdentityUser>(options)
 {
+    internal DbSet<PageBackgroundPersistence> PageBackgrounds => Set<PageBackgroundPersistence>();
     internal DbSet<CatalogSeoSettingsPersistence> CatalogSeoSettings => Set<CatalogSeoSettingsPersistence>();
     internal DbSet<ProductSeoPersistence> ProductSeos => Set<ProductSeoPersistence>();
     internal DbSet<ProductWebAddressPersistence> ProductWebAddresses => Set<ProductWebAddressPersistence>();
