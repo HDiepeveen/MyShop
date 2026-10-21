@@ -587,6 +587,6 @@ label > input[type='radio'] {
 }
 
 /* Let the home background reach the screen edges, including on wide displays. */
-main#content:has(.home-page.with-image), main#content:has(.photo-page.with-image), main#content:has(app-shop-list.assortment-photo) { max-width: none; }
+main#content:has(.home-page.with-image), main#content:has(.photo-page.with-image), main#content:has(app-shop-list.assortment-photo), main#content:has(app-shop-detail.assortment-photo) { max-width: none; }
 
 .with-page-photo .home-image, .with-page-photo .page-background { visibility: hidden; }

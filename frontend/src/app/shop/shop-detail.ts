@@ -1,3 +1,4 @@
+import { PageBackdrop } from './page-backdrop';
 import { ShopBranding } from './shop-branding';
 import { StorefrontSeo } from './storefront-seo';
 import { Cart } from './cart';
@@ -15,9 +16,18 @@ import { Auth } from '../auth/auth';
 import { CustomerWishlistApi } from '../customer/customer-wishlist.api';
 import { chooseOption, optionAvailable, optionValue, variantOptions } from './variant-options';
 @Component({
+  selector: 'app-shop-detail',
+  host: {'[class.assortment-photo]': '!!branding.assortmentImageUrl()'},
   imports: [FormsModule, RouterLink, ShopImage],
   styles: [
     `
+      :host {display:block;}
+      .detail-content {max-width:1316px;margin-inline:auto;}
+      :host.assortment-photo {width:calc(100% + 84px);margin:-38px -42px;padding:54px 42px 38px;box-sizing:border-box;min-height:calc(100vh - 140px);background:#0009;color:#fff;}
+      :host.assortment-photo .back {color:inherit;}
+      :host.assortment-photo .panel {background:rgba(0,0,0,.68);border-color:#ffffff40;color:#fff;}
+      :host.assortment-photo .panel .muted, :host.assortment-photo .panel a:not(.button) {color:inherit;}
+      @media(max-width:760px){:host.assortment-photo{width:calc(100% + 40px);margin:-24px -20px;padding:36px 20px 24px;}}
       .description {
         white-space: pre-wrap;
         overflow-wrap: anywhere;
@@ -25,6 +35,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
     `,
   ],
   template: `
+    <div class="detail-content">
     @if (wishlistReturn(); as query) {
       <a class="back" routerLink="/winkel/account/verlanglijst" [queryParams]="query"
         >← Terug naar mijn verlanglijst</a
@@ -251,10 +262,11 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
         </section>
       </div>
     }
+    </div>
   `,
 })
 export class ShopDetail {
-  private readonly branding = inject(ShopBranding);
+  readonly branding = inject(ShopBranding);
   private readonly seo = inject(StorefrontSeo);
   readonly auth = inject(Auth);
   private readonly wishlistApi = inject(CustomerWishlistApi);
@@ -399,6 +411,9 @@ export class ShopDetail {
     this.state()?.data?.variants.find((variant) => variant.id === this.selectedId()),
   );
   constructor() {
+    const backdrop=inject(PageBackdrop),owner={};
+    inject(DestroyRef).onDestroy(()=>backdrop.clear(owner));
+    effect(()=>backdrop.show(owner,this.branding.assortmentImageUrl(),this.branding.assortmentImageMode()));
     effect(() => { const product = this.state()?.data; if (product) this.seo.apply(product.seoTitle || product.name + " · " + this.branding.name(), product.seoDescription, "/winkel/" + encodeURIComponent(product.webAddress || product.id)); });
     effect(() => {
       const product = this.state()?.data;

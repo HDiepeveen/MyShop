@@ -1,3 +1,4 @@
+import { PageBackdrop } from './page-backdrop';
 import { ShopBranding } from './shop-branding';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -117,6 +118,8 @@ describe('Public storefront', () => {
       .flush({ items: [], totalCount: 0, offset: 0, limit: 20, at: '2026-09-30T12:00:00Z' });
   });
   it('selects variants, escapes product text and retains the return context', async () => {
+    TestBed.inject(ShopBranding).assortmentImageUrl.set('/api/shop/page-images/assortment');
+    TestBed.inject(ShopBranding).assortmentImageMode.set('stretch');
     const harness = await RouterTestingHarness.create(
       '/winkel/p?search=shirt&offset=20&categoryId=c1',
     );
@@ -128,6 +131,9 @@ describe('Public storefront', () => {
     harness.detectChanges();
     const detail = harness.routeDebugElement!.componentInstance as ShopDetail;
     expect(detail.selected()?.name).toBe('Small');
+    expect(harness.routeNativeElement!.classList.contains('assortment-photo')).toBe(true);
+    expect(TestBed.inject(PageBackdrop).url()).toBe('/api/shop/page-images/assortment');
+    expect(TestBed.inject(PageBackdrop).mode()).toBe('fill');
     const select = harness.routeNativeElement!.querySelector('select')!;
     select.value = 'v2';
     select.dispatchEvent(new Event('change'));
