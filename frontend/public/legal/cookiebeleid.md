@@ -7,7 +7,7 @@
 Deze website gebruikt het framework HD Web Framework en is ingericht als presentatie voor Autoservice Ganpat. Winkelmand, online bestellen en online betalen zijn uitgeschakeld. De bepalingen hieronder over online bestellingen, klantaccounts en betaalproviders gelden alleen voor zover deze functies daadwerkelijk worden gebruikt of eerdere gegevens daarvan nog worden bewaard. De beschreven technische ondersteuning betekent niet dat die functies nu worden aangeboden. Afspraken via telefoon of e-mail kunnen afhankelijk van de feitelijke gang van zaken wel onder de regels voor overeenkomsten op afstand vallen.
 
 
-Dit beleid geldt voor https://autoservice-ganpat.nl/, aangeboden door Autoservice Ganpat, Popovstraat 7-B, 8013 RK Zwolle, KvK 08187330, btw NL005298462B85. Vragen: [e-mailadres].
+Dit beleid geldt voor https://autoservice-ganpat.nl/, aangeboden door Autoservice Ganpat, Popovstraat 7-B, 8013 RK Zwolle, KvK 08187330, btw NL005298462B85. Vragen: APK-ganpat@live.nl, telefoon 06 45707667.
 
 ## Wat gebruiken wij?
 

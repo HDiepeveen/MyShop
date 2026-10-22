@@ -6,4 +6,6 @@ Adres: Popovstraat 7-B, 8013 RK Zwolle. KvK 08187330. Btw NL005298462B85. Winkel
 
 De footer bevat links naar /algemene-voorwaarden, /privacyverklaring en /cookiebeleid. De pagina’s zijn openbaar en noindex zolang het concepten betreft. Na afronding van bedrijfsgegevens, bewaartermijnen en leverancierscontrole kunnen de conceptmelding en noindex in ShopLegal en SeoHtml worden herzien. Er wordt geen cookiebanner toegevoegd voor uitsluitend noodzakelijke cookies.
 
-Nog aan te vullen: rechtsvorm indien van toepassing, e-mailadres, telefoonnummer, bewaartermijnen, ontvangers/doorgiften en eventuele verkoop op afstand buiten de website. De oorspronkelijke controlebronnen en publicatiechecklist zijn lokaal bewaard bij de juridische concepten.
+Contact: APK-ganpat@live.nl; telefoon 06 45707667.
+
+Nog aan te vullen: rechtsvorm indien van toepassing, bewaartermijnen, ontvangers/doorgiften en eventuele verkoop op afstand buiten de website. De oorspronkelijke controlebronnen en publicatiechecklist zijn lokaal bewaard bij de juridische concepten.
