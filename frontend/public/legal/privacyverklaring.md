@@ -4,7 +4,7 @@
 
 ## Huidige inrichting van deze website
 
-Autoservice Ganpat gebruikt deze website om het bedrijf, de diensten en het assortiment te presenteren. Voor vragen over een artikel, een aankoop of een werkplaatsafspraak kunt u contact opnemen met de garage. Afspraken via telefoon of e-mail kunnen afhankelijk van de feitelijke gang van zaken onder de regels voor overeenkomsten op afstand vallen.
+Deze privacyverklaring gaat over het gebruik van de website van Autoservice Ganpat. De website presenteert het bedrijf, de diensten en het assortiment. Via deze website kunt u geen klantprofiel aanmaken, bestelling plaatsen of online betalen. De facturatie, aankoop-, voertuig- en werkplaatsadministratie van de garage vallen buiten deze verklaring; Autoservice Ganpat moet u over die verwerkingen afzonderlijk informeren.
 
 
 ## Wie is verantwoordelijk?
@@ -13,23 +13,19 @@ Autoservice Ganpat, [rechtsvorm indien van toepassing], Popovstraat 7-B, 8013 RK
 
 ## Welke gegevens gebruiken wij en waarom?
 
-Wanneer u contact opneemt, gebruiken wij uw contactgegevens en de inhoud van uw bericht om uw vraag te behandelen. Dat gebeurt voor het voorbereiden of uitvoeren van een overeenkomst, of op basis van ons gerechtvaardigde belang om algemene vragen te beantwoorden.
+Op de website staan contactlinks voor e-mail, telefoon en WhatsApp. Als u daarvan gebruikmaakt, neemt u buiten deze website contact op met de garage. De inhoud van die correspondentie en de bewaring daarvan vallen buiten deze websiteverklaring. De gebruikte e-mail-, telefoon- of WhatsApp-dienst kan daarbij zelf gegevens verwerken volgens het eigen privacybeleid.
 
-Bij een informatieaanvraag, aankoop of werkplaatsafspraak gebruiken wij de benodigde contactgegevens en gegevens over het artikel, voertuig of de werkzaamheden om uw vraag te behandelen of onze afspraken uit te voeren.
-
-Voor voertuigverkoop, APK of reparatie kunnen voertuiggegevens nodig zijn, zoals kenteken, voertuigidentificatie en werkzaamheden. Wij verwerken deze uitsluitend voor zover nodig voor de afspraak, uitvoering en toepasselijke administratieve verplichtingen. [Controleer en beschrijf eventuele APK/RDW-registraties en andere garagesystemen die buiten deze website worden gebruikt.]
-
-Financiële gegevens gebruiken wij tevens om aan onze administratie- en belastingverplichtingen te voldoen. HD Web Framework houdt zelf geen bezoekershistorie bij. Om misbruik te beperken, kan het framework IP-adressen tijdelijk in het werkgeheugen gebruiken voor het begrenzen van te veel verzoeken; hiervoor wordt geen afzonderlijk IP-logbestand bijgehouden. Voor het onderzoeken van storingen en het beveiligen van de website kunnen wel technische foutmeldingen en waarschuwingen worden verwerkt. Deze meldingen zijn niet bedoeld als bezoekersregistratie. Afhankelijk van de fout en de loginstellingen kunnen daarin incidenteel persoonsgegevens voorkomen; wij sluiten dit niet uit. Voor deze beveiligingsdoeleinden wegen wij ons gerechtvaardigde belang af tegen uw privacybelang.
+HD Web Framework houdt zelf geen bezoekershistorie bij. Om misbruik te beperken, kan het framework IP-adressen tijdelijk in het werkgeheugen gebruiken voor het begrenzen van te veel verzoeken; hiervoor wordt geen afzonderlijk IP-logbestand bijgehouden. Voor het onderzoeken van storingen en het beveiligen van de website kunnen wel technische foutmeldingen en waarschuwingen worden verwerkt. Deze meldingen zijn niet bedoeld als bezoekersregistratie. Afhankelijk van de fout en de loginstellingen kunnen daarin incidenteel persoonsgegevens voorkomen; wij sluiten dit niet uit. Voor deze beveiligingsdoeleinden wegen wij ons gerechtvaardigde belang af tegen uw privacybelang.
 
 Wij gebruiken de website niet voor advertentietracking of marketingprofilering zoals deze momenteel is ingericht. Voor nieuwe verwerkingen waarvoor toestemming nodig is, vragen wij die vooraf afzonderlijk.
 
 ## Wie ontvangt gegevens?
 
-Wij verstrekken gegevens voor zover nodig voor de betreffende dienstverlening:
+Voor de werking en beveiliging van de website kunnen de volgende partijen gegevens ontvangen:
 
 - **SmarterASP.NET:** hosting van de website en database.
-- **Brevo:** verzending van functionele e-mails, zoals account- en beveiligingsberichten, voor zover deze e-maildienst is ingeschakeld.
-- [Andere ontvangers invullen indien deze voor de dienstverlening worden gebruikt.]
+- **Brevo:** verzending van functionele e-mails, voor het beheer en de beveiliging van de website, voor zover deze e-maildienst is ingeschakeld. Dit betreft geen bestel- of klantaccountberichten voor bezoekers.
+- [Andere ontvangers invullen indien deze voor de website worden gebruikt.]
 - Bevoegde instanties wanneer een wettelijke verplichting dat vereist.
 
 Wij leggen de toepasselijke afspraken over gegevensbescherming met dienstverleners vast. **[Vóór publicatie controleren: juridische leveranciersnamen, rollen, verwerkersafspraken, daadwerkelijke opslaglanden en eventuele doorgifte buiten de EER. Vermeld bij doorgifte de toepasselijke waarborgen en hoe informatie daarover verkrijgbaar is.]**
@@ -38,19 +34,14 @@ Wij leggen de toepasselijke afspraken over gegevensbescherming met dienstverlene
 
 Wij bewaren persoonsgegevens zolang dat nodig is voor het doel waarvoor wij ze hebben ontvangen. Daarbij houden wij rekening met wettelijke bewaarplichten en gegevens die noodzakelijk zijn voor de afhandeling van klachten of geschillen. Daarna verwijderen of anonimiseren wij de gegevens.
 
-**Concept — nog afstemmen met Autoservice Ganpat:** de hieronder voorgestelde termijnen van 12 maanden voor algemene correspondentie en 5 jaar voor aankoop-, voertuig- en werkplaatsgegevens moeten vóór publicatie worden getoetst aan de werkelijke werkwijze en uitvoerbaarheid.
 
 | Gegevens | Bewaartermijn |
 |---|---|
-| Facturen en relevante fiscale basisadministratie | In beginsel minimaal zeven jaar volgens de toepasselijke fiscale bewaarplicht. Langere bewaring vindt alleen plaats wanneer een wettelijke verplichting of een aantoonbare noodzaak, zoals een lopend geschil, dit rechtvaardigt. |
-| Algemene vragen en correspondentie, zoals e-mails en WhatsApp-berichten | Maximaal 12 maanden na afhandeling. Berichten die nodig zijn voor een aankoop, werkzaamheden, factuur of klacht vallen onder de betreffende administratie; de daarvoor geldende termijnen worden afzonderlijk vastgesteld. |
-| Aankoop-, voertuig- en werkplaatsgegevens, zoals werkbonnen, voertuiggegevens bij een opdracht en vastgelegde aankoop- of reparatieafspraken | Maximaal 5 jaar na afronding van de betreffende aankoop of werkzaamheden, voor zover nodig om afspraken en uitgevoerde werkzaamheden te reconstrueren. Relevante gegevens worden langer bewaard wanneer dit aantoonbaar nodig is voor een lopende garantieaanspraak, klacht, geschil of wettelijke verplichting. Gegevens die niet meer nodig zijn, worden eerder verwijderd of geanonimiseerd. |
 | Functionele e-mails en verzendregistraties in HD Web Framework | De berichttekst wordt na succesvolle verzending leeggemaakt. Verzonden registraties vervallen 30 dagen na verzending; niet-verzonden berichten vervallen 30 dagen na aanmaak en worden daarna niet meer aangeboden voor verzending. Verlopen registraties worden bij het starten en vervolgens ieder uur tijdens het draaien van de website verwijderd. Lopende verzendingen worden overgeslagen tot zij zijn afgerond of hun verzendvergrendeling is verlopen. |
 | Verzendlogs en inhoudsvoorbeelden bij Brevo | Verzendlogs worden voor alle afzenders na één maand automatisch verwijderd. Van nieuwe e-mails worden geen inhoudsvoorbeelden (previews) opgeslagen. |
 
-De wachtrijtermijn van 30 dagen geldt voor de actieve frameworkdatabase. Brevo heeft een afzonderlijke bewaartermijn van één maand voor verzendlogs. De Brevo-instelling om geen inhoudsvoorbeelden te bewaren geldt voor nieuwe e-mails. Voor mailboxen en back-ups geldt een afzonderlijk bewaarbeleid.
+De wachtrijtermijn van 30 dagen geldt voor de actieve frameworkdatabase. Brevo heeft een afzonderlijke bewaartermijn van één maand voor verzendlogs. De Brevo-instelling om geen inhoudsvoorbeelden te bewaren geldt voor nieuwe e-mails. Deze termijnen gaan niet over uw eigen mailbox of correspondentie met de garage. Voor back-ups moet het afzonderlijke bewaarbeleid nog worden vastgesteld.
 
-Het gaat hierbij om aanvullende informatie naast de factuur, bijvoorbeeld welke onderdelen zijn vervangen, welke gebreken zijn besproken en welke afspraken met u zijn gemaakt. Deze gegevens kunnen in het garagesysteem, op papier of in correspondentie staan. Voor gegevens die onderdeel zijn van de fiscale administratie geldt de daarbij vermelde bewaartermijn. De termijn van vijf jaar beperkt uw wettelijke garantie of andere consumentenrechten niet.
 
 Gegevens kunnen langer nodig zijn als een concrete juridische verplichting of een lopend geschil dat rechtvaardigt. Wij beperken die bewaring tot wat daarvoor noodzakelijk is. De opslag in uw browser is afzonderlijk beschreven in ons cookiebeleid.
 
