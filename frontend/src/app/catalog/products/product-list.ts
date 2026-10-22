@@ -76,7 +76,7 @@ import { readProductListQuery } from './product-list-query';
         </p>
       }
       <p>
-        <a class="button secondary" [href]="exportUrl()" download="myshop-products.csv"
+        <a class="button secondary" [href]="exportUrl()" download="hdwebframework-products.csv"
           >Productselectie als CSV exporteren</a
         >
       </p>

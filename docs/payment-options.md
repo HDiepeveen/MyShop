@@ -13,16 +13,16 @@ De Mollie-adapter ondersteunt nu uitsluitend **testmodus**, eenmalige betalingen
 
 Voor lokale ontwikkeling kun je **scripts/configure-mollie-test.ps1** uitvoeren. Het script vraagt de testsleutel met verborgen invoer en slaat deze via standaardinvoer op, zodat de sleutel niet in de opdrachtregel of shellgeschiedenis staat. Het vraagt ook de twee adressen en wijzigt geen database. .NET user secrets is lokale opslag buiten Git, geen versleutelde kluis; gebruik de instellingen alleen op een vertrouwde ontwikkelmachine.
 
-Voor lokale ontwikkeling laadt de API .NET user secrets met id `MyShop-Development`; instellingen en de sleutel blijven daarmee buiten de repository. Productieconfiguratie hoort in de secret store van de hostingomgeving. De database moet de migratie **MollieCustomerPaymentStarts** hebben voordat de API wordt gestart.
+Voor lokale ontwikkeling laadt de API .NET user secrets met id `HDWebFramework-Development`; instellingen en de sleutel blijven daarmee buiten de repository. Productieconfiguratie hoort in de secret store van de hostingomgeving. De database moet de migratie **MollieCustomerPaymentStarts** hebben voordat de API wordt gestart.
 
-Herstart de backend na configuratie. Schakel daarna **Direct online betalen** in onder **Betaalopties**. Bij onvolledige configuratie blijft Mollie onbeschikbaar. De klant ziet iDEAL als betaaloptie. MyShop maakt expliciet een iDEAL-betaling aan (method=ideal, locale=nl_NL); bankkeuze vindt plaats bij Mollie. Activeer iDEAL in je Mollie-profiel. Bedragen moeten in EUR zijn, tussen €0,01 en €50.000,00, met maximaal twee decimalen.
+Herstart de backend na configuratie. Schakel daarna **Direct online betalen** in onder **Betaalopties**. Bij onvolledige configuratie blijft Mollie onbeschikbaar. De klant ziet iDEAL als betaaloptie. HDWebFramework maakt expliciet een iDEAL-betaling aan (method=ideal, locale=nl_NL); bankkeuze vindt plaats bij Mollie. Activeer iDEAL in je Mollie-profiel. Bedragen moeten in EUR zijn, tussen €0,01 en €50.000,00, met maximaal twee decimalen.
 
 ## Betaalcyclus
 
-1. MyShop controleert winkelmand, actuele prijzen, voorraad, bezorgoptie en betaalopties en legt een snapshot vast.
+1. HDWebFramework controleert winkelmand, actuele prijzen, voorraad, bezorgoptie en betaalopties en legt een snapshot vast.
 2. Mollie ontvangt het exacte totaal, betalingskenmerk en checkouttoken. Een stabiele idempotency-sleutel voorkomt dubbele betaalstarts bij korte retries. Mollie bewaart deze sleutel één uur; een niet-opgeslagen betaalstart geeft nog geen betaalpagina aan de klant.
 3. De klant opent de Mollie-betaalpagina. De UI vermeldt dat dit testmodus is.
-4. Mollie meldt veranderingen via de webhook. De webhook vertrouwt geen meegestuurde betaalstatus: MyShop haalt deze zelf bij Mollie op en vergelijkt betaling-id, testmodus, bedrag, valuta en metadata met de opgeslagen start.
+4. Mollie meldt veranderingen via de webhook. De webhook vertrouwt geen meegestuurde betaalstatus: HDWebFramework haalt deze zelf bij Mollie op en vergelijkt betaling-id, testmodus, bedrag, valuta en metadata met de opgeslagen start.
 5. Alleen **paid** maakt een betaalde bestelling aan, boekt voorraad en zet één bestelbevestiging in de bestaande e-mailwachtrij. De bevestiging gebruikt de bestaande e-mailinstellingen; de koppeling voegt geen SMTP-account toe. Ingelogde klanten behouden de koppeling met hun account.
 6. De klant keert terug naar **/winkel/betaling** en ziet de bevestiging of kan de betaalstatus opnieuw controleren. Een callback werkt ook als de klant de browser heeft gesloten.
 7. Bij **failed**, **canceled** of **expired** blijft de winkelmand behouden en kan de klant opnieuw afrekenen. Open, pending en authorized geven geen bestelling. Bij een tijdelijk communicatieprobleem wordt geen tweede betaling gestart.
@@ -42,7 +42,7 @@ Gebruik een aparte testdatabase en een testprofiel. Voor localhost moet het call
 - Test een terugkeer vóór de callback en een callback zonder terugkeer; beide moeten correct werken.
 - Controleer tijdelijk onbereikbare backend/provider en een voorraadwijziging tijdens de betaling. Start bij een onzekere betaalstatus geen nieuwe betaling.
 
-De automatische tests simuleren Mollies HTTP-antwoorden en controleren de echte MyShop-API, SQL-opslag, e-mailwachtrij en factuurfunctie. Zij bewijzen niet dat jouw Mollie-account, tunnel, hosting of SMTP-server correct is ingesteld. Daarvoor is bovenstaande echte test nodig.
+De automatische tests simuleren Mollies HTTP-antwoorden en controleren de echte HDWebFramework-API, SQL-opslag, e-mailwachtrij en factuurfunctie. Zij bewijzen niet dat jouw Mollie-account, tunnel, hosting of SMTP-server correct is ingesteld. Daarvoor is bovenstaande echte test nodig.
 
 **TestPay** blijft een interne simulator, met `Payments:Online:Provider=TestPay` en een fictieve checkout-URL; dit is geen aansluiting op Mollie en geen echte betaling.
 
@@ -54,9 +54,9 @@ Maak eerst een Mollie-account voor de onderneming en activeer iDEAL in het profi
 Gebruik vervolgens alleen de test-API-sleutel met het lokale configuratiescript;
 voer de sleutel niet in deze chat of in Git in. Een publiek bereikbaar HTTPS-
 callback-adres blijft nodig, ook als de webshop lokaal wordt bekeken.
-MyShop biedt iDEAL aan zodra de Mollie-configuratie compleet is en de beheerder
+HDWebFramework biedt iDEAL aan zodra de Mollie-configuratie compleet is en de beheerder
 online betalen heeft ingeschakeld. De API kiest method=ideal; er is geen verouderde
-bankkeuzelijst in MyShop. Mollie verzorgt de bankkeuze.
+bankkeuzelijst in HDWebFramework. Mollie verzorgt de bankkeuze.
 Automatische tests controleren deze parameters en de betaalcyclus met gesimuleerde
 Mollie-antwoorden. Een eigen account is nog nodig voor de daadwerkelijke Mollie-test.
 Live-sleutels blijven geblokkeerd. Voorraadreservering, automatische refunds en
@@ -83,7 +83,7 @@ hostingkopie; configureer de koppeling daar opnieuw. De lokale gegevens blijven 
 
 ## Winkelmand heropenen na betaling (0.2.7)
 
-Bij het heropenen controleert MyShop een in deze browser bewaarde betaalstart.
+Bij het heropenen controleert HDWebFramework een in deze browser bewaarde betaalstart.
 Na bevestiging wordt alleen een nog overeenkomende winkelmand leeggemaakt.
 Wijzigingen na de betaalstart blijven behouden. Bij mislukt, geannuleerd of verlopen
 blijft de winkelmand staan en wordt de eerdere betaalstart vrijgegeven. Bij een
@@ -109,7 +109,7 @@ open betaling krijgt de oorspronkelijke betaallink. Herstellen start geen nieuwe
 betaling en toont geen klantnaam, e-mailadres of adres in de publieke statusrespons.
 
 Vanaf 0.2.11 klikt de klant op Betalen met iDEAL. Na controle en het bewaren van
-de betaalstart stuurt MyShop direct in hetzelfde venster door naar Mollie; de
+de betaalstart stuurt HDWebFramework direct in hetzelfde venster door naar Mollie; de
 tussenstap met een aparte knop om de betaalpagina te openen vervalt. Tijdens het
 doorsturen zijn dubbele klikken geblokkeerd. Lukt navigeren niet, dan blijft
 dezelfde betaalstart beschikbaar via een handmatige link. De bankstatus blijft

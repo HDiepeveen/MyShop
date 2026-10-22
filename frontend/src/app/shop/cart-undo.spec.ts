@@ -13,9 +13,9 @@ const productId = '10000000-0000-0000-0000-000000000001',
   secondId = '20000000-0000-0000-0000-000000000002';
 const first = { productId, variantId, quantity: 2 },
   second = { productId, variantId: secondId, quantity: 3 };
-beforeEach(() => localStorage.removeItem('myshop.cart.v1'));
+beforeEach(() => localStorage.removeItem('HDWebFramework.cart.v1'));
 afterEach(() => {
-  localStorage.removeItem('myshop.cart.v1');
+  localStorage.removeItem('HDWebFramework.cart.v1');
   vi.restoreAllMocks();
 });
 describe('Undo cart removal', () => {

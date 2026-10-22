@@ -71,4 +71,6 @@ See [Klantmail](docs/email.md) for email confirmation, customer password recover
 
 Productnaam: **HD Web Framework**. Technische projectnaam: **HDWebFramework**. Omschrijving: **Framework voor websites en webshops**.
 
-De solution en assemblies dragen de nieuwe technische naam. De bestaande bronmappen en C#-namespaces blijven voorlopig `MyShop` om bestaande integraties te behouden. Databaseconfiguratiesleutel `MyShop`, databasegegevens, cookies, browseropslag, UserSecretsId en Data Protection-toepassingsnaam blijven eveneens behouden. De configureerbare bedrijfsnaam verandert niet. Bij een hostingupdate wordt de gegenereerde web.config gebruikt voor HDWebFramework.Api.dll; behoud productie-instellingen en App_Data.
+Solution, bronmappen, namespaces, cookies, browseropslag en ontwikkelinstellingen gebruiken de nieuwe technische naam. De bedrijfsnaam en bestaande gegevens blijven behouden. Alleen omzettingscode leest tijdelijk oude identifiers om opgeslagen browsergegevens en versleutelde instellingen over te nemen; nieuwe waarden worden met de nieuwe naam opgeslagen. Bestaande gebruikers melden zich opnieuw aan.
+
+De lokale projectmap heet HDWebFramework. De lokale werkdatabase heet HDWebFrameworkPaymentAcceptance_20261007. Hosting-databasegegevens zijn door de provider toegewezen en blijven ongewijzigd. Bij een hostingupdate wordt de gegenereerde web.config voor HDWebFramework.Api.dll gebruikt; behoud productie-instellingen en App_Data met de bestaande sleutels. Zie [Naamswijziging](docs/framework-rename.md).

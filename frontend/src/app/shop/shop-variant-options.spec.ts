@@ -38,7 +38,7 @@ const optionProduct: ShopProduct = {
 describe('ShopDetail option selection', () => {
   let http: HttpTestingController;
   beforeEach(() => {
-    localStorage.removeItem('myshop.cart.v1');
+    localStorage.removeItem('HDWebFramework.cart.v1');
     TestBed.configureTestingModule({
       providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     });
@@ -46,7 +46,7 @@ describe('ShopDetail option selection', () => {
   });
   afterEach(() => {
     http.verify();
-    localStorage.removeItem('myshop.cart.v1');
+    localStorage.removeItem('HDWebFramework.cart.v1');
   });
   async function setup(other = false, product = optionProduct) {
     const harness = await RouterTestingHarness.create('/winkel/' + optionProduct.id);

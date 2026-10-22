@@ -1,0 +1,109 @@
+using HDWebFramework.Application.Catalog.Abstractions;
+using HDWebFramework.Application.Catalog.DeleteProductType;
+using HDWebFramework.Domain.Catalog;
+using UseCase = HDWebFramework.Application.Catalog.DeleteProductType.DeleteProductType;
+
+namespace HDWebFramework.Application.Tests.Catalog.DeleteProductType;
+
+public sealed class DeleteProductTypeTests
+{
+    [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake();
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, store, null!));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store, store).ExecuteAsync(
+                ProductTypeId.New(), new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsEmptyProductTypeId()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new UseCase(store, store, store).ExecuteAsync(default, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UnusedProductType_IsDeleted()
+    {
+        var store = new StoreFake { ProductType = ProductType.Create("Old") };
+        var result = await new UseCase(store, store, store).ExecuteAsync(
+            store.ProductType.Id, CancellationToken.None);
+        Assert.Equal(DeleteProductTypeOutcome.Succeeded, result.Outcome);
+        Assert.Equal(store.ProductType.Id, store.DeletedId);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_UsedProductType_ReturnsConflictWithoutDelete()
+    {
+        var store = new StoreFake { ProductType = ProductType.Create("Used"), ProductCount = 3 };
+        var result = await new UseCase(store, store, store).ExecuteAsync(
+            store.ProductType.Id, CancellationToken.None);
+        Assert.Equal(DeleteProductTypeOutcome.InUse, result.Outcome);
+        Assert.Equal(3, result.ProductCount);
+        Assert.Null(store.DeletedId);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MissingProductType_SkipsUsageAndDelete()
+    {
+        var store = new StoreFake { ProductCount = 3 };
+        var result = await new UseCase(store, store, store).ExecuteAsync(
+            ProductTypeId.New(), CancellationToken.None);
+        Assert.Equal(DeleteProductTypeOutcome.NotFound, result.Outcome);
+        Assert.Equal(0, store.UsageCalls);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ForwardsProductTypeIdAndCancellationToken()
+    {
+        var store = new StoreFake { ProductType = ProductType.Create("Unused") };
+        using var source = new CancellationTokenSource();
+        await new UseCase(store, store, store).ExecuteAsync(store.ProductType.Id, source.Token);
+        Assert.Equal(store.ProductType.Id, store.LookupId);
+        Assert.Equal(store.ProductType.Id, store.UsageId);
+        Assert.Equal(store.ProductType.Id, store.DeletedId);
+        Assert.Equal(source.Token, store.Token);
+    }
+
+    private sealed class StoreFake
+        : IProductTypeRepository, IProductTypeUsageRepository, IProductTypeDeleter
+    {
+        public ProductType? ProductType { get; set; }
+        public int ProductCount { get; set; }
+        public int UsageCalls { get; private set; }
+        public ProductTypeId? DeletedId { get; private set; }
+        public ProductTypeId? LookupId { get; private set; }
+        public ProductTypeId? UsageId { get; private set; }
+        public CancellationToken Token { get; private set; }
+        public Task<ProductType?> GetByIdAsync(ProductTypeId id, CancellationToken token)
+        {
+            LookupId = id;
+            Token = token;
+            return Task.FromResult(ProductType);
+        }
+        public Task<int> CountProductsAsync(ProductTypeId id, CancellationToken token)
+        {
+            UsageCalls++;
+            UsageId = id;
+            Token = token;
+            return Task.FromResult(ProductCount);
+        }
+        public Task DeleteAsync(ProductTypeId id, CancellationToken token)
+        {
+            DeletedId = id;
+            Token = token;
+            return Task.CompletedTask;
+        }
+    }
+}

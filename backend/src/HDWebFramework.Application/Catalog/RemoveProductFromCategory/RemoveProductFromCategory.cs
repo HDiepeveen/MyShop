@@ -1,0 +1,40 @@
+using HDWebFramework.Application.Catalog.Abstractions;
+
+namespace HDWebFramework.Application.Catalog.RemoveProductFromCategory;
+
+public sealed class RemoveProductFromCategory
+{
+    private readonly IProductRepository _products;
+
+    public RemoveProductFromCategory(IProductRepository products)
+    {
+        _products = products ?? throw new ArgumentNullException(nameof(products));
+    }
+
+    public async Task<RemoveProductFromCategoryResult> ExecuteAsync(
+        RemoveProductFromCategoryCommand command,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (command.ProductId == default)
+            throw new ArgumentException("Product ID must not be empty.", nameof(command.ProductId));
+        if (command.CategoryId == default)
+            throw new ArgumentException("Category ID must not be empty.", nameof(command.CategoryId));
+
+        var snapshot = await _products.GetByIdAsync(command.ProductId, cancellationToken);
+        if (snapshot is null)
+            return RemoveProductFromCategoryResult.Failed(RemoveProductFromCategoryFailure.ProductNotFound);
+
+        var product = snapshot.Product;
+
+        if (!product.CategoryIds.Contains(command.CategoryId))
+            return RemoveProductFromCategoryResult.Succeeded;
+
+        product.RemoveFromCategory(command.CategoryId);
+        await _products.SaveAsync(product, snapshot.ConcurrencyToken, cancellationToken);
+
+        return RemoveProductFromCategoryResult.Succeeded;
+    }
+}

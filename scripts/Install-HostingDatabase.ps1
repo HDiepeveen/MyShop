@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $taskConfig = Join-Path $PSScriptRoot 'website/appsettings.Production.json'
 if (!(Test-Path -LiteralPath $taskConfig)) { throw 'Voer eerst Configure-Hosting.ps1 uit.' }
 $taskSettings = Get-Content -LiteralPath $taskConfig -Raw | ConvertFrom-Json
-$taskConnection = New-Object System.Data.SqlClient.SqlConnection($taskSettings.ConnectionStrings.MyShop)
+$taskConnection = New-Object System.Data.SqlClient.SqlConnection($taskSettings.ConnectionStrings.HDWebFramework)
 try {
     $taskConnection.Open()
     $taskCommand = $taskConnection.CreateCommand()

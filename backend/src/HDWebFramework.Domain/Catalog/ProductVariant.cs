@@ -1,0 +1,233 @@
+using System.Collections.ObjectModel;
+
+namespace HDWebFramework.Domain.Catalog;
+
+public sealed class ProductVariant
+{
+    private readonly List<AttributeValue> _attributeValues = [];
+    private readonly ReadOnlyCollection<AttributeValue> _readOnlyAttributeValues;
+    private readonly List<PriceRule> _priceRules = [];
+    private readonly ReadOnlyCollection<PriceRule> _readOnlyPriceRules;
+
+    internal ProductVariant(ProductVariantId id, string name)
+    {
+        if (id == default)
+            throw new ArgumentException("Product variant ID must not be empty.", nameof(id));
+
+        Id = id;
+        Name = ValidateName(name);
+        _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _readOnlyPriceRules = _priceRules.AsReadOnly();
+    }
+
+    private ProductVariant(
+        ProductVariantId id,
+        string name,
+        Sku? sku,
+        List<AttributeValue> attributeValues,
+        Money? price,
+        List<PriceRule> priceRules,
+        int? stockQuantity)
+    {
+        Id = id;
+        Name = name;
+        Sku = sku;
+        Price = price;
+        StockQuantity = ValidateStockQuantity(stockQuantity);
+        _attributeValues.AddRange(attributeValues);
+        _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _priceRules.AddRange(priceRules);
+        _readOnlyPriceRules = _priceRules.AsReadOnly();
+    }
+
+    public ProductVariantId Id { get; }
+    public string Name { get; private set; }
+    public Money? Price { get; private set; }
+    public decimal? VatRate { get; private set; }
+    public bool VatExempt { get; private set; }
+    public decimal? NetPriceAmount { get; private set; }
+    public IReadOnlyCollection<PriceRule> PriceRules => _readOnlyPriceRules;
+    public Sku? Sku { get; private set; }
+    public int? StockQuantity { get; private set; }
+    public bool TracksStock => StockQuantity is not null;
+    public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
+
+    internal static ProductVariant Rehydrate(
+        ProductVariantId id,
+        string name,
+        Sku? sku,
+        IEnumerable<AttributeValue> attributeValues,
+        Money? price = null,
+        IEnumerable<PriceRule>? priceRules = null,
+        int? stockQuantity = null, decimal? vatRate = null, bool vatExempt = false, decimal? netPriceAmount = null)
+    {
+        ArgumentNullException.ThrowIfNull(attributeValues);
+
+        var values = attributeValues.ToList();
+        ValidateRehydratedValues(values);
+
+        if (id == default)
+            throw new ArgumentException("Product variant ID must not be empty.", nameof(id));
+
+        var validatedName = ValidateName(name);
+        if (price is { } suppliedPrice && suppliedPrice == default)
+            throw new ArgumentException("Price must be specified.", nameof(price));
+        var rules = (priceRules ?? []).ToList();
+        if (rules.Any(rule => rule is null)) throw new InvalidOperationException("A variant cannot contain null price rules.");
+        if (rules.GroupBy(rule => rule.Id).Any(group => group.Count() > 1)) throw new InvalidOperationException("A variant cannot contain duplicate price rules.");
+        var variant = new ProductVariant(id, validatedName, sku, values, price, rules, stockQuantity);
+        if (price is { } supplied) variant.SetPrice(supplied, vatRate, vatExempt, netPriceAmount);
+        else if (vatRate is not null || vatExempt || netPriceAmount is not null) throw new ArgumentException("VAT requires a price.");
+        return variant;
+    }
+
+    internal void Rename(string name) => Name = ValidateName(name);
+
+    internal void SetSku(Sku sku)
+    {
+        ArgumentNullException.ThrowIfNull(sku);
+        Sku = sku;
+    }
+
+    internal void ClearSku() => Sku = null;
+
+    internal void SetPrice(Money price, decimal? vatRate = null, bool vatExempt = false, decimal? netPriceAmount = null)
+    {
+        if (price == default)
+            throw new ArgumentException("Price must be specified.", nameof(price));
+        if (vatRate is null && !vatExempt) { vatRate = VatRate; vatExempt = VatExempt; }
+        if (vatRate is { } rate) VatPrice.FromGross(price, rate, vatExempt);
+        else if (vatExempt) throw new ArgumentException("VAT exemption requires a zero rate.");
+        if (netPriceAmount is null && price == Price && VatRate == vatRate && VatExempt == vatExempt) netPriceAmount = NetPriceAmount;
+        if (netPriceAmount is { } net)
+        {
+            netPriceAmount = Money.Create(net, price.Currency).Amount;
+            if (vatRate is null || VatPrice.FromNet(Money.Create(netPriceAmount.Value, price.Currency), vatRate.Value, vatExempt).Gross != price)
+                throw new ArgumentException("Net and gross prices must agree with the VAT treatment.");
+        }
+        Price = price;
+        VatRate = vatRate;
+        VatExempt = vatExempt;
+        NetPriceAmount = netPriceAmount;
+    }
+
+    internal void ClearPrice() { Price = null; VatRate = null; VatExempt = false; NetPriceAmount = null; }
+
+    internal void SetStockQuantity(int quantity) => StockQuantity = ValidateStockQuantity(quantity);
+
+    internal void ClearStockTracking() => StockQuantity = null;
+
+    public bool CanFulfill(int quantity)
+    {
+        if (quantity < 1) throw new ArgumentOutOfRangeException(nameof(quantity));
+        return StockQuantity is null || StockQuantity >= quantity;
+    }
+
+    internal void ReserveStock(int quantity)
+    {
+        if (!CanFulfill(quantity)) throw new InvalidOperationException("Insufficient variant stock.");
+        if (StockQuantity is not null) StockQuantity -= quantity;
+    }
+
+    internal void ReleaseStock(int quantity)
+    {
+        if (quantity < 1) throw new ArgumentOutOfRangeException(nameof(quantity));
+        if (StockQuantity is not null) StockQuantity = checked(StockQuantity.Value + quantity);
+    }
+
+    internal void AddPriceRule(PriceRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        if (_priceRules.Any(existing => existing.Id == rule.Id)) throw new InvalidOperationException("This price rule is already assigned.");
+        _priceRules.Add(rule);
+    }
+
+    internal bool UpdatePriceRule(Guid ruleId, string name, PriceAdjustmentType adjustmentType,
+        decimal value, int priority, DateTimeOffset? startsAt, DateTimeOffset? endsAt)
+    {
+        if (ruleId == Guid.Empty)
+            throw new ArgumentException("Price rule ID must not be empty.", nameof(ruleId));
+        var index = _priceRules.FindIndex(rule => rule.Id == ruleId);
+        if (index < 0)
+            throw new InvalidOperationException("The price rule is not assigned to this variant.");
+        var current = _priceRules[index];
+        var updated = current.WithChanges(name, adjustmentType, value, priority, startsAt, endsAt);
+        if (current.Name == updated.Name && current.AdjustmentType == updated.AdjustmentType &&
+            current.Value == updated.Value && current.Priority == updated.Priority &&
+            current.StartsAt == updated.StartsAt && current.EndsAt == updated.EndsAt)
+            return false;
+        _priceRules[index] = updated;
+        return true;
+    }
+
+    internal void RemovePriceRule(Guid ruleId)
+    {
+        var rule = _priceRules.SingleOrDefault(candidate => candidate.Id == ruleId)
+            ?? throw new InvalidOperationException("The price rule is not assigned to this variant.");
+        _priceRules.Remove(rule);
+    }
+
+    public Money CalculatePrice(DateTimeOffset at)
+    {
+        var basePrice = Price ?? throw new InvalidOperationException("A base price must be set before calculating a price.");
+        return GetApplicablePriceRule(at)?.Apply(basePrice) ?? basePrice;
+    }
+
+    public PriceRule? GetApplicablePriceRule(DateTimeOffset at) =>
+        _priceRules.Where(candidate => candidate.IsActiveAt(at))
+            .OrderByDescending(candidate => candidate.Priority)
+            .ThenBy(candidate => candidate.Id)
+            .FirstOrDefault();
+
+    internal bool SetAttributeValue(AttributeValue value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        var existingIndex = _attributeValues.FindIndex(existing =>
+            existing.AttributeDefinitionId == value.AttributeDefinitionId);
+
+        if (existingIndex >= 0 && _attributeValues[existingIndex] == value)
+            return false;
+        if (existingIndex >= 0)
+            _attributeValues[existingIndex] = value;
+        else
+            _attributeValues.Add(value);
+        return true;
+    }
+
+    internal void RemoveAttributeValue(AttributeDefinitionId attributeDefinitionId)
+    {
+        if (attributeDefinitionId == default)
+            throw new ArgumentException("Attribute definition ID must not be empty.", nameof(attributeDefinitionId));
+
+        var value = _attributeValues.SingleOrDefault(existing =>
+            existing.AttributeDefinitionId == attributeDefinitionId)
+            ?? throw new InvalidOperationException(
+                $"Attribute value for definition ID '{attributeDefinitionId}' does not exist on this variant.");
+
+        _attributeValues.Remove(value);
+    }
+
+    private static void ValidateRehydratedValues(List<AttributeValue> values)
+    {
+        if (values.Any(value => value is null))
+            throw new InvalidOperationException("A product variant cannot contain null attribute values.");
+
+        if (values.GroupBy(value => value.AttributeDefinitionId).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product variant cannot contain duplicate attribute definitions.");
+    }
+
+    private static string ValidateName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Product variant name must not be empty or whitespace.", nameof(name));
+        return name;
+    }
+
+    private static int? ValidateStockQuantity(int? quantity)
+    {
+        if (quantity < 0) throw new ArgumentOutOfRangeException(nameof(quantity));
+        return quantity;
+    }
+}

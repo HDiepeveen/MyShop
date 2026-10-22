@@ -13,7 +13,7 @@ dotnet build backend/HDWebFramework.sln
 ```
 
 The design-time factory in Infrastructure lets EF inspect the model without starting the API.
-Its default connection names `MyShopDesignTime` on LocalDB; constructing the context and generating SQL do not open that connection.
+Its default connection names `HDWebFrameworkDesignTime` on LocalDB; constructing the context and generating SQL do not open that connection.
 Always provide `--connection` when applying migrations so the intended database is explicit.
 
 ## Create a new development database
@@ -22,13 +22,13 @@ Install SQL Server LocalDB on Windows, or use a development SQL Server instance.
 The following example creates or updates a dedicated local development database:
 
 ```powershell
-$developmentConnection = 'Server=(localdb)\MSSQLLocalDB;Database=MyShopDevelopment;Integrated Security=True;TrustServerCertificate=True'
-dotnet ef database update --project backend/src/MyShop.Infrastructure --startup-project backend/src/MyShop.Infrastructure --connection $developmentConnection
-$env:ConnectionStrings__MyShop = $developmentConnection
-dotnet run --project backend/src/MyShop.Api
+$developmentConnection = 'Server=(localdb)\MSSQLLocalDB;Database=HDWebFrameworkDevelopment;Integrated Security=True;TrustServerCertificate=True'
+dotnet ef database update --project backend/src/HDWebFramework.Infrastructure --startup-project backend/src/HDWebFramework.Infrastructure --connection $developmentConnection
+$env:ConnectionStrings__HDWebFramework = $developmentConnection
+dotnet run --project backend/src/HDWebFramework.Api
 ```
 
-The API reads `ConnectionStrings:MyShop`; it does not automatically migrate the database.
+The API reads `ConnectionStrings:HDWebFramework`; it does not automatically migrate the database.
 Use your own server and authentication settings when LocalDB is unavailable. Keep credentials out of tracked files.
 
 The initial migration is intended for an empty database. An existing database created without migration history needs a separately reviewed baseline plan; do not apply the initial migration blindly to existing catalog tables.
@@ -39,9 +39,9 @@ An idempotent script uses migration history to decide what to apply, not a compa
 After deliberately updating the persistence mappings, create and review a migration:
 
 ```powershell
-dotnet ef migrations add DescriptiveChangeName --project backend/src/MyShop.Infrastructure --startup-project backend/src/MyShop.Infrastructure --output-dir Persistence/Migrations
-dotnet ef migrations has-pending-model-changes --project backend/src/MyShop.Infrastructure --startup-project backend/src/MyShop.Infrastructure
-dotnet ef migrations script --idempotent --project backend/src/MyShop.Infrastructure --startup-project backend/src/MyShop.Infrastructure
+dotnet ef migrations add DescriptiveChangeName --project backend/src/HDWebFramework.Infrastructure --startup-project backend/src/HDWebFramework.Infrastructure --output-dir Persistence/Migrations
+dotnet ef migrations has-pending-model-changes --project backend/src/HDWebFramework.Infrastructure --startup-project backend/src/HDWebFramework.Infrastructure
+dotnet ef migrations script --idempotent --project backend/src/HDWebFramework.Infrastructure --startup-project backend/src/HDWebFramework.Infrastructure
 ```
 
 Review both directions of the migration, generated SQL, and any data conversion or deletion before applying it.
@@ -50,18 +50,18 @@ The offline migration tests verify that the snapshot matches the model and that 
 
 ## Run real SQL Server integration tests
 
-The integration tests are opt-in. Without `MYSHOP_TEST_SQLSERVER`, only those tests are reported as skipped; the other backend tests still run.
+The integration tests are opt-in. Without `HDWEBFRAMEWORK_TEST_SQLSERVER`, only those tests are reported as skipped; the other backend tests still run.
 For a full validation including real SQL Server:
 
 ```powershell
-$env:MYSHOP_TEST_SQLSERVER = 'Server=(localdb)\MSSQLLocalDB;Integrated Security=True;TrustServerCertificate=True'
+$env:HDWEBFRAMEWORK_TEST_SQLSERVER = 'Server=(localdb)\MSSQLLocalDB;Integrated Security=True;TrustServerCertificate=True'
 dotnet build backend/HDWebFramework.sln -m:1 --disable-build-servers
 dotnet test backend/HDWebFramework.sln -m:1 --disable-build-servers
 git diff --check
 ```
 
 The test account needs permission to create and drop databases on that development instance.
-Each fixture replaces the supplied database name with a fresh `MyShopTests_<random GUID>` database, applies migrations, and deletes only that database on completion.
+Each fixture replaces the supplied database name with a fresh `HDWebFrameworkTests_<random GUID>` database, applies migrations, and deletes only that database on completion.
 Tests use separate contexts to verify persisted results. The migration rollback test uses its own additional database.
 The fixture rejects attached database files; supply a server connection instead.
 Tests cover migration application and rollback, category hierarchy constraints, product type attributes, full product graphs, tracked removals, ordered choices, concurrency rollback, cascading deletes, paging, and unique SKUs.
@@ -70,7 +70,7 @@ A forcibly terminated test process can leave its temporary database behind. Iden
 To return to tests without a live database in the current PowerShell session:
 
 ```powershell
-Remove-Item Env:MYSHOP_TEST_SQLSERVER
+Remove-Item Env:HDWEBFRAMEWORK_TEST_SQLSERVER
 ```
 
 See Microsoft's [design-time context documentation](https://learn.microsoft.com/ef/core/miscellaneous/cli/dbcontext-creation) and [migration application guidance](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying?tabs=dotnet-core-cli) for the underlying tooling.

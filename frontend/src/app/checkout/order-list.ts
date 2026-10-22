@@ -45,7 +45,7 @@ import { OrderManagementApi, OrderPaymentMethod, OrderStatus } from './order-man
         <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
           Overzicht verversen
         </button>
-        <a class="button secondary" [href]="exportUrl()" download="myshop-orders.csv"
+        <a class="button secondary" [href]="exportUrl()" download="hdwebframework-orders.csv"
           >CSV exporteren</a
         >
       </div>

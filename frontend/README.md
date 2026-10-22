@@ -9,8 +9,8 @@ Gebruik de .NET-versie uit `../global.json` en Node uit `../.nvmrc`. Deze versie
 Maak eerst een ontwikkelingsdatabase met de instructies in [Database development](../docs/database-development.md). Start daarna de backend vanuit de repository-root, met jouw ontwikkelingsdatabase:
 
 ```powershell
-$env:ConnectionStrings__MyShop = 'Server=(localdb)\MSSQLLocalDB;Database=MyShopDevelopment;Integrated Security=True;TrustServerCertificate=True'
-dotnet run --project backend/src/MyShop.Api --launch-profile http
+$env:ConnectionStrings__HDWebFramework = 'Server=(localdb)\MSSQLLocalDB;Database=HDWebFrameworkDevelopment;Integrated Security=True;TrustServerCertificate=True'
+dotnet run --project backend/src/HDWebFramework.Api --launch-profile http
 ```
 
 Open een tweede terminal in `frontend`:
@@ -78,7 +78,7 @@ De componenttests gebruiken de echte Angular HTTP-client met een gecontroleerde 
 Voor de backend, vanuit de repository-root:
 
 ```powershell
-$env:MYSHOP_TEST_SQLSERVER = 'Server=(localdb)\MSSQLLocalDB;Integrated Security=True;TrustServerCertificate=True'
+$env:HDWEBFRAMEWORK_TEST_SQLSERVER = 'Server=(localdb)\MSSQLLocalDB;Integrated Security=True;TrustServerCertificate=True'
 dotnet build backend/HDWebFramework.sln -m:1 --disable-build-servers
 dotnet test backend/HDWebFramework.sln -m:1 --disable-build-servers
 git diff --check

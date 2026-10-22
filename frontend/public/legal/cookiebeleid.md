@@ -17,11 +17,11 @@ Onze huidige website gebruikt deze technieken voor inloggen, beveiliging en — 
 
 | Naam | Techniek en doel | Bewaring |
 |---|---|---|
-| `MyShop.Admin` | Functionele inlogcookie voor klant- én beheeraccounts. Ondanks de technische naam wordt deze ook voor klanten gebruikt. | Sessiecookie; het inlogbewijs is maximaal dertig minuten geldig. De website verlengt die termijn niet automatisch bij ieder bezoek. |
-| `MyShop.Antiforgery` | Beveiligingscookie die samen met een controletoken helpt voorkomen dat een andere website ongewenst handelingen namens u uitvoert. | Sessiecookie, zonder ingestelde vaste vervaldatum. |
+| `HDWebFramework.Admin` | Functionele inlogcookie voor klant- én beheeraccounts. Ondanks de technische naam wordt deze ook voor klanten gebruikt. | Sessiecookie; het inlogbewijs is maximaal dertig minuten geldig. De website verlengt die termijn niet automatisch bij ieder bezoek. |
+| `HDWebFramework.Antiforgery` | Beveiligingscookie die samen met een controletoken helpt voorkomen dat een andere website ongewenst handelingen namens u uitvoert. | Sessiecookie, zonder ingestelde vaste vervaldatum. |
 | `XSRF-TOKEN` | Bijbehorend beveiligingstoken dat de website kan meesturen bij wijzigingen en formulierverzoeken. | Sessiecookie, zonder ingestelde vaste vervaldatum. |
-| `myshop.cart.v1` | localStorage met product- en variantidentificaties en aantallen van de winkelmand. | Geen automatische tijdslimiet ingesteld. Wordt bijgewerkt door winkelmandhandelingen; kan blijven staan tot overschrijven of verwijderen van browsergegevens. |
-| `myshop.pending-payment.v1` | localStorage met een verwijzing naar een betaalpoging en een kenmerkenlijst van de bijbehorende winkelmand. Helpt een betaling terugvinden en dubbele betaling voorkomen. | Geen automatische tijdslimiet ingesteld. Wordt bij afhandeling van de bijbehorende poging verwijderd, of blijft bestaan tot overschrijven of verwijderen van browsergegevens. |
+| `HDWebFramework.cart.v1` | localStorage met product- en variantidentificaties en aantallen van de winkelmand. | Geen automatische tijdslimiet ingesteld. Wordt bijgewerkt door winkelmandhandelingen; kan blijven staan tot overschrijven of verwijderen van browsergegevens. |
+| `HDWebFramework.pending-payment.v1` | localStorage met een verwijzing naar een betaalpoging en een kenmerkenlijst van de bijbehorende winkelmand. Helpt een betaling terugvinden en dubbele betaling voorkomen. | Geen automatische tijdslimiet ingesteld. Wordt bij afhandeling van de bijbehorende poging verwijderd, of blijft bestaan tot overschrijven of verwijderen van browsergegevens. |
 
 Een sessiecookie is niet hetzelfde als een blijvende cookie met een vaste einddatum. Browsers kunnen sessies herstellen; daarom kan het gedrag bij afsluiten verschillen. De geldigheidsduur van het inlogbewijs blijft afzonderlijk van toepassing.
 

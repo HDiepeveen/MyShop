@@ -39,7 +39,7 @@ worden toegepast. Lokaal is dit uitgevoerd; de online webshop is niet aangepast.
 
 De webshopnaam (maximaal 100 tekens), welkomsttekst (200 tekens) en introductietekst
 (1000 tekens) staan bij dezelfde instellingen. Ze zijn verplicht; de bestaande
-MyShop-teksten blijven de beginwaarden. De naam wordt gebruikt in de winkelkop,
+HDWebFramework-teksten blijven de beginwaarden. De naam wordt gebruikt in de winkelkop,
 beheerkop, footer, besteloverzichten en standaard producttitels. Eigen SEO-titels
 blijven onafhankelijk instelbaar. De technische projectnaam verandert niet.
 De openbare route /api/shop/settings geeft uitsluitend de drie zichtbare teksten.

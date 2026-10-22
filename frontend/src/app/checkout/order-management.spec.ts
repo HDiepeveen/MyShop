@@ -92,7 +92,7 @@ describe('Order management', () => {
       '/api/orders/export?status=awaitingPayment&search=Ada',
     );
     fixture.detectChanges();
-    const exportLink = fixture.nativeElement.querySelector('a[download="myshop-orders.csv"]');
+    const exportLink = fixture.nativeElement.querySelector('a[download="hdwebframework-orders.csv"]');
     expect(exportLink.getAttribute('href')).toBe(
       '/api/orders/export?status=awaitingPayment&search=Ada',
     );
@@ -211,7 +211,7 @@ describe('Order management', () => {
     fixture.componentInstance.markShipped(
       fixture.componentInstance.state()!.data!,
       '  PostNL  ',
-      '  3SMYSHOP123  ',
+      '  3SHDWEBFRAMEWORK123  ',
     );
     fixture.componentInstance.markShipped(
       fixture.componentInstance.state()!.data!,
@@ -224,7 +224,7 @@ describe('Order management', () => {
       status: 'shipped',
       revision: 'new-revision',
       carrier: 'PostNL',
-      trackingCode: '3SMYSHOP123',
+      trackingCode: '3SHDWEBFRAMEWORK123',
     });
     shipment.flush({
       status: 'shipped',
@@ -232,7 +232,7 @@ describe('Order management', () => {
       paymentReference: 'bankafschrift 12345',
       shippedAt: '2026-09-30T10:00:00Z',
       shippingCarrier: 'PostNL',
-      trackingCode: '3SMYSHOP123',
+      trackingCode: '3SHDWEBFRAMEWORK123',
       revision: 'shipped-revision',
     });
     http.expectOne('/api/orders/' + summary.id).flush({
@@ -243,7 +243,7 @@ describe('Order management', () => {
       paymentInstructions: 'Betaal binnen 14 dagen.',
       shippedAt: '2026-09-30T10:00:00Z',
       shippingCarrier: 'PostNL',
-      trackingCode: '3SMYSHOP123',
+      trackingCode: '3SHDWEBFRAMEWORK123',
       revision: 'shipped-revision',
       customer: { name: 'Ada Lovelace', email: 'ada@example.test' },
       deliveryAddress: {
@@ -258,7 +258,7 @@ describe('Order management', () => {
     expect(fixture.nativeElement.textContent).toContain('Verzonden');
     expect(fixture.nativeElement.textContent).toContain('Bestelling verzonden');
     expect(fixture.nativeElement.textContent).toContain('PostNL');
-    expect(fixture.nativeElement.textContent).toContain('3SMYSHOP123');
+    expect(fixture.nativeElement.textContent).toContain('3SHDWEBFRAMEWORK123');
     expect(fixture.nativeElement.textContent).toContain(
       'De bestelling is als verzonden gemarkeerd.',
     );

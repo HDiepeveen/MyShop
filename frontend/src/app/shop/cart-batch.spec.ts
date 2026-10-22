@@ -3,9 +3,9 @@ const productId = '10000000-0000-0000-0000-000000000001';
 const variantId = '20000000-0000-0000-0000-000000000001';
 const second = '20000000-0000-0000-0000-000000000002';
 const line = { productId, variantId, quantity: 2 };
-beforeEach(() => localStorage.removeItem('myshop.cart.v1'));
+beforeEach(() => localStorage.removeItem('HDWebFramework.cart.v1'));
 afterEach(() => {
-  localStorage.removeItem('myshop.cart.v1');
+  localStorage.removeItem('HDWebFramework.cart.v1');
   vi.restoreAllMocks();
 });
 describe('Atomic cart additions', () => {

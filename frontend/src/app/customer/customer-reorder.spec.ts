@@ -41,9 +41,9 @@ const order: Detail = {
   ],
   totals: [],
 };
-beforeEach(() => localStorage.removeItem('myshop.cart.v1'));
+beforeEach(() => localStorage.removeItem('HDWebFramework.cart.v1'));
 afterEach(() => {
-  localStorage.removeItem('myshop.cart.v1');
+  localStorage.removeItem('HDWebFramework.cart.v1');
   vi.restoreAllMocks();
 });
 describe('Ordering previous articles again', () => {

@@ -1,0 +1,95 @@
+using HDWebFramework.Application.Catalog.Abstractions;
+using HDWebFramework.Application.Catalog.CreateCategory;
+using HDWebFramework.Domain.Catalog;
+using UseCase = HDWebFramework.Application.Catalog.CreateCategory.CreateCategory;
+
+namespace HDWebFramework.Application.Tests.Catalog.CreateCategory;
+
+public sealed class CreateCategoryTests
+{
+    [Fact]
+    public void Constructor_RejectsNullDependencies()
+    {
+        var store = new StoreFake();
+        Assert.Throws<ArgumentNullException>(() => new UseCase(null!, store));
+        Assert.Throws<ArgumentNullException>(() => new UseCase(store, null!));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WhenPreCancelled_StopsBeforeRepositoryAccess()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            new UseCase(store, store).ExecuteAsync(
+                new CreateCategoryCommand("Clothing"), new CancellationToken(canceled: true)));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_RejectsNullCommandAndEmptyParentId()
+    {
+        var store = new StoreFake();
+        var useCase = new UseCase(store, store);
+        await Assert.ThrowsAsync<ArgumentNullException>(() => useCase.ExecuteAsync(null!, CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => useCase.ExecuteAsync(
+            new CreateCategoryCommand("Child", default(CategoryId)), CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_CreatesRootWithoutParentLookup()
+    {
+        var store = new StoreFake();
+        var result = await new UseCase(store, store).ExecuteAsync(new("Clothing"), CancellationToken.None);
+        Assert.NotNull(result.Category);
+        Assert.True(result.Category.IsRoot);
+        Assert.Same(result.Category, store.Added);
+        Assert.Equal(0, store.LookupCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_CreatesChildWhenParentExists()
+    {
+        var store = new StoreFake { Found = Category.CreateRoot("Clothing") };
+        var result = await new UseCase(store, store).ExecuteAsync(
+            new("Shirts", store.Found.Id), CancellationToken.None);
+        Assert.Equal(store.Found.Id, result.Category!.ParentCategoryId);
+        Assert.Same(result.Category, store.Added);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MissingParent_DoesNotWrite()
+    {
+        var store = new StoreFake();
+        var result = await new UseCase(store, store).ExecuteAsync(
+            new("Shirts", CategoryId.New()), CancellationToken.None);
+        Assert.True(result.ParentNotFound);
+        Assert.Null(store.Added);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_InvalidName_DoesNotWrite()
+    {
+        var store = new StoreFake();
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new UseCase(store, store).ExecuteAsync(new(""), CancellationToken.None));
+        Assert.Null(store.Added);
+    }
+
+    private sealed class StoreFake : ICategoryRepository, ICategoryWriter
+    {
+        public Category? Found { get; set; }
+        public Category? Added { get; private set; }
+        public int LookupCount { get; private set; }
+        public Task<Category?> GetByIdAsync(CategoryId id, CancellationToken token)
+        {
+            LookupCount++;
+            return Task.FromResult(Found);
+        }
+        public Task AddAsync(Category category, CancellationToken token)
+        {
+            Added = category;
+            return Task.CompletedTask;
+        }
+        public Task SaveAsync(Category category, CancellationToken token) => throw new NotSupportedException();
+        public Task DeleteAsync(CategoryId categoryId, CancellationToken token) => throw new NotSupportedException();
+    }
+}

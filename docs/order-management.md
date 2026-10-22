@@ -22,7 +22,7 @@ An administrator can mark an order awaiting payment as paid and then mark a paid
 An authenticated customer can also cancel their own order while it awaits payment. That action uses
 the fixed audit reason `Geannuleerd door klant.` and applies the same atomic stock restoration.
 
-A paid order that has not been shipped can be marked as refunded after the full amount has been returned outside MyShop. This requires a refund reference of at most 100 characters and a reason of at most 500 characters. Both values and the UTC refund time are retained for the audit trail. MyShop records this manual action; automatic provider refunds and returns after shipment remain outside this slice.
+A paid order that has not been shipped can be marked as refunded after the full amount has been returned outside HDWebFramework. This requires a refund reference of at most 100 characters and a reason of at most 500 characters. Both values and the UTC refund time are retained for the audit trail. HDWebFramework records this manual action; automatic provider refunds and returns after shipment remain outside this slice.
 
 `PUT /api/orders/{id}/status` accepts `paid`, `shipped`, `cancelled` or `refunded` with the revision returned by the detail endpoint. Payment requires `paymentReference`, shipping requires `carrier` and `trackingCode`, cancellation requires `reason`, and a refund requires both `refundReference` and `reason`. Each update records its UTC event time and replaces the revision atomically. A stale revision returns a conflict so concurrent changes are never overwritten silently.
 

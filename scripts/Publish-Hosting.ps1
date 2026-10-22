@@ -15,7 +15,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Frontendbuild mislukt.' }
 } finally { Pop-Location }
 $taskPublish = Join-Path $taskOutput 'website'
-dotnet publish (Join-Path $taskRepo 'backend/src/MyShop.Api') -c Release --no-restore -p:UseAppHost=false -o $taskPublish
+dotnet publish (Join-Path $taskRepo 'backend/src/HDWebFramework.Api') -c Release --no-restore -p:UseAppHost=false -o $taskPublish
 if ($LASTEXITCODE -ne 0) { throw 'Publiceren mislukt.' }
 $taskWebRoot = Join-Path $taskPublish 'wwwroot'
 New-Item -ItemType Directory -Force -Path $taskWebRoot | Out-Null

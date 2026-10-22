@@ -17,7 +17,7 @@ describe('Shop checkout', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
-    localStorage.removeItem('myshop.pending-payment.v1');
+    localStorage.removeItem('HDWebFramework.pending-payment.v1');
     TestBed.configureTestingModule({
       imports: [ShopCheckout],
       providers: [
@@ -38,7 +38,7 @@ describe('Shop checkout', () => {
 
   afterEach(() => {
     http.verify();
-    localStorage.removeItem('myshop.pending-payment.v1');
+    localStorage.removeItem('HDWebFramework.pending-payment.v1');
   });
 
   it('saves the payment before redirecting directly and blocks duplicate clicks during navigation', () => {

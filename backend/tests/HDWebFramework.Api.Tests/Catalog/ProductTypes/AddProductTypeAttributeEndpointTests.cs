@@ -1,0 +1,73 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Routing;
+using HDWebFramework.Api.Catalog;
+using HDWebFramework.Api.Catalog.ProductTypes;
+using HDWebFramework.Application.Catalog.Abstractions;
+using HDWebFramework.Domain.Catalog;
+using UseCase = HDWebFramework.Application.Catalog.AddProductTypeAttribute.AddProductTypeAttribute;
+
+namespace HDWebFramework.Api.Tests.Catalog.ProductTypes;
+
+public sealed class AddProductTypeAttributeEndpointTests
+{
+    [Fact]
+    public void MapAddProductTypeAttribute_NullBuilder_Throws() =>
+        Assert.Throws<ArgumentNullException>(() => AddProductTypeAttributeEndpoint.MapAddProductTypeAttribute(null!));
+
+    [Fact]
+    public void MapAddProductTypeAttribute_MapsNamedPostRoute()
+    {
+        var app = WebApplication.CreateBuilder().Build();
+        Assert.Same(app, app.MapAddProductTypeAttribute());
+        var endpoint = Assert.IsType<RouteEndpoint>(Assert.Single(((IEndpointRouteBuilder)app).DataSources).Endpoints.Single());
+        Assert.Equal("/api/product-types/{productTypeId:guid}/attributes", endpoint.RoutePattern.RawText);
+        Assert.Equal("AddProductTypeAttribute", endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()!.EndpointName);
+        Assert.Equal(["POST"], endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()!.HttpMethods);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_AddsAttributeAndReturnsCreated()
+    {
+        var store = new StoreFake { ProductType = ProductType.Create("Clothing") };
+        var request = new AddProductTypeAttributeRequest(
+            "colour", "Colour", ApiAttributeDataType.Choice, false, true, ApiAttributeScope.Variant);
+        var result = await AddProductTypeAttributeEndpoint.ExecuteAsync(
+            store.ProductType.Id.Value, request, new UseCase(store, store), CancellationToken.None);
+
+        var created = Assert.IsType<Created<AddProductTypeAttributeResponse>>(result.Result);
+        Assert.Equal("colour", created.Value!.Code);
+        Assert.Equal(ApiAttributeDataType.Choice, created.Value.DataType);
+        Assert.Equal(ApiAttributeScope.Variant, created.Value.Scope);
+        Assert.Contains(created.Value.Id.ToString(), created.Location);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_MissingProductType_ReturnsNotFound()
+    {
+        var store = new StoreFake();
+        var result = await AddProductTypeAttributeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), new("code", "Name", ApiAttributeDataType.Text, false, false, ApiAttributeScope.Product),
+            new UseCase(store, store), CancellationToken.None);
+        Assert.IsType<NotFound<Microsoft.AspNetCore.Mvc.ProblemDetails>>(result.Result);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_NullRequest_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => AddProductTypeAttributeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), null!, null!, CancellationToken.None));
+
+    [Fact]
+    public async Task ExecuteAsync_NullUseCase_Throws() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() => AddProductTypeAttributeEndpoint.ExecuteAsync(
+            Guid.NewGuid(), new("size", "Size", ApiAttributeDataType.Text, false, false, ApiAttributeScope.Product),
+            null!, CancellationToken.None));
+
+    private sealed class StoreFake : IProductTypeRepository, IProductTypeWriter
+    {
+        public ProductType? ProductType { get; set; }
+        public Task<ProductType?> GetByIdAsync(ProductTypeId id, CancellationToken token) => Task.FromResult(ProductType);
+        public Task AddAsync(ProductType productType, CancellationToken token) => throw new NotSupportedException();
+        public Task SaveAsync(ProductType productType, CancellationToken token) => Task.CompletedTask;
+    }
+}

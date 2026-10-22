@@ -32,7 +32,7 @@ const prices = {
 describe('Product quantity selection', () => {
   let http: HttpTestingController;
   beforeEach(() => {
-    localStorage.removeItem('myshop.cart.v1');
+    localStorage.removeItem('HDWebFramework.cart.v1');
     TestBed.configureTestingModule({
       providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
     });
@@ -40,7 +40,7 @@ describe('Product quantity selection', () => {
   });
   afterEach(() => {
     http.verify();
-    localStorage.removeItem('myshop.cart.v1');
+    localStorage.removeItem('HDWebFramework.cart.v1');
     vi.restoreAllMocks();
   });
   async function setup(available = true) {

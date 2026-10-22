@@ -1,0 +1,33 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using HDWebFramework.Infrastructure.Persistence.Models;
+
+namespace HDWebFramework.Infrastructure.Persistence.Configurations;
+
+internal sealed class ProductPersistenceConfiguration : IEntityTypeConfiguration<ProductPersistence>
+{
+    public void Configure(EntityTypeBuilder<ProductPersistence> builder)
+    {
+        builder.ToTable("Products");
+        builder.HasKey(product => product.Id);
+        builder.Property(product => product.Id).ValueGeneratedNever();
+        builder.Property(product => product.ProductTypeId).IsRequired();
+        builder.Property(product => product.Name).IsRequired();
+        builder.Property(product => product.Description).IsRequired().HasMaxLength(10000);
+        builder.Property(product => product.ImageUrl).HasMaxLength(2048);
+        builder.Property(product => product.ImageAlt).IsRequired().HasMaxLength(250);
+        builder.Property(product => product.IsPublished).IsRequired();
+        builder.Property(product => product.Version)
+            .IsRequired()
+            .HasColumnType("uniqueidentifier")
+            .IsConcurrencyToken()
+            .ValueGeneratedNever();
+
+        builder.HasOne(product => product.ProductType)
+            .WithMany()
+            .HasForeignKey(product => product.ProductTypeId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasIndex(product => product.ProductTypeId);
+    }
+}

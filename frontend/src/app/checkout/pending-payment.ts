@@ -1,6 +1,7 @@
+import { migrateFrameworkStorage } from '../shop/framework-storage';
 import { Injectable } from '@angular/core';
 import { CartLine } from '../shop/cart';
-const key = 'myshop.pending-payment.v1';
+const key = 'HDWebFramework.pending-payment.v1';
 const signature = (lines: readonly CartLine[]) =>
   JSON.stringify(
     lines
@@ -10,6 +11,7 @@ const signature = (lines: readonly CartLine[]) =>
 
 @Injectable({ providedIn: 'root' })
 export class PendingPayment {
+  constructor() { migrateFrameworkStorage('pending-payment.v1'); }
   save(token: string, lines: readonly CartLine[]) {
     try {
       localStorage.setItem(key, JSON.stringify({ token, signature: signature(lines) }));

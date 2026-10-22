@@ -1,4 +1,4 @@
-# MyShop op SmarterASP.NET
+# HDWebFramework op SmarterASP.NET
 
 Hostnaam: `hansdiepeveen-001-site1.ktempurl.com`. SQL-doel: `sql6033.site4now.net`,
 `db_acf835_myshop`, gebruiker `db_acf835_myshop_admin`. Bewaar wachtwoorden buiten Git.
@@ -8,8 +8,8 @@ Hostnaam: `hansdiepeveen-001-site1.ktempurl.com`. SQL-doel: `sql6033.site4now.ne
 Voer vanuit de repository uit met een nieuwe uitvoermap buiten Git:
 
 ```powershell
-./scripts/Publish-Hosting.ps1 -OutputDirectory C:/Users/hansd/Documents/Codex/MyShop-upload
-./scripts/Export-HostingDatabase.ps1 -PackageDirectory C:/Users/hansd/Documents/Codex/MyShop-upload
+./scripts/Publish-Hosting.ps1 -OutputDirectory C:/Users/hansd/Documents/Codex/HDWebFramework-upload
+./scripts/Export-HostingDatabase.ps1 -PackageDirectory C:/Users/hansd/Documents/Codex/HDWebFramework-upload
 ```
 
 Het pakket bevat de ASP.NET Core API en de Angular-productiebouw in `website/wwwroot`.
@@ -21,7 +21,7 @@ De gegenereerde `web.config` start de API in Production. Gebruik HTTPS.
 
 Voer in de uitvoermap `./Configure-Hosting.ps1` uit. Het script vraagt het
 wachtwoord afgeschermd op, schrijft `website/appsettings.Production.json` en maakt
-`MyShop-upload.zip`. Configuratie en zip bevatten het databasewachtwoord. Bewaar ze
+`HDWebFramework-upload.zip`. Configuratie en zip bevatten het databasewachtwoord. Bewaar ze
 prive, buiten Git, en stuur ze niet in een chat. Het configuratiebestand mag niet
 in `wwwroot` staan. Upload geen backups of gegevensscripts naar de websitemap.
 

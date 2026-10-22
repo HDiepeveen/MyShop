@@ -20,7 +20,7 @@ try {
     $taskConnection["Encrypt"] = $true
     $taskConnection["TrustServerCertificate"] = $false
     $taskSettings = @{
-        ConnectionStrings = @{ MyShop = $taskConnection.ConnectionString }
+        ConnectionStrings = @{ HDWebFramework = $taskConnection.ConnectionString }
         AllowedHosts = $taskUri.Host
         Hosting = @{ DataProtectionKeyPath = 'App_Data/keys' }
         Email = @{ Enabled = $false; Mode = 'Smtp'; PublicBaseUrl = $taskUri.GetLeftPart([UriPartial]::Authority) }

@@ -29,7 +29,7 @@ describe('Product selection CSV export', () => {
     page.searchText = 'draft';
     harness.detectChanges();
     const link = harness.routeNativeElement!.querySelector(
-      'a[download="myshop-products.csv"]',
+      'a[download="hdwebframework-products.csv"]',
     ) as HTMLAnchorElement;
     const url = new URL(link.getAttribute('href')!, 'http://localhost');
     expect(url.pathname).toBe('/api/products/export');

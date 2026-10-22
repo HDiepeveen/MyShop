@@ -1,0 +1,274 @@
+using System.Collections.ObjectModel;
+
+namespace HDWebFramework.Domain.Catalog;
+
+public sealed class Product
+{
+    private readonly List<ProductVariant> _variants = [];
+    private readonly ReadOnlyCollection<ProductVariant> _readOnlyVariants;
+    private readonly List<AttributeValue> _attributeValues = [];
+    private readonly ReadOnlyCollection<AttributeValue> _readOnlyAttributeValues;
+    private readonly List<CategoryId> _categoryIds = [];
+    private readonly ReadOnlyCollection<CategoryId> _readOnlyCategoryIds;
+
+    private Product(string name, ProductTypeId productTypeId)
+    {
+        if (productTypeId == default)
+            throw new ArgumentException("Product type ID must not be empty.", nameof(productTypeId));
+
+        Id = ProductId.New();
+        ProductTypeId = productTypeId;
+        Name = ValidateName(name);
+        _readOnlyVariants = _variants.AsReadOnly();
+        _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _readOnlyCategoryIds = _categoryIds.AsReadOnly();
+    }
+
+    private Product(
+        ProductId id,
+        ProductTypeId productTypeId,
+        string name,
+        List<ProductVariant> variants,
+        List<CategoryId> categoryIds,
+        List<AttributeValue> attributeValues)
+    {
+        Id = id;
+        ProductTypeId = productTypeId;
+        Name = name;
+        _variants.AddRange(variants);
+        _categoryIds.AddRange(categoryIds);
+        _attributeValues.AddRange(attributeValues);
+        _readOnlyVariants = _variants.AsReadOnly();
+        _readOnlyAttributeValues = _attributeValues.AsReadOnly();
+        _readOnlyCategoryIds = _categoryIds.AsReadOnly();
+    }
+
+    public ProductId Id { get; }
+    public ProductTypeId ProductTypeId { get; }
+    public string Name { get; private set; }
+    public ProductPresentation Presentation { get; private set; } = ProductPresentation.Draft;
+
+    public void SetPresentation(ProductPresentation presentation) =>
+        Presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
+    public IReadOnlyCollection<ProductVariant> Variants => _readOnlyVariants;
+    public IReadOnlyCollection<AttributeValue> AttributeValues => _readOnlyAttributeValues;
+    public IReadOnlyCollection<CategoryId> CategoryIds => _readOnlyCategoryIds;
+
+    public static Product Create(string name, ProductTypeId productTypeId) => new(name, productTypeId);
+
+    public static Product Create(string name, ProductTypeId productTypeId, string initialVariantName)
+    {
+        var product = Create(name, productTypeId);
+        product.AddVariant(initialVariantName);
+        return product;
+    }
+
+    internal static Product Rehydrate(
+        ProductId id,
+        ProductTypeId productTypeId,
+        string name,
+        IEnumerable<ProductVariant> variants,
+        IEnumerable<CategoryId> categoryIds,
+        IEnumerable<AttributeValue> attributeValues,
+        ProductPresentation? presentation = null)
+    {
+        ArgumentNullException.ThrowIfNull(variants);
+        ArgumentNullException.ThrowIfNull(categoryIds);
+        ArgumentNullException.ThrowIfNull(attributeValues);
+
+        var variantList = variants.ToList();
+        var categoryIdList = categoryIds.ToList();
+        var values = attributeValues.ToList();
+
+        if (id == default)
+            throw new ArgumentException("Product ID must not be empty.", nameof(id));
+        if (productTypeId == default)
+            throw new ArgumentException("Product type ID must not be empty.", nameof(productTypeId));
+        if (variantList.Any(variant => variant is null))
+            throw new InvalidOperationException("A product cannot contain null variants.");
+        if (variantList.GroupBy(variant => variant.Id).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate variants.");
+        if (variantList.Where(variant => variant.Sku is not null)
+            .GroupBy(variant => variant.Sku)
+            .Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate variant SKUs.");
+        if (variantList.SelectMany(variant => variant.PriceRules)
+            .GroupBy(rule => rule.Id).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate price rule identities.");
+        if (categoryIdList.Any(categoryId => categoryId == default))
+            throw new ArgumentException("Category ID must not be empty.", nameof(categoryIds));
+        if (categoryIdList.Distinct().Count() != categoryIdList.Count)
+            throw new InvalidOperationException("A product cannot contain duplicate categories.");
+        if (values.Any(value => value is null))
+            throw new InvalidOperationException("A product cannot contain null attribute values.");
+        if (values.GroupBy(value => value.AttributeDefinitionId).Any(group => group.Count() > 1))
+            throw new InvalidOperationException("A product cannot contain duplicate attribute definitions.");
+
+        return new Product(
+            id,
+            productTypeId,
+            ValidateName(name),
+            variantList,
+            categoryIdList,
+            values) { Presentation = presentation ?? ProductPresentation.Draft };
+    }
+
+    public void Rename(string name) => Name = ValidateName(name);
+
+    public ProductVariant AddVariant(string name)
+    {
+        var variant = new ProductVariant(ProductVariantId.New(), name);
+        _variants.Add(variant);
+        return variant;
+    }
+
+    public void RenameVariant(ProductVariantId variantId, string name) => FindVariant(variantId).Rename(name);
+
+    public void SetVariantSku(ProductVariantId variantId, Sku sku)
+    {
+        ArgumentNullException.ThrowIfNull(sku);
+
+        if (variantId == default)
+            throw new ArgumentException("Product variant ID must not be empty.", nameof(variantId));
+
+        var variant = FindVariant(variantId);
+        if (_variants.Any(candidate => candidate.Id != variantId && candidate.Sku == sku))
+            throw new InvalidOperationException($"SKU '{sku}' is already assigned to another variant of this product.");
+
+        variant.SetSku(sku);
+    }
+
+    public void ClearVariantSku(ProductVariantId variantId)
+    {
+        if (variantId == default)
+            throw new ArgumentException("Product variant ID must not be empty.", nameof(variantId));
+
+        FindVariant(variantId).ClearSku();
+    }
+
+    public void SetVariantPrice(ProductVariantId variantId, Money price, decimal? vatRate = null, bool vatExempt = false, decimal? netPriceAmount = null) => FindVariant(variantId).SetPrice(price, vatRate, vatExempt, netPriceAmount);
+
+    public void ClearVariantPrice(ProductVariantId variantId) => FindVariant(variantId).ClearPrice();
+
+    public void SetVariantStockQuantity(ProductVariantId variantId, int quantity) =>
+        FindVariant(variantId).SetStockQuantity(quantity);
+
+    public void ClearVariantStockTracking(ProductVariantId variantId) =>
+        FindVariant(variantId).ClearStockTracking();
+
+    public void ReserveVariantStock(ProductVariantId variantId, int quantity) =>
+        FindVariant(variantId).ReserveStock(quantity);
+
+    public void ReleaseVariantStock(ProductVariantId variantId, int quantity) =>
+        FindVariant(variantId).ReleaseStock(quantity);
+
+    public void AddVariantPriceRule(ProductVariantId variantId, PriceRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        var variant = FindVariant(variantId);
+        if (_variants.SelectMany(candidate => candidate.PriceRules).Any(existing => existing.Id == rule.Id))
+            throw new InvalidOperationException("This price rule is already assigned to a variant of this product.");
+        variant.AddPriceRule(rule);
+    }
+
+    public bool UpdateVariantPriceRule(ProductVariantId variantId, Guid ruleId, string name,
+        PriceAdjustmentType adjustmentType, decimal value, int priority,
+        DateTimeOffset? startsAt = null, DateTimeOffset? endsAt = null) =>
+        FindVariant(variantId).UpdatePriceRule(ruleId, name, adjustmentType, value, priority, startsAt, endsAt);
+
+    public void RemoveVariantPriceRule(ProductVariantId variantId, Guid ruleId) => FindVariant(variantId).RemovePriceRule(ruleId);
+
+    public bool SetAttributeValue(AttributeValue value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return SetAttributeValue(_attributeValues, value);
+    }
+
+    public void RemoveAttributeValue(AttributeDefinitionId attributeDefinitionId) =>
+        RemoveAttributeValue(_attributeValues, attributeDefinitionId);
+
+    public void AssignToCategory(CategoryId categoryId)
+    {
+        ValidateCategoryId(categoryId);
+
+        if (!_categoryIds.Contains(categoryId))
+            _categoryIds.Add(categoryId);
+    }
+
+    public void RemoveFromCategory(CategoryId categoryId)
+    {
+        ValidateCategoryId(categoryId);
+
+        if (!_categoryIds.Remove(categoryId))
+            throw new InvalidOperationException(
+                $"Category with ID '{categoryId}' is not assigned to this product.");
+    }
+
+    public bool SetVariantAttributeValue(ProductVariantId variantId, AttributeValue value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        return FindVariant(variantId).SetAttributeValue(value);
+    }
+
+    public void RemoveVariantAttributeValue(
+        ProductVariantId variantId,
+        AttributeDefinitionId attributeDefinitionId) =>
+        FindVariant(variantId).RemoveAttributeValue(attributeDefinitionId);
+
+    public void RemoveVariant(ProductVariantId variantId)
+    {
+        var variant = FindVariant(variantId);
+
+        if (_variants.Count == 1)
+            throw new InvalidOperationException("A product must contain at least one variant.");
+
+        _variants.Remove(variant);
+    }
+
+    private ProductVariant FindVariant(ProductVariantId variantId) =>
+        _variants.SingleOrDefault(variant => variant.Id == variantId)
+        ?? throw new InvalidOperationException($"Variant with ID '{variantId}' does not belong to this product.");
+
+    private static bool SetAttributeValue(List<AttributeValue> values, AttributeValue value)
+    {
+        var existingIndex = values.FindIndex(existing =>
+            existing.AttributeDefinitionId == value.AttributeDefinitionId);
+
+        if (existingIndex >= 0 && values[existingIndex] == value)
+            return false;
+        if (existingIndex >= 0)
+            values[existingIndex] = value;
+        else
+            values.Add(value);
+        return true;
+    }
+
+    private static void RemoveAttributeValue(
+        List<AttributeValue> values,
+        AttributeDefinitionId attributeDefinitionId)
+    {
+        if (attributeDefinitionId == default)
+            throw new ArgumentException("Attribute definition ID must not be empty.", nameof(attributeDefinitionId));
+
+        var value = values.SingleOrDefault(existing =>
+            existing.AttributeDefinitionId == attributeDefinitionId)
+            ?? throw new InvalidOperationException(
+                $"Attribute value for definition ID '{attributeDefinitionId}' does not exist.");
+
+        values.Remove(value);
+    }
+
+    private static void ValidateCategoryId(CategoryId categoryId)
+    {
+        if (categoryId == default)
+            throw new ArgumentException("Category ID must not be empty.", nameof(categoryId));
+    }
+
+    private static string ValidateName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Product name must not be empty or whitespace.", nameof(name));
+        return name;
+    }
+}

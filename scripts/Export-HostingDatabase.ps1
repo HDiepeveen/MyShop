@@ -1,5 +1,5 @@
 param([Parameter(Mandatory=$true)][string]$PackageDirectory,
-      [string]$SourceConnection = 'Server=(localdb)\MSSQLLocalDB;Database=MyShopPaymentAcceptance_20261007;Integrated Security=True;TrustServerCertificate=True')
+      [string]$SourceConnection = 'Server=(localdb)\MSSQLLocalDB;Database=HDWebFrameworkPaymentAcceptance_20261007;Integrated Security=True;TrustServerCertificate=True')
 $ErrorActionPreference = 'Stop'
 $taskRepo = Split-Path $PSScriptRoot -Parent
 $taskOutput = [IO.Path]::GetFullPath($PackageDirectory)
@@ -8,7 +8,7 @@ if ($taskOutput.Equals($taskRepo, [StringComparison]::OrdinalIgnoreCase) -or $ta
 $taskSchema = Join-Path $taskOutput 'database-schema.sql'
 $taskData = Join-Path $taskOutput 'database-data.sql'
 if ((Test-Path -LiteralPath $taskSchema) -or (Test-Path -LiteralPath $taskData)) { throw 'Bestaande exports worden niet overschreven.' }
-dotnet ef migrations script --no-build --project (Join-Path $taskRepo 'backend/src/MyShop.Infrastructure') --startup-project (Join-Path $taskRepo 'backend/src/MyShop.Infrastructure') --output $taskSchema
+dotnet ef migrations script --no-build --project (Join-Path $taskRepo 'backend/src/HDWebFramework.Infrastructure') --startup-project (Join-Path $taskRepo 'backend/src/HDWebFramework.Infrastructure') --output $taskSchema
 if ($LASTEXITCODE -ne 0) { throw 'Schemascript maken mislukt.' }
 # Compile statements after ADD COLUMN in a fresh batch: SQL Server cannot see
 # a newly added column while compiling the rest of the original batch.

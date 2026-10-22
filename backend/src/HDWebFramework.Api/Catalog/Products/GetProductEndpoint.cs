@@ -1,0 +1,140 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using HDWebFramework.Application.Catalog.GetProduct;
+using HDWebFramework.Domain.Catalog;
+using UseCase = HDWebFramework.Application.Catalog.GetProduct.GetProduct;
+
+namespace HDWebFramework.Api.Catalog.Products;
+
+public static class GetProductEndpoint
+{
+    public static IEndpointRouteBuilder MapGetProduct(this IEndpointRouteBuilder endpoints)
+    {
+        ArgumentNullException.ThrowIfNull(endpoints);
+
+        endpoints.MapGet("/api/products/{productId:guid}", ExecuteAsync)
+            .WithName("GetProduct");
+
+        return endpoints;
+    }
+
+    public static async Task<Results<
+        Ok<GetProductResponse>,
+        NotFound<ProblemDetails>,
+        BadRequest<ProblemDetails>>> ExecuteAsync(
+        Guid productId,
+        [FromServices] UseCase useCase,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(useCase);
+
+        try
+        {
+            var result = await useCase.ExecuteAsync(
+                new GetProductQuery(ProductId.From(productId)),
+                cancellationToken);
+
+            if (result.Failure == GetProductFailure.ProductNotFound)
+                return TypedResults.NotFound(new ProblemDetails
+                {
+                    Title = "Product not found",
+                    Detail = $"Product '{productId}' does not exist."
+                });
+
+            var snapshot = result.Snapshot
+                ?? throw new InvalidOperationException("A successful get result must contain a product snapshot.");
+
+            return TypedResults.Ok(Map(snapshot));
+        }
+        catch (ArgumentException exception)
+        {
+            return TypedResults.BadRequest(new ProblemDetails
+            {
+                Title = "Invalid product ID",
+                Detail = exception.Message
+            });
+        }
+    }
+
+    private static GetProductResponse Map(
+        Application.Catalog.Abstractions.ProductSnapshot snapshot)
+    {
+        var product = snapshot.Product;
+        return new GetProductResponse(
+            product.Id.Value,
+            product.ProductTypeId.Value,
+            product.Name,
+            product.CategoryIds.Select(categoryId => categoryId.Value).ToArray(),
+            product.AttributeValues.Select(AttributeValueResponse.FromDomain).ToArray(),
+            product.Variants.Select(ProductVariantResponse.FromDomain).ToArray(),
+            snapshot.ConcurrencyToken.Revision,
+            new ProductPresentationResponse(product.Presentation.Description, product.Presentation.ImageUrl, product.Presentation.ImageAlt, product.Presentation.IsPublished));
+    }
+}
+
+public sealed record GetProductResponse(
+    Guid Id,
+    Guid ProductTypeId,
+    string Name,
+    IReadOnlyList<Guid> CategoryIds,
+    IReadOnlyList<AttributeValueResponse> AttributeValues,
+    IReadOnlyList<ProductVariantResponse> Variants,
+    Guid Revision,
+    ProductPresentationResponse? Presentation = null);
+
+public sealed record ProductPresentationResponse(string Description, string? ImageUrl, string ImageAlt, bool IsPublished);
+
+public sealed record ProductVariantResponse(
+    Guid Id,
+    string Name,
+    string? Sku,
+    IReadOnlyList<AttributeValueResponse> AttributeValues,
+    MoneyResponse? Price,
+    IReadOnlyList<PriceRuleResponse> PriceRules,
+    int? StockQuantity)
+{
+    internal static ProductVariantResponse FromDomain(ProductVariant variant) => new(
+        variant.Id.Value,
+        variant.Name,
+        variant.Sku?.Value,
+        variant.AttributeValues.Select(AttributeValueResponse.FromDomain).ToArray(),
+        variant.Price is { } price ? MoneyResponse.FromVariant(variant, price) : null,
+        variant.PriceRules.OrderByDescending(rule => rule.Priority).ThenBy(rule => rule.Id)
+            .Select(PriceRuleResponse.FromDomain).ToArray(),
+        variant.StockQuantity);
+}
+
+public sealed record AttributeValueResponse(
+    Guid AttributeDefinitionId,
+    string DataType,
+    object Value)
+{
+    internal static AttributeValueResponse FromDomain(AttributeValue value) =>
+        new(
+            value.AttributeDefinitionId.Value,
+            value.DataType.ToString(),
+            value switch
+            {
+                TextAttributeValue text => text.Value,
+                IntegerAttributeValue integer => integer.Value,
+                DecimalAttributeValue decimalValue => decimalValue.Value,
+                BooleanAttributeValue boolean => boolean.Value,
+                DateAttributeValue date => date.Value,
+                ChoiceAttributeValue choice => choice.Value.Value,
+                MultiChoiceAttributeValue multiChoice =>
+                    multiChoice.Values.Select(choice => choice.Value).ToArray(),
+                _ => throw new ArgumentOutOfRangeException(nameof(value), "Attribute value type is not supported.")
+            });
+}
+
+public sealed record MoneyResponse(decimal Amount, string Currency, string? NetAmount = null,
+    string? VatAmount = null, string? GrossAmount = null, decimal? VatRate = null, bool VatExempt = false, bool IsNetPrice = false)
+{
+    internal static MoneyResponse FromVariant(ProductVariant variant, Money price)
+    {
+        var split = variant.VatRate is { } rate ? VatPrice.FromGross(price, rate, variant.VatExempt) : null;
+        return new(price.Amount, price.Currency, split?.Net.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+            split?.Vat.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+            price.Amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture), variant.VatRate, variant.VatExempt, variant.NetPriceAmount is not null);
+    }
+}

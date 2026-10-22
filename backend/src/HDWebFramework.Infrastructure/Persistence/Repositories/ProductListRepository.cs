@@ -1,0 +1,67 @@
+using Microsoft.EntityFrameworkCore;
+using HDWebFramework.Application.Catalog.Abstractions;
+using HDWebFramework.Domain.Catalog;
+using HDWebFramework.Infrastructure.Persistence.Models;
+
+namespace HDWebFramework.Infrastructure.Persistence.Repositories;
+
+internal sealed class ProductListRepository
+    : IProductListRepository
+{
+    private readonly HDWebFrameworkDbContext _dbContext;
+
+    internal ProductListRepository(HDWebFrameworkDbContext dbContext) =>
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+
+    public async Task<ProductListPage> ListAsync(
+        int offset,
+        int limit,
+        ProductTypeId? productTypeId,
+        CategoryId? categoryId,
+        string? searchTerm,
+        CancellationToken cancellationToken, bool? isPublished = null, ProductStockFilter? stock = null)
+    {
+        var products = FilterQuery(
+            _dbContext.Products.AsNoTracking(), productTypeId, categoryId, searchTerm, isPublished, stock);
+        var totalCount = await products.CountAsync(cancellationToken);
+        var items = await ItemsQuery(products, offset, limit).ToListAsync(cancellationToken);
+        return new ProductListPage(items, totalCount);
+    }
+
+    internal static IQueryable<ProductListItem> ItemsQuery(
+        IQueryable<ProductPersistence> products,
+        int offset,
+        int limit) =>
+        products
+            .AsNoTracking()
+            .OrderBy(product => product.Name)
+            .ThenBy(product => product.Id)
+            .Skip(offset)
+            .Take(limit)
+            .Select(product => new ProductListItem(
+                product.Id,
+                product.ProductTypeId,
+                product.Name,
+                product.Variants.Count,
+                product.IsPublished));
+
+    internal static IQueryable<ProductPersistence> FilterQuery(
+        IQueryable<ProductPersistence> products,
+        ProductTypeId? productTypeId,
+        CategoryId? categoryId,
+        string? searchTerm, bool? isPublished = null, ProductStockFilter? stock = null)
+    {
+        if (stock == ProductStockFilter.Low) products = products.Where(product => product.Variants.Any(variant => variant.StockQuantity >= 0 && variant.StockQuantity <= 5));
+        else if (stock == ProductStockFilter.OutOfStock) products = products.Where(product => product.Variants.Any(variant => variant.StockQuantity == 0));
+        else if (stock == ProductStockFilter.Untracked) products = products.Where(product => product.Variants.Any(variant => variant.StockQuantity == null));
+        if (isPublished is not null) products = products.Where(product => product.IsPublished == isPublished.Value);
+        if (productTypeId is not null)
+            products = products.Where(product => product.ProductTypeId == productTypeId.Value.Value);
+        if (categoryId is not null)
+            products = products.Where(product => product.Categories.Any(
+                category => category.CategoryId == categoryId.Value.Value));
+        if (searchTerm is not null)
+            products = products.Where(product => product.Name.Contains(searchTerm));
+        return products;
+    }
+}

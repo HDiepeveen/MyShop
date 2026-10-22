@@ -51,5 +51,5 @@ secrets.json
 # Private database exports
 *.bak
 *.bacpac
-MyShop-upload.zip
+HDWebFramework-upload.zip
 database-data.sql

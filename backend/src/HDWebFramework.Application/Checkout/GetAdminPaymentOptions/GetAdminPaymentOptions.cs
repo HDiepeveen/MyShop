@@ -1,0 +1,29 @@
+using HDWebFramework.Application.Checkout.Abstractions;
+
+namespace HDWebFramework.Application.Checkout.GetAdminPaymentOptions;
+
+public sealed record AdminPaymentOptions(bool PayLaterEnabled, bool OnlinePaymentEnabled,
+    string? PayLaterInstructions, bool OnlinePaymentConfigured, string? OnlinePaymentProvider,
+    Guid Revision)
+{
+    public bool CheckoutEnabled { get; init; } = true;
+}
+
+public sealed class GetAdminPaymentOptions(
+    IPaymentOptionsRepository repository,
+    IOnlinePaymentAvailability online)
+{
+    private readonly IPaymentOptionsRepository repository = repository
+        ?? throw new ArgumentNullException(nameof(repository));
+    private readonly IOnlinePaymentAvailability online = online
+        ?? throw new ArgumentNullException(nameof(online));
+
+    public async Task<AdminPaymentOptions> ExecuteAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var onlineStatus = await online.GetAsync(cancellationToken);
+        var settings = await repository.GetAsync(cancellationToken);
+        return new(settings.PayLaterEnabled, settings.OnlinePaymentEnabled,
+            settings.PayLaterInstructions, onlineStatus.IsConfigured, onlineStatus.ProviderName, settings.Revision) { CheckoutEnabled = settings.CheckoutEnabled };
+    }
+}

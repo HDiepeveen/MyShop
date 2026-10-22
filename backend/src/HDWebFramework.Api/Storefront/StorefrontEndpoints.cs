@@ -1,0 +1,116 @@
+using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
+using HDWebFramework.Application.Catalog.GetStorefrontPrices;
+using HDWebFramework.Application.Catalog.BrowseStorefront;
+using HDWebFramework.Application.Catalog.Abstractions;
+using HDWebFramework.Application.Catalog.GetStorefrontProduct;
+using HDWebFramework.Application.Catalog.ListStorefrontCategories;
+using HDWebFramework.Domain.Catalog;
+using HDWebFramework.Api.Checkout;
+
+namespace HDWebFramework.Api.Storefront;
+
+public static class StorefrontEndpoints
+{
+    public static void MapStorefront(this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapGet("/api/shop/settings", async ([FromServices] HDWebFramework.Application.Catalog.Seo.ManageSeo useCase, HDWebFramework.Application.Catalog.CategoryNavigation.ICategoryNavigationStore navigation, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            var homePages = settings.Home.Enabled ? settings.Home.Normalize().Items.Select((item, index) => new { name = item.Title ?? $"Pagina {index + 1}", webAddress = item.WebAddress }).ToArray() : [];
+            return Results.Ok(new { showAssortmentInMenu = (await navigation.GetShopAsync(ct)).ShowAssortmentInMenu, categoryLinks = await navigation.ListVisibleAsync(ct), headerText = settings.HeaderText, contactPhone = settings.Company.Phone, settings.AssortmentImageUrl, settings.AssortmentImageMode, settings.ShowHeaderPhone, settings.ShowHeaderWhatsapp, homePages, settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/category-pages/{address}", async (string address, HDWebFramework.Application.Catalog.CategoryNavigation.ICategoryNavigationStore navigation, CancellationToken ct) =>
+        {
+            var page = await navigation.ResolvePageAsync(address, ct);
+            return page is null ? (IResult)Results.NotFound() : Results.Ok(page);
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/home", async ([FromServices] HDWebFramework.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            return settings.Home.Enabled ? (IResult)Results.Ok(settings.Home.Normalize() with { WelcomeText = settings.WelcomeText, ImageUrl = settings.HomeImageUrl }) : Results.NotFound();
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/pages/{address}", async (string address, [FromServices] HDWebFramework.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            var page = settings.Home.Enabled ? settings.Home.Normalize().Items.FirstOrDefault(item => item.WebAddress == address) : null;
+            return page is null ? (IResult)Results.NotFound() : Results.Ok(page);
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/company", async ([FromServices] HDWebFramework.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
+        {
+            var settings = await useCase.GetSettingsAsync(ct);
+            var company = settings.Company;
+            return Results.Ok(new { company.Heading, Name = company.Name ?? settings.ShopName, company.Description, company.Address, company.Email, company.Phone, company.OpeningHours, company.SeoTitle, company.SeoDescription, company.ImageUrl, company.ImageMode });
+        }).AllowAnonymous();
+        endpoints.MapCartQuote();
+        endpoints.MapPlaceOrder();
+        endpoints.MapStartOnlinePayment();
+        endpoints.MapCompleteOnlinePayment();
+        endpoints.MapMollieWebhook();
+        endpoints.MapGet("/api/shop/categories", async (
+            [FromServices] ListStorefrontCategories useCase, CancellationToken cancellationToken) =>
+            Results.Ok(await useCase.ExecuteAsync(cancellationToken))).AllowAnonymous();
+        endpoints.MapGet("/api/shop/products/{productId}/prices", async (string productId,
+            [FromServices] GetStorefrontPrices useCase, [FromServices] HDWebFramework.Application.Catalog.Seo.ICatalogSeoStore seo, CancellationToken cancellationToken) =>
+        {
+            var resolved = await seo.ResolveProductAsync(productId, cancellationToken);
+            if (resolved is not Guid id) return Results.NotFound();
+            var prices = await useCase.ExecuteAsync(new(ProductId.From(id), DateTimeOffset.UtcNow), cancellationToken);
+            return prices is null ? (IResult)Results.NotFound() : Results.Ok(new StorefrontPricesResponse(
+                prices.At, prices.Variants.Select(price => new StorefrontVariantPriceResponse(price.VariantId,
+                    price.Amount?.ToString("F2", CultureInfo.InvariantCulture), price.Currency)).ToList()));
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/products", async (int? offset, int? limit, string? search, Guid? categoryId,
+            string? sort, bool? availableOnly,
+            [FromServices] BrowseStorefront useCase, CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                var ordering = sort switch { null or "" or "nameAsc" => StorefrontSort.NameAscending,
+                    "nameDesc" => StorefrontSort.NameDescending, _ => throw new ArgumentException("Unknown sort order.") };
+                CategoryId? category = categoryId is null ? null : CategoryId.From(categoryId.Value);
+                var page = await useCase.ExecuteAsync(
+                    new(offset ?? 0, limit ?? 20, search, category, DateTimeOffset.UtcNow, ordering, availableOnly ?? false),
+                    cancellationToken);
+                return Results.Ok(new StorefrontPageResponse(page.At,
+                    page.Items.Select(item => new StorefrontItemResponse(item.Id, item.Name,
+                        item.ImageUrl, item.ImageAlt, item.IsAvailable, item.Prices.Select(price =>
+                            new StorefrontPriceRangeResponse(price.Currency,
+                                price.MinimumAmount.ToString("F2", CultureInfo.InvariantCulture),
+                                price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()) { WebAddress = item.WebAddress })
+                        .ToList(), page.TotalCount, page.Offset, page.Limit) { WelcomeText = page.WelcomeText, Introduction = page.Introduction, Heading = page.Heading, SeoTitle = page.SeoTitle, SeoDescription = page.SeoDescription });
+            }
+            catch (ArgumentException) { return (IResult)Results.BadRequest(); }
+        }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/products/{productId}", async (string productId,
+            [FromServices] GetStorefrontProduct useCase, [FromServices] HDWebFramework.Application.Catalog.Seo.ICatalogSeoStore seo, CancellationToken cancellationToken) =>
+        {
+            var resolved = await seo.ResolveProductAsync(productId, cancellationToken);
+            if (resolved is not Guid id) return Results.NotFound();
+            var product = await useCase.ExecuteAsync(new(ProductId.From(id)), cancellationToken);
+            if (product is null) return Results.NotFound();
+            var metadata = await seo.GetProductAsync(id, cancellationToken);
+            if (metadata is null || !metadata.Published) return Results.NotFound();
+            return Results.Ok(product with { SeoTitle = metadata!.ResolvedTitle, SeoDescription = metadata.ResolvedDescription, WebAddress = metadata.ResolvedAddress, AboutHeading = metadata.ResolvedAboutHeading, AttributesHeading = metadata.ResolvedAttributesHeading });
+        }).AllowAnonymous();
+    }
+}
+
+public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<StorefrontItemResponse> Items,
+    int TotalCount, int Offset, int Limit)
+{
+    public string WelcomeText { get; init; } = "Welkom bij HD Web Framework";
+    public string Introduction { get; init; } = "Bekijk onze producten en kies de variant die bij je past.";
+    public string Heading { get; init; } = "Ontdek ons assortiment";
+    public string? SeoDescription { get; init; }
+    public string SeoTitle { get; init; } = "Assortiment · HD Web Framework";
+}
+public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,
+    bool IsAvailable, IReadOnlyList<StorefrontPriceRangeResponse> Prices)
+{
+    public string? WebAddress { get; init; }
+}
+public sealed record StorefrontPriceRangeResponse(string Currency, string MinimumAmount, string MaximumAmount);
+public sealed record StorefrontPricesResponse(DateTimeOffset At,
+    IReadOnlyList<StorefrontVariantPriceResponse> Variants);
+public sealed record StorefrontVariantPriceResponse(Guid VariantId, string? Amount, string? Currency);

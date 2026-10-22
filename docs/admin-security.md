@@ -1,16 +1,16 @@
 # Beveiligd beheer
 
-MyShop gebruikt ASP.NET Core Identity met EF Core en SQL Server voor lokale beheerdersaccounts. Alle catalogusroutes vereisen standaard de rol `Administrator`. Alleen sessiecontrole, het ophalen van een CSRF-token en inloggen zijn openbaar. Er is geen openbare registratie.
+HDWebFramework gebruikt ASP.NET Core Identity met EF Core en SQL Server voor lokale beheerdersaccounts. Alle catalogusroutes vereisen standaard de rol `Administrator`. Alleen sessiecontrole, het ophalen van een CSRF-token en inloggen zijn openbaar. Er is geen openbare registratie.
 
 ## Eerste account aanmaken
 
 Stop de oude API. Voer vanuit de repository-root in een interactieve PowerShell-terminal uit:
 
 ```powershell
-$developmentConnection = 'Server=(localdb)\MSSQLLocalDB;Database=MyShopDevelopment;Integrated Security=True;TrustServerCertificate=True'
-dotnet ef database update --project backend/src/MyShop.Infrastructure --startup-project backend/src/MyShop.Infrastructure --connection $developmentConnection
-$env:ConnectionStrings__MyShop = $developmentConnection
-dotnet run --project backend/src/MyShop.Api -- --create-admin
+$developmentConnection = 'Server=(localdb)\MSSQLLocalDB;Database=HDWebFrameworkDevelopment;Integrated Security=True;TrustServerCertificate=True'
+dotnet ef database update --project backend/src/HDWebFramework.Infrastructure --startup-project backend/src/HDWebFramework.Infrastructure --connection $developmentConnection
+$env:ConnectionStrings__HDWebFramework = $developmentConnection
+dotnet run --project backend/src/HDWebFramework.Api -- --create-admin
 ```
 
 Gebruik de bestaande database met migratiehistorie; zie [Database development](database-development.md) voor databases zonder migratiehistorie. De nieuwe migratie voegt alleen Identity-tabellen toe. De catalogusdomeinmodellen en repositories veranderen niet.
@@ -25,7 +25,7 @@ Start daarna API en frontend volgens de frontendhandleiding en log in op `/inlog
 - Wachtwoord wijzigen vereist het huidige wachtwoord. Daarna moet je opnieuw inloggen; eerdere sessies vervallen.
 - Uitloggen trekt alle sessies van dit account in. Een netwerkfout wordt niet als succesvol uitloggen getoond.
 - Vijf onjuiste wachtwoorden blokkeren een account vijftien minuten. Maximaal tien loginverzoeken per bron-IP per minuut, per serverproces. De foutmelding onderscheidt geen onbekende naam, onjuist wachtwoord, ontbrekende rol of blokkade.
-- Vergeten wachtwoord: voer lokaal `dotnet run --project backend/src/MyShop.Api -- --reset-admin` uit met dezelfde verbindingsinstelling. Dit reset alleen een bestaand beheerdersaccount, heft de loginblokkade op en trekt sessies in.
+- Vergeten wachtwoord: voer lokaal `dotnet run --project backend/src/HDWebFramework.Api -- --reset-admin` uit met dezelfde verbindingsinstelling. Dit reset alleen een bestaand beheerdersaccount, heft de loginblokkade op en trekt sessies in.
 - Extra beheerders kunnen met `--create-admin` worden toegevoegd. Deze batch bevat geen webscherm voor gebruikers- of rollenbeheer, e-mailherstel of MFA.
 
 ## API en browser
@@ -42,7 +42,7 @@ Bewaar ASP.NET Core Data Protection-sleutels duurzaam en afgeschermd voor het se
 
 ## Tests
 
-De beveiligingstests gebruiken een echte HTTP-server en eigen tijdelijke `MyShopTests_<guid>` SQL Server-databases. Ze testen alle catalogusroutes zonder login, CSRF, rolintrekking, wachtwoordwijziging, cookiehergebruik, sessieverloop, accountaanmaak/herstel en loginlimieten. Stel `MYSHOP_TEST_SQLSERVER` in, zoals bij de bestaande databasetests. De ontwikkelingsdatabase wordt niet gewijzigd.
+De beveiligingstests gebruiken een echte HTTP-server en eigen tijdelijke `HDWebFrameworkTests_<guid>` SQL Server-databases. Ze testen alle catalogusroutes zonder login, CSRF, rolintrekking, wachtwoordwijziging, cookiehergebruik, sessieverloop, accountaanmaak/herstel en loginlimieten. Stel `HDWEBFRAMEWORK_TEST_SQLSERVER` in, zoals bij de bestaande databasetests. De ontwikkelingsdatabase wordt niet gewijzigd.
 
 Bronnen: [ASP.NET Core cookie authentication](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-10.0), [antiforgery](https://learn.microsoft.com/en-us/aspnet/core/security/anti-request-forgery?view=aspnetcore-10.0).
 

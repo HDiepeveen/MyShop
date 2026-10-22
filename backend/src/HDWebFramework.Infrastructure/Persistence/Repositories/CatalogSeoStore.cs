@@ -1,0 +1,150 @@
+using System.Text.Json;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using HDWebFramework.Application.Catalog.Seo;
+using HDWebFramework.Infrastructure.Persistence.Configurations;
+using HDWebFramework.Infrastructure.Persistence.Models;
+namespace HDWebFramework.Infrastructure.Persistence.Repositories;
+internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalogSeoStore
+{
+    public Task<ProductTypeHeadings?> GetTypeHeadingsAsync(Guid id, CancellationToken ct) => context.ProductTypes.AsNoTracking()
+        .Where(x => x.Id == id).Select(x => new ProductTypeHeadings(x.Id, x.AboutHeading, x.AttributesHeading, x.SectionHeadingsRevision)).SingleOrDefaultAsync(ct);
+    public async Task<SeoResult> SaveTypeHeadingsAsync(ProductTypeHeadings value, CancellationToken ct)
+    {
+        var changed = await context.ProductTypes.Where(x => x.Id == value.ProductTypeId && x.SectionHeadingsRevision == value.Revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.AboutHeading, value.AboutHeading)
+                .SetProperty(x => x.AttributesHeading, value.AttributesHeading).SetProperty(x => x.SectionHeadingsRevision, Guid.NewGuid()), ct);
+        return new(changed == 1 ? null : await context.ProductTypes.AnyAsync(x => x.Id == value.ProductTypeId, ct) ? SeoFailure.Conflict : SeoFailure.NotFound);
+    }
+    public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
+    {
+        var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
+            .Select(x => new { x.HomePageJson, x.Heading, x.SeoTitle, x.SeoDescription, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
+                x.AssortmentImageMode, x.CompanyImageMode, x.CompanySeoTitle, x.CompanySeoDescription, x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours, x.HeaderText, x.ShowHeaderPhone, x.ShowHeaderWhatsapp,
+                x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasHomeImage = x.HomeImageBytes != null, HasIcon = x.IconBytes != null }).SingleAsync(ct);
+        var home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!;
+        if (home.Place is null)
+        {
+            var legacyPlaces = home.Items.Select(item => SeoText.Optional(item.Place, 100)).Where(place => place is not null).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            if (legacyPlaces.Length == 1) home = home with { Place = legacyPlaces[0] };
+        }
+        var images = await context.PageBackgrounds.AsNoTracking().Select(x => x.PageId).ToListAsync(ct);
+        string? ImageUrl(Guid id) => images.Contains(id) ? $"/api/shop/page-images/{id:D}?v={row.Version:D}" : null;
+        home = home with { Items = home.Items.Select(item => item with { ImageUrl = ImageUrl(item.PageId) }).ToArray() };
+        return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { ImageMode = row.CompanyImageMode, ImageUrl = ImageUrl(PageBackground.ContactId), SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, AssortmentImageUrl = ImageUrl(PageBackground.AssortmentId), AssortmentImageMode = row.AssortmentImageMode, HeaderText = row.HeaderText, ShowHeaderPhone = row.ShowHeaderPhone, ShowHeaderWhatsapp = row.ShowHeaderWhatsapp, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+    }
+    public async Task<HDWebFramework.Application.Catalog.Abstractions.ProductImageContent?> GetPageImageAsync(Guid id, CancellationToken ct)
+    {
+        var settings = await GetSettingsAsync(ct);
+        if (id != PageBackground.ContactId && id != PageBackground.AssortmentId && (!settings.Home.Enabled || !settings.Home.Items.Any(x => x.PageId == id))) return null;
+        return await context.PageBackgrounds.AsNoTracking().Where(x => x.PageId == id)
+            .Select(x => new HDWebFramework.Application.Catalog.Abstractions.ProductImageContent(x.Bytes, x.ContentType)).SingleOrDefaultAsync(ct);
+    }
+    public async Task<SeoResult> SavePageImageAsync(Guid id, HDWebFramework.Application.Catalog.Abstractions.ProductImageUpload? image, Guid revision, CancellationToken ct)
+    {
+        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        if (changed != 1) return new(SeoFailure.Conflict);
+        var settings = await GetSettingsAsync(ct);
+        if (id != PageBackground.ContactId && id != PageBackground.AssortmentId && !settings.Home.Items.Any(x => x.PageId == id)) return new(SeoFailure.NotFound);
+        await context.PageBackgrounds.Where(x => x.PageId == id).ExecuteDeleteAsync(ct);
+        if (image is not null) context.PageBackgrounds.Add(new() { PageId = id, Bytes = image.Bytes, ContentType = image.ContentType });
+        await context.SaveChangesAsync(ct); await tx.CommitAsync(ct);
+        return new(null);
+    }
+    public Task<HDWebFramework.Application.Catalog.Abstractions.ProductImageContent?> GetHomeImageAsync(CancellationToken ct) =>
+        context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.HomeImageBytes != null)
+            .Select(x => new HDWebFramework.Application.Catalog.Abstractions.ProductImageContent(x.HomeImageBytes!, x.HomeImageContentType!)).SingleOrDefaultAsync(ct);
+    public async Task<SeoResult> SaveHomeImageAsync(HDWebFramework.Application.Catalog.Abstractions.ProductImageUpload? icon, Guid revision, CancellationToken ct)
+    {
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.HomeImageBytes, icon == null ? null : icon.Bytes)
+                .SetProperty(x => x.HomeImageContentType, icon == null ? null : icon.ContentType)
+                .SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        return new(changed == 1 ? null : SeoFailure.Conflict);
+    }
+    public Task<HDWebFramework.Application.Catalog.Abstractions.ProductImageContent?> GetIconAsync(CancellationToken ct) =>
+        context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.IconBytes != null)
+            .Select(x => new HDWebFramework.Application.Catalog.Abstractions.ProductImageContent(x.IconBytes!, x.IconContentType!)).SingleOrDefaultAsync(ct);
+    public async Task<SeoResult> SaveIconAsync(HDWebFramework.Application.Catalog.Abstractions.ProductImageUpload? icon, Guid revision, CancellationToken ct)
+    {
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.IconBytes, icon == null ? null : icon.Bytes)
+                .SetProperty(x => x.IconContentType, icon == null ? null : icon.ContentType)
+                .SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        return new(changed == 1 ? null : SeoFailure.Conflict);
+    }
+    public async Task<SeoResult> SaveAppearanceAsync(ShopAppearanceSettings value, CancellationToken ct)
+    {
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.PrimaryColor, value.Colors.PrimaryColor)
+                .SetProperty(x => x.BackgroundColor, value.Colors.BackgroundColor)
+                .SetProperty(x => x.PanelColor, value.Colors.PanelColor)
+                .SetProperty(x => x.TextColor, value.Colors.TextColor)
+                .SetProperty(x => x.ShowManagementMenuWithoutLogin, value.ShowManagementMenuWithoutLogin)
+                .SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        return new(changed == 1 ? null : SeoFailure.Conflict);
+    }
+    public async Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
+    {
+        await using var tx = await context.Database.BeginTransactionAsync(ct);
+        var homeJson = JsonSerializer.Serialize(value.Home with { Items = value.Home.Items.Select(x => x with { ImageUrl = null }).ToArray() });
+        var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
+            .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.SeoDescription, value.SeoDescription).SetProperty(x => x.HomePageJson, homeJson).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
+                .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.FooterText, value.FooterText)
+                .SetProperty(x => x.AssortmentImageMode, value.AssortmentImageMode).SetProperty(x => x.CompanyImageMode, value.Company.ImageMode).SetProperty(x => x.CompanySeoTitle, value.Company.SeoTitle).SetProperty(x => x.CompanySeoDescription, value.Company.SeoDescription)
+                .SetProperty(x => x.CompanyHeading, value.Company.Heading).SetProperty(x => x.CompanyName, value.Company.Name)
+                .SetProperty(x => x.CompanyDescription, value.Company.Description).SetProperty(x => x.CompanyAddress, value.Company.Address)
+                .SetProperty(x => x.ShowHeaderPhone, value.ShowHeaderPhone).SetProperty(x => x.ShowHeaderWhatsapp, value.ShowHeaderWhatsapp)
+                .SetProperty(x => x.CompanyEmail, value.Company.Email).SetProperty(x => x.CompanyPhone, value.Company.Phone).SetProperty(x => x.HeaderText, value.HeaderText)
+                .SetProperty(x => x.CompanyOpeningHours, value.Company.OpeningHours).SetProperty(x => x.Version, Guid.NewGuid()), ct);
+        if (changed != 1) return new(SeoFailure.Conflict);
+        var ids = value.Home.Items.Select(x => x.PageId).Append(PageBackground.ContactId).Append(PageBackground.AssortmentId).ToArray();
+        await context.PageBackgrounds.Where(x => !ids.Contains(x.PageId)).ExecuteDeleteAsync(ct);
+        await tx.CommitAsync(ct);
+        return new(null);
+    }
+    public async Task<ProductSeoInfo?> GetProductAsync(Guid id, CancellationToken ct)
+    {
+        var row = await context.Products.AsNoTracking().Include(x => x.Seo).Include(x => x.ProductType).SingleOrDefaultAsync(x => x.Id == id, ct);
+        if (row is null) return null;
+        var settings = await GetSettingsAsync(ct);
+        return new(row.Id, row.Name, row.Description, row.ImageUrl, row.ImageAlt, row.IsPublished,
+            new(row.Seo?.SeoTitle, row.Seo?.SeoDescription, row.Seo?.WebAddress), row.Seo?.Version ?? Guid.Empty) { ShopName = settings.ShopName, ResolvedAboutHeading = row.ProductType.AboutHeading ?? "Over dit product",
+                ResolvedAttributesHeading = row.ProductType.AttributesHeading ?? "Productkenmerken" };
+    }
+    public async Task<Guid?> ResolveProductAsync(string key, CancellationToken ct)
+    {
+        if (Guid.TryParseExact(key, "D", out var id) && id != Guid.Empty) return id;
+        if (key.Length > 160) return null;
+        var address = key.ToLowerInvariant();
+        var owner = await context.ProductWebAddresses.AsNoTracking().Where(x => x.Address == address).Select(x => (Guid?)x.ProductId).SingleOrDefaultAsync(ct);
+        return owner ?? SeoText.AutomaticId(key);
+    }
+    public async Task<SeoResult> SaveProductAsync(Guid id, ProductSeoValues value, Guid revision, CancellationToken ct)
+    {
+        if (!await context.Products.AnyAsync(x => x.Id == id, ct)) return new(SeoFailure.NotFound);
+        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        var row = await context.ProductSeos.SingleOrDefaultAsync(x => x.ProductId == id, ct);
+        if ((row?.Version ?? Guid.Empty) != revision) return new(SeoFailure.Conflict);
+        if (value.WebAddress is not null)
+        {
+            var address = await context.ProductWebAddresses.SingleOrDefaultAsync(x => x.Address == value.WebAddress, ct);
+            if (address is not null && address.ProductId != id) return new(SeoFailure.AddressInUse);
+            if (address is null) context.ProductWebAddresses.Add(new() { Address = value.WebAddress, ProductId = id });
+        }
+        if (row is null) { row = new() { ProductId = id }; context.ProductSeos.Add(row); }
+        row.SeoTitle = value.SeoTitle; row.SeoDescription = value.SeoDescription; row.WebAddress = value.WebAddress; row.Version = Guid.NewGuid();
+        try { await context.SaveChangesAsync(ct); await transaction.CommitAsync(ct); return new(null); }
+        catch (DbUpdateConcurrencyException) { return new(SeoFailure.Conflict); }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 2601 or 2627 })
+        {
+            await transaction.RollbackAsync(ct);
+            var current = await context.ProductSeos.AsNoTracking().Where(x => x.ProductId == id).Select(x => (Guid?)x.Version).SingleOrDefaultAsync(ct);
+            return new(current is not null && current != revision ? SeoFailure.Conflict : SeoFailure.AddressInUse);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is SqlException { Number: 547 }) { return new(SeoFailure.NotFound); }
+    }
+}

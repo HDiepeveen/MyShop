@@ -1,0 +1,181 @@
+using System.Net.Mail;
+using HDWebFramework.Domain.Catalog;
+
+namespace HDWebFramework.Domain.Checkout;
+
+public enum OrderPaymentMethod { PayLater = 1, Online = 2 }
+public enum OrderStatus { AwaitingPayment = 1, Paid = 2, Shipped = 3, Cancelled = 4, Refunded = 5 }
+
+public sealed record OrderCustomer
+{
+    private OrderCustomer(string name, string email) { Name = name; Email = email; }
+    public string Name { get; }
+    public string Email { get; }
+
+    public static OrderCustomer Create(string name, string email)
+    {
+        name = Required(name, 200, nameof(name));
+        email = Required(email, 320, nameof(email));
+        try
+        {
+            var parsed = new MailAddress(email);
+            if (!string.Equals(parsed.Address, email, StringComparison.Ordinal)) throw new FormatException();
+        }
+        catch (FormatException) { throw new ArgumentException("Email address is invalid.", nameof(email)); }
+        return new(name, email);
+    }
+
+    private static string Required(string value, int maximum, string parameter)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        value = value.Trim();
+        if (value.Length > maximum) throw new ArgumentException($"Value must contain at most {maximum} characters.", parameter);
+        return value;
+    }
+}
+
+public sealed record DeliveryAddress
+{
+    private DeliveryAddress(string addressLine, string postalCode, string city, string countryCode, string phoneNumber, string notes)
+    { AddressLine = addressLine; PostalCode = postalCode; City = city; CountryCode = countryCode; PhoneNumber = phoneNumber; Notes = notes; }
+    public string AddressLine { get; }
+    public string PostalCode { get; }
+    public string City { get; }
+    public string CountryCode { get; }
+    public string PhoneNumber { get; }
+    public string Notes { get; }
+
+    public static DeliveryAddress Create(string addressLine, string postalCode, string city, string countryCode, string? phoneNumber = null, string? notes = null)
+    {
+        addressLine = Required(addressLine, 200, nameof(addressLine));
+        postalCode = Required(postalCode, 32, nameof(postalCode));
+        city = Required(city, 100, nameof(city));
+        countryCode = Required(countryCode, 100, nameof(countryCode));
+        if (countryCode.Any(char.IsControl)) throw new ArgumentException("Vul een geldig land in.");
+        if (countryCode.Length == 2 && countryCode.All(char.IsLetter)) countryCode = countryCode.ToUpperInvariant();
+        return new(addressLine, postalCode, city, countryCode, NormalizePhone(phoneNumber), NormalizeNotes(notes));
+    }
+
+    public static string NormalizePhone(string? value, bool required = false)
+    {
+        value = value?.Trim() ?? "";
+        if (required && value.Length == 0) throw new ArgumentException("Vul een telefoonnummer in.");
+        if (value.Length > 50 || value.Length > 0 && (!value.Any(char.IsDigit) || !System.Text.RegularExpressions.Regex.IsMatch(value, "^[+0-9 ()\\-./]+$")))
+            throw new ArgumentException("Vul een geldig telefoonnummer van maximaal 50 tekens in.");
+        return value;
+    }
+    public static string NormalizeNotes(string? value)
+    {
+        value = value?.Trim().Replace("\r\n", "\n") ?? "";
+        if (value.Length > 1000 || value.Any(c => char.IsControl(c) && c is not ('\n' or '\t')))
+            throw new ArgumentException("Gebruik maximaal 1000 tekens voor opmerkingen.");
+        return value;
+    }
+    private static string Required(string value, int maximum, string parameter)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        value = value.Trim();
+        if (value.Length > maximum) throw new ArgumentException($"Value must contain at most {maximum} characters.", parameter);
+        return value;
+    }
+}
+
+public sealed record OrderLine(Guid ProductId, Guid VariantId, string ProductName, string VariantName,
+    int Quantity, Money UnitPrice, Money Total, decimal? VatRate = null, bool VatExempt = false, decimal? NetAmount = null, decimal? VatAmount = null);
+public sealed record OrderTotal(string Currency, decimal Amount);
+public sealed record OrderDeliveryMethod(Guid Id, string Name, string? Description, Money Fee);
+
+public sealed class Order
+{
+    private Order(Guid id, DateTimeOffset placedAt, OrderCustomer customer, DeliveryAddress address,
+        IReadOnlyList<OrderLine> lines, IReadOnlyList<OrderTotal> totals,
+        OrderPaymentMethod paymentMethod, string? paymentInstructions,
+        OrderDeliveryMethod? deliveryMethod)
+    {
+        Id = id; PlacedAt = placedAt; Customer = customer; DeliveryAddress = address;
+        Lines = lines; Totals = totals;
+        PaymentMethod = paymentMethod;
+        PaymentInstructions = paymentInstructions;
+        DeliveryMethod = deliveryMethod;
+    }
+
+    public Guid Id { get; }
+    public string Number => $"MS-{Id:N}".ToUpperInvariant();
+    public DateTimeOffset PlacedAt { get; }
+    public OrderCustomer Customer { get; }
+    public DeliveryAddress DeliveryAddress { get; }
+    public OrderPaymentMethod PaymentMethod { get; }
+    public OrderStatus Status => OrderStatus.AwaitingPayment;
+    public IReadOnlyList<OrderLine> Lines { get; }
+    public IReadOnlyList<OrderTotal> Totals { get; }
+    public string? PaymentInstructions { get; }
+    public OrderDeliveryMethod? DeliveryMethod { get; }
+
+    public static Order Place(Guid id, DateTimeOffset placedAt, OrderCustomer customer,
+        DeliveryAddress address, IEnumerable<(Guid ProductId, Guid VariantId, string ProductName,
+            string VariantName, int Quantity, Money UnitPrice)> lines, string? paymentInstructions = null,
+        OrderDeliveryMethod? deliveryMethod = null,
+        OrderPaymentMethod paymentMethod = OrderPaymentMethod.PayLater,
+        IReadOnlyDictionary<(Guid ProductId, Guid VariantId), (decimal Rate, bool Exempt)>? vatRates = null)
+    {
+        if (id == Guid.Empty) throw new ArgumentException("Order ID is required.", nameof(id));
+        ArgumentNullException.ThrowIfNull(customer);
+        ArgumentNullException.ThrowIfNull(address);
+        ArgumentNullException.ThrowIfNull(lines);
+        if (!Enum.IsDefined(paymentMethod)) throw new ArgumentOutOfRangeException(nameof(paymentMethod));
+        var snapshots = lines.Select(line =>
+        {
+            if (line.ProductId == Guid.Empty || line.VariantId == Guid.Empty || line.Quantity is < 1 or > 99)
+                throw new ArgumentException("Order line is invalid.", nameof(lines));
+            var productName = Required(line.ProductName, nameof(lines));
+            var variantName = Required(line.VariantName, nameof(lines));
+            var total = Money.Create(line.UnitPrice.Amount * line.Quantity, line.UnitPrice.Currency);
+            if (vatRates is not null && vatRates.TryGetValue((line.ProductId, line.VariantId), out var vat))
+            {
+                var split = VatPrice.FromGross(line.UnitPrice, vat.Rate, vat.Exempt);
+                return new OrderLine(line.ProductId, line.VariantId, productName, variantName, line.Quantity,
+                    line.UnitPrice, total, vat.Rate, vat.Exempt, split.Net.Amount * line.Quantity, split.Vat.Amount * line.Quantity);
+            }
+            return new OrderLine(line.ProductId, line.VariantId, productName, variantName, line.Quantity, line.UnitPrice, total);
+        }).ToArray();
+        if (snapshots.Length is < 1 or > 20 || snapshots.Select(line => (line.ProductId, line.VariantId)).Distinct().Count() != snapshots.Length)
+            throw new ArgumentException("Order must contain 1 to 20 unique variants.", nameof(lines));
+        if (vatRates?.Keys.Any(key => !snapshots.Any(line => (line.ProductId, line.VariantId) == key)) == true)
+            throw new ArgumentException("VAT contains an unknown order line.", nameof(vatRates));
+        var totals = snapshots.Select(line => line.Total)
+            .Concat(deliveryMethod is null ? [] : [deliveryMethod.Fee])
+            .GroupBy(total => total.Currency)
+            .Select(group => new OrderTotal(group.Key, group.Sum(total => total.Amount)))
+            .OrderBy(total => total.Currency, StringComparer.Ordinal).ToArray();
+        paymentInstructions = string.IsNullOrWhiteSpace(paymentInstructions)
+            ? null
+            : paymentInstructions.Trim();
+        if (paymentInstructions?.Length > 2000)
+            throw new ArgumentException("Payment instructions must contain at most 2000 characters.",
+                nameof(paymentInstructions));
+        if (deliveryMethod is not null)
+        {
+            if (deliveryMethod.Id == Guid.Empty) throw new ArgumentException("Delivery method ID is required.", nameof(deliveryMethod));
+            var deliveryName = Required(deliveryMethod.Name, nameof(deliveryMethod));
+            var description = string.IsNullOrWhiteSpace(deliveryMethod.Description) ? null : deliveryMethod.Description.Trim();
+            if (description?.Length > 500) throw new ArgumentException("Delivery description must contain at most 500 characters.", nameof(deliveryMethod));
+            deliveryMethod = new(deliveryMethod.Id, deliveryName, description, deliveryMethod.Fee);
+        }
+        return new(id, placedAt.ToUniversalTime(), customer, address, snapshots, totals,
+            paymentMethod, paymentInstructions, deliveryMethod);
+    }
+
+    private static string Required(string value, int maximum, string parameter)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        value = value.Trim();
+        if (value.Length > maximum) throw new ArgumentException($"Value must contain at most {maximum} characters.", parameter);
+        return value;
+    }
+
+    private static string Required(string value, string parameter)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameter);
+        return value.Trim();
+    }
+}

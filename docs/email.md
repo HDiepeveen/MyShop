@@ -1,6 +1,6 @@
 # Klantmail
 
-MyShop ondersteunt e-mailbevestiging, wachtwoordherstel voor klanten en bestelbevestigingen. Verzending verloopt via SMTP met STARTTLS of via lokale `.eml`-bestanden in Development. Standaard staat verzending uit; nieuwe berichten worden wel duurzaam klaargezet.
+HDWebFramework ondersteunt e-mailbevestiging, wachtwoordherstel voor klanten en bestelbevestigingen. Verzending verloopt via SMTP met STARTTLS of via lokale `.eml`-bestanden in Development. Standaard staat verzending uit; nieuwe berichten worden wel duurzaam klaargezet.
 
 ## Configuratie
 

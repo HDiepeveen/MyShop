@@ -1,3 +1,4 @@
+import { migrateFrameworkStorage } from './framework-storage';
 import { Injectable, computed, signal } from '@angular/core';
 
 export interface CartLine {
@@ -5,7 +6,7 @@ export interface CartLine {
   variantId: string;
   quantity: number;
 }
-const key = 'myshop.cart.v1';
+const key = 'HDWebFramework.cart.v1';
 const guid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const validId = (id: unknown): id is string =>
   typeof id === 'string' && guid.test(id) && id !== '00000000-0000-0000-0000-000000000000';
@@ -17,6 +18,7 @@ export class Cart {
   readonly count = computed(() => this.lines().reduce((sum, line) => sum + line.quantity, 0));
   readonly warning = signal('');
   constructor() {
+    migrateFrameworkStorage('cart.v1');
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return;

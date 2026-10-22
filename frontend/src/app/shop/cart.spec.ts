@@ -26,7 +26,7 @@ const product = {
     { id: secondId, name: 'Large' },
   ],
 };
-const key = 'myshop.cart.v1';
+const key = 'HDWebFramework.cart.v1';
 
 beforeEach(() => localStorage.removeItem(key));
 afterEach(() => {
