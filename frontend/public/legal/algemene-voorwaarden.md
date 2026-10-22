@@ -4,7 +4,7 @@
 
 ## Huidige inrichting van deze website
 
-Deze website gebruikt het framework HD Web Framework en is ingericht als presentatie voor Autoservice Ganpat. Winkelmand, online bestellen en online betalen zijn uitgeschakeld. De bepalingen hieronder over online bestellingen, klantaccounts en betaalproviders gelden alleen voor zover deze functies daadwerkelijk worden gebruikt of eerdere gegevens daarvan nog worden bewaard. De beschreven technische ondersteuning betekent niet dat die functies nu worden aangeboden. Afspraken via telefoon of e-mail kunnen afhankelijk van de feitelijke gang van zaken wel onder de regels voor overeenkomsten op afstand vallen.
+Autoservice Ganpat gebruikt deze website om het bedrijf, de diensten en het assortiment te presenteren. Voor vragen over een artikel, een aankoop of een werkplaatsafspraak kunt u contact opnemen met de garage. Afspraken via telefoon of e-mail kunnen afhankelijk van de feitelijke gang van zaken onder de regels voor overeenkomsten op afstand vallen.
 
 
 ## 1. Wie zijn wij?
@@ -19,11 +19,11 @@ Wij beschrijven het aangeboden product of de dienst, de prijs en relevante eigen
 
 Een advertentie of informatieaanvraag vormt op zichzelf geen koopovereenkomst. Voor een aankoop, afspraak of werkzaamheden maken wij afzonderlijk afspraken met u. Een ontvangstbevestiging van een aanvraag is nog geen aanvaarding als dat daarin duidelijk staat.
 
-Als de website alleen als catalogus wordt gebruikt, maken wij afzonderlijk afspraken over aankoop of dienstverlening. Of een overeenkomst een overeenkomst op afstand is, hangt af van de manier waarop deze daadwerkelijk wordt gesloten.
+De website is een catalogus. Over aankoop of dienstverlening maken wij afzonderlijk afspraken. Of een overeenkomst een overeenkomst op afstand is, hangt af van de manier waarop deze daadwerkelijk wordt gesloten.
 
 ## 3. Prijzen en betaling
 
-Consumentenprijzen zijn inclusief btw en andere verplichte kosten. Eventuele bezorgkosten en andere keuzekosten spreken wij vóór het sluiten van de overeenkomst af. U betaalt volgens de betaalmethode en betaaltermijn die bij de overeenkomst zijn afgesproken. De website biedt zelf geen online betaalmogelijkheid.
+Consumentenprijzen zijn inclusief btw en andere verplichte kosten. Eventuele bezorgkosten en andere keuzekosten spreken wij vóór het sluiten van de overeenkomst af. U betaalt volgens de betaalmethode en betaaltermijn die bij de overeenkomst zijn afgesproken.
 
 Wij voeren geen extra werkzaamheden uit tegen betaling zonder de daarvoor vereiste afspraken en toestemming. Bij een gewijzigde reparatiebehoefte bespreken wij de gevolgen voor kosten en planning met u.
 
@@ -41,7 +41,7 @@ U kunt herroepen met een duidelijke verklaring aan ons e-mailadres of postadres 
 
 Wij betalen bij volledige herroeping het aankoopbedrag en de kosten van de aangeboden standaardlevering terug, uiterlijk binnen veertien dagen na uw melding. Wij mogen wachten op ontvangst van het product of bewijs van terugzending. Terugbetaling gebeurt met hetzelfde betaalmiddel, tenzij anders afgesproken zonder extra kosten voor u.
 
-De directe retourkosten zijn voor u uitsluitend wanneer wij u daar vóór de aankoop over hebben geïnformeerd. Voor producten die niet normaal per post terug kunnen, zoals een auto, verstrekken wij vooraf een concrete kostenopgave of redelijke raming: [retourregeling en kosten/raming invullen vóór online verkoop].
+De directe retourkosten zijn voor u uitsluitend wanneer wij u daar vóór de aankoop over hebben geïnformeerd. Voor producten die niet normaal per post terug kunnen, zoals een auto, verstrekken wij vooraf een concrete kostenopgave of redelijke raming: [retourregeling en kosten/raming invullen vóór eventuele verkoop op afstand].
 
 U mag een product beoordelen zoals dat in een winkel mogelijk zou zijn. Voor verdergaand gebruik kan een waardevermindering voor uw rekening komen, voor zover wettelijk toegestaan en correct vooraf meegedeeld. Tweedehands producten zijn niet uitsluitend vanwege hun gebruikte staat uitgesloten van herroeping.
 
@@ -51,7 +51,7 @@ Moet een dienst tijdens de bedenktijd beginnen, dan vragen wij eerst uw uitdrukk
 
 Een product moet voldoen aan wat u redelijkerwijs op grond van de overeenkomst mag verwachten. Bij een occasion spelen onder meer de leeftijd, prijs, kilometerstand en meegedeelde eigenschappen een rol. Wij sluiten wettelijke garantie niet uit met de aanduiding ‘gebruikt’ of ‘zonder garantie’. Een aanvullende garantie beperkt uw wettelijke rechten niet.
 
-Meld een probleem zo spoedig mogelijk na ontdekking via onze contactgegevens, met het bestelnummer en een omschrijving. Wij bespreken de klacht en een passende oplossing. Wettelijke aanspraken op onder meer herstel, vervanging, prijsvermindering of ontbinding blijven gelden wanneer aan de voorwaarden daarvoor is voldaan.
+Meld een probleem zo spoedig mogelijk na ontdekking via onze contactgegevens, met een aankoop- of afspraakreferentie, indien beschikbaar, en een omschrijving. Wij bespreken de klacht en een passende oplossing. Wettelijke aanspraken op onder meer herstel, vervanging, prijsvermindering of ontbinding blijven gelden wanneer aan de voorwaarden daarvoor is voldaan.
 
 ## 7. Overige bepalingen
 

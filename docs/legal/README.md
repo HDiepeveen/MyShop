@@ -9,3 +9,11 @@ De footer bevat links naar /algemene-voorwaarden, /privacyverklaring en /cookieb
 Contact: APK-ganpat@live.nl; telefoon 06 45707667.
 
 Nog aan te vullen: rechtsvorm indien van toepassing, bewaartermijnen, ontvangers/doorgiften en eventuele verkoop op afstand buiten de website. De oorspronkelijke controlebronnen en publicatiechecklist zijn lokaal bewaard bij de juridische concepten.
+
+## Gebruiksprofielen
+
+1. Website: bedrijfsinformatie en pagina’s.
+2. Website met assortiment: daarnaast artikelen presenteren, zoals Autoservice Ganpat.
+3. Webshop: daarnaast online bestellen en betalen.
+
+De openbare juridische teksten zijn nu toegespitst op profiel 2. De eerdere tekstbasis is met bedrijfsinvulvelden bewaard in templates/webshop. Dit is een documentindeling; er is hiermee geen nieuwe modusinstelling of automatische juridische-tekstselectie toegevoegd. Algemene afspraken over prijzen en betaling bij de garage en mogelijke verkoop op afstand buiten het framework blijven beschreven. Oudere browseropslag kan achterblijven; de tekst zegt niet dat deze automatisch is verwijderd.

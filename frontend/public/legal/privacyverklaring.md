@@ -4,7 +4,7 @@
 
 ## Huidige inrichting van deze website
 
-Deze website gebruikt het framework HD Web Framework en is ingericht als presentatie voor Autoservice Ganpat. Winkelmand, online bestellen en online betalen zijn uitgeschakeld. De bepalingen hieronder over online bestellingen, klantaccounts en betaalproviders gelden alleen voor zover deze functies daadwerkelijk worden gebruikt of eerdere gegevens daarvan nog worden bewaard. De beschreven technische ondersteuning betekent niet dat die functies nu worden aangeboden. Afspraken via telefoon of e-mail kunnen afhankelijk van de feitelijke gang van zaken wel onder de regels voor overeenkomsten op afstand vallen.
+Autoservice Ganpat gebruikt deze website om het bedrijf, de diensten en het assortiment te presenteren. Voor vragen over een artikel, een aankoop of een werkplaatsafspraak kunt u contact opnemen met de garage. Afspraken via telefoon of e-mail kunnen afhankelijk van de feitelijke gang van zaken onder de regels voor overeenkomsten op afstand vallen.
 
 
 ## Wie is verantwoordelijk?
@@ -15,7 +15,7 @@ Autoservice Ganpat, [rechtsvorm indien van toepassing], Popovstraat 7-B, 8013 RK
 
 Wanneer u contact opneemt, gebruiken wij uw contactgegevens en de inhoud van uw bericht om uw vraag te behandelen. Dat gebeurt voor het voorbereiden of uitvoeren van een overeenkomst, of op basis van ons gerechtvaardigde belang om algemene vragen te beantwoorden.
 
-Bij een klantaccount verwerken wij uw naam, e-mailadres, beveiligde inloggegevens en de door u ingevulde contact- en adresgegevens om het account te laten werken. Bij een bestelling gebruiken wij daarnaast het telefoonnummer, aflevergegevens, bestelde artikelen, bezorgkeuze, eventuele opmerkingen en bestel- en betaalgegevens om de overeenkomst uit te voeren. Vul bij opmerkingen alleen informatie in die voor de bestelling nodig is.
+Bij een informatieaanvraag, aankoop of werkplaatsafspraak gebruiken wij de benodigde contactgegevens en gegevens over het artikel, voertuig of de werkzaamheden om uw vraag te behandelen of onze afspraken uit te voeren. Voor zover een account wordt gebruikt, verwerken wij de noodzakelijke account- en inloggegevens voor de werking en beveiliging daarvan.
 
 Voor voertuigverkoop, APK of reparatie kunnen voertuiggegevens nodig zijn, zoals kenteken, voertuigidentificatie en werkzaamheden. Wij verwerken deze uitsluitend voor zover nodig voor de afspraak, uitvoering en toepasselijke administratieve verplichtingen. [Controleer en beschrijf eventuele APK/RDW-registraties en andere garagesystemen die buiten deze website worden gebruikt.]
 
@@ -28,9 +28,8 @@ Wij gebruiken de website niet voor advertentietracking of marketingprofilering z
 Wij verstrekken gegevens voor zover nodig voor de betreffende dienstverlening:
 
 - **SmarterASP.NET:** hosting van de website en database.
-- **Brevo:** verzending van functionele e-mails, zoals accountbevestigingen, wachtwoordherstel en bestelberichten, voor zover deze e-maildienst is ingeschakeld.
-- **Mollie:** verwerking van online betalingen wanneer u deze betaalmethode gebruikt. Voor de eigen verwerkingen van Mollie geldt ook de privacyinformatie van Mollie.
-- [Bezorgdienst en/of andere ontvangers invullen indien gebruikt.]
+- **Brevo:** verzending van functionele e-mails, zoals account- en beveiligingsberichten, voor zover deze e-maildienst is ingeschakeld.
+- [Andere ontvangers invullen indien gebruikt, bijvoorbeeld bij afgesproken levering van een artikel.]
 - Bevoegde instanties wanneer een wettelijke verplichting dat vereist.
 
 Wij leggen de toepasselijke afspraken over gegevensbescherming met dienstverleners vast. **[Vóór publicatie controleren: juridische leveranciersnamen, rollen, verwerkersafspraken, daadwerkelijke opslaglanden en eventuele doorgifte buiten de EER. Vermeld bij doorgifte de toepasselijke waarborgen en hoe informatie daarover verkrijgbaar is.]**
@@ -44,7 +43,7 @@ Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten vó�
 | Facturen en relevante fiscale basisadministratie | In beginsel zeven jaar volgens de toepasselijke fiscale bewaarplicht |
 | Account- en profielgegevens | [Termijn en beleid voor inactieve of opgeheven accounts invullen] |
 | Vragen en correspondentie | [Termijn na afhandeling invullen] |
-| Bestel-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
+| Aankoop-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
 | Toegangs- en beveiligingslogs | [Werkelijke hosting- en applicatietermijnen invullen] |
 | Functionele e-mails, verzendregistraties en tijdelijke accounttokens | [Termijnen per systeem en e-mailleverancier invullen] |
 
@@ -64,6 +63,6 @@ U kunt een klacht indienen bij de [Autoriteit Persoonsgegevens](https://autorite
 
 ## Cookies, externe diensten en wijzigingen
 
-Ons cookiebeleid beschrijft de functionele cookies en lokale browseropslag. Een externe betaalpagina valt onder de informatie van die betaalprovider. Als een productafbeelding rechtstreeks van een externe website wordt geladen, ontvangt die aanbieder technische verbindingsgegevens. [Controleer of dergelijke afbeeldingen worden gebruikt.]
+Ons cookiebeleid beschrijft de functionele cookies en lokale browseropslag. Als een productafbeelding rechtstreeks van een externe website wordt geladen, ontvangt die aanbieder technische verbindingsgegevens. [Controleer of dergelijke afbeeldingen worden gebruikt.]
 
 Wij passen deze verklaring aan als onze verwerking verandert. De datum bovenaan geeft de versie aan.
