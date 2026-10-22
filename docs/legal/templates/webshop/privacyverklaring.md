@@ -45,7 +45,6 @@ Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten v√≥√
 | Account- en profielgegevens | [Termijn en beleid voor inactieve of opgeheven accounts invullen] |
 | Vragen en correspondentie | [Termijn na afhandeling invullen] |
 | Bestel-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
-| Technische fout- en beveiligingsmeldingen, voor zover deze worden vastgelegd | [De daadwerkelijke opslaglocaties en bewaartermijnen van de applicatielogs op de hostingomgeving moeten nog worden vastgesteld.] |
 | Functionele e-mails, verzendregistraties en tijdelijke accounttokens | [Termijnen per systeem en e-mailleverancier invullen] |
 
 Gegevens kunnen langer nodig zijn als een concrete juridische verplichting of een lopend geschil dat rechtvaardigt. Wij beperken die bewaring tot wat daarvoor noodzakelijk is. De opslag in uw browser is afzonderlijk beschreven in ons cookiebeleid.
