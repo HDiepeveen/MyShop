@@ -221,3 +221,5 @@ footer { flex-wrap: wrap; }
 .legal-links a { color: inherit; }
 
 .shop .body:not(.with-page-photo) footer { color: var(--shop-readable-background-text, var(--shop-text)); }
+
+.shop .body:not(.with-page-photo) .topbar { color: var(--shop-readable-panel-text, var(--shop-text)); }
