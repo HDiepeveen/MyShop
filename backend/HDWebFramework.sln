@@ -5,23 +5,23 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Api", "src\MyShop.Api\MyShop.Api.csproj", "{30A78EEB-7678-4407-AE1B-78CCF8F83960}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Api", "src\MyShop.Api\HDWebFramework.Api.csproj", "{30A78EEB-7678-4407-AE1B-78CCF8F83960}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Application", "src\MyShop.Application\MyShop.Application.csproj", "{3A1BFB02-D9EB-4116-80BC-ABBE4A931A0C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Application", "src\MyShop.Application\HDWebFramework.Application.csproj", "{3A1BFB02-D9EB-4116-80BC-ABBE4A931A0C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Domain", "src\MyShop.Domain\MyShop.Domain.csproj", "{8A4ED4C8-B683-4A34-8555-332B884C27B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Domain", "src\MyShop.Domain\HDWebFramework.Domain.csproj", "{8A4ED4C8-B683-4A34-8555-332B884C27B5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Infrastructure", "src\MyShop.Infrastructure\MyShop.Infrastructure.csproj", "{D8AACD2E-6225-451E-AD68-AFD99A0A6390}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Infrastructure", "src\MyShop.Infrastructure\HDWebFramework.Infrastructure.csproj", "{D8AACD2E-6225-451E-AD68-AFD99A0A6390}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Domain.Tests", "tests\MyShop.Domain.Tests\MyShop.Domain.Tests.csproj", "{A3763F1C-5607-40AA-A2CF-C13D797DFD77}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Domain.Tests", "tests\MyShop.Domain.Tests\HDWebFramework.Domain.Tests.csproj", "{A3763F1C-5607-40AA-A2CF-C13D797DFD77}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Application.Tests", "tests\MyShop.Application.Tests\MyShop.Application.Tests.csproj", "{AB14406B-A76D-473E-8198-8EE3082916C7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Application.Tests", "tests\MyShop.Application.Tests\HDWebFramework.Application.Tests.csproj", "{AB14406B-A76D-473E-8198-8EE3082916C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Api.Tests", "tests\MyShop.Api.Tests\MyShop.Api.Tests.csproj", "{E1B853DD-6CAC-4060-A359-C028447EB698}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Api.Tests", "tests\MyShop.Api.Tests\HDWebFramework.Api.Tests.csproj", "{E1B853DD-6CAC-4060-A359-C028447EB698}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.Infrastructure.Tests", "tests\MyShop.Infrastructure.Tests\MyShop.Infrastructure.Tests.csproj", "{EB1D1F94-D2CE-49C6-B1D3-14D42AAAD359}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HDWebFramework.Infrastructure.Tests", "tests\MyShop.Infrastructure.Tests\HDWebFramework.Infrastructure.Tests.csproj", "{EB1D1F94-D2CE-49C6-B1D3-14D42AAAD359}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

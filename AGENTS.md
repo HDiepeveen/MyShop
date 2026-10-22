@@ -1,8 +1,8 @@
-# MyShop Project Instructions
+# HD Web Framework Project Instructions
 
 ## Project Context
 
-MyShop is an e-commerce application. Its frontend will use Angular and TypeScript. Its backend will use ASP.NET Core Web API and C#. SQL Server and Entity Framework Core will provide database access.
+HD Web Framework is a framework for websites and webshops. Its frontend will use Angular and TypeScript. Its backend will use ASP.NET Core Web API and C#. SQL Server and Entity Framework Core will provide database access.
 
 ## Architecture
 

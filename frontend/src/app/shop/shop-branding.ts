@@ -19,7 +19,7 @@ export class ShopBranding {
   readonly showHeaderPhone = signal(true);
   readonly showHeaderWhatsapp = signal(true);
   readonly headerText = signal<string | null>(null);
-  readonly name = signal('MyShop');
+  readonly name = signal('HD Web Framework');
   readonly footerText = signal('Ontdek wat bij je past.');
   private requestVersion = 0;
   refresh() {
@@ -65,7 +65,7 @@ export class ShopBranding {
             this.colors.set(
               validColors(settings.appearance) ? { ...settings.appearance } : { ...defaultColors },
             );
-            this.name.set(settings.shopName || 'MyShop');
+            this.name.set(settings.shopName || 'HD Web Framework');
             this.footerText.set(settings.footerText ?? 'Ontdek wat bij je past.');
           }
         },

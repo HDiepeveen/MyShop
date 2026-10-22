@@ -22,11 +22,11 @@ public sealed record StorefrontItem(Guid Id, string Name, string? ImageUrl, stri
 public sealed record StorefrontPage(DateTimeOffset At, IReadOnlyList<StorefrontItem> Items,
     int TotalCount, int Offset, int Limit)
 {
-    public string WelcomeText { get; init; } = "Welkom bij MyShop";
+    public string WelcomeText { get; init; } = "Welkom bij HD Web Framework";
     public string Introduction { get; init; } = "Bekijk onze producten en kies de variant die bij je past.";
     public string Heading { get; init; } = "Ontdek ons assortiment";
     public string? SeoDescription { get; init; }
-    public string SeoTitle { get; init; } = "Assortiment · MyShop";
+    public string SeoTitle { get; init; } = "Assortiment · HD Web Framework";
 }
 public sealed record StorefrontCategory(Guid Id, string Name);
 public sealed record StorefrontProductAttribute(Guid AttributeDefinitionId, string Name, string Value);

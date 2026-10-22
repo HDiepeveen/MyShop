@@ -103,7 +103,7 @@ public sealed record ProductTypeHeadings(Guid ProductTypeId, string? AboutHeadin
 public sealed record ProductSeoInfo(Guid ProductId, string Name, string Description, string? ImageUrl,
     string ImageAlt, bool Published, ProductSeoValues Values, Guid Revision)
 {
-    public string ShopName { get; init; } = "MyShop";
+    public string ShopName { get; init; } = "HD Web Framework";
     public string ResolvedTitle => Values.SeoTitle ?? Name + " · " + ShopName;
     public string ResolvedAboutHeading { get; init; } = "Over dit product";
     public string ResolvedAttributesHeading { get; init; } = "Productkenmerken";

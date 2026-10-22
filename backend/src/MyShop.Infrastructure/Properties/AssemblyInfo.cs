@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("MyShop.Infrastructure.Tests")]
+[assembly: InternalsVisibleTo("HDWebFramework.Infrastructure.Tests")]

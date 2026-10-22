@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "myshop-admin": {
+    "hdwebframework": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -54,10 +54,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "myshop-admin:build:production"
+              "buildTarget": "hdwebframework:build:production"
             },
             "development": {
-              "buildTarget": "myshop-admin:build:development"
+              "buildTarget": "hdwebframework:build:development"
             }
           },
           "defaultConfiguration": "development",

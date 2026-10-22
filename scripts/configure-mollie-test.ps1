@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$taskApiProject = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../backend/src/MyShop.Api/MyShop.Api.csproj'))
+$taskApiProject = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../backend/src/MyShop.Api/HDWebFramework.Api.csproj'))
 $taskSecureKey = Read-Host 'Mollie test-API-sleutel (invoer verborgen)' -AsSecureString
 $taskKey = [System.Net.NetworkCredential]::new('', $taskSecureKey).Password
 if ($taskKey -cnotmatch '^test_[A-Za-z0-9]{20,64}$') { throw 'Gebruik uitsluitend een Mollie testsleutel die begint met test_.' }

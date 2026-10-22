@@ -168,16 +168,16 @@ describe('Webshop name', () => {
       panelColor: '#1f2937',
       textColor: '#f3f4f6',
     };
-    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'HD Web Framework', appearance });
     await TestBed.inject(Router).navigateByUrl('/assortiment');
-    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'HD Web Framework', appearance });
     http.expectOne('/api/shop/payment-options').flush({ checkoutEnabled: true });
     fixture.detectChanges();
     const workspace = fixture.nativeElement.querySelector('.workspace') as HTMLElement;
     expect(workspace.style.getPropertyValue('--shop-background')).toBe('#111827');
     expect(workspace.style.getPropertyValue('--shop-button-text')).toBe('#000000');
     await TestBed.inject(Router).navigateByUrl('/inloggen');
-    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'HD Web Framework', appearance });
     fixture.detectChanges();
     expect(workspace.classList.contains('shop')).toBe(false);
     expect(workspace.style.getPropertyValue('--shop-background')).toBe('');
@@ -192,7 +192,7 @@ describe('Webshop name', () => {
         { provide: TitleStrategy, useClass: ShopTitleStrategy },
         provideRouter([
           { path: 'assortiment', children: [] },
-          { path: 'inloggen', children: [], title: 'Inloggen · MyShop' },
+          { path: 'inloggen', children: [], title: 'Inloggen · HD Web Framework' },
         ]),
       ],
     });
@@ -204,7 +204,7 @@ describe('Webshop name', () => {
   });
   it('retains the latest stored name on stale responses or temporary failures', () => {
     const branding = TestBed.inject(ShopBranding);
-    expect(branding.name()).toBe('MyShop');
+    expect(branding.name()).toBe('HD Web Framework');
     branding.refresh();
     const old = http.expectOne('/api/shop/settings');
     branding.refresh();
@@ -219,7 +219,7 @@ describe('Webshop name', () => {
     const branding = TestBed.inject(ShopBranding);
     await TestBed.inject(Router).navigateByUrl('/inloggen');
     const title = TestBed.inject(Title);
-    expect(title.getTitle()).toBe('Inloggen · MyShop');
+    expect(title.getTitle()).toBe('Inloggen · HD Web Framework');
     branding.refresh();
     http.expectOne('/api/shop/settings').flush({ shopName: 'Company $&' });
     TestBed.tick();

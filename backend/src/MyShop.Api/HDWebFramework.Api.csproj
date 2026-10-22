@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MyShop.Application\HDWebFramework.Application.csproj" />
+    <ProjectReference Include="..\MyShop.Infrastructure\HDWebFramework.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <RootNamespace>MyShop.Api</RootNamespace>
+    <AssemblyName>HDWebFramework.Api</AssemblyName>
+    <Product>HD Web Framework</Product>
+    <Description>Framework voor websites en webshops</Description>
+    <TargetFramework>net10.0</TargetFramework>
+    <UserSecretsId>MyShop-Development</UserSecretsId>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

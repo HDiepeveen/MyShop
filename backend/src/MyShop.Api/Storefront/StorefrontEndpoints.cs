@@ -99,11 +99,11 @@ public static class StorefrontEndpoints
 public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<StorefrontItemResponse> Items,
     int TotalCount, int Offset, int Limit)
 {
-    public string WelcomeText { get; init; } = "Welkom bij MyShop";
+    public string WelcomeText { get; init; } = "Welkom bij HD Web Framework";
     public string Introduction { get; init; } = "Bekijk onze producten en kies de variant die bij je past.";
     public string Heading { get; init; } = "Ontdek ons assortiment";
     public string? SeoDescription { get; init; }
-    public string SeoTitle { get; init; } = "Assortiment · MyShop";
+    public string SeoTitle { get; init; } = "Assortiment · HD Web Framework";
 }
 public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,
     bool IsAvailable, IReadOnlyList<StorefrontPriceRangeResponse> Prices)

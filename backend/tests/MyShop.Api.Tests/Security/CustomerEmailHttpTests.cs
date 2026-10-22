@@ -49,7 +49,7 @@ public sealed class CustomerEmailHttpTests
             Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync("/api/customer/auth/request-password-reset", new { email })).StatusCode);
         string body;
         await using (var scope = host.App.Services.CreateAsyncScope())
-            body = await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.SqlQueryRaw<string>("SELECT Body AS Value FROM EmailMessages WHERE Subject = N'Herstel je MyShop wachtwoord'").SingleAsync();
+            body = await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.SqlQueryRaw<string>("SELECT Body AS Value FROM EmailMessages WHERE Subject = N'Herstel je HD Web Framework wachtwoord'").SingleAsync();
         var query = QueryHelpers.ParseQuery(new Uri(body.Split('\n').Single(line => line.StartsWith("http://")).Trim()).Query);
         var request = new { userId = query["userId"].ToString(), token = query["token"].ToString(), password = "NewStrongPassword123!" };
         Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PostAsJsonAsync("/api/customer/auth/reset-password", new { request.userId, request.token, password = "weak" })).StatusCode);

@@ -9,7 +9,7 @@ The root `dotnet-tools.json` pins the local EF tool to the backend's EF Core ver
 
 ```powershell
 dotnet tool restore
-dotnet build backend/MyShop.sln
+dotnet build backend/HDWebFramework.sln
 ```
 
 The design-time factory in Infrastructure lets EF inspect the model without starting the API.
@@ -55,8 +55,8 @@ For a full validation including real SQL Server:
 
 ```powershell
 $env:MYSHOP_TEST_SQLSERVER = 'Server=(localdb)\MSSQLLocalDB;Integrated Security=True;TrustServerCertificate=True'
-dotnet build backend/MyShop.sln -m:1 --disable-build-servers
-dotnet test backend/MyShop.sln -m:1 --disable-build-servers
+dotnet build backend/HDWebFramework.sln -m:1 --disable-build-servers
+dotnet test backend/HDWebFramework.sln -m:1 --disable-build-servers
 git diff --check
 ```
 

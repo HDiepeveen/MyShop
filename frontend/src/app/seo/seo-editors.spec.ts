@@ -5,19 +5,19 @@ import { provideRouter } from '@angular/router';
 import { SeoSettings } from './seo-settings';
 import { ProductSeoEdit } from './product-seo-edit';
 const revision = '10000000-0000-0000-0000-000000000001';
-const info = { productId: 'p', name: 'Opel Corsa', revision, values: { seoTitle: null, seoDescription: null, webAddress: null }, resolvedTitle: 'Opel Corsa · MyShop', resolvedDescription: 'Een auto.', resolvedAddress: 'opel-corsa-p' };
+const info = { productId: 'p', name: 'Opel Corsa', revision, values: { seoTitle: null, seoDescription: null, webAddress: null }, resolvedTitle: 'Opel Corsa · HD Web Framework', resolvedDescription: 'Een auto.', resolvedAddress: 'opel-corsa-p' };
 describe('SEO editors', () => {
   let http: HttpTestingController;
   beforeEach(() => { TestBed.configureTestingModule({ imports: [SeoSettings, ProductSeoEdit], providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])] }); http = TestBed.inject(HttpTestingController); });
   afterEach(() => http.verify());
   it('saves the assortment heading and title with revision and reloads the stored settings', () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision });
     const page = fixture.componentInstance;
-    page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | MyShop';
+    page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | HD Web Framework';
     page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | MyShop', seoDescription: '', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', showHeaderPhone: true, showHeaderWhatsapp: true, home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
+    expect(request.request.body).toEqual({ heading: 'Auto’s te koop', seoTitle: 'Auto kopen | HD Web Framework', seoDescription: '', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', showHeaderPhone: true, showHeaderWhatsapp: true, home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
@@ -33,7 +33,7 @@ describe('SEO editors', () => {
   });
   it('keeps an edited heading when saving fails', () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision });
     const page = fixture.componentInstance; page.heading = 'Mijn ontwerp'; page.shopName = 'Mijn bedrijf'; page.welcomeText = 'Mijn welkom'; page.introduction = 'Mijn introductie'; page.save();
     http.expectOne('/api/seo-settings').flush({}, { status: 409, statusText: 'Conflict' });
     expect(page.shopName).toBe('Mijn bedrijf'); expect(page.welcomeText).toBe('Mijn welkom'); expect(page.introduction).toBe('Mijn introductie');
@@ -41,7 +41,7 @@ describe('SEO editors', () => {
   });
   it('saves company information and an empty footer text without losing drafts on conflicts', () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision });
     const page = fixture.componentInstance; page.footerText = '';
     page.company = { heading: 'Ons bedrijf', name: 'Hans', description: 'Eerste regel\nTweede regel', address: 'Straat 1', email: 'contact@example.test', phone: '030 1234567', openingHours: 'Maandag' };
     page.save(); const request = http.expectOne('/api/seo-settings');
@@ -51,7 +51,7 @@ describe('SEO editors', () => {
   });
   it('reorders home blocks, retains required titles and sends their order when saving', () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: { enabled: true, heading: 'Garage abc', items: [{ title: 'Over ons', description: 'Al 20 jaar.' }, { title: 'Openingstijden', description: 'ma - vr 8:00 - 17:00 uur' }] } });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision, home: { enabled: true, heading: 'Garage abc', items: [{ title: 'Over ons', description: 'Al 20 jaar.' }, { title: 'Openingstijden', description: 'ma - vr 8:00 - 17:00 uur' }] } });
     const page = fixture.componentInstance;
     page.moveHomeItem(1, -1); page.save();
     const request = http.expectOne('/api/seo-settings');
@@ -62,7 +62,7 @@ describe('SEO editors', () => {
   });
   it('requires a title for every page, including old untitled pages', async () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: {enabled: true, heading: 'Home', items: [{title: null, description: 'Inhoud', webAddress: 'pagina'}]} });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision, home: {enabled: true, heading: 'Home', items: [{title: null, description: 'Inhoud', webAddress: 'pagina'}]} });
     fixture.detectChanges(); await fixture.whenStable();
     const titleInput = Array.from(fixture.nativeElement.querySelectorAll('label') as NodeListOf<HTMLLabelElement>).find(label => label.textContent?.trim() === 'Titel')?.querySelector('input');
     expect(titleInput?.required).toBe(true);
@@ -77,7 +77,7 @@ describe('SEO editors', () => {
   });
   it.each(['shopName', 'title', 'description'])('marks an empty required %s field after submitting and saves after correction', async field => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision, home: {enabled: true, heading: 'Home', items: [{title: 'APK', description: 'Keuring'}]} });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision, home: {enabled: true, heading: 'Home', items: [{title: 'APK', description: 'Keuring'}]} });
     const page = fixture.componentInstance;
     if (field === 'shopName') page.shopName = '';
     if (field === 'title') page.home.items[0].title = '   ';
@@ -101,7 +101,7 @@ describe('SEO editors', () => {
   });
   it('saves one website place and an independent home text without requiring extra pages', () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision });
     const page = fixture.componentInstance;
     page.home = { enabled: true, heading: 'Garage abc', place: 'Zwolle', description: 'Welkom!\nSinds 2001.', items: [] };
     fixture.detectChanges();
@@ -115,14 +115,14 @@ describe('SEO editors', () => {
   });
   it('saves separate phone and WhatsApp choices with the Contact number', () => {
     const fixture=TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({heading:'Assortiment',seoTitle:'MyShop',revision});
+    http.expectOne('/api/seo-settings').flush({heading:'Assortiment',seoTitle:'HD Web Framework',revision});
     const page=fixture.componentInstance;page.company.phone='038 1234567';page.showHeaderPhone=false;page.showHeaderWhatsapp=true;page.save();
     const request=http.expectOne('/api/seo-settings');expect(request.request.body.showHeaderPhone).toBe(false);expect(request.request.body.showHeaderWhatsapp).toBe(true);expect(request.request.body.company.phone).toBe('038 1234567');request.flush({}, {status:409,statusText:'Conflict'});
     expect(page.company.phone).toBe('038 1234567');
   });
   it('uploads the home image with CSRF and keeps unsaved page text', () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision });
     const page = fixture.componentInstance;
     page.home.description = 'Nog niet opgeslagen';
     page.homeImageFile = new File(['png'], 'home.png', { type: 'image/png' });
@@ -133,7 +133,7 @@ describe('SEO editors', () => {
     expect((upload.request.body as FormData).get('revision')).toBe(revision);
     expect(((upload.request.body as FormData).get('file') as File).name).toBe('home.png');
     upload.flush(null);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision: 'new', homeImageUrl: '/api/shop/home-image?v=new' });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision: 'new', homeImageUrl: '/api/shop/home-image?v=new' });
     expect(page.home.description).toBe('Nog niet opgeslagen');
     expect(page.settings()?.revision).toBe('new');
     expect(page.busy()).toBe(false);
@@ -148,7 +148,7 @@ describe('SEO editors', () => {
   });
   it('sends optional metadata for home, extra pages and contact without changing visible texts', async () => {
     const fixture = TestBed.createComponent(SeoSettings);
-    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'MyShop', revision });
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'HD Web Framework', revision });
     const page = fixture.componentInstance;
     page.home = { enabled: true, heading: 'Home', description: 'Welkom', seoTitle: 'Garage Zwolle', seoDescription: 'Home SEO', items: [{ title: 'APK', description: 'Inhoud', seoTitle: 'APK Zwolle', seoDescription: 'APK SEO' }] };
     page.company.seoTitle = 'Contact Ganpat'; page.company.seoDescription = '';

@@ -37,7 +37,7 @@ describe('Public storefront', () => {
     });
     http = TestBed.inject(HttpTestingController);
   });
-  afterEach(() => { http.match('/api/shop/settings').forEach(request => request.flush({ shopName: 'MyShop' })); http.verify(); });
+  afterEach(() => { http.match('/api/shop/settings').forEach(request => request.flush({ shopName: 'HD Web Framework' })); http.verify(); });
   it('opens without authentication and preserves search/page when following product links', async () => {
     TestBed.inject(ShopBranding).name.set('Autohuis Hans');
     TestBed.inject(ShopBranding).assortmentImageUrl.set('/api/shop/page-images/assortment');
@@ -65,7 +65,7 @@ describe('Public storefront', () => {
     expect(harness.routeNativeElement!.textContent).toContain('Autohuis Hans');
     expect(harness.routeNativeElement!.classList.contains('assortment-photo')).toBe(true);
     expect(harness.routeNativeElement!.textContent).toContain('Onze geselecteerde occasions.');
-    expect(harness.routeNativeElement!.textContent).not.toContain('Welkom bij MyShop');
+    expect(harness.routeNativeElement!.textContent).not.toContain('Welkom bij HD Web Framework');
     expect(harness.routeNativeElement!.textContent).toContain('EUR 12,50');
     expect(harness.routeNativeElement!.textContent).toContain('25,00');
     const link = harness.routeNativeElement!.querySelector('a[href*="/winkel/p?"]')!;

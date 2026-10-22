@@ -45,7 +45,7 @@ public sealed class SharedAccountEmailHttpTests
         Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PostAsJsonAsync("/api/customer/auth/register", new { email = " SHARED@example.test ", password = customerPassword })).StatusCode);
         string body;
         await using (var scope = host.App.Services.CreateAsyncScope())
-            body = await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.SqlQueryRaw<string>("SELECT Body AS Value FROM EmailMessages WHERE Subject = N'Bevestig je MyShop e-mailadres'").SingleAsync();
+            body = await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.SqlQueryRaw<string>("SELECT Body AS Value FROM EmailMessages WHERE Subject = N'Bevestig je HD Web Framework e-mailadres'").SingleAsync();
         var confirmation = QueryHelpers.ParseQuery(new Uri(body.Split('\n').Single(line => line.StartsWith("http://")).Trim()).Query);
         var customerId = confirmation["userId"].ToString();
         Assert.NotEqual(adminId, customerId);
@@ -57,7 +57,7 @@ public sealed class SharedAccountEmailHttpTests
         await host.Csrf();
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync("/api/customer/auth/request-password-reset", new { email })).StatusCode);
         await using (var scope = host.App.Services.CreateAsyncScope())
-            body = await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.SqlQueryRaw<string>("SELECT Body AS Value FROM EmailMessages WHERE Subject = N'Herstel je MyShop wachtwoord'").SingleAsync();
+            body = await scope.ServiceProvider.GetRequiredService<MyShopDbContext>().Database.SqlQueryRaw<string>("SELECT Body AS Value FROM EmailMessages WHERE Subject = N'Herstel je HD Web Framework wachtwoord'").SingleAsync();
         var reset = QueryHelpers.ParseQuery(new Uri(body.Split('\n').Single(line => line.StartsWith("http://")).Trim()).Query);
         Assert.Equal(customerId, reset["userId"].ToString());
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PostAsJsonAsync("/api/customer/auth/reset-password", new { userId = customerId, token = reset["token"].ToString(), password = newPassword })).StatusCode);

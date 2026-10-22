@@ -2,8 +2,8 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <ProjectReference Include="..\MyShop.Application\MyShop.Application.csproj" />
-    <ProjectReference Include="..\MyShop.Domain\MyShop.Domain.csproj" />
+    <ProjectReference Include="..\MyShop.Application\HDWebFramework.Application.csproj" />
+    <ProjectReference Include="..\MyShop.Domain\HDWebFramework.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <RootNamespace>MyShop.Infrastructure</RootNamespace>
+    <AssemblyName>HDWebFramework.Infrastructure</AssemblyName>
+    <Product>HD Web Framework</Product>
+    <Description>Framework voor websites en webshops</Description>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

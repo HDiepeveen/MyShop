@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("MyShop.Infrastructure")]
-[assembly: InternalsVisibleTo("MyShop.Domain.Tests")]
+[assembly: InternalsVisibleTo("HDWebFramework.Infrastructure")]
+[assembly: InternalsVisibleTo("HDWebFramework.Domain.Tests")]

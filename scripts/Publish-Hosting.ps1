@@ -19,7 +19,7 @@ dotnet publish (Join-Path $taskRepo 'backend/src/MyShop.Api') -c Release --no-re
 if ($LASTEXITCODE -ne 0) { throw 'Publiceren mislukt.' }
 $taskWebRoot = Join-Path $taskPublish 'wwwroot'
 New-Item -ItemType Directory -Force -Path $taskWebRoot | Out-Null
-Copy-Item -Path (Join-Path $taskRepo 'frontend/dist/myshop-admin/browser/*') -Destination $taskWebRoot -Recurse
+Copy-Item -Path (Join-Path $taskRepo 'frontend/dist/hdwebframework/browser/*') -Destination $taskWebRoot -Recurse
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Configure-Hosting.ps1') -Destination $taskOutput
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Install-HostingDatabase.ps1') -Destination $taskOutput
 Write-Host "Hostingbestanden staan in $taskOutput. Voer Configure-Hosting.ps1 uit om het databasewachtwoord lokaal in te stellen en de uploadzip te maken."

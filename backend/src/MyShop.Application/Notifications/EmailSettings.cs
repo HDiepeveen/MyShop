@@ -68,7 +68,7 @@ public sealed class SendEmailTest(IEmailSettingsRepository repository, IEmailQue
         UpdateEmailSettings.Address(recipient);
         var settings = await repository.GetAsync(cancellationToken);
         if (!settings.Enabled || settings.Revision != revision) return false;
-        await queue.EnqueueAsync(recipient, "MyShop testmail", "Deze testmail is verzonden met de opgeslagen MyShop e-mailinstellingen.", cancellationToken);
+        await queue.EnqueueAsync(recipient, "HD Web Framework testmail", "Deze testmail is verzonden met de opgeslagen HD Web Framework e-mailinstellingen.", cancellationToken);
         return true;
     }
 }

@@ -93,7 +93,7 @@ export class SeoSettings {
   readonly submitted = signal(false);
   readonly settings = signal<ShopSeoSettings | null>(null);
   readonly busy = signal(false); readonly loading = signal(false); readonly error = signal(''); readonly notice = signal('');
-  heading = ''; seoTitle = ''; shopName = 'MyShop'; welcomeText = 'Welkom bij MyShop'; introduction = 'Bekijk onze producten en kies de variant die bij je past.';
+  heading = ''; seoTitle = ''; shopName = 'HD Web Framework'; welcomeText = 'Welkom bij HD Web Framework'; introduction = 'Bekijk onze producten en kies de variant die bij je past.';
   seoDescription = '';
   showHeaderPhone = true; showHeaderWhatsapp = true;
   assortmentImageMode: string | null | undefined;
@@ -107,7 +107,7 @@ export class SeoSettings {
     if (this.loading() || this.busy()) return;
     this.loading.set(true); this.error.set('');
     this.api.seoSettings().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: settings => { this.submitted.set(false); this.settings.set(settings); this.assortmentImageMode = settings.assortmentImageMode; this.headerText = settings.headerText ?? ''; this.showHeaderPhone = settings.showHeaderPhone !== false; this.showHeaderWhatsapp = settings.showHeaderWhatsapp !== false; this.seoDescription = settings.seoDescription ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'MyShop'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij MyShop'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
+      next: settings => { this.submitted.set(false); this.settings.set(settings); this.assortmentImageMode = settings.assortmentImageMode; this.headerText = settings.headerText ?? ''; this.showHeaderPhone = settings.showHeaderPhone !== false; this.showHeaderWhatsapp = settings.showHeaderWhatsapp !== false; this.seoDescription = settings.seoDescription ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'HD Web Framework'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij HD Web Framework'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
       error: error => { this.loading.set(false); this.error.set(errorMessage(error)); },
     });
   }

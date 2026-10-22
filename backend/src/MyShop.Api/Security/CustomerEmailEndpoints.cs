@@ -21,8 +21,8 @@ public static class CustomerEmailEndpoints
     {
         var token = await users.GenerateEmailConfirmationTokenAsync(user);
         var link = Link("e-mail-bevestigen", user.Id, token, (await settings.GetAsync(cancellationToken)).PublicBaseUrl, environment);
-        await queue.EnqueueAsync(user.Email!, "Bevestig je MyShop e-mailadres",
-            $"Bevestig je e-mailadres via deze link:\n\n{link}\n\nDe link is twee uur geldig. Heb je geen MyShop-account gemaakt? Dan kun je deze e-mail negeren.", cancellationToken);
+        await queue.EnqueueAsync(user.Email!, "Bevestig je HD Web Framework e-mailadres",
+            $"Bevestig je e-mailadres via deze link:\n\n{link}\n\nDe link is twee uur geldig. Heb je geen HD Web Framework-account gemaakt? Dan kun je deze e-mail negeren.", cancellationToken);
     }
 
     private static async Task<IResult> RequestConfirmationAsync(CustomerEmailRequest request, UserManager<IdentityUser> users,
@@ -42,7 +42,7 @@ public static class CustomerEmailEndpoints
         {
             var token = await users.GeneratePasswordResetTokenAsync(user);
             var link = Link("wachtwoord-herstellen", user.Id, token, (await settings.GetAsync(cancellationToken)).PublicBaseUrl, environment);
-            await queue.EnqueueAsync(user.Email!, "Herstel je MyShop wachtwoord",
+            await queue.EnqueueAsync(user.Email!, "Herstel je HD Web Framework wachtwoord",
                 $"Kies een nieuw wachtwoord via deze link:\n\n{link}\n\nDe link is twee uur geldig. Heb je dit niet aangevraagd? Negeer deze e-mail; je wachtwoord blijft ongewijzigd.", cancellationToken);
         }
         return Results.NoContent();

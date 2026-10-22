@@ -6,7 +6,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $taskWebsite = Join-Path $PSScriptRoot 'website'
-if (!(Test-Path -LiteralPath (Join-Path $taskWebsite 'MyShop.Api.dll'))) { throw 'Dit script hoort naast de map website uit het hostingpakket.' }
+if (!(Test-Path -LiteralPath (Join-Path $taskWebsite 'HDWebFramework.Api.dll'))) { throw 'Dit script hoort naast de map website uit het hostingpakket.' }
 $taskUri = [Uri]$WebsiteAddress
 if ($taskUri.Scheme -ne 'https' -or !$taskUri.IsAbsoluteUri) { throw 'Gebruik een HTTPS-websiteadres.' }
 $taskSecret = Read-Host 'Databasewachtwoord (wordt niet getoond)' -AsSecureString
@@ -28,7 +28,7 @@ try {
         Logging = @{ LogLevel = @{ Default = 'Information'; 'Microsoft.AspNetCore' = 'Warning' } }
     }
     [System.IO.File]::WriteAllText((Join-Path $taskWebsite 'appsettings.Production.json'), ($taskSettings | ConvertTo-Json -Depth 8), [System.Text.UTF8Encoding]::new($false))
-    $taskZip = Join-Path $PSScriptRoot 'MyShop-upload.zip'
+    $taskZip = Join-Path $PSScriptRoot 'HDWebFramework-upload.zip'
     Compress-Archive -Path (Join-Path $taskWebsite '*') -DestinationPath $taskZip -Force
     Write-Host "Uploadpakket gemaakt: $taskZip. Dit pakket bevat het databasewachtwoord; bewaar het prive en upload de databasebackup nooit naar /site1."
 } finally {

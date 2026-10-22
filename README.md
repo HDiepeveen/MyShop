@@ -1,6 +1,6 @@
-# MyShop
+# HD Web Framework
 
-MyShop is an e-commerce application with an ASP.NET Core catalog API and a modular backend. An Angular interface provides the first local catalog management screens.
+HD Web Framework is a framework for websites and webshops with an ASP.NET Core catalog API and a modular backend. An Angular interface provides the first local catalog management screens.
 
 ## Webshop version
 
@@ -66,3 +66,9 @@ See [Bezorgopties](docs/delivery-methods.md) for managed checkout choices and im
 
 See [Verlanglijst](docs/customer-wishlist.md) for customer product saving and availability behavior.
 See [Klantmail](docs/email.md) for email confirmation, customer password recovery, order confirmations and SMTP configuration.
+
+## Productnaam en compatibiliteit
+
+Productnaam: **HD Web Framework**. Technische projectnaam: **HDWebFramework**. Omschrijving: **Framework voor websites en webshops**.
+
+De solution en assemblies dragen de nieuwe technische naam. De bestaande bronmappen en C#-namespaces blijven voorlopig `MyShop` om bestaande integraties te behouden. Databaseconfiguratiesleutel `MyShop`, databasegegevens, cookies, browseropslag, UserSecretsId en Data Protection-toepassingsnaam blijven eveneens behouden. De configureerbare bedrijfsnaam verandert niet. Bij een hostingupdate wordt de gegenereerde web.config gebruikt voor HDWebFramework.Api.dll; behoud productie-instellingen en App_Data.

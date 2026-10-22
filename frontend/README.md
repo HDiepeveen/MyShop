@@ -1,4 +1,4 @@
-# MyShop beheerinterface
+# HD Web Framework beheerinterface
 
 Eerste lokale Angular-beheerinterface voor de bestaande catalogusbackend. De onderdelen zijn standalone en ingedeeld per catalogusfunctie. Angular en CLI zijn lokaal vastgezet op 22.2.0; de volledige afhankelijkheden staan in `package-lock.json`.
 
@@ -20,9 +20,9 @@ npm ci
 npm start
 ```
 
-Open [MyShop beheer](http://127.0.0.1:4200). De ontwikkelserver stuurt `/api/**` door naar `http://localhost:5032` volgens `proxy.conf.json`. Hiervoor zijn geen wijzigingen aan de CORS-instellingen van de backend nodig.
+Open [HD Web Framework beheer](http://127.0.0.1:4200). De ontwikkelserver stuurt `/api/**` door naar `http://localhost:5032` volgens `proxy.conf.json`. Hiervoor zijn geen wijzigingen aan de CORS-instellingen van de backend nodig.
 
-De interface en API vereisen een MyShop-beheerdersaccount. Volg eerst [Beveiligd beheer](../docs/admin-security.md) om de accountmigratie toe te passen en je eigen account lokaal aan te maken. Productiehosting blijft een afzonderlijke stap. De frontend bindt standaard aan 127.0.0.1. Een productiebuild vereist een host met SPA-fallback en een passende `/api`-reverse proxy.
+De interface en API vereisen een HD Web Framework-beheerdersaccount. Volg eerst [Beveiligd beheer](../docs/admin-security.md) om de accountmigratie toe te passen en je eigen account lokaal aan te maken. Productiehosting blijft een afzonderlijke stap. De frontend bindt standaard aan 127.0.0.1. Een productiebuild vereist een host met SPA-fallback en een passende `/api`-reverse proxy.
 
 ## Wat deze versie ondersteunt
 
@@ -79,8 +79,8 @@ Voor de backend, vanuit de repository-root:
 
 ```powershell
 $env:MYSHOP_TEST_SQLSERVER = 'Server=(localdb)\MSSQLLocalDB;Integrated Security=True;TrustServerCertificate=True'
-dotnet build backend/MyShop.sln -m:1 --disable-build-servers
-dotnet test backend/MyShop.sln -m:1 --disable-build-servers
+dotnet build backend/HDWebFramework.sln -m:1 --disable-build-servers
+dotnet test backend/HDWebFramework.sln -m:1 --disable-build-servers
 git diff --check
 ```
 

@@ -135,7 +135,7 @@ internal sealed class OrderRepository : IOrderRepository, IOrderReadRepository, 
         };
         context.Orders.Add(persistence);
         context.EmailMessages.Add(MyShop.Infrastructure.Notifications.EmailQueue.Create(order.Customer.Email,
-            $"MyShop bestelbevestiging {order.Number}", MyShop.Infrastructure.Notifications.OrderConfirmationEmail.Body(order)));
+            $"HD Web Framework bestelbevestiging {order.Number}", MyShop.Infrastructure.Notifications.OrderConfirmationEmail.Body(order)));
         try
         {
             await context.SaveChangesAsync(cancellationToken);

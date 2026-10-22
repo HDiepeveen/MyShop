@@ -23,7 +23,7 @@ export class ShopTitleStrategy extends TitleStrategy {
   }
   private setTitle(name: string) {
     if (!this.routeTitle) return;
-    this.lastTitle = this.routeTitle.replace(/ · MyShop$/, () => ' · ' + name);
+    this.lastTitle = this.routeTitle.replace(/ · HD Web Framework$/, () => ' · ' + name);
     this.title.setTitle(this.lastTitle);
   }
 }

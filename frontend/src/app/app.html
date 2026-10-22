@@ -11,7 +11,7 @@
         [routerLink]="auth.isManagement() ? auth.landingPage() : '/beheer'"
         class="brand"
         [attr.aria-label]="branding.name() + ' startpagina'"
-        ><span class="brand-icon">m.</span> {{ branding.name() }}</a
+        ><span class="brand-icon">HD</span> {{ branding.name() }}</a
       >
       <p class="nav-label">WERKRUIMTE</p>
       <nav aria-label="Hoofdnavigatie">
@@ -26,7 +26,7 @@
           }
         }
       </nav>
-      <div class="sidebar-footer">
+      <div class="sidebar-footer" title="HD Web Framework — Framework voor websites en webshops">
         <div>
           <span class="status-dot"></span> Catalogusbeheer
           <span class="webshop-version">{{ version }}</span>

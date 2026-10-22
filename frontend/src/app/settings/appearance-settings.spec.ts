@@ -27,7 +27,7 @@ describe('Appearance settings', () => {
     const save = http.expectOne('/api/shop-appearance');
     expect(save.request.body.showManagementMenuWithoutLogin).toBe(true);
     save.flush(null);
-    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', showManagementMenuWithoutLogin: true });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'HD Web Framework', showManagementMenuWithoutLogin: true });
     http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-2', showManagementMenuWithoutLogin: true });
     expect(page.showManagementMenuWithoutLogin).toBe(true);
     expect(TestBed.inject(ShopBranding).showManagementMenuWithoutLogin()).toBe(true);
@@ -50,7 +50,7 @@ describe('Appearance settings', () => {
     http
       .expectOne('/api/shop/settings')
       .flush({
-        shopName: 'MyShop',
+        shopName: 'HD Web Framework',
         iconUrl: '/api/shop/icon?v=11111111-1111-1111-1111-111111111111',
       });
     http
@@ -73,7 +73,7 @@ describe('Appearance settings', () => {
     expect(removal.request.method).toBe('DELETE');
     expect(removal.request.body).toEqual({ revision: 'revision-2' });
     removal.flush(null);
-    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', iconUrl: null });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'HD Web Framework', iconUrl: null });
     http
       .expectOne('/api/shop-appearance')
       .flush({ colors: defaultColors, revision: 'revision-3', iconUrl: null });
@@ -121,7 +121,7 @@ describe('Appearance settings', () => {
     const save = http.expectOne('/api/shop-appearance');
     expect(save.request.body).toEqual({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     save.flush(null);
-    http.expectOne('/api/shop/settings').flush({ shopName: 'MyShop', appearance: defaultColors });
+    http.expectOne('/api/shop/settings').flush({ shopName: 'HD Web Framework', appearance: defaultColors });
     http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-2' });
     expect(branding.colors()).toEqual(defaultColors);
   });
@@ -146,7 +146,7 @@ describe('Appearance settings', () => {
     save.flush(null);
     http
       .expectOne('/api/shop/settings')
-      .flush({ shopName: 'MyShop', appearance: shopThemes[2].colors });
+      .flush({ shopName: 'HD Web Framework', appearance: shopThemes[2].colors });
     http
       .expectOne('/api/shop-appearance')
       .flush({ colors: shopThemes[2].colors, revision: 'revision-2' });

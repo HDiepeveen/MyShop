@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <RootNamespace>MyShop.Api.Tests</RootNamespace>
+    <AssemblyName>HDWebFramework.Api.Tests</AssemblyName>
+    <Product>HD Web Framework</Product>
+    <Description>Framework voor websites en webshops</Description>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -19,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MyShop.Domain\MyShop.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MyShop.Api\HDWebFramework.Api.csproj" />
   </ItemGroup>
 
 </Project>

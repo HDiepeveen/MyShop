@@ -1,6 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <RootNamespace>MyShop.Infrastructure.Tests</RootNamespace>
+    <AssemblyName>HDWebFramework.Infrastructure.Tests</AssemblyName>
+    <Product>HD Web Framework</Product>
+    <Description>Framework voor websites en webshops</Description>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -19,8 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MyShop.Application\MyShop.Application.csproj" />
-    <ProjectReference Include="..\..\src\MyShop.Domain\MyShop.Domain.csproj" />
+    <ProjectReference Include="..\..\src\MyShop.Infrastructure\HDWebFramework.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
