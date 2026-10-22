@@ -15,7 +15,7 @@ Autoservice Ganpat, [rechtsvorm indien van toepassing], Popovstraat 7-B, 8013 RK
 
 Wanneer u contact opneemt, gebruiken wij uw contactgegevens en de inhoud van uw bericht om uw vraag te behandelen. Dat gebeurt voor het voorbereiden of uitvoeren van een overeenkomst, of op basis van ons gerechtvaardigde belang om algemene vragen te beantwoorden.
 
-Bij een informatieaanvraag, aankoop of werkplaatsafspraak gebruiken wij de benodigde contactgegevens en gegevens over het artikel, voertuig of de werkzaamheden om uw vraag te behandelen of onze afspraken uit te voeren. Voor zover een account wordt gebruikt, verwerken wij de noodzakelijke account- en inloggegevens voor de werking en beveiliging daarvan.
+Bij een informatieaanvraag, aankoop of werkplaatsafspraak gebruiken wij de benodigde contactgegevens en gegevens over het artikel, voertuig of de werkzaamheden om uw vraag te behandelen of onze afspraken uit te voeren.
 
 Voor voertuigverkoop, APK of reparatie kunnen voertuiggegevens nodig zijn, zoals kenteken, voertuigidentificatie en werkzaamheden. Wij verwerken deze uitsluitend voor zover nodig voor de afspraak, uitvoering en toepasselijke administratieve verplichtingen. [Controleer en beschrijf eventuele APK/RDW-registraties en andere garagesystemen die buiten deze website worden gebruikt.]
 
@@ -41,8 +41,7 @@ Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten v√≥√
 | Gegevens | Bewaartermijn |
 |---|---|
 | Facturen en relevante fiscale basisadministratie | In beginsel zeven jaar volgens de toepasselijke fiscale bewaarplicht |
-| Account- en profielgegevens | [Termijn en beleid voor inactieve of opgeheven accounts invullen] |
-| Vragen en correspondentie | [Termijn na afhandeling invullen] |
+| Algemene vragen en correspondentie, zoals e-mails en WhatsApp-berichten | Maximaal 12 maanden na afhandeling. Berichten die nodig zijn voor een aankoop, werkzaamheden, factuur of klacht vallen onder de betreffende administratie; de daarvoor geldende termijnen worden afzonderlijk vastgesteld. |
 | Aankoop-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
 | Toegangs- en beveiligingslogs | [Werkelijke hosting- en applicatietermijnen invullen] |
 | Functionele e-mails, verzendregistraties en tijdelijke accounttokens | [Termijnen per systeem en e-mailleverancier invullen] |

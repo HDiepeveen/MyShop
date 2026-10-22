@@ -21,3 +21,5 @@ De openbare juridische teksten zijn nu toegespitst op profiel 2. De eerdere teks
 
 De teksten voor Autoservice Ganpat bevatten geen bezorg-, verzend- of leveringsafspraken. Werkplaatsafspraken en eventuele wettelijke rechten bij een overeenkomst op afstand blijven wel beschreven. De uitgebreide conceptbasis voor profiel 4 staat in templates/webshop-met-leveringen. Automatisering van leveringen zelf valt buiten deze tekstwijziging.
 Voor alle bedrijfsconcepten geldt dezelfde uitgangssituatie voor afbeeldingen: upload naar de eigen website. Passages over rechtstreeks laden van afbeeldingen bij externe afbeeldingshosts zijn daarom weggelaten, ook uit de webshopconcepten en de concepten voor webshops met leveringen.
+
+Voor Ganpat is algemene correspondentie (ook e-mail en WhatsApp) op maximaal 12 maanden na afhandeling gezet. Dit is bedrijfsbeleid dat Ganpat in de eigen systemen moet uitvoeren; het framework verwijdert de mailbox niet automatisch. Klantprofielen zijn uit de openbare privacyverklaring verwijderd. Termijnen voor aankoop-, werkplaats- en klachtadministratie blijven nog vast te stellen. De webshopconcepten behouden hun accountpassages.
