@@ -25,7 +25,6 @@ Voor de werking en beveiliging van de website kunnen de volgende partijen gegeve
 
 - **SmarterASP.NET:** hosting van de website en database.
 - **Brevo:** verzending van functionele e-mails, voor het beheer en de beveiliging van de website, voor zover deze e-maildienst is ingeschakeld. Dit betreft geen bestel- of klantaccountberichten voor bezoekers.
-- [Andere ontvangers invullen indien deze voor de website worden gebruikt.]
 - Bevoegde instanties wanneer een wettelijke verplichting dat vereist.
 
 Wij leggen de toepasselijke afspraken over gegevensbescherming met dienstverleners vast. **[Vóór publicatie controleren: juridische leveranciersnamen, rollen, verwerkersafspraken, daadwerkelijke opslaglanden en eventuele doorgifte buiten de EER. Vermeld bij doorgifte de toepasselijke waarborgen en hoe informatie daarover verkrijgbaar is.]**
