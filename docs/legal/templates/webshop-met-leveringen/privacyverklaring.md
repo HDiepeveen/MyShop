@@ -41,7 +41,7 @@ Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten v√≥√
 
 | Gegevens | Bewaartermijn |
 |---|---|
-| Facturen en relevante fiscale basisadministratie | In beginsel zeven jaar volgens de toepasselijke fiscale bewaarplicht |
+| Facturen en relevante fiscale basisadministratie | In beginsel minimaal zeven jaar volgens de toepasselijke fiscale bewaarplicht. Langere bewaring vindt alleen plaats wanneer een wettelijke verplichting of een aantoonbare noodzaak, zoals een lopend geschil, dit rechtvaardigt. |
 | Account- en profielgegevens | [Termijn en beleid voor inactieve of opgeheven accounts invullen] |
 | Vragen en correspondentie | [Termijn na afhandeling invullen] |
 | Bestel-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
