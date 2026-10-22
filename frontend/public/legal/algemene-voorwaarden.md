@@ -23,25 +23,23 @@ De website is een catalogus. Over aankoop of dienstverlening maken wij afzonderl
 
 ## 3. Prijzen en betaling
 
-Consumentenprijzen zijn inclusief btw en andere verplichte kosten. Eventuele bezorgkosten en andere keuzekosten spreken wij vóór het sluiten van de overeenkomst af. U betaalt volgens de betaalmethode en betaaltermijn die bij de overeenkomst zijn afgesproken.
+Consumentenprijzen zijn inclusief btw en andere verplichte kosten. Eventuele aanvullende kosten spreken wij vóór het sluiten van de overeenkomst af. U betaalt volgens de betaalmethode en betaaltermijn die bij de overeenkomst zijn afgesproken.
 
 Wij voeren geen extra werkzaamheden uit tegen betaling zonder de daarvoor vereiste afspraken en toestemming. Bij een gewijzigde reparatiebehoefte bespreken wij de gevolgen voor kosten en planning met u.
 
-## 4. Levering, afhalen en werkzaamheden
+## 4. Afspraken en werkzaamheden
 
-Wij spreken af hoe en wanneer levering, afhalen of uitvoering plaatsvindt. Bij vertraging informeren wij u en bespreken wij een oplossing. Uw wettelijke mogelijkheden bij te late levering blijven bestaan.
+Wij spreken af welke werkzaamheden wij uitvoeren en wanneer deze plaatsvinden. Bij vertraging informeren wij u en bespreken wij een oplossing. Uw wettelijke rechten blijven bestaan.
 
-Controleer of bestelde onderdelen, banden en velgen geschikt zijn voor uw voertuig. Vraag bij twijfel vooraf advies en geef de juiste voertuiggegevens door. Dit doet niets af aan onze verantwoordelijkheid voor de juistheid van ons eigen advies en de overeengekomen levering.
+Controleer of bestelde onderdelen, banden en velgen geschikt zijn voor uw voertuig. Vraag bij twijfel vooraf advies en geef de juiste voertuiggegevens door. Dit doet niets af aan onze verantwoordelijkheid voor de juistheid van ons eigen advies en de overeengekomen eigenschappen van het product.
 
 ## 5. Alleen indien een overeenkomst op afstand wordt gesloten
 
 Bij een overeenkomst op afstand heeft u in beginsel veertien dagen bedenktijd. Voor producten begint deze na ontvangst; voor diensten na het sluiten van de overeenkomst. Ook gebruikte producten kunnen hieronder vallen. Voor een aankoop in de garage bestaat geen algemene wettelijke bedenktijd.
 
-U kunt herroepen met een duidelijke verklaring aan ons e-mailadres of postadres uit artikel 1. U mag het onderstaande formulier gebruiken, maar dat hoeft niet. Na herroeping stuurt of brengt u producten binnen veertien dagen terug.
+U kunt herroepen met een duidelijke verklaring aan ons e-mailadres of postadres uit artikel 1. U mag het onderstaande formulier gebruiken, maar dat hoeft niet. Na herroeping brengt u producten binnen veertien dagen terug.
 
-Wij betalen bij volledige herroeping het aankoopbedrag en de kosten van de aangeboden standaardlevering terug, uiterlijk binnen veertien dagen na uw melding. Wij mogen wachten op ontvangst van het product of bewijs van terugzending. Terugbetaling gebeurt met hetzelfde betaalmiddel, tenzij anders afgesproken zonder extra kosten voor u.
-
-De directe retourkosten zijn voor u uitsluitend wanneer wij u daar vóór de aankoop over hebben geïnformeerd. Voor producten die niet normaal per post terug kunnen, zoals een auto, verstrekken wij vooraf een concrete kostenopgave of redelijke raming: [retourregeling en kosten/raming invullen vóór eventuele verkoop op afstand].
+Wij betalen bij volledige herroeping het aankoopbedrag terug, uiterlijk binnen veertien dagen na uw melding. Bij producten mogen wij wachten totdat het product is teruggebracht of is aangetoond dat het is teruggegeven. Terugbetaling gebeurt met hetzelfde betaalmiddel, tenzij anders afgesproken zonder extra kosten voor u.
 
 U mag een product beoordelen zoals dat in een winkel mogelijk zou zijn. Voor verdergaand gebruik kan een waardevermindering voor uw rekening komen, voor zover wettelijk toegestaan en correct vooraf meegedeeld. Tweedehands producten zijn niet uitsluitend vanwege hun gebruikte staat uitgesloten van herroeping.
 

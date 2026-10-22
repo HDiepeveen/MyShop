@@ -15,5 +15,8 @@ Nog aan te vullen: rechtsvorm indien van toepassing, bewaartermijnen, ontvangers
 1. Website: bedrijfsinformatie en pagina’s.
 2. Website met assortiment: daarnaast artikelen presenteren, zoals Autoservice Ganpat.
 3. Webshop: daarnaast online bestellen en betalen.
+4. Webshop met leveringen: daarnaast automatische leveringen.
 
 De openbare juridische teksten zijn nu toegespitst op profiel 2. De eerdere tekstbasis is met bedrijfsinvulvelden bewaard in templates/webshop. Dit is een documentindeling; er is hiermee geen nieuwe modusinstelling of automatische juridische-tekstselectie toegevoegd. Algemene afspraken over prijzen en betaling bij de garage en mogelijke verkoop op afstand buiten het framework blijven beschreven. Oudere browseropslag kan achterblijven; de tekst zegt niet dat deze automatisch is verwijderd.
+
+De teksten voor Autoservice Ganpat bevatten geen bezorg-, verzend- of leveringsafspraken. Werkplaatsafspraken en eventuele wettelijke rechten bij een overeenkomst op afstand blijven wel beschreven. De uitgebreide conceptbasis voor profiel 4 staat in templates/webshop-met-leveringen. Automatisering van leveringen zelf valt buiten deze tekstwijziging.

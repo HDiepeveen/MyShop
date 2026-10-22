@@ -29,7 +29,7 @@ Wij verstrekken gegevens voor zover nodig voor de betreffende dienstverlening:
 
 - **SmarterASP.NET:** hosting van de website en database.
 - **Brevo:** verzending van functionele e-mails, zoals account- en beveiligingsberichten, voor zover deze e-maildienst is ingeschakeld.
-- [Andere ontvangers invullen indien gebruikt, bijvoorbeeld bij afgesproken levering van een artikel.]
+- [Andere ontvangers invullen indien deze voor de dienstverlening worden gebruikt.]
 - Bevoegde instanties wanneer een wettelijke verplichting dat vereist.
 
 Wij leggen de toepasselijke afspraken over gegevensbescherming met dienstverleners vast. **[Vóór publicatie controleren: juridische leveranciersnamen, rollen, verwerkersafspraken, daadwerkelijke opslaglanden en eventuele doorgifte buiten de EER. Vermeld bij doorgifte de toepasselijke waarborgen en hoe informatie daarover verkrijgbaar is.]**
