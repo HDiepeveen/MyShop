@@ -23,9 +23,6 @@ import { errorMessage } from '../catalog/error-message';
     }
     @if (state()?.data; as options) {
       <form class="panel" (ngSubmit)="save(options)">
-        <label><input type="checkbox" name="checkoutEnabled" [(ngModel)]="checkoutEnabled" [disabled]="busy()" />
-          Winkelmand en bestellen inschakelen</label>
-        <p class="muted">Uitgeschakeld: klanten kunnen het assortiment en de prijzen bekijken, maar niet bestellen of betalen. Je betaalopties blijven bewaard.</p>
         <label
           ><input type="checkbox" name="payLater" [(ngModel)]="payLater" [disabled]="busy()" />
           Later betalen</label

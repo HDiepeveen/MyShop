@@ -1,3 +1,4 @@
+import { CheckoutEnabledSettings } from '../checkout/checkout-enabled-settings';
 import { PageBackgroundEditor } from './page-background-editor';
 import { HttpClient } from '@angular/common/http';
 import { Auth } from '../auth/auth';
@@ -10,13 +11,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi } from '../catalog/catalog.api';
 import { errorMessage } from '../catalog/error-message';
 import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
-@Component({ imports: [FormsModule, RouterLink, PageBackgroundEditor], template: `
+@Component({ imports: [FormsModule, RouterLink, PageBackgroundEditor, CheckoutEnabledSettings], template: `
   <h1>Website en SEO</h1>
+  <app-checkout-enabled-settings />
   <p>De koptekst staat boven je producten. De SEO-titel wordt gebruikt voor het browsertabblad en als aanwijzing voor zoekmachines.</p>
   @if (loading()) { <p role="status">Instellingen ophalen…</p> }
   @if (error()) { <p role="alert">{{ error() }}</p><button type="button" [disabled]="busy() || loading()" (click)="load()">Opnieuw ophalen</button> }
   @if (settings()) {
     <form class="panel" #settingsForm="ngForm" (ngSubmit)="save(settingsForm)">
+      <h2>Website</h2>
       <label>Plaats website (optioneel)<input name="sitePlace" [(ngModel)]="home.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" [disabled]="busy()" /></label>
       <label>Naam<input name="shopName" [(ngModel)]="shopName" [class.invalid-required]="submitted() && !shopName.trim()" [attr.aria-invalid]="submitted() && !shopName.trim() ? 'true' : null" maxlength="100" required [disabled]="busy()" /></label>
       <fieldset [disabled]="busy()"><legend>Icoontjes in menubalk</legend>
