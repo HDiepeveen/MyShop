@@ -64,6 +64,6 @@ U kunt een klacht indienen bij de [Autoriteit Persoonsgegevens](https://autorite
 
 ## Cookies, externe diensten en wijzigingen
 
-Ons cookiebeleid beschrijft de functionele cookies en lokale browseropslag. Een externe betaalpagina valt onder de informatie van die betaalprovider. Als een productafbeelding rechtstreeks van een externe website wordt geladen, ontvangt die aanbieder technische verbindingsgegevens. [Controleer of dergelijke afbeeldingen worden gebruikt.]
+Ons cookiebeleid beschrijft de functionele cookies en lokale browseropslag. Een externe betaalpagina valt onder de informatie van die betaalprovider.
 
 Wij passen deze verklaring aan als onze verwerking verandert. De datum bovenaan geeft de versie aan.
