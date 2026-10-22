@@ -42,9 +42,11 @@ Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten v√≥√
 |---|---|
 | Facturen en relevante fiscale basisadministratie | In beginsel zeven jaar volgens de toepasselijke fiscale bewaarplicht |
 | Algemene vragen en correspondentie, zoals e-mails en WhatsApp-berichten | Maximaal 12 maanden na afhandeling. Berichten die nodig zijn voor een aankoop, werkzaamheden, factuur of klacht vallen onder de betreffende administratie; de daarvoor geldende termijnen worden afzonderlijk vastgesteld. |
-| Aankoop-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
+| Aankoop-, voertuig- en werkplaatsgegevens, zoals werkbonnen, voertuiggegevens bij een opdracht en vastgelegde aankoop- of reparatieafspraken | Maximaal 5 jaar na afronding van de betreffende aankoop of werkzaamheden, voor zover nodig om afspraken en uitgevoerde werkzaamheden te reconstrueren. Relevante gegevens worden langer bewaard wanneer dit aantoonbaar nodig is voor een lopende garantieaanspraak, klacht, geschil of wettelijke verplichting. Gegevens die niet meer nodig zijn, worden eerder verwijderd of geanonimiseerd. |
 | Toegangs- en beveiligingslogs | [Werkelijke hosting- en applicatietermijnen invullen] |
 | Functionele e-mails, verzendregistraties en tijdelijke accounttokens | [Termijnen per systeem en e-mailleverancier invullen] |
+
+Het gaat hierbij om aanvullende informatie naast de factuur, bijvoorbeeld welke onderdelen zijn vervangen, welke gebreken zijn besproken en welke afspraken met u zijn gemaakt. Deze gegevens kunnen in het garagesysteem, op papier of in correspondentie staan. Voor gegevens die onderdeel zijn van de fiscale administratie geldt de daarbij vermelde bewaartermijn. De termijn van vijf jaar beperkt uw wettelijke garantie of andere consumentenrechten niet.
 
 Gegevens kunnen langer nodig zijn als een concrete juridische verplichting of een lopend geschil dat rechtvaardigt. Wij beperken die bewaring tot wat daarvoor noodzakelijk is. De opslag in uw browser is afzonderlijk beschreven in ons cookiebeleid.
 
