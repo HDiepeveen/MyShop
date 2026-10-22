@@ -13,6 +13,15 @@ public sealed class SqlServerFactAttribute : FactAttribute
     }
 }
 
+public sealed class SqlServerTheoryAttribute : TheoryAttribute
+{
+    public SqlServerTheoryAttribute()
+    {
+        if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(SqlServerDatabase.EnvironmentVariable)))
+            Skip = $"Set {SqlServerDatabase.EnvironmentVariable} to run isolated SQL Server integration tests.";
+    }
+}
+
 [CollectionDefinition(Name, DisableParallelization = true)]
 public sealed class SqlServerCollection : ICollectionFixture<SqlServerDatabase>
 {

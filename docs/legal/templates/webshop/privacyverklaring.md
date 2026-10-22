@@ -45,7 +45,9 @@ Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten v√≥√
 | Account- en profielgegevens | [Termijn en beleid voor inactieve of opgeheven accounts invullen] |
 | Vragen en correspondentie | [Termijn na afhandeling invullen] |
 | Bestel-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
-| Functionele e-mails, verzendregistraties en tijdelijke accounttokens | [Termijnen per systeem en e-mailleverancier invullen] |
+| Functionele e-mails en verzendregistraties in HD Web Framework | De berichttekst wordt na succesvolle verzending leeggemaakt. Verzonden registraties vervallen 30 dagen na verzending; niet-verzonden berichten vervallen 30 dagen na aanmaak en worden daarna niet meer aangeboden voor verzending. Verlopen registraties worden bij het starten en vervolgens ieder uur tijdens het draaien van de website verwijderd. Lopende verzendingen worden overgeslagen tot zij zijn afgerond of hun verzendvergrendeling is verlopen. |
+| Gegevens bij de e-mailleverancier | [Controleer de werkelijk ingestelde leverancier en bewaartermijn; deze volgt niet automatisch de frameworkinstellingen.] |
+| Tijdelijke accounttokens | [Beschrijf apart de geldigheid en eventuele bewaring van accounttokens.] |
 
 Gegevens kunnen langer nodig zijn als een concrete juridische verplichting of een lopend geschil dat rechtvaardigt. Wij beperken die bewaring tot wat daarvoor noodzakelijk is. De opslag in uw browser is afzonderlijk beschreven in ons cookiebeleid.
 

@@ -116,6 +116,116 @@ public sealed class EmailDeliveryTests(SqlServerDatabase database)
         finally { await isolated.DisposeAsync(); }
     }
 
+    [SqlServerTheory]
+    [InlineData(30, 30)]
+    [InlineData(5, 10)]
+    public async Task Cleanup_uses_sent_time_or_creation_time_and_preserves_active_leases(int sentDays, int unsentDays)
+    {
+        var isolated = new SqlServerDatabase(); await isolated.InitializeAsync();
+        try
+        {
+            var now = new DateTimeOffset(2026, 10, 22, 12, 0, 0, TimeSpan.Zero);
+            var sentCutoff = now.AddDays(-sentDays);
+            var unsentCutoff = now.AddDays(-unsentDays);
+            var rows = new[] {
+                StoredMail("sent-old", now.AddDays(-100), sentCutoff.AddTicks(-1)),
+                StoredMail("sent-boundary", now.AddDays(-100), sentCutoff),
+                StoredMail("sent-recent", now.AddDays(-100), now.AddHours(-1)),
+                StoredMail("unsent-failed", unsentCutoff.AddTicks(-1), attempts: 3),
+                StoredMail("unsent-never-attempted", unsentCutoff.AddDays(-1)),
+                StoredMail("unsent-boundary", unsentCutoff),
+                StoredMail("unsent-recent", unsentCutoff.AddTicks(1)),
+                StoredMail("unsent-active", unsentCutoff.AddDays(-1), leaseUntil: now.AddMinutes(5)),
+                StoredMail("sent-active", now.AddDays(-100), sentCutoff, now.AddMinutes(5)),
+                StoredMail("unsent-expired-lease", unsentCutoff.AddDays(-1), leaseUntil: now),
+            };
+            await using (var context = isolated.CreateContext())
+            { context.EmailMessages.AddRange(rows); await context.SaveChangesAsync(); }
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
+                ["Email:Enabled"] = "false", ["Email:Retention:SentDays"] = sentDays.ToString(),
+                ["Email:Retention:UnsentDays"] = unsentDays.ToString() }).Build();
+            using var provider = MailServices(isolated, configuration);
+            var worker = new EmailDeliveryWorker(provider.GetRequiredService<IServiceScopeFactory>(), configuration,
+                new MailEnvironment(), NullLogger<EmailDeliveryWorker>.Instance);
+            await worker.CleanupAsync(now, CancellationToken.None);
+            await worker.CleanupAsync(now, CancellationToken.None);
+            await using var read = isolated.CreateContext();
+            Assert.Equal(new[] { "sent-active", "sent-recent", "unsent-active", "unsent-recent" },
+                await read.EmailMessages.OrderBy(x => x.Subject).Select(x => x.Subject).ToArrayAsync());
+            await worker.CleanupAsync(now.AddMinutes(6), CancellationToken.None);
+            Assert.Equal(new[] { "sent-recent" },
+                await read.EmailMessages.OrderBy(x => x.Subject).Select(x => x.Subject).ToArrayAsync());
+        }
+        finally { await isolated.DisposeAsync(); }
+    }
+
+    [SqlServerFact]
+    public async Task Expired_unsent_messages_are_not_retried_while_waiting_for_cleanup()
+    {
+        var isolated = new SqlServerDatabase(); await isolated.InitializeAsync();
+        try
+        {
+            await using (var context = isolated.CreateContext())
+            {
+                context.EmailMessages.Add(StoredMail("Expired", DateTimeOffset.UtcNow.AddDays(-31)));
+                await context.SaveChangesAsync();
+            }
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
+                ["Email:Enabled"] = "true", ["Email:Mode"] = "Smtp", ["Email:Smtp:Host"] = "unused.invalid", ["Email:Smtp:Port"] = "0" }).Build();
+            using var provider = MailServices(isolated, configuration);
+            var worker = new EmailDeliveryWorker(provider.GetRequiredService<IServiceScopeFactory>(), configuration,
+                new MailEnvironment(), NullLogger<EmailDeliveryWorker>.Instance);
+            await worker.DeliverNextAsync(CancellationToken.None);
+            await using var read = isolated.CreateContext();
+            var mail = await read.EmailMessages.SingleAsync();
+            Assert.Equal(0, mail.Attempts);
+            Assert.Null(mail.SentAt);
+            await worker.CleanupAsync(DateTimeOffset.UtcNow, CancellationToken.None);
+            Assert.Empty(await read.EmailMessages.ToArrayAsync());
+        }
+        finally { await isolated.DisposeAsync(); }
+    }
+
+    [SqlServerFact]
+    public async Task Starting_worker_cleans_up_even_when_email_delivery_is_disabled()
+    {
+        var isolated = new SqlServerDatabase(); await isolated.InitializeAsync();
+        try
+        {
+            await using (var context = isolated.CreateContext())
+            {
+                context.EmailMessages.Add(StoredMail("Expired", DateTimeOffset.UtcNow.AddDays(-31)));
+                await context.SaveChangesAsync();
+            }
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
+                ["Email:Enabled"] = "false" }).Build();
+            using var provider = MailServices(isolated, configuration);
+            using var worker = new EmailDeliveryWorker(provider.GetRequiredService<IServiceScopeFactory>(), configuration,
+                new MailEnvironment(), NullLogger<EmailDeliveryWorker>.Instance);
+            await worker.StartAsync(CancellationToken.None);
+            try
+            {
+                await using var read = isolated.CreateContext();
+                for (var attempt = 0; attempt < 50 && await read.EmailMessages.AnyAsync(); attempt++)
+                    await Task.Delay(100);
+                Assert.Empty(await read.EmailMessages.ToArrayAsync());
+            }
+            finally { await worker.StopAsync(CancellationToken.None); }
+        }
+        finally { await isolated.DisposeAsync(); }
+    }
+
+    private static HDWebFramework.Infrastructure.Persistence.Models.EmailMessagePersistence StoredMail(
+        string subject, DateTimeOffset createdAt, DateTimeOffset? sentAt = null,
+        DateTimeOffset? leaseUntil = null, int attempts = 0)
+    {
+        var mail = EmailQueue.Create("retention@example.test", subject, "Private message");
+        mail.CreatedAt = createdAt; mail.NextAttemptAt = createdAt; mail.SentAt = sentAt;
+        mail.LeaseUntil = leaseUntil; mail.Attempts = attempts;
+        if (leaseUntil is not null) mail.Lease = Guid.NewGuid();
+        return mail;
+    }
+
     private static ServiceProvider MailServices(SqlServerDatabase database, IConfiguration configuration) =>
         new ServiceCollection().AddScoped(_ => database.CreateContext()).AddScoped<EmailSettingsRepository>()
             .AddSingleton(configuration).AddSingleton<IHostEnvironment>(new MailEnvironment())

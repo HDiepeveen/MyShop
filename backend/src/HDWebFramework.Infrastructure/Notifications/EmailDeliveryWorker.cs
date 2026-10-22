@@ -13,15 +13,52 @@ namespace HDWebFramework.Infrastructure.Notifications;
 public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IConfiguration configuration,
     IHostEnvironment environment, ILogger<EmailDeliveryWorker> logger) : BackgroundService
 {
+    private readonly int sentRetentionDays = RetentionDays(configuration, "SentDays");
+    private readonly int unsentRetentionDays = RetentionDays(configuration, "UnsentDays");
+
+    private static int RetentionDays(IConfiguration configuration, string name)
+    {
+        var days = configuration.GetValue("Email:Retention:" + name, 30);
+        if (days is < 1 or > 3650)
+            throw new ArgumentOutOfRangeException(name, "De bewaartermijn moet tussen 1 en 3650 dagen liggen.");
+        return days;
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+        var nextCleanup = DateTimeOffset.MinValue;
         do
         {
+            var now = DateTimeOffset.UtcNow;
+            if (now >= nextCleanup)
+            {
+                try
+                {
+                    await CleanupAsync(now, stoppingToken);
+                    nextCleanup = now.AddHours(1);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
+                catch (Exception) { logger.LogWarning("Email queue cleanup failed; cleanup will be retried."); }
+            }
             try { await DeliverNextAsync(stoppingToken); }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { break; }
             catch (Exception) { logger.LogWarning("Email delivery failed; queued messages will be retried."); }
         } while (await timer.WaitForNextTickAsync(stoppingToken));
+    }
+
+    internal async Task CleanupAsync(DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        using var scope = scopes.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<HDWebFrameworkDbContext>();
+        var sentBefore = now.AddDays(-sentRetentionDays);
+        var unsentBefore = now.AddDays(-unsentRetentionDays);
+        var sent = await context.EmailMessages.Where(message => message.SentAt != null && message.SentAt <= sentBefore
+            && (message.LeaseUntil == null || message.LeaseUntil <= now)).ExecuteDeleteAsync(cancellationToken);
+        var unsent = await context.EmailMessages.Where(message => message.SentAt == null && message.CreatedAt <= unsentBefore
+            && (message.LeaseUntil == null || message.LeaseUntil <= now)).ExecuteDeleteAsync(cancellationToken);
+        if (sent > 0) logger.LogInformation("Removed {Count} expired sent email records.", sent);
+        if (unsent > 0) logger.LogWarning("Removed {Count} expired unsent emails; these messages will no longer be retried.", unsent);
     }
 
     internal async Task DeliverNextAsync(CancellationToken cancellationToken)
@@ -33,12 +70,13 @@ public sealed class EmailDeliveryWorker(IServiceScopeFactory scopes, IConfigurat
         if (settings.Mode is not "Pickup" and not "Smtp" || (settings.Mode == "Pickup" && !environment.IsDevelopment()))
             throw new InvalidOperationException("Invalid email delivery mode.");
         var now = DateTimeOffset.UtcNow;
-        var id = await context.EmailMessages.AsNoTracking().Where(message => message.SentAt == null && message.NextAttemptAt <= now
+        var unsentBefore = now.AddDays(-unsentRetentionDays);
+        var id = await context.EmailMessages.AsNoTracking().Where(message => message.SentAt == null && message.CreatedAt > unsentBefore && message.NextAttemptAt <= now
             && (message.LeaseUntil == null || message.LeaseUntil < now)).OrderBy(message => message.CreatedAt)
             .Select(message => (Guid?)message.Id).FirstOrDefaultAsync(cancellationToken);
         if (id is null) return;
         var lease = Guid.NewGuid();
-        var claimed = await context.EmailMessages.Where(message => message.Id == id && message.SentAt == null && message.NextAttemptAt <= now
+        var claimed = await context.EmailMessages.Where(message => message.Id == id && message.SentAt == null && message.CreatedAt > unsentBefore && message.NextAttemptAt <= now
             && (message.LeaseUntil == null || message.LeaseUntil < now))
             .ExecuteUpdateAsync(update => update.SetProperty(message => message.Lease, lease)
                 .SetProperty(message => message.LeaseUntil, now.AddMinutes(5))

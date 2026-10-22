@@ -51,3 +51,14 @@ De werker verwerkt elke tien seconden een bericht. Een databaselease voorkomt ge
 SMTP kan geen strikt eenmalige aflevering garanderen: als de mailserver een bericht accepteert en het proces vóór de databasebevestiging stopt, kan een retry hetzelfde bericht opnieuw afleveren. De vaste Message-ID helpt identificeren; er wordt niet beloofd dat een mailprovider hierop dedupliceert. Er is geen automatische bulkverzending voor oude orders. Na inschakelen worden reeds klaargezette berichten verwerkt; verlopen accountlinks moeten opnieuw worden aangevraagd.
 
 Controleer bij ingebruikname afzenderrechten en SPF/DKIM/DMARC bij de gekozen mailprovider en test een echte mailbox. Verzorg toegangsbeperking en bewaartermijnen voor mailbestanden en wachtrijmetadata. Een beheerpagina voor de mailwachtrij en bounceverwerking vallen buiten deze uitbreiding. De geautomatiseerde tests gebruiken lokale mailbestanden en een falende SMTP-configuratie; ze versturen geen echte klantmail.
+
+## Automatische opschoning van de wachtrij
+
+Sinds 0.2.54 ruimt de verzendworker bij het starten en vervolgens elk uur de databasewachtrij op, ook wanneer verzending uitstaat. Standaard vervallen verzonden registraties 30 dagen na SentAt; nooit verzonden of mislukte berichten vervallen 30 dagen na CreatedAt. De volledige verlopen rij wordt verwijderd, inclusief ontvanger, onderwerp, inhoud en verzendgegevens. Er blijven geen afzonderlijke persoonsgebonden verwijderlogs achter: alleen aantallen worden gelogd.
+
+Berichten met een nog geldige verzendlease worden overgeslagen en bij een volgende opschoning opnieuw beoordeeld. Verlopen niet-verzonden berichten worden niet meer geselecteerd of geclaimd voor verzending, ook niet als de opruimronde nog niet heeft gedraaid. Daarmee eindigen herhaalpogingen na de bewaartermijn. De inhoud van succesvol verzonden berichten wordt zoals voorheen direct leeggemaakt.
+
+Instellingen in serverconfiguratie: Email:Retention:SentDays en Email:Retention:UnsentDays, of de omgevingsvariabelen Email__Retention__SentDays en Email__Retention__UnsentDays. Geldig: 1–3650 dagen; standaard beide 30. Wijzigingen worden actief na herstart. Dit zijn configuratie-instellingen, geen nieuwe velden in Beheer.
+
+De worker moet actief zijn: bij IIS-idle of een gestopte website wordt de opschoning uitgevoerd bij de volgende start. De feitelijke verwijdering kan dus na de vervaldatum plaatsvinden. Deze wijziging wist geen ontvangen mailboxberichten, Brevo-gegevens, databaseback-ups of lokale Pickup/.mail-bestanden. Die opslag vereist een eigen bewaarbeleid. Bestellingen, facturen en accounts worden niet verwijderd. Er is geen schemawijziging nodig.
+Wanneer je de bewaartermijnen in de serverconfiguratie verandert, pas dan ook de gepubliceerde privacyverklaring en download aan; de juridische tekst wordt niet automatisch uit deze instellingen opgebouwd.
