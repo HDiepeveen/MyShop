@@ -39,4 +39,4 @@ Toevoegen van bijvoorbeeld advertentietracking, externe video's of andere ingesl
 
 U kunt cookies en websitegegevens via de instellingen van uw browser bekijken, blokkeren en verwijderen. Kies daarbij ook lokale websiteopslag als u winkelmand- of betaalgegevens wilt wissen. Blokkeren kan inloggen, beveiligde formulieren, de winkelmand of het hervatten van betalingen verstoren. Het wissen van browseropslag annuleert geen bestelling of betaling bij ons of bij de betaalprovider.
 
-Voor verwerking van gegevens op onze server verwijzen wij naar de privacyverklaring.
+De beschreven beveiligingscookies worden niet gebruikt om een bezoekershistorie bij te houden. Technische foutmeldingen staan los van deze cookies en kunnen afhankelijk van de fout en de loginstellingen incidenteel persoonsgegevens bevatten. Voor verwerking van gegevens op onze server verwijzen wij naar de privacyverklaring.

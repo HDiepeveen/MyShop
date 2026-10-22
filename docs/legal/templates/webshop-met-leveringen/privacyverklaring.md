@@ -19,7 +19,7 @@ Bij een klantaccount verwerken wij uw naam, e-mailadres, beveiligde inloggegeven
 
 Voor voertuigverkoop, APK of reparatie kunnen voertuiggegevens nodig zijn, zoals kenteken, voertuigidentificatie en werkzaamheden. Wij verwerken deze uitsluitend voor zover nodig voor de afspraak, uitvoering en toepasselijke administratieve verplichtingen. [Controleer en beschrijf eventuele APK/RDW-registraties en andere garagesystemen die buiten deze website worden gebruikt.]
 
-Financiële gegevens gebruiken wij tevens om aan onze administratie- en belastingverplichtingen te voldoen. Technische gegevens, zoals IP-adressen en beveiligings- en toegangsgegevens, kunnen worden verwerkt voor de beveiliging en werking van de website. Hiervoor wegen wij ons gerechtvaardigde beveiligingsbelang af tegen uw privacybelang.
+Financiële gegevens gebruiken wij tevens om aan onze administratie- en belastingverplichtingen te voldoen. HD Web Framework houdt zelf geen bezoekershistorie bij. Om misbruik te beperken, kan het framework IP-adressen tijdelijk in het werkgeheugen gebruiken voor het begrenzen van te veel verzoeken; hiervoor wordt geen afzonderlijk IP-logbestand bijgehouden. Voor het onderzoeken van storingen en het beveiligen van de website kunnen wel technische foutmeldingen en waarschuwingen worden verwerkt. Deze meldingen zijn niet bedoeld als bezoekersregistratie. Afhankelijk van de fout en de loginstellingen kunnen daarin incidenteel persoonsgegevens voorkomen; wij sluiten dit niet uit. Voor deze beveiligingsdoeleinden wegen wij ons gerechtvaardigde belang af tegen uw privacybelang.
 
 Wij gebruiken de website niet voor advertentietracking of marketingprofilering zoals deze momenteel is ingericht. Voor nieuwe verwerkingen waarvoor toestemming nodig is, vragen wij die vooraf afzonderlijk.
 
@@ -45,7 +45,7 @@ Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten vó�
 | Account- en profielgegevens | [Termijn en beleid voor inactieve of opgeheven accounts invullen] |
 | Vragen en correspondentie | [Termijn na afhandeling invullen] |
 | Bestel-, voertuig- en werkplaatsgegevens buiten de fiscale administratie | [Termijn en reden, bijvoorbeeld afhandeling van aanspraken, invullen] |
-| Toegangs- en beveiligingslogs | [Werkelijke hosting- en applicatietermijnen invullen] |
+| Technische fout- en beveiligingsmeldingen, voor zover deze worden vastgelegd | [De daadwerkelijke opslaglocaties en bewaartermijnen van de applicatielogs op de hostingomgeving moeten nog worden vastgesteld.] |
 | Functionele e-mails, verzendregistraties en tijdelijke accounttokens | [Termijnen per systeem en e-mailleverancier invullen] |
 
 Gegevens kunnen langer nodig zijn als een concrete juridische verplichting of een lopend geschil dat rechtvaardigt. Wij beperken die bewaring tot wat daarvoor noodzakelijk is. De opslag in uw browser is afzonderlijk beschreven in ons cookiebeleid.
