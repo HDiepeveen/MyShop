@@ -215,3 +215,7 @@ footer {
 .with-page-photo .topbar, .with-page-photo footer { background: var(--photo-bar-background); color: var(--photo-bar-text); backdrop-filter: blur(12px);  }
 .with-page-photo .topbar a, .with-page-photo .topbar button { color: inherit; }
 .with-page-photo .topbar { border-bottom-color: #ffffff40; }
+
+.legal-links { display: flex; flex-wrap: wrap; gap: 12px 20px; }
+footer { flex-wrap: wrap; }
+.legal-links a { color: inherit; }

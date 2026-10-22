@@ -18,6 +18,25 @@ internal static class SeoHtml
             context.Response.Redirect("/contact" + context.Request.QueryString, permanent: true);
             return true;
         }
+        var legalTitle = path.TrimEnd('/') switch
+        {
+            "/algemene-voorwaarden" => "Algemene voorwaarden",
+            "/privacyverklaring" => "Privacyverklaring",
+            "/cookiebeleid" => "Cookiebeleid",
+            _ => null
+        };
+        if (legalTitle is not null)
+        {
+            var root = context.RequestServices.GetRequiredService<IWebHostEnvironment>();
+            var file = Path.Combine(root.WebRootPath ?? Path.Combine(root.ContentRootPath, "wwwroot"), "legal", path.Trim('/').ToLowerInvariant() + ".html");
+            var body = File.Exists(file) ? await File.ReadAllTextAsync(file, context.RequestAborted) : "<p>Document wordt geladen.</p>";
+            template = Regex.Replace(template, "<title>.*?</title>", _ => "<title>" + E(legalTitle) + " · Autoservice Ganpat</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            template = template.Replace("</head>", "<meta name=\"robots\" content=\"noindex\"></head>", StringComparison.OrdinalIgnoreCase);
+            template = template.Replace("<app-root></app-root>", "<app-root><main><h1>" + E(legalTitle) + "</h1>" + body + "</main></app-root>", StringComparison.OrdinalIgnoreCase);
+            context.Response.Headers["X-Robots-Tag"] = "noindex";
+            await context.Response.WriteAsync(template, context.RequestAborted);
+            return true;
+        }
         var branding = await seo.GetSettingsAsync(context.RequestAborted);
         var title = branding.ShopName; string? description = null; string? canonical = null; var preview = ""; var index = false;
         if (path.TrimEnd('/') == "/assortiment")

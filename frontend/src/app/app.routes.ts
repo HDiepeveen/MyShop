@@ -227,6 +227,7 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/forbidden').then((m) => m.Forbidden),
     title: 'Geen toegang · HD Web Framework',
   },
+  ...['algemene-voorwaarden', 'privacyverklaring', 'cookiebeleid'].map(page => ({ path: page, data: { storefront: true, legalPage: page }, loadComponent: () => import('./shop/shop-legal').then(m => m.ShopLegal) })),
   ...protectedRoutes.map((route) => ({ ...route, canActivate: [adminGuard] })),
   { path: ':page', data: { storefront: true }, loadComponent: () => import('./shop/shop-service-page').then(m => m.ShopServicePage), title: 'Pagina · HD Web Framework' },
   { path: '**', loadComponent: () => import('./not-found').then(m => m.NotFound), title: 'Pagina niet gevonden · HD Web Framework' },

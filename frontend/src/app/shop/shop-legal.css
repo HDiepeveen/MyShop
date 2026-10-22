@@ -1,0 +1,5 @@
+:host { display: block; }
+.legal-page { max-width: 100%; color: var(--shop-text); }
+h1 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.1; overflow-wrap: anywhere; }
+.draft-notice { padding: 16px; border: 1px solid var(--shop-border); border-radius: 8px; }
+.legal-document { background: var(--shop-panel); border: 1px solid var(--shop-border); border-radius: 16px; padding: clamp(20px, 4vw, 48px); line-height: 1.8; overflow-wrap: anywhere; }

@@ -590,3 +590,14 @@ label > input[type='radio'] {
 main#content:has(.home-page.with-image), main#content:has(.photo-page.with-image), main#content:has(app-shop-list.assortment-photo), main#content:has(app-shop-detail.assortment-photo) { max-width: none; }
 
 .with-page-photo .home-image, .with-page-photo .page-background { visibility: hidden; }
+
+/* Legal documents are rendered from local, versioned HTML assets. */
+.legal-document h2 { font-size: 1.35rem; line-height: 1.4; margin-top: 2rem; }
+.legal-document p { margin-block: 1rem; }
+.legal-table { overflow-x: auto; }
+.legal-document table { width: 100%; border-collapse: collapse; }
+.legal-document td { padding: 12px; border: 1px solid var(--shop-border); vertical-align: top; }
+.legal-document tr:first-child { font-weight: 700; }
+.legal-document code { overflow-wrap: anywhere; }
+
+.legal-document th { padding: 12px; border: 1px solid var(--shop-border); text-align: left; vertical-align: top; }

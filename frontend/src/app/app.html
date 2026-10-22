@@ -125,6 +125,13 @@
       <span>{{
         storefront() ? branding.footerText() : 'Een goed assortiment begint bij de details.'
       }}</span>
+      @if (storefront()) {
+        <nav class="legal-links" aria-label="Juridische informatie">
+          <a routerLink="/algemene-voorwaarden">Algemene voorwaarden</a>
+          <a routerLink="/privacyverklaring">Privacyverklaring</a>
+          <a routerLink="/cookiebeleid">Cookiebeleid</a>
+        </nav>
+      }
     </footer>
   </div>
 </div>
