@@ -79,6 +79,8 @@ export function themeStyles(colors: ShopColors): Record<string, string> {
     '--shop-background': safe.backgroundColor,
     '--shop-panel': safe.panelColor,
     '--shop-text': safe.textColor,
+    '--shop-readable-background-text': contrast(safe.textColor, safe.backgroundColor) >= 4.5 ? safe.textColor : buttonText(safe.backgroundColor),
+    '--shop-readable-panel-text': contrast(safe.textColor, safe.panelColor) >= 4.5 ? safe.textColor : buttonText(safe.panelColor),
     '--shop-button-text': buttonText(safe.primaryColor),
     '--shop-border': safe.textColor + '40',
     '--shop-color-scheme': buttonText(safe.backgroundColor) === '#ffffff' ? 'dark' : 'light',
