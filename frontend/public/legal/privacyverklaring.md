@@ -9,7 +9,7 @@ Deze privacyverklaring gaat over het gebruik van de website van Autoservice Ganp
 
 ## Wie is verantwoordelijk?
 
-Autoservice Ganpat, [rechtsvorm indien van toepassing], Popovstraat 7-B, 8013 RK Zwolle, KvK 08187330, btw NL005298462B85, is verantwoordelijk voor de hieronder beschreven verwerking. Voor privacyvragen en verzoeken: APK-ganpat@live.nl, telefoon 06 45707667. Website: https://autoservice-ganpat.nl/.
+Autoservice Ganpat, eenmanszaak, Popovstraat 7-B, 8013 RK Zwolle, KvK 08187330, btw NL005298462B85, is verantwoordelijk voor de hieronder beschreven verwerking. Voor privacyvragen en verzoeken: APK-ganpat@live.nl, telefoon 06 45707667. Website: https://autoservice-ganpat.nl/.
 
 ## Welke gegevens gebruiken wij en waarom?
 

@@ -9,7 +9,7 @@ Autoservice Ganpat gebruikt deze website om het bedrijf, de diensten en het asso
 
 ## 1. Wie zijn wij?
 
-Autoservice Ganpat, [rechtsvorm indien van toepassing], is gevestigd aan Popovstraat 7-B, 8013 RK Zwolle. KvK: 08187330. Btw-identificatienummer: NL005298462B85. E-mail: APK-ganpat@live.nl. Telefoon: 06 45707667. Website: https://autoservice-ganpat.nl/.
+Autoservice Ganpat, eenmanszaak, is gevestigd aan Popovstraat 7-B, 8013 RK Zwolle. KvK: 08187330. Btw-identificatienummer: NL005298462B85. E-mail: APK-ganpat@live.nl. Telefoon: 06 45707667. Website: https://autoservice-ganpat.nl/.
 
 Deze voorwaarden gelden voor onze aanbiedingen en overeenkomsten over occasions, onderdelen, banden, velgen, APK en reparaties, voor zover wij deze aanbieden. Afwijkende afspraken leggen wij schriftelijk vast. Wettelijke rechten van consumenten blijven altijd gelden.
 
