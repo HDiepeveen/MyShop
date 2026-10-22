@@ -36,7 +36,9 @@ Wij leggen de toepasselijke afspraken over gegevensbescherming met dienstverlene
 
 ## Hoelang bewaren wij gegevens?
 
-Wij hanteren de onderstaande termijnen. De nog openstaande termijnen moeten vóór publicatie worden vastgesteld en daadwerkelijk worden toegepast.
+Wij bewaren persoonsgegevens zolang dat nodig is voor het doel waarvoor wij ze hebben ontvangen. Daarbij houden wij rekening met wettelijke bewaarplichten en gegevens die noodzakelijk zijn voor de afhandeling van klachten of geschillen. Daarna verwijderen of anonimiseren wij de gegevens.
+
+**Concept — nog afstemmen met Autoservice Ganpat:** de hieronder voorgestelde termijnen van 12 maanden voor algemene correspondentie en 5 jaar voor aankoop-, voertuig- en werkplaatsgegevens moeten vóór publicatie worden getoetst aan de werkelijke werkwijze en uitvoerbaarheid.
 
 | Gegevens | Bewaartermijn |
 |---|---|
