@@ -1,4 +1,3 @@
-import { CheckoutEnabledSettings } from '../checkout/checkout-enabled-settings';
 import { PageBackgroundEditor } from './page-background-editor';
 import { HttpClient } from '@angular/common/http';
 import { Auth } from '../auth/auth';
@@ -11,9 +10,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi } from '../catalog/catalog.api';
 import { errorMessage } from '../catalog/error-message';
 import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
-@Component({ imports: [FormsModule, RouterLink, PageBackgroundEditor, CheckoutEnabledSettings], template: `
+@Component({ imports: [FormsModule, RouterLink, PageBackgroundEditor], template: `
   <h1>Website en SEO</h1>
-  <app-checkout-enabled-settings />
   <p>De koptekst staat boven je producten. De SEO-titel wordt gebruikt voor het browsertabblad en als aanwijzing voor zoekmachines.</p>
   @if (loading()) { <p role="status">Instellingen ophalen…</p> }
   @if (error()) { <p role="alert">{{ error() }}</p><button type="button" [disabled]="busy() || loading()" (click)="load()">Opnieuw ophalen</button> }
