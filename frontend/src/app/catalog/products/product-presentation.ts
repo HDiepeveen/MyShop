@@ -18,11 +18,13 @@ import { ProductEditState } from './product-edit-state';
         padding: 10px;
       }
       img {
+        display: block;
         max-width: 100%;
         max-height: 320px;
         object-fit: contain;
       }
       .description {
+        margin: 32px 0;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
