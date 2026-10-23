@@ -51,7 +51,7 @@ import { loadState } from '../load-state';
           <button type="button" class="secondary" (click)="clearSearch()">Zoekterm wissen</button>
         }
       </form>
-      <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
+      <button type="button" class="secondary refresh-overview" [disabled]="state()?.loading" (click)="retry()">
         Overzicht verversen
       </button>
       @if (state()?.loading) {

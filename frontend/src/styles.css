@@ -603,3 +603,6 @@ main#content:has(.home-page.with-image), main#content:has(.photo-page.with-image
 .legal-document th { padding: 12px; border: 1px solid var(--shop-border); text-align: left; vertical-align: top; }
 
 .legal-document th { color: var(--shop-readable-panel-text, #223c33); background: var(--shop-panel, #fffefa); }
+
+/* Align list refresh actions consistently, including flex toolbars. */
+button.refresh-overview { display: block; margin-left: auto; }

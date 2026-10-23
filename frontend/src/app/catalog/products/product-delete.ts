@@ -7,8 +7,8 @@ import { ProductEditState } from './product-edit-state';
 @Component({
   selector: 'app-product-delete',
   template: `
-    <section class="remove-section">
-      <h2>Product verwijderen</h2>
+    <section [class.remove-section]="!compact()">
+      @if (!compact()) { <h2>Product verwijderen</h2> }
       @if (confirming()) {
         <p>
           Product “{{ productName() }}” en alle varianten, waarden en kortingsregels definitief
@@ -21,7 +21,7 @@ import { ProductEditState } from './product-edit-state';
           Annuleren
         </button>
       } @else {
-        <button type="button" class="secondary" [disabled]="busy()" (click)="confirming.set(true)">
+        <button type="button" class="secondary" [attr.aria-label]="compact() ? productName() + ' verwijderen' : null" [disabled]="busy()" (click)="confirming.set(true)">
           Product verwijderen
         </button>
       }
@@ -32,6 +32,7 @@ import { ProductEditState } from './product-edit-state';
   `,
 })
 export class ProductDelete {
+  readonly compact = input(false);
   readonly productId = input.required<string>();
   readonly productName = input.required<string>();
   readonly removed = output<void>();

@@ -32,6 +32,30 @@ describe('ProductList', () => {
     });
   });
   afterEach(() => http.verify());
+  it('confirms row deletion and returns to the previous page while preserving filters', () => {
+    filters.next(convertToParamMap({ categoryId: 'c', search: 'auto', offset: '20' }));
+    const fixture=TestBed.createComponent(ProductList);
+    http.expectOne(r=>r.url==='/api/products').flush({items:[{id:'p',name:'Opel Corsa',variantCount:1,isPublished:true}],totalCount:21});
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    (root.querySelector('button[aria-label="Opel Corsa verwijderen"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    http.expectNone(r=>r.method==='DELETE');
+    expect(root.textContent).toContain('definitief');
+    const confirm=Array.from(root.querySelectorAll('button')).find(b=>b.textContent?.trim()==='Ja, product verwijderen')!;
+    confirm.click();confirm.click();
+    const request=http.expectOne('/api/products/p');
+    expect(request.request.method).toBe('DELETE');
+    request.flush(null);
+    const refreshed=http.expectOne(r=>r.url==='/api/products');
+    expect(refreshed.request.params.get('offset')).toBe('0');
+    expect(refreshed.request.params.get('categoryId')).toBe('c');
+    expect(refreshed.request.params.get('search')).toBe('auto');
+    refreshed.flush({items:[],totalCount:20});
+    fixture.detectChanges();
+    expect(root.textContent).toContain('Product “Opel Corsa” is verwijderd.');
+    expect(root.querySelector('app-product-delete')).toBeNull();
+  });
   it('combines route filters with applied name search, paging and retry', () => {
     filters.next(convertToParamMap({ categoryId: 'c', productTypeId: 't' }));
     const fixture = TestBed.createComponent(ProductList);

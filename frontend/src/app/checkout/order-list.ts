@@ -43,9 +43,6 @@ import { OrderManagementApi, OrderPaymentMethod, OrderStatus } from './order-man
             <option value="refunded">Terugbetaald</option>
           </select>
         </label>
-        <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
-          Overzicht verversen
-        </button>
         <a class="button secondary" [href]="exportUrl()" download="hdwebframework-orders.csv"
           >CSV exporteren</a
         >

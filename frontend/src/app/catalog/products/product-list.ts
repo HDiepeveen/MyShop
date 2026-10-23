@@ -1,3 +1,5 @@
+import { ProductDelete } from './product-delete';
+import { ProductEditState } from './product-edit-state';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -10,7 +12,8 @@ import { loadState } from '../load-state';
 import { readProductListQuery } from './product-list-query';
 
 @Component({
-  imports: [FormsModule, RouterLink],
+  providers: [ProductEditState],
+  imports: [FormsModule, RouterLink, ProductDelete],
   template: ` <div class="eyebrow">Assortiment</div>
     <div class="page-head">
       <div>
@@ -21,6 +24,7 @@ import { readProductListQuery } from './product-list-query';
         >+ Nieuw product</a
       >
     </div>
+    @if (notice()) { <p class="success" role="status">{{ notice() }}</p> }
     <section class="panel">
       @if (filters().categoryId; as categoryId) {
         <p>
@@ -126,7 +130,7 @@ import { readProductListQuery } from './product-list-query';
       @if (skuError()) {
         <p class="error" role="alert">{{ skuError() }}</p>
       }
-      <button type="button" class="secondary" [disabled]="state()?.loading" (click)="retry()">
+      <button type="button" class="secondary refresh-overview" [disabled]="state()?.loading" (click)="retry()">
         Overzicht verversen
       </button>
       @if (state()?.loading) {
@@ -147,6 +151,7 @@ import { readProductListQuery } from './product-list-query';
                   <th>Status</th>
                   <th>Varianten</th>
                   <th>Bekijken</th>
+                  <th>Verwijderen</th>
                 </tr>
               </thead>
               <tbody>
@@ -173,6 +178,7 @@ import { readProductListQuery } from './product-list-query';
                         >Details →</a
                       >
                     </td>
+                    <td><app-product-delete [compact]="true" [productId]="product.id" [productName]="product.name" (removed)="onRemoved(product.name)" /></td>
                   </tr>
                 }
               </tbody>
@@ -220,6 +226,12 @@ export class ProductList {
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly refresh = new BehaviorSubject(0);
+  readonly notice = signal('');
+  onRemoved(name: string) {
+    this.notice.set('Product “' + name + '” is verwijderd.');
+    if (this.state()?.data?.items.length === 1 && this.offset() > 0) this.changePage(-this.pageSize());
+    else this.retry();
+  }
   searchText = '';
   readonly listQuery = signal<ReturnType<typeof readProductListQuery>>({
     categoryId: null as string | null,
