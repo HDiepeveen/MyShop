@@ -25,6 +25,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
     @if (data(); as items) {
       <section class="panel">
         <h2>Bedrijfsrollen</h2>
+        <h3>Bestaande rollen</h3>
         @for (role of items.roles; track role.id) {
           <div class="access-row">
           <p><strong>{{ role.name }}</strong> · {{ permissionNames(role) || 'Geen beheeronderdelen' }}</p>
@@ -55,6 +56,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
       </section>
       <section class="panel">
         <h2>Bedrijfsbeheerders</h2>
+        <h3>Bestaande accounts</h3>
         @for (account of items.accounts; track account.id) {
           <div class="access-row">
           <p><strong>{{ account.userName }}</strong> · {{ account.email }} · {{ account.enabled ? 'Actief' : 'Geblokkeerd' }}<br />
