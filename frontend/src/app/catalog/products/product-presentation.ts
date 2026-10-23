@@ -73,7 +73,7 @@ import { ProductEditState } from './product-edit-state';
       }
     </section>
     <section class="panel">
-      <h2>Voorbeeld opgeslagen presentatie</h2>
+      <h2>Voorbeeld</h2>
       @if (product().presentation; as presentation) {
         @if (presentation.imageUrl) {
           @if (!imageFailed()) {
