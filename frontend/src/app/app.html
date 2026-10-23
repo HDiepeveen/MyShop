@@ -15,15 +15,17 @@
       >
       <p class="nav-label">WERKRUIMTE</p>
       <nav aria-label="Hoofdnavigatie">
-        @for (item of managementMenu; track item.code) {
-          @if (auth.canUse(item.code) || !auth.isManagement()) {
-            <a
-              [routerLink]="item.path"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: item.code === 'overview' }"
-              >{{ item.name }}</a
-            >
-          }
+        @for (group of managementGroups(); track $index) {
+          <div class="management-menu-group">
+            @for (item of group; track item.code) {
+              <a
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: item.code === 'overview' }"
+                >{{ item.name }}</a
+              >
+            }
+          </div>
         }
       </nav>
       <div class="sidebar-footer" title="HD Web Framework — Framework voor websites en webshops">

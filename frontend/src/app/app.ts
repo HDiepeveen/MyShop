@@ -22,6 +22,11 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 })
 export class App {
   readonly managementMenu = managementMenu;
+  managementGroups() {
+    return [managementMenu.slice(0, 3), managementMenu.slice(3, 6), managementMenu.slice(6)]
+      .map(items => items.filter(item => this.auth.canUse(item.code) || !this.auth.isManagement()))
+      .filter(items => items.length > 0);
+  }
   showManagementMenu() {
     return !this.storefront() && (this.auth.isManagement() || this.branding.showManagementMenuWithoutLogin());
   }
