@@ -56,7 +56,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
       </section>
       <section class="panel">
         <h2>Bedrijfsaccounts</h2>
-        <h3>Bestaande accounts</h3>
+        <h3 class="existing-accounts-heading">Bestaande accounts</h3>
         @for (account of items.accounts; track account.id) {
           <div class="access-row">
           <p><strong>{{ account.userName }}</strong> · {{ account.email }} · {{ account.enabled ? 'Actief' : 'Geblokkeerd' }}<br />
@@ -86,7 +86,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
       </section>
     }
   `,
-  styles: [`.access-form-heading { margin-top: 32px; } .access-row { display: flex; align-items: center; gap: 16px; padding-block: 8px; } .access-row p { margin: 0; min-width: 0; overflow-wrap: anywhere; } .access-row button { margin: 0 0 0 auto; flex-shrink: 0; } @media (max-width: 600px) { .access-row { flex-wrap: wrap; } } .permission-group + .permission-group { border-top: 1px solid #9eb7af; margin-top: 16px; padding-top: 16px; } .admin-only { margin: 0; }`],
+  styles: [`.existing-accounts-heading { border-bottom: 1px solid #9eb7af; padding-bottom: 12px; } .access-form-heading { margin-top: 32px; } .access-row { display: flex; align-items: center; gap: 16px; padding-block: 8px; } .access-row p { margin: 0; min-width: 0; overflow-wrap: anywhere; } .access-row button { margin: 0 0 0 auto; flex-shrink: 0; } @media (max-width: 600px) { .access-row { flex-wrap: wrap; } } .permission-group + .permission-group { border-top: 1px solid #9eb7af; margin-top: 16px; padding-top: 16px; } .admin-only { margin: 0; }`],
 })
 export class CompanyAccessPage {
   permissionGroups() {
