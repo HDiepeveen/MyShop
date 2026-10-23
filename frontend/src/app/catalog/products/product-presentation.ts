@@ -41,7 +41,7 @@ import { ProductEditState } from './product-edit-state';
         </label>
         <p class="muted">Gewone tekst, maximaal 10.000 tekens. HTML wordt niet opgemaakt.</p>
     </section>
-    <ng-content />
+    <ng-content select="[product-details]" />
     <section class="panel">
       <h2>Publiceren</h2>
       <p>
@@ -72,6 +72,7 @@ import { ProductEditState } from './product-edit-state';
     </section>
     <section class="panel">
       <h2>Voorbeeld opgeslagen presentatie</h2>
+      <ng-content select="[presentation-details]" />
       @if (product().presentation; as presentation) {
         <p class="description">{{ presentation.description || 'Nog geen beschrijving.' }}</p>
         @if (presentation.imageUrl) {

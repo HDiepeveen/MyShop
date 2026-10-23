@@ -78,7 +78,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
       <app-product-edit section="rename" [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-images [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-presentation [product]="detail.product" (saved)="onSaved($event)">
-      <section class="panel">
+      <section class="panel" product-details>
         <h2>Productgegevens</h2>
         @if (!detail.product.attributeValues.length) {
           @if (hasProductDefinitions()) {
@@ -106,6 +106,12 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           }
         </dl>
       </section>
+      <dl class="detail-list" presentation-details>
+          @for (value of detail.product.attributeValues; track value.attributeDefinitionId) {
+            <dt>{{ attributeName(value.attributeDefinitionId, detail.type.attributeDefinitions) }}</dt>
+            <dd>{{ displayValue(value) }}</dd>
+          }
+      </dl>
       </app-product-presentation>
       <app-orphan-values
         [productId]="detail.product.id"
