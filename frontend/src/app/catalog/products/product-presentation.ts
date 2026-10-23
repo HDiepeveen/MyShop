@@ -68,6 +68,7 @@ import { ProductEditState } from './product-edit-state';
         <p class="error" role="alert">{{ error() }}</p>
       }
     </section>
+    <ng-content />
     <section class="panel">
       <h2>Voorbeeld opgeslagen presentatie</h2>
       @if (product().presentation; as presentation) {

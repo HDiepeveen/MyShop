@@ -77,7 +77,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
       </div>
       <app-product-edit section="rename" [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-images [product]="detail.product" (saved)="onSaved($event)" />
-      <app-product-presentation [product]="detail.product" (saved)="onSaved($event)" />
+      <app-product-presentation [product]="detail.product" (saved)="onSaved($event)">
       <section class="panel">
         <h2>Productgegevens</h2>
         @if (!detail.product.attributeValues.length) {
@@ -106,6 +106,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           }
         </dl>
       </section>
+      </app-product-presentation>
       <app-orphan-values
         [productId]="detail.product.id"
         [values]="detail.product.attributeValues"
