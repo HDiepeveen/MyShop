@@ -152,6 +152,28 @@ public sealed class CompanyAccessHttpTests
         Assert.Equal(employee.UserName, Assert.Single(page.GetProperty("accounts").EnumerateArray()).GetProperty("userName").GetString());
     }
 
+    [SecuritySqlFact]
+    public async Task WebsiteRoleCanSaveMenuOrderAndReadItBack()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var role = await CreateRole(host.Client, "Website", ["seo"]);
+        var employee = await CreateAccount(host.Client, "website-editor", [role.Id]);
+        var cookies = new CookieContainer();
+        using var client = new HttpClient(new HttpClientHandler { CookieContainer = cookies, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
+        await Csrf(client, cookies);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/login", new { userName = employee.UserName, password = SecurityHost.Password })).StatusCode);
+        await Csrf(client, cookies);
+        var settings = (await client.GetFromJsonAsync<System.Text.Json.Nodes.JsonObject>("/api/seo-settings"))!;
+        settings["home"]!["menuOrder"] = new System.Text.Json.Nodes.JsonArray("contact", "home", "assortment");
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
+        var stored = (await client.GetFromJsonAsync<System.Text.Json.Nodes.JsonObject>("/api/seo-settings"))!;
+        Assert.Equal("contact", stored["home"]!["menuOrder"]![0]!.GetValue<string>());
+        var publicSettings = (await client.GetFromJsonAsync<System.Text.Json.Nodes.JsonObject>("/api/shop/settings"))!;
+        Assert.Equal("contact", publicSettings["menuOrder"]![0]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/company-access")).StatusCode);
+    }
+
     private static async Task<CompanyRole> CreateRole(HttpClient client, string name, string[] permissions)
     {
         var response = await client.PostAsJsonAsync("/api/company-access/roles", new SaveCompanyRole(name, permissions));

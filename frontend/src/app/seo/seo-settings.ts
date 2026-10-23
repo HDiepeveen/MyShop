@@ -99,10 +99,13 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       </ol>
       </section>
       @if (submitted() && invalidPageTitles()) { <p class="validation-error">Vul voor elke extra pagina een titel in. Controleer de rood gemarkeerde velden.</p> }
+      <p class="muted">Wijzigingen aan de menuvolgorde worden pas toegepast na Instellingen opslaan.</p>
+      @if (error()) { <p class="validation-error save-feedback" role="alert">{{ error() }}</p> }
+      @if (notice()) { <p class="success save-feedback" role="status">{{ notice() }}</p> }
       <button type="submit" [disabled]="busy() || loading()">{{ busy() ? 'Opslaan…' : 'Instellingen opslaan' }}</button>
     </form>
   }
-  @if (notice()) { <p role="status">{{ notice() }}</p> }
+
 `, styles: [`input.invalid-required, textarea.invalid-required, select.invalid-required, input.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border: 2px solid #b42318; outline-color: #b42318; }
   .menu-order { padding-left: 0; list-style: none; }
   .menu-order li { display: flex; align-items: center; gap: 16px; padding-block: 8px; }
@@ -189,11 +192,21 @@ export class SeoSettings {
     this.company.imageUrl=stored.company.imageUrl;
   }
   invalidPageTitles() { return this.home.items.some(item => !item.title?.trim()); }
+  validationMessage(form?: NgForm) {
+    const labels: Record<string, string> = {
+      shopName: 'Naam', currency: 'Valuta', heading: 'Koptekst assortiment', introduction: 'Introductietekst',
+      seoTitle: 'SEO-titel assortiment', homeHeading: 'Titel Home pagina', companyHeading: 'Titel Contact pagina', companyEmail: 'E-mailadres Contact pagina',
+    };
+    const fields = Object.entries(form?.controls ?? {}).filter(([,control]) => control.invalid)
+      .map(([name]) => labels[name] || (name.startsWith('homeTitle') ? 'Titel extra pagina' : name.startsWith('homeDescription') ? 'Omschrijving extra pagina' : name));
+    return fields.length ? 'Niet opgeslagen. Controleer: ' + [...new Set(fields)].join(', ') + '. Controleer de rood gemarkeerde velden.'
+      : 'Niet opgeslagen. Controleer de rood gemarkeerde velden en vul alle verplichte velden in.';
+  }
   save(form?: NgForm) {
     const settings = this.settings();
     if (!settings || this.busy() || this.loading()) return;
-    this.submitted.set(true); form?.form.markAllAsTouched();
-    if (!this.validCurrency() || form?.invalid || !this.heading.trim() || !this.seoTitle.trim() || !this.shopName.trim() || !this.introduction.trim() || !this.company.heading.trim()) { this.error.set('Controleer de rood gemarkeerde velden. Vul alle verplichte velden in, waaronder de titel van elke pagina.'); return; }
+    this.submitted.set(true); this.notice.set(''); form?.form.markAllAsTouched();
+    if (!this.validCurrency() || form?.invalid || !this.heading.trim() || !this.seoTitle.trim() || !this.shopName.trim() || !this.introduction.trim() || !this.company.heading.trim()) { this.error.set(this.validationMessage(form)); return; }
     if (!this.home.heading.trim() || this.invalidPageTitles() || this.home.items.some(item => !item.description.trim())) { this.error.set('Controleer de rood gemarkeerde velden. Vul de koptekst en voor elke pagina een titel en omschrijving in.'); return; }
     this.busy.set(true); this.error.set(''); this.notice.set('');
     this.api.updateSeoSettings({ currency: this.currency.trim().toUpperCase(), heading: this.heading, seoTitle: this.seoTitle, seoDescription: this.seoDescription, revision: settings.revision, shopName: this.shopName, welcomeText: this.welcomeText, introduction: this.introduction, footerText: this.footerText, headerText: this.headerText, assortmentImageMode: this.assortmentImageMode, showHeaderPhone: this.showHeaderPhone, showHeaderWhatsapp: this.showHeaderWhatsapp, company: this.company, home: this.home }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({

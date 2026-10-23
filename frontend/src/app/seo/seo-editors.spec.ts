@@ -1,3 +1,5 @@
+import { NgForm } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -47,6 +49,29 @@ describe('SEO editors', () => {
     expect(request.request.body.home.contactEnabled).toBe(false);
     expect(request.request.body.home.menuOrder).toEqual(['home','page:p','contact','assortment']);
     request.flush({}, {status:409,statusText:'Conflict'});
+  });
+  it('shows invalid fields beside the save button and preserves the menu draft', async () => {
+    const fixture=TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({heading:'Assortiment',seoTitle:'Shop',revision,shopName:'Shop',introduction:'Intro',company:{heading:'Contact'},home:{enabled:true,heading:'Home',items:[]}});
+    await fixture.whenStable(); fixture.detectChanges();
+    const input=fixture.nativeElement.querySelector('input[name=shopName]') as HTMLInputElement;
+    input.value='';input.dispatchEvent(new Event('input'));await fixture.whenStable();
+    const page=fixture.componentInstance; page.home.menuOrder=['contact','home'];page.notice.set('Vorige bevestiging');
+    const form=fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+    page.save(form); await fixture.whenStable(); fixture.detectChanges();
+    expect(page.error()).toContain('Naam');
+    expect(page.notice()).toBe('');
+    expect(fixture.nativeElement.querySelector('.save-feedback[role=alert]')?.textContent).toContain('Niet opgeslagen');
+    expect(page.home.menuOrder).toEqual(['contact','home']);
+    http.expectNone(r=>r.method==='PUT');
+  });
+  it('shows the precise SEO error at the save controls instead of a generic message', async () => {
+    const fixture=TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({heading:'Assortiment',seoTitle:'Shop',revision});
+    fixture.componentInstance.save();
+    http.expectOne('/api/seo-settings').flush({code:'invalidSeo',message:'Gebruik een geldige volgorde voor de menubalk.'},{status:400,statusText:'Bad Request'});
+    await fixture.whenStable(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.save-feedback[role=alert]')?.textContent).toContain('geldige volgorde');
   });
   it('keeps an edited heading when saving fails', () => {
     const fixture = TestBed.createComponent(SeoSettings);
