@@ -29,7 +29,6 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
       :host.assortment-photo .panel {background:rgba(0,0,0,.68);border-color:#ffffff40;color:#fff;}
       :host.assortment-photo .panel .muted, :host.assortment-photo .panel a:not(.button) {color:inherit;}
       @media(max-width:760px){:host.assortment-photo{width:calc(100% + 40px);margin:-24px -20px;padding:36px 20px 24px;}}
-      .product-photos { padding: 36px; }
       .product-attributes, .product-price { margin-top: 32px; }
       .description {
         white-space: pre-wrap;
@@ -60,11 +59,11 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
     @if (state()?.data; as product) {
       <h1>{{ product.name }}</h1>
       <div class="grid">
-        <section class="panel product-photos">
-          <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" [large]="true" />
+        <section class="panel">
+          <app-shop-image [padded]="true" [url]="product.imageUrl" [alt]="product.imageAlt" [large]="true" />
           <div class="grid" aria-label="Extra productfoto’s">
             @for (image of extraImages(); track image.id) {
-              <app-shop-image [url]="image.url" [alt]="image.alternativeText" />
+              <app-shop-image [padded]="true" [url]="image.url" [alt]="image.alternativeText" />
             }
           </div>
         </section>
