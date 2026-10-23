@@ -1,3 +1,4 @@
+import { MoneyPipe } from '../../shared/money';
 import { currencies, knownCurrency } from '../currencies';
 import { ShopBranding } from '../../shop/shop-branding';
 import { ProductEditState } from './product-edit-state';
@@ -12,7 +13,7 @@ import { errorMessage } from '../error-message';
 
 @Component({
   selector: 'app-variant-edit',
-  imports: [FormsModule],
+  imports: [MoneyPipe, FormsModule],
   template: `
     <details (toggle)="loadVatRates($event)">
       <summary>{{ simpleSale() ? 'Prijs, voorraad en artikelnummer bewerken' : 'Variant bewerken: ' + variant().name }}</summary>
@@ -74,8 +75,7 @@ import { errorMessage } from '../error-message';
         >
         @if (variant().price && !variant().price?.isNetPrice) {
           <p>
-            De bestaande klantprijs is {{ variant().price?.grossAmount ?? variant().price?.amount }}
-            {{ variant().price?.currency }}. Deze prijs is als klantprijs vastgelegd. Vul hieronder
+            De bestaande klantprijs is {{ (variant().price?.grossAmount ?? variant().price?.amount) | money: variant().price?.currency }}. Deze prijs is als klantprijs vastgelegd. Vul hieronder
             bewust de netto prijs en btw-keuze in.
           </p>
         }
@@ -100,8 +100,7 @@ import { errorMessage } from '../error-message';
         }
         @if (taxPreview(); as split) {
           <p>
-            Prijs: {{ split.net }} · Btw: {{ split.vat }} · Totaal voor de klant: {{ split.gross }}
-            {{ currency.toUpperCase() }}
+            Prijs: {{ split.net | money: currency }} · Btw: {{ split.vat | money: currency }} · Totaal voor de klant: {{ split.gross | money: currency }}
           </p>
         }
         <label class="field"

@@ -1,3 +1,4 @@
+import { MoneyPipe } from '../../shared/money';
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,7 +10,7 @@ import { ProductEditState } from './product-edit-state';
 
 @Component({
   selector: 'app-price-rule-edit',
-  imports: [FormsModule],
+  imports: [MoneyPipe, FormsModule],
   template: `
     <details>
       <summary>Kortingsregels ({{ rules().length }})</summary>
@@ -20,8 +21,7 @@ import { ProductEditState } from './product-edit-state';
               <strong>{{ rule.name }}</strong>
               <span class="badge">{{ typeLabel(rule.adjustmentType) }}</span>
               <p>
-                {{ rule.value
-                }}{{ rule.adjustmentType === 1 ? '%' : ' ' + (variant().price?.currency ?? '') }} ·
+                @if (rule.adjustmentType === 1) { {{ rule.value }}% } @else { {{ rule.value | money: variant().price?.currency }} } ·
                 Prioriteit {{ rule.priority }}
               </p>
               @if (rule.startsAt || rule.endsAt) {

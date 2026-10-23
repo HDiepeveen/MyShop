@@ -73,7 +73,7 @@ describe('Home', () => {
     expect(text).toContain('6 gepubliceerd · 2 concept');
     expect(text).toContain('3 wacht op betaling');
     expect(text).toContain('4 accounts');
-    expect(text).toContain('EUR 42,50');
+    expect(text).toContain('€ 42,50');
     expect(text).toContain('Linnen shirt · Blauw');
     expect(text).toContain('2 op voorraad');
     expect(text).toContain('MS-ORDER');

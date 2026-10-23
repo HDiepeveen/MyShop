@@ -241,7 +241,7 @@ describe('Shop checkout', () => {
     expect(link.textContent).toContain('iDEAL-betaalpagina openen');
     expect(content).toContain('iDEAL via Mollie');
     expect(content).toContain('Bezorging: Pakketdienst');
-    expect(content).toContain('Totaal EUR 29,95');
+    expect(content).toContain('Totaal € 29,95');
 
     const buttons = fixture.nativeElement.querySelectorAll(
       'button',

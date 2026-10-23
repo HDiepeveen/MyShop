@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { PageBackdrop } from './page-backdrop';
 import { ShopBranding } from './shop-branding';
 import { StorefrontSeo } from './storefront-seo';
@@ -18,7 +19,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
 @Component({
   selector: 'app-shop-detail',
   host: {'[class.assortment-photo]': '!!branding.assortmentImageUrl()'},
-  imports: [FormsModule, RouterLink, ShopImage],
+  imports: [CurrencySymbolPipe, FormsModule, RouterLink, ShopImage],
   styles: [
     `
       :host {display:block;}
@@ -173,7 +174,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               <p role="alert">Prijs niet beschikbaar. Probeer het later opnieuw.</p>
             } @else if (selectedPrice(); as price) {
               @if (price.amount !== null && price.currency) {
-                <p class="price">{{ price.currency }} {{ amount(price.amount) }}</p>
+                <p class="price">{{ price.currency | currencySymbol }} {{ amount(price.amount) }}</p>
               } @else {
                 <p>Voor deze variant is nog geen prijs beschikbaar.</p>
               }

@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe, MoneyPipe } from '../shared/money';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { DatePipe } from '@angular/common';
@@ -9,7 +10,7 @@ import { BillingApi, Buyer, Invoice } from './billing.api';
 import { billingError } from './billing-settings';
 import { OrderManagementApi } from '../checkout/order-management.api';
 @Component({
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [CurrencySymbolPipe, MoneyPipe, DatePipe, FormsModule, RouterLink],
   host: { class: 'printable-order' },
   template: `<a
       class="back print-hide"
@@ -75,10 +76,10 @@ import { OrderManagementApi } from '../checkout/order-management.api';
             <tr>
               <td>{{ line.description }}</td>
               <td>{{ line.quantity }}</td>
-              <td>{{ amount(line.unitNet) }}</td>
-              <td>{{ amount(line.net) }}</td>
-              <td>{{ line.exempt ? 'Vrijgesteld' : line.rate + '%' }} · {{ amount(line.vat) }}</td>
-              <td>{{ amount(line.gross) }}</td>
+              <td>{{ line.unitNet | money: document.currency }}</td>
+              <td>{{ line.net | money: document.currency }}</td>
+              <td>{{ line.exempt ? 'Vrijgesteld' : line.rate + '%' }} · {{ line.vat | money: document.currency }}</td>
+              <td>{{ line.gross | money: document.currency }}</td>
             </tr>
           }
         </tbody>
@@ -86,14 +87,14 @@ import { OrderManagementApi } from '../checkout/order-management.api';
       <h2>Btw-overzicht</h2>
       @for (total of document.totals; track $index) {
         <p>
-          {{ total.exempt ? 'Vrijgesteld' : total.rate + '%' }} · Netto {{ amount(total.net) }} ·
-          Btw {{ amount(total.vat) }} · Totaal {{ amount(total.gross) }} {{ document.currency }}
+          {{ total.exempt ? 'Vrijgesteld' : total.rate + '%' }} · Netto {{ total.net | money: document.currency }} ·
+          Btw {{ total.vat | money: document.currency }} · Totaal {{ total.gross | money: document.currency }}
         </p>
       }
       <p>
         <strong
-          >Netto {{ amount(document.net) }} + btw {{ amount(document.vat) }} =
-          {{ document.currency }} {{ amount(document.gross) }}</strong
+          >Netto {{ document.net | money: document.currency }} + btw {{ document.vat | money: document.currency }} =
+          {{ document.currency | currencySymbol }} {{ amount(document.gross) }}</strong
         >
       </p>
       @if (document.taxStatement) {

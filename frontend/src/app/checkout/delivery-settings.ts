@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -5,7 +6,7 @@ import { errorMessage } from '../catalog/error-message';
 import { DeliveryMethod, DeliveryMethodsApi } from './delivery-methods.api';
 
 @Component({
-  imports: [FormsModule],
+  imports: [CurrencySymbolPipe, FormsModule],
   template: `<div class="eyebrow">Checkout</div>
     <h1>Bezorgopties</h1>
     <p>Alle ingeschakelde opties worden bij het afrekenen aangeboden.</p>
@@ -27,7 +28,7 @@ import { DeliveryMethod, DeliveryMethodsApi } from './delivery-methods.api';
           {{ method.name }}
           <span class="badge">{{ method.enabled ? 'Beschikbaar' : 'Uitgeschakeld' }}</span>
         </h2>
-        <p>{{ method.currency }} {{ amount(method.amount) }}</p>
+        <p>{{ method.currency | currencySymbol }} {{ amount(method.amount) }}</p>
         @if (method.description) {
           <p class="preserve-lines">{{ method.description }}</p>
         }

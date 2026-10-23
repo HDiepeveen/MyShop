@@ -185,7 +185,7 @@ describe('Cart page', () => {
       harness.detectChanges();
       const text = harness.routeNativeElement!.textContent;
       expect(text).not.toContain('Old product name');
-      if (result === 'current') expect(text).toContain('EUR 40,00');
+      if (result === 'current') expect(text).toContain('€ 40,00');
       else expect(text).toContain('niet meer beschikbaar');
       http.expectNone((request) => request.method === 'POST');
     },
@@ -260,7 +260,7 @@ describe('Cart page', () => {
     expect(harness.routeNativeElement!.textContent).toContain('Je bestelnummer is MS-3000');
     expect(harness.routeNativeElement!.textContent).toContain('Pakketdienst');
     expect(harness.routeNativeElement!.textContent).toContain('Binnen twee werkdagen.');
-    expect(harness.routeNativeElement!.textContent).toContain('EUR 17,45');
+    expect(harness.routeNativeElement!.textContent).toContain('€ 17,45');
     expect(harness.routeNativeElement!.textContent).toContain('Betaal binnen 14 dagen.');
   });
   it('adds the selected variant from the product page', async () => {
@@ -319,7 +319,7 @@ describe('Cart page', () => {
     expect(page.selectedPayment()).toBe('payLater');
     expect(harness.routeNativeElement!.textContent).toContain('Betaal binnen 14 dagen.');
     expect(harness.routeNativeElement!.textContent).toContain('9999999999999999,99');
-    expect(harness.routeNativeElement!.textContent).toContain('USD 0,00');
+    expect(harness.routeNativeElement!.textContent).toContain('$ 0,00');
     expect(harness.routeNativeElement!.querySelectorAll('input[type=radio]')).toHaveLength(2);
   });
   it('cancels obsolete quotes and clears old totals during changes and errors', async () => {

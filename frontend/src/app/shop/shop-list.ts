@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { DestroyRef } from '@angular/core';
 import { PageBackdrop } from './page-backdrop';
 import { CategoryPageInfo } from './category-page';
@@ -16,7 +17,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
 @Component({
   selector: 'app-shop-list',
   host: {'[class.assortment-photo]': '!!branding.assortmentImageUrl()'},
-  imports: [FormsModule, RouterLink, ShopImage],
+  imports: [CurrencySymbolPipe, FormsModule, RouterLink, ShopImage],
   styles: [
     `
       :host { display: block; padding-top: 16px; }
@@ -203,7 +204,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
                 @for (price of product.prices; track price.currency) {
                   <p>
                     <strong>
-                      {{ price.currency }} {{ amount(price.minimumAmount) }}
+                      {{ price.currency | currencySymbol }} {{ amount(price.minimumAmount) }}
                       @if (price.minimumAmount !== price.maximumAmount) {
                         – {{ amount(price.maximumAmount) }}
                       }

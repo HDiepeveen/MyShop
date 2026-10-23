@@ -1,3 +1,4 @@
+using HDWebFramework.Application.Common;
 using System.Globalization;
 using System.Text;
 using HDWebFramework.Domain.Checkout;
@@ -14,12 +15,12 @@ internal static class OrderConfirmationEmail
             .AppendLine(order.PaymentMethod == OrderPaymentMethod.Online ? "Betaalmethode: online betalen" : "Betaalmethode: later betalen")
             .AppendLine();
         foreach (var line in order.Lines)
-            body.AppendLine($"{line.Quantity} × {line.ProductName} / {line.VariantName}: {line.Total.Currency} {line.Total.Amount.ToString("0.00", CultureInfo.InvariantCulture)}");
+            body.AppendLine($"{line.Quantity} × {line.ProductName} / {line.VariantName}: {CurrencyDisplay.Symbol(line.Total.Currency)} {line.Total.Amount.ToString("0.00", CultureInfo.InvariantCulture)}");
         if (order.DeliveryMethod is { } delivery)
-            body.AppendLine($"Bezorging: {delivery.Name} — {delivery.Fee.Currency} {delivery.Fee.Amount.ToString("0.00", CultureInfo.InvariantCulture)}");
+            body.AppendLine($"Bezorging: {delivery.Name} — {CurrencyDisplay.Symbol(delivery.Fee.Currency)} {delivery.Fee.Amount.ToString("0.00", CultureInfo.InvariantCulture)}");
         body.AppendLine();
         foreach (var total in order.Totals.OrderBy(total => total.Currency))
-            body.AppendLine($"Totaal: {total.Currency} {total.Amount.ToString("0.00", CultureInfo.InvariantCulture)}");
+            body.AppendLine($"Totaal: {CurrencyDisplay.Symbol(total.Currency)} {total.Amount.ToString("0.00", CultureInfo.InvariantCulture)}");
         if (!string.IsNullOrWhiteSpace(order.PaymentInstructions))
             body.AppendLine().AppendLine("Betaalinstructies:").AppendLine(order.PaymentInstructions);
         return body.AppendLine().AppendLine("Dit is een bestelbevestiging, geen factuur.").ToString();

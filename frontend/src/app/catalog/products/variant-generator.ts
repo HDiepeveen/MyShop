@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe, MoneyPipe } from '../../shared/money';
 import { currencies, knownCurrency } from '../currencies';
 import { ShopBranding } from '../../shop/shop-branding';
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
@@ -16,7 +17,7 @@ import {
 
 @Component({
   selector: 'app-variant-generator',
-  imports: [FormsModule],
+  imports: [CurrencySymbolPipe, MoneyPipe, FormsModule],
   template: `
     <section class="panel">
       <h2>Varianten uit opties aanmaken</h2>
@@ -96,8 +97,7 @@ import {
               }
               @if (pricePreview(); as price) {
                 <p>
-                  Prijs: {{ price.net }} · Btw: {{ price.vat }} · Totaal voor de klant:
-                  {{ price.gross }} {{ currency.toUpperCase() }}
+                  Prijs: {{ price.net | money: currency }} · Btw: {{ price.vat | money: currency }} · Totaal voor de klant: {{ price.gross | money: currency }}
                 </p>
               }
             }
@@ -107,7 +107,7 @@ import {
               <small>Leeg laten betekent dat de voorraad nog niet wordt gevolgd.</small>
             </label>
             <p>
-              De beginprijs is in {{ currency.toUpperCase() }}. Artikelnummer en eventuele afwijkende prijzen stel je daarna
+              De beginprijs is in {{ currency | currencySymbol }}. Artikelnummer en eventuele afwijkende prijzen stel je daarna
               per variant in.
             </p>
             <button [disabled]="busy() || selectedCount() === 0">

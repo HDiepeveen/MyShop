@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { countryName } from './country-name';
 import { ShopBranding } from '../shop/shop-branding';
 import { ShopSettings } from '../shop/shop-settings';
@@ -24,7 +25,7 @@ import {
 } from './customer-order.api';
 
 @Component({
-  imports: [DatePipe, RouterLink],
+  imports: [CurrencySymbolPipe, DatePipe, RouterLink],
   host: { class: 'printable-order' },
   template: `<p class="print-only">{{ branding.name() }} · Besteloverzicht</p>
     <a class="print-hide" routerLink="/winkel/account/bestellingen" [queryParams]="listQuery()"
@@ -96,13 +97,13 @@ import {
         @for (line of item.lines; track line.productId + line.variantId) {
           <h3>{{ line.productName }} · {{ line.variantName }}</h3>
           <p>
-            {{ line.quantity }} × {{ line.currency }} {{ amount(line.unitAmount) }} =
-            <strong>{{ line.currency }} {{ amount(line.totalAmount) }}</strong>
+            {{ line.quantity }} × {{ line.currency | currencySymbol }} {{ amount(line.unitAmount) }} =
+            <strong>{{ line.currency | currencySymbol }} {{ amount(line.totalAmount) }}</strong>
           </p>
         }
         @for (total of articleTotals(item); track total.currency) {
           <p>
-            <strong>Subtotaal artikelen {{ total.currency }} {{ amount(total.amount) }}</strong>
+            <strong>Subtotaal artikelen {{ total.currency | currencySymbol }} {{ amount(total.amount) }}</strong>
           </p>
         }
       </section>
@@ -111,7 +112,7 @@ import {
           <h2>Bezorgoptie</h2>
           <p>
             {{ delivery.name }} ·
-            <strong>{{ delivery.currency }} {{ delivery.amount.replace('.', ',') }}</strong>
+            <strong>{{ delivery.currency | currencySymbol }} {{ delivery.amount.replace('.', ',') }}</strong>
           </p>
           @if (delivery.description) {
             <p class="preserve-lines">{{ delivery.description }}</p>
@@ -121,7 +122,7 @@ import {
       <section class="panel">
         <h2>Totaal bestelling</h2>
         @for (total of item.totals; track total.currency) {
-          <p><strong>{{ total.currency }} {{ amount(total.amount) }}</strong></p>
+          <p><strong>{{ total.currency | currencySymbol }} {{ amount(total.amount) }}</strong></p>
         }
         <p>Inclusief bezorgkosten.</p>
       </section>

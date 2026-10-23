@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,7 +15,7 @@ import {
 } from './customer-order.api';
 
 @Component({
-  imports: [DatePipe, RouterLink, FormsModule],
+  imports: [CurrencySymbolPipe, DatePipe, RouterLink, FormsModule],
   template: `<a routerLink="/winkel/account">← Mijn account</a>
     <div class="eyebrow">Mijn account</div>
     <h1>Mijn bestellingen</h1>
@@ -120,7 +121,7 @@ import {
           }
           @for (total of order.totals; track total.currency) {
             <p>
-              <strong>{{ total.currency }} {{ amount(total.amount) }}</strong>
+              <strong>{{ total.currency | currencySymbol }} {{ amount(total.amount) }}</strong>
             </p>
           }
           <p><a [routerLink]="[order.id]" [queryParams]="contextQuery()">Details bekijken</a></p>

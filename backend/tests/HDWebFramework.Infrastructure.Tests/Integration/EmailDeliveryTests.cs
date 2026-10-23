@@ -37,7 +37,7 @@ public sealed class EmailDeliveryTests(SqlServerDatabase database)
         await using var read = database.CreateContext();
         var mail = Assert.Single(await read.EmailMessages.Where(message => message.Recipient == email).ToListAsync());
         Assert.Contains(order.Number, mail.Subject); Assert.Contains("2 × Saved product / Saved variant", mail.Body);
-        Assert.Contains("EUR 20.00", mail.Body); Assert.Contains("Saved instructions", mail.Body);
+        Assert.Contains("€ 20.00", mail.Body); Assert.Contains("Saved instructions", mail.Body);
         Assert.DoesNotContain(token.ToString(), mail.Body);
         var unavailable = Order.Place(Guid.NewGuid(), DateTimeOffset.UtcNow, OrderCustomer.Create("Customer", email),
             DeliveryAddress.Create("Street 1", "1234 AB", "Utrecht", "NL"),

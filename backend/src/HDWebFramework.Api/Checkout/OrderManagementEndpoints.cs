@@ -265,7 +265,7 @@ public static class OrderManagementEndpoints
                 .Append(Csv(order.ShippedAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")).Append(',')
                 .Append(Csv(order.CancelledAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")).Append(',')
                 .Append(Csv(order.RefundedAt?.ToString("O", CultureInfo.InvariantCulture) ?? "")).Append(',')
-                .AppendLine(Csv(string.Join(" | ", order.Totals.Select(total => $"{total.Currency} {total.Amount}"))));
+                .AppendLine(Csv(string.Join(" | ", order.Totals.Select(total => $"{HDWebFramework.Application.Common.CurrencyDisplay.Symbol(total.Currency)} {total.Amount}"))));
         }
         return builder.ToString();
     }

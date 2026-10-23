@@ -9,3 +9,5 @@ De wijziging van instellingen en productvaluta’s gebeurt in één transactie. 
 Nieuwe prijzen en gegenereerde varianten gebruiken de websitevaluta als standaard. Handmatig ingevoerde valutakeuzen in een open formulier worden niet overschreven door een achtergrondverversing van website-instellingen.
 
 Bestaande bestellingen en betalingen behouden hun historische bedragen en valuta. Dit breidt de ondersteunde betaalvaluta’s bij betaalproviders niet uit en wijzigt geen bezorgtarieven; daarvoor blijven de eigen valuta en validaties gelden.
+
+Prijsweergave gebruikt een teken vóór het bedrag: EUR → €, USD → $ , GBP → £ en SRD → SR$. Onbekende bestaande valuta gebruiken hun code als herkenbare terugval. De opgeslagen codes en prijsbedragen blijven onveranderd. Dit geldt voor beheer, winkel, factuurweergave, nieuwe bestelbevestigingen en de bestellingenexport.

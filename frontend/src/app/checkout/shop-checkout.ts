@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
@@ -22,7 +23,7 @@ import { CustomerAccountApi, CustomerProfile } from '../customer/customer-accoun
 
 @Component({
   selector: 'app-shop-checkout',
-  imports: [FormsModule],
+  imports: [CurrencySymbolPipe, FormsModule],
   template: `
     <section class="panel">
       <h2>Gegevens voor je bestelling</h2>
@@ -166,7 +167,7 @@ import { CustomerAccountApi, CustomerProfile } from '../customer/customer-accoun
             <p>Bezorging: {{ payment.deliveryMethod.name }}</p>
             <ul>
               @for (total of payment.totals; track total.currency) {
-                <li>Totaal {{ total.currency }} {{ amount(total.amount) }}</li>
+                <li>Totaal {{ total.currency | currencySymbol }} {{ amount(total.amount) }}</li>
               }
             </ul>
           </section>

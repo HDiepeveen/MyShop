@@ -1,4 +1,5 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { MoneyPipe } from '../shared/money';
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +9,7 @@ import { loadState } from '../catalog/load-state';
 import { OrderManagementApi, OrderPaymentMethod, OrderStatus } from './order-management.api';
 
 @Component({
-  imports: [RouterLink, DatePipe, CurrencyPipe, FormsModule],
+  imports: [MoneyPipe, RouterLink, DatePipe, FormsModule],
   template: ` <div class="eyebrow">Verkoop</div>
     <div class="page-head">
       <div>
@@ -90,7 +91,7 @@ import { OrderManagementApi, OrderPaymentMethod, OrderStatus } from './order-man
                     <td>{{ paymentMethodLabel(order.paymentMethod) }}</td>
                     <td>
                       @for (total of order.totals; track total.currency) {
-                        <div class="nowrap">{{ total.amount | currency: total.currency }}</div>
+                        <div class="nowrap">{{ total.amount | money: total.currency }}</div>
                       }
                     </td>
                     <td>

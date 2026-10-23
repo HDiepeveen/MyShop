@@ -99,7 +99,7 @@ describe('ShopDetail option selection', () => {
     harness.detectChanges();
     expect(colour.value).toBe('zwart');
     expect(Array.from(colour.options).find((o) => o.value === 'blauw')?.disabled).toBe(true);
-    expect(root.querySelector('.price')?.textContent).toContain('EUR 12,00');
+    expect(root.querySelector('.price')?.textContent).toContain('€ 12,00');
     detail.addToCart();
     expect(TestBed.inject(Cart).lines()).toEqual([
       { productId: optionProduct.id, variantId: optionProduct.variants[2].id, quantity: 1 },
@@ -169,7 +169,7 @@ describe('ShopDetail option selection', () => {
     expect(root.querySelector('select[name="variant"]')).toBeNull();
     expect(root.textContent).not.toContain('Kies je variant');
     expect(root.textContent).not.toContain('Gekozen variant:');
-    expect(root.querySelector('.price')?.textContent).toContain('EUR 10,00');
+    expect(root.querySelector('.price')?.textContent).toContain('€ 10,00');
     expect(root.textContent).not.toContain('Prijs opgehaald op');
     expect(root.textContent).not.toContain('Prijs vernieuwen');
     detail.addToCart();
@@ -198,7 +198,7 @@ describe('ShopDetail option selection', () => {
     const root = harness.routeNativeElement!;
     expect(root.querySelector('input[name=quantity]')).toBeNull();
     expect(root.textContent).not.toContain('In winkelmand');
-    expect(root.querySelector('.price')?.textContent).toContain('EUR 10,00');
+    expect(root.querySelector('.price')?.textContent).toContain('€ 10,00');
     detail.addToCart();
     expect(TestBed.inject(Cart).lines()).toEqual([]);
   });

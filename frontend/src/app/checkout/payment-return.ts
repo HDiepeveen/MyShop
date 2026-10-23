@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -9,7 +10,7 @@ import { PendingPayment } from './pending-payment';
 
 @Component({
   selector: 'app-payment-return',
-  imports: [RouterLink],
+  imports: [CurrencySymbolPipe, RouterLink],
   template: `<section class="panel">
     <h1>Betaling</h1>
     @if (busy()) {
@@ -18,7 +19,7 @@ import { PendingPayment } from './pending-payment';
     @if (receipt(); as order) {
       <p role="status">Je betaling is bevestigd. Bestelling {{ order.number }} is geplaatst.</p>
       @for (total of order.totals; track total.currency) {
-        <p>Totaal {{ total.currency }} {{ total.amount.replace('.', ',') }}</p>
+        <p>Totaal {{ total.currency | currencySymbol }} {{ total.amount.replace('.', ',') }}</p>
       }
       <p>Je ontvangt een bestelbevestiging per e-mail.</p>
       @if (cartNotice()) {

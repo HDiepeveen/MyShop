@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from '../shared/money';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PendingPayment } from '../checkout/pending-payment';
@@ -17,7 +18,7 @@ import { Auth } from '../auth/auth';
 import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
 
 @Component({
-  imports: [DatePipe, FormsModule, RouterLink, ShopCheckout],
+  imports: [CurrencySymbolPipe, DatePipe, FormsModule, RouterLink, ShopCheckout],
   template: `
     <a routerLink="/assortiment">← Verder winkelen</a>
     @if (paymentOptions()?.data?.checkoutEnabled === false) {
@@ -42,7 +43,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
         @if (payment.providerName === 'Mollie') { <p>iDEAL via Mollie · Testmodus: er wordt geen echt geld afgeschreven.</p> }
         <button type="button" class="secondary" [disabled]="recoveringPayment() || checkoutBusy()" (click)="checkPreparedPayment()">Betaalstatus controleren</button>
         <p>Bezorging: {{ payment.deliveryMethod.name }}</p>
-        @for (total of payment.totals; track total.currency) { <p>Totaal {{ total.currency }} {{ amount(total.amount) }}</p> }
+        @for (total of payment.totals; track total.currency) { <p>Totaal {{ total.currency | currencySymbol }} {{ amount(total.amount) }}</p> }
         @if (resumeCheckoutUrl()) { <a [href]="resumeCheckoutUrl()">{{ payment.providerName === 'Mollie' ? 'iDEAL-betaalpagina openen' : 'Betaalpagina openen' }}</a> }
         @else { <p>De betaling wordt nog verwerkt. Controleer de eerdere betaalstatus.</p> }
       </section>
@@ -74,15 +75,15 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
           @if (receipt.deliveryMethod; as delivery) {
             <dt>Ontvangst</dt>
             <dd>
-              {{ delivery.name }} · {{ delivery.currency }} {{ amount(delivery.amount) }}
+              {{ delivery.name }} · {{ delivery.currency | currencySymbol }} {{ amount(delivery.amount) }}
               @if (delivery.description) {
                 <br /><span class="muted preserve-lines">{{ delivery.description }}</span>
               }
             </dd>
           }
           @for (total of receipt.totals; track total.currency) {
-            <dt>Totaal {{ total.currency }}</dt>
-            <dd>{{ total.currency }} {{ amount(total.amount) }}</dd>
+            <dt>Totaal {{ total.currency | currencySymbol }}</dt>
+            <dd>{{ total.currency | currencySymbol }} {{ amount(total.amount) }}</dd>
           }
         </dl>
         @if (receipt.paymentInstructions) {
@@ -120,8 +121,8 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
             </h2>
             <p>{{ row.variant }}</p>
             @if (row.amount !== null) {
-              <p>Per stuk: {{ row.currency }} {{ amount(row.amount) }}</p>
-              <p>Regelbedrag: {{ row.currency }} {{ amount(row.total) }}</p>
+              <p>Per stuk: {{ row.currency | currencySymbol }} {{ amount(row.amount) }}</p>
+              <p>Regelbedrag: {{ row.currency | currencySymbol }} {{ amount(row.total) }}</p>
             } @else {
               <p role="status">{{ row.message }}</p>
             }
@@ -155,7 +156,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
       @if (complete()) {
         @for (total of totals(); track total.currency) {
           <p>
-            <strong>Subtotaal {{ total.currency }}: {{ amount(total.amount) }}</strong>
+            <strong>Subtotaal: {{ total.currency | currencySymbol }} {{ amount(total.amount) }}</strong>
           </p>
         }
         <section class="panel">
@@ -177,7 +178,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
                 [ngModel]="selectedDelivery()"
                 (ngModelChange)="!checkoutBusy() && selectedDelivery.set($event)"
               />
-              {{ method.name }} · {{ method.currency }} {{ amount(method.amount) }}</label
+              {{ method.name }} · {{ method.currency | currencySymbol }} {{ amount(method.amount) }}</label
             >
             @if (method.id === selectedDelivery() && method.description) {
               <p class="muted preserve-lines">{{ method.description }}</p>
@@ -188,7 +189,7 @@ import { DeliveryMethodsApi } from '../checkout/delivery-methods.api';
           }
         </section>
         @for (total of orderTotals(); track total.currency) {
-          <p><strong>Totaal {{ total.currency }}: {{ amount(total.amount) }}</strong></p>
+          <p><strong>Totaal: {{ total.currency | currencySymbol }} {{ amount(total.amount) }}</strong></p>
         }
         <section class="panel">
           <h2>Hoe wil je betalen?</h2>

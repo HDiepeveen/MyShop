@@ -1,6 +1,7 @@
+import { CurrencySymbolPipe, MoneyPipe } from '../shared/money';
 import { countryName } from '../customer/country-name';
 import { ShopBranding } from '../shop/shop-branding';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -10,7 +11,7 @@ import { errorMessage } from '../catalog/error-message';
 import { OrderDetail, OrderManagementApi } from './order-management.api';
 
 @Component({
-  imports: [RouterLink, DatePipe, CurrencyPipe],
+  imports: [CurrencySymbolPipe, MoneyPipe, RouterLink, DatePipe],
   host: { class: 'printable-order' },
   template: ` <p class="print-only">{{ branding.name() }} · Besteloverzicht</p>
     <a class="back print-hide" routerLink="/bestellingen" queryParamsHandling="preserve"
@@ -74,7 +75,7 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
           <section class="panel">
             <h2>Bezorgoptie</h2>
             <p>
-              <strong>{{ delivery.name }}</strong> · {{ delivery.currency }}
+              <strong>{{ delivery.name }}</strong> · {{ delivery.currency | currencySymbol }}
               {{ delivery.amount.replace('.', ',') }}
             </p>
             @if (delivery.description) {
@@ -122,8 +123,8 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
                     {{ line.productName }}<br /><span class="muted">{{ line.variantName }}</span>
                   </td>
                   <td>{{ line.quantity }}</td>
-                  <td class="nowrap">{{ line.unitAmount | currency: line.currency }}</td>
-                  <td class="nowrap">{{ line.totalAmount | currency: line.currency }}</td>
+                  <td class="nowrap">{{ line.unitAmount | money: line.currency }}</td>
+                  <td class="nowrap">{{ line.totalAmount | money: line.currency }}</td>
                 </tr>
               }
             </tbody>
@@ -182,8 +183,8 @@ import { OrderDetail, OrderManagementApi } from './order-management.api';
             <dd class="preserve-lines">{{ order.refundReason }}</dd>
           }
           @for (total of order.totals; track total.currency) {
-            <dt>Totaal ({{ total.currency }})</dt>
-            <dd>{{ total.amount | currency: total.currency }}</dd>
+            <dt>Totaal ({{ total.currency | currencySymbol }})</dt>
+            <dd>{{ total.amount | money: total.currency }}</dd>
           }
         </dl>
       </section>

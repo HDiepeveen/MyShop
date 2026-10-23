@@ -45,7 +45,7 @@ describe('Net price and VAT editing', () => {
     fixture.detectChanges();
     expect(editor.taxPreview()).toEqual({ net: '100,00', vat, gross });
     expect(fixture.nativeElement.textContent.replace(/\s+/g, ' ')).toContain(
-      'Totaal voor de klant: ' + gross,
+      'Totaal voor de klant: € ' + gross,
     );
     editor.savePrice();
     const request = http.expectOne('/api/products/product/variants/variant/price');
@@ -66,7 +66,7 @@ describe('Net price and VAT editing', () => {
     });
     expect(editor.amount).toBe('');
     expect(editor.vatChoice).toBe('');
-    expect(fixture.nativeElement.textContent).toContain('De bestaande klantprijs is 121.00');
+    expect(fixture.nativeElement.textContent).toContain('De bestaande klantprijs is € 121,00');
     editor.amount = '100';
     editor.savePrice();
     http.expectNone(() => true);

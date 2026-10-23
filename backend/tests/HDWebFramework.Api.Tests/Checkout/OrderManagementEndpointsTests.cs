@@ -46,7 +46,7 @@ public sealed class OrderManagementEndpointsTests
         Assert.Equal("hdwebframework-orders.csv", file.FileDownloadName);
         var csv = System.Text.Encoding.UTF8.GetString(file.FileContents.ToArray());
         Assert.Contains("\"MS-1\",\"2026-10-01T10:30:00.0000000+00:00\",\"'=Ada, \"\"Admin\"\"\"", csv);
-        Assert.Contains("\"EUR 12.50 | USD 7.00\"", csv);
+        Assert.Contains("\"€ 12.50 | $ 7.00\"", csv);
         Assert.Equal(OrderStatus.Paid, repository.ListStatus);
         Assert.Equal("Ada", repository.ListSearch);
     }

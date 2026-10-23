@@ -66,7 +66,7 @@ describe('Public storefront', () => {
     expect(harness.routeNativeElement!.classList.contains('assortment-photo')).toBe(true);
     expect(harness.routeNativeElement!.textContent).toContain('Onze geselecteerde occasions.');
     expect(harness.routeNativeElement!.textContent).not.toContain('Welkom bij HD Web Framework');
-    expect(harness.routeNativeElement!.textContent).toContain('EUR 12,50');
+    expect(harness.routeNativeElement!.textContent).toContain('€ 12,50');
     expect(harness.routeNativeElement!.textContent).toContain('25,00');
     const link = harness.routeNativeElement!.querySelector('a[href*="/winkel/p?"]')!;
     expect(link.getAttribute('href')).toContain('search=shirt');
@@ -192,12 +192,12 @@ describe('Public storefront', () => {
     });
     await harness.fixture.whenStable();
     harness.detectChanges();
-    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('EUR 75,00');
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('€ 75,00');
     const select = harness.routeNativeElement!.querySelector('select')!;
     select.value = 'v2';
     select.dispatchEvent(new Event('change'));
     await harness.fixture.whenStable();
-    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('USD 0,00');
+    expect(harness.routeNativeElement!.querySelector('.price')?.textContent).toContain('$ 0,00');
     const detail = harness.routeDebugElement!.componentInstance as ShopDetail;
     detail.refreshPrices();
     harness.detectChanges();

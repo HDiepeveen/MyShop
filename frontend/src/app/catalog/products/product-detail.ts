@@ -1,3 +1,4 @@
+import { MoneyPipe } from '../../shared/money';
 import { ProductSeoEdit } from '../../seo/product-seo-edit';
 import { ProductPresentationEdit } from './product-presentation';
 import { ProductImagesEdit } from './product-images';
@@ -12,7 +13,6 @@ import { VariantGenerator } from './variant-generator';
 import { ProductCategories } from './product-categories';
 import { ProductEdit } from './product-edit';
 import { Component, effect, inject, signal } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -24,9 +24,8 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
 
 @Component({
   providers: [ProductEditState],
-  imports: [
+  imports: [MoneyPipe,
     RouterLink,
-    CurrencyPipe,
     FormsModule,
     ProductEdit,
     ProductPresentationEdit,
@@ -199,22 +198,20 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
                 @if (variant.price; as price) {
                   @if (price.netAmount != null) {
                     <p>
-                      Prijs exclusief btw: {{ price.netAmount.replace('.', ',') }}
-                      {{ price.currency }}
+                      Prijs exclusief btw: {{ price.netAmount | money: price.currency }}
                     </p>
                     <p>
                       Btw {{ price.vatExempt ? '(vrijgesteld)' : '(' + price.vatRate + '%)' }}:
-                      {{ price.vatAmount?.replace('.', ',') }} {{ price.currency }}
+                      {{ price.vatAmount | money: price.currency }}
                     </p>
                     <p>
-                      Totaal klantprijs: {{ price.grossAmount?.replace('.', ',') }}
-                      {{ price.currency }}
+                      Totaal klantprijs: {{ price.grossAmount | money: price.currency }}
                     </p>
                   } @else {
                     @if (price.grossAmount) {
-                      {{ price.grossAmount.replace('.', ',') }} {{ price.currency }}
+                      {{ price.grossAmount | money: price.currency }}
                     } @else {
-                      {{ price.amount | currency: price.currency }}
+                      {{ price.amount | money: price.currency }}
                     }
                     <span class="muted"> · Btw nog niet vastgelegd</span>
                   }

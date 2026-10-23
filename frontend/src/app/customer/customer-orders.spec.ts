@@ -59,11 +59,11 @@ describe('Customer orders', () => {
     const panels = Array.from(fixture.nativeElement.querySelectorAll('section')) as HTMLElement[];
     const articles = panels.find((panel) => panel.querySelector('h2')?.textContent === 'Artikelen')!;
     const grandTotal = panels.find((panel) => panel.querySelector('h2')?.textContent === 'Totaal bestelling')!;
-    expect(articles.textContent).toContain('Subtotaal artikelen EUR 45,98');
-    expect(articles.textContent).toContain('Subtotaal artikelen USD 0,30');
+    expect(articles.textContent).toContain('Subtotaal artikelen € 45,98');
+    expect(articles.textContent).toContain('Subtotaal artikelen $ 0,30');
     expect(articles.textContent).not.toContain('47,98');
-    expect(grandTotal.textContent).toContain('EUR ' + total.replace('.', ','));
-    expect(grandTotal.textContent).toContain('USD 0,30');
+    expect(grandTotal.textContent).toContain('€ ' + total.replace('.', ','));
+    expect(grandTotal.textContent).toContain('$ 0,30');
     expect(grandTotal.textContent).toContain('Inclusief bezorgkosten.');
     expect(panels.indexOf(grandTotal)).toBeGreaterThan(panels.indexOf(articles));
     if (deliveryAmount !== null) {
@@ -104,7 +104,7 @@ describe('Customer orders', () => {
     expect(fixture.nativeElement.textContent).toContain('Later betalen');
     expect(fixture.nativeElement.textContent).toContain('PostNL');
     expect(fixture.nativeElement.textContent).toContain('3S123');
-    expect(fixture.nativeElement.textContent).toContain('EUR 25,00');
+    expect(fixture.nativeElement.textContent).toContain('€ 25,00');
     const detailLinks = Array.from(
       fixture.nativeElement.querySelectorAll('a'),
     ) as HTMLAnchorElement[];

@@ -28,31 +28,31 @@ describe('Cart total including delivery', () => {
     TestBed.inject(Cart).addLines([line]);
     const fixture = TestBed.createComponent(ShopCart);
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).not.toContain('Totaal EUR:');
+    expect(fixture.nativeElement.textContent).not.toContain('Totaal: €');
     delivery.next([
       { id: 'post', name: 'Post', description: null, amount: '2.00', currency: 'EUR' },
       { id: 'pickup', name: 'Afhalen', description: null, amount: '0.00', currency: 'EUR' },
       { id: 'other', name: 'Andere valuta', description: null, amount: '0.30', currency: 'USD' },
     ]);
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).toContain('Subtotaal EUR: 45,98');
-    expect(fixture.nativeElement.textContent).toContain('Totaal EUR: 47,98');
+    expect(fixture.nativeElement.textContent).toContain('Subtotaal: € 45,98');
+    expect(fixture.nativeElement.textContent).toContain('Totaal: € 47,98');
     expect(fixture.nativeElement.textContent).not.toContain('inclusief bezorgkosten');
     const text = fixture.nativeElement.textContent as string;
-    expect(text.indexOf('Totaal EUR:')).toBeGreaterThan(text.indexOf('Hoe wil je je bestelling ontvangen?'));
-    expect(text.indexOf('Totaal EUR:')).toBeLessThan(text.indexOf('Hoe wil je betalen?'));
+    expect(text.indexOf('Totaal: €')).toBeGreaterThan(text.indexOf('Hoe wil je je bestelling ontvangen?'));
+    expect(text.indexOf('Totaal: €')).toBeLessThan(text.indexOf('Hoe wil je betalen?'));
     const radios = Array.from(fixture.nativeElement.querySelectorAll('input[type="radio"]')) as HTMLInputElement[];
     const pickup = radios[1];
     pickup.click();
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).toContain('Totaal EUR: 45,98');
+    expect(fixture.nativeElement.textContent).toContain('Totaal: € 45,98');
     const other = radios[2];
     other.click();
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).toContain('Totaal EUR: 45,98');
-    expect(fixture.nativeElement.textContent).toContain('Totaal USD: 0,30');
+    expect(fixture.nativeElement.textContent).toContain('Totaal: € 45,98');
+    expect(fixture.nativeElement.textContent).toContain('Totaal: $ 0,30');
     delivery.next([]);
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).not.toContain('Totaal EUR:');
+    expect(fixture.nativeElement.textContent).not.toContain('Totaal: €');
   });
 });

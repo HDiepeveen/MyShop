@@ -1,3 +1,4 @@
+import { CurrencySymbolPipe } from './shared/money';
 import { ShopBranding } from './shop/shop-branding';
 import { DatePipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
@@ -8,7 +9,7 @@ import { DashboardApi, DashboardOrderStatus } from './dashboard.api';
 import { loadState } from './catalog/load-state';
 
 @Component({
-  imports: [RouterLink, DatePipe],
+  imports: [CurrencySymbolPipe, RouterLink, DatePipe],
   template: `
     <div class="page-head">
       <div><div class="eyebrow">Vandaag in {{ branding.name() }}</div><h1>Overzicht</h1></div>
@@ -40,7 +41,7 @@ import { loadState } from './catalog/load-state';
       <div class="grid">
         <section class="panel"><h2>Actieve omzet</h2>
           <p class="muted">Betaalde en verzonden bestellingen, exclusief terugbetalingen.</p>
-          @for (total of data.activeRevenue; track total.currency) { <p class="price">{{ total.currency }} {{ amount(total.amount) }}</p> }
+          @for (total of data.activeRevenue; track total.currency) { <p class="price">{{ total.currency | currencySymbol }} {{ amount(total.amount) }}</p> }
           @empty { <p>Nog geen betaalde omzet.</p> }
         </section>
         <section class="panel"><h2>Lage voorraad</h2><p class="muted">Gepubliceerde varianten met maximaal vijf stuks.</p>
@@ -58,7 +59,7 @@ import { loadState } from './catalog/load-state';
             <td><a [routerLink]="['/bestellingen', order.id]">{{ order.number }}</a></td>
             <td>{{ order.placedAt | date: 'dd-MM-yyyy HH:mm' }}</td><td>{{ order.customerName }}</td>
             <td><span class="badge">{{ status(order.status) }}</span></td>
-            <td>@for (total of order.totals; track total.currency) { <div>{{ total.currency }} {{ amount(total.amount) }}</div> }</td>
+            <td>@for (total of order.totals; track total.currency) { <div>{{ total.currency | currencySymbol }} {{ amount(total.amount) }}</div> }</td>
           </tr> }</tbody></table></div>
         } @else { <p>Nog geen bestellingen.</p> }
       </section>
