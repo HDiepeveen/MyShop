@@ -13,3 +13,7 @@ Herstel: oude pagina’s krijgen bij lezen een vaste, afzonderlijke ID op basis 
 - Uitpakken 18:53 Succes. Onderhoud hernoemd naar maintenance-completed-0.2.58-20261023.htm.
 - Rechtstreeks live getest in ingelogde bedrijfsbeheerderssessie: Banden één positie omhoog en terug, vervolgens Instellingen opslaan. Bevestiging Webshopinstellingen opgeslagen zichtbaar naast knop. Oorspronkelijke zichtbare volgorde behouden. Openbare instellingen bevatten acht unieke menulinks en twee unieke pagina-IDs. Naar Home en terug genavigeerd; volgorde blijft behouden.
 - Actuele main-YOWIJRKJ.js bevat 0.2.58. Screenshot menu-order-saved.png in pakketmap. Lokale frontend en API herstart, 0.2.58 lokaal bevestigd.
+
+## Tijdelijke domeinloskoppeling
+
+Op verzoek is autoservice-ganpat.nl op 23 oktober 2026 via Websiteconfiguratie → Domeinbeheerder van SITE1 losgekoppeld. Het paneel bevestigt verwijdering van IIS-binding en bijbehorende DNS-/hostingaccountgegevens. Domeinregistratie is niet opgezegd; geen websitebestanden of database verwijderd. Alleen hansdiepeveen-001-site1.ktempurl.com blijft gekoppeld; HTTP 200 gecontroleerd. Later opnieuw toevoegen in Domeinbeheerder en DNS/SSL controleren voordat het eigen domein weer wordt gebruikt.
