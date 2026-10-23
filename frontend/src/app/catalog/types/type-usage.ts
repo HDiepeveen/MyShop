@@ -8,6 +8,7 @@ import { CatalogApi } from '../catalog.api';
 import { loadState } from '../load-state';
 @Component({
   selector: 'app-type-usage',
+  styles: [`.remove-section { text-align: right; } .remove-section p { text-align: left; }`],
   template: ` <section class="panel">
     <h2>Gebruik van dit producttype</h2>
     @if (state()?.loading) {

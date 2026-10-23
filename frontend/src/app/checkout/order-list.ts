@@ -46,6 +46,9 @@ import { OrderManagementApi, OrderPaymentMethod, OrderStatus } from './order-man
         <a class="button secondary" [href]="exportUrl()" download="hdwebframework-orders.csv"
           >CSV exporteren</a
         >
+        <button type="button" class="secondary refresh-overview" [disabled]="state()?.loading" (click)="retry()">
+          Overzicht verversen
+        </button>
       </div>
       @if (state()?.loading) {
         <p class="loading" role="status">Bestellingen ophalen…</p>
