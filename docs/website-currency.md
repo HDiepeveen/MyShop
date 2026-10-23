@@ -1,6 +1,6 @@
 # Websitevaluta
 
-Bij Website en SEO, onder Website, staat Valuta als laatste veld. Verplicht: drie letters, bijvoorbeeld EUR, SRD of USD; opslag normaliseert naar hoofdletters. Bestaande installaties krijgen EUR via migratie WebsiteDefaultCurrency.
+Bij Website en SEO, onder Website, staat Valuta als laatste veld. Keuzelijst: Euro (€), Surinaamse dollar (SRD), Amerikaanse dollar ($) en Brits pond (£). Dezelfde lijst staat bij product-/variantprijzen en de variantgenerator. Intern worden EUR, SRD, USD en GBP opgeslagen. Een eerder opgeslagen andere code blijft als huidige valuta zichtbaar totdat die bewust wordt gewijzigd. Bestaande installaties krijgen EUR via migratie WebsiteDefaultCurrency.
 
 Een wijziging van de websitevaluta vervangt de valuta van alle bestaande product-/variantprijzen, ook van eerder afwijkend ingestelde valuta. Alleen de valutacode verandert: brutoprijs, nettoprijs, btw-percentage, voorraad en prijsregels blijven intact. Bijvoorbeeld EUR 10 wordt SRD 10; er is geen wisselkoersomrekening. Het ongewijzigd opslaan van de websitevaluta laat afwijkende productvaluta’s staan. Daarna kan elke productprijs weer een afwijkende valuta krijgen.
 

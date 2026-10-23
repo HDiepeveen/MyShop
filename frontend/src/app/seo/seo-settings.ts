@@ -1,3 +1,4 @@
+import { currencies, knownCurrency } from '../catalog/currencies';
 import { PageBackgroundEditor } from './page-background-editor';
 import { HttpClient } from '@angular/common/http';
 import { Auth } from '../auth/auth';
@@ -25,8 +26,9 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label><input type="checkbox" name="showHeaderPhone" [(ngModel)]="showHeaderPhone" />Telefoon</label>
       <label><input type="checkbox" name="showHeaderWhatsapp" [(ngModel)]="showHeaderWhatsapp" />WhatsApp</label></fieldset>
       <label>Tekst onderaan de winkel<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
-      <label>Valuta<input name="currency" [(ngModel)]="currency" required pattern="[A-Za-z]{3}" maxlength="3" [disabled]="busy()" [class.invalid-required]="submitted() && !validCurrency()" placeholder="EUR" /></label>
-      <p>Bijvoorbeeld EUR, SRD of USD. Bij wijziging krijgen alle bestaande productprijzen deze valuta; de prijsbedragen blijven exact gelijk en worden niet omgerekend. Daarna kun je de valuta per productprijs weer aanpassen.</p>
+      <label>Valuta<select name="currency" [(ngModel)]="currency" required [disabled]="busy()" [class.invalid-required]="submitted() && !validCurrency()">@if (currency && !knownCurrency(currency)) { <option [value]="currency">{{ currency }} (huidige valuta)</option> }
+          @for (item of currencies; track item.code) { <option [value]="item.code">{{ item.name }}</option> }</select></label>
+      <p>Bij wijziging krijgen alle bestaande productprijzen deze valuta; de prijsbedragen blijven exact gelijk en worden niet omgerekend. Daarna kun je de valuta per productprijs weer aanpassen.</p>
       <h2>Assortiment</h2>
       <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" [class.invalid-required]="submitted() && !heading.trim()" [attr.aria-invalid]="submitted() && !heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" [class.invalid-required]="submitted() && !introduction.trim()" [attr.aria-invalid]="submitted() && !introduction.trim() ? 'true' : null" maxlength="1000" required [disabled]="busy()"></textarea></label>
@@ -83,10 +85,12 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
     </form>
   }
   @if (notice()) { <p role="status">{{ notice() }}</p> }
-`, styles: [`input.invalid-required, textarea.invalid-required, input.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border: 2px solid #b42318; outline-color: #b42318; }
+`, styles: [`input.invalid-required, textarea.invalid-required, select.invalid-required, input.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border: 2px solid #b42318; outline-color: #b42318; }
   .validation-error { color: #b42318; }
   .home-image-preview { display: block; max-width: 300px; max-height: 180px; object-fit: contain; border-radius: 12px; }`] })
 export class SeoSettings {
+  readonly currencies = currencies;
+  readonly knownCurrency = knownCurrency;
   private readonly http = inject(HttpClient);
   private readonly auth = inject(Auth);
   homeImageFile: File | null = null;

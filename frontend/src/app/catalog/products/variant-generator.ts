@@ -1,3 +1,4 @@
+import { currencies, knownCurrency } from '../currencies';
 import { ShopBranding } from '../../shop/shop-branding';
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -70,7 +71,8 @@ import {
                 [disabled]="busy()"
               />
             </label>
-            <label>Valuta<input name="currency" [(ngModel)]="currency" maxlength="3" [disabled]="busy()" /></label>
+            <label>Valuta<select name="currency" [(ngModel)]="currency" required [disabled]="busy()">@if (currency && !knownCurrency(currency)) { <option [value]="currency">{{ currency }} (huidige valuta)</option> }
+          @for (item of currencies; track item.code) { <option [value]="item.code">{{ item.name }}</option> }</select></label>
             @if (netAmount.trim()) {
               <label class="field"
                 >Btw
@@ -121,6 +123,8 @@ import {
   `,
 })
 export class VariantGenerator {
+  readonly currencies = currencies;
+  readonly knownCurrency = knownCurrency;
   readonly product = input.required<Product>();
   readonly definitions = input.required<AttributeDefinition[]>();
   readonly saved = output<string>();

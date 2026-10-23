@@ -1,3 +1,4 @@
+import { currencies, knownCurrency } from '../currencies';
 import { ShopBranding } from '../../shop/shop-branding';
 import { ProductEditState } from './product-edit-state';
 import { Component, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
@@ -104,14 +105,8 @@ import { errorMessage } from '../error-message';
           </p>
         }
         <label class="field"
-          >Valuta<input
-            name="currency"
-            [(ngModel)]="currency"
-            required
-            maxlength="3"
-            [disabled]="busy()"
-            placeholder="EUR"
-        /></label>
+          >Valuta<select name="currency" [(ngModel)]="currency" required [disabled]="busy()">@if (currency && !knownCurrency(currency)) { <option [value]="currency">{{ currency }} (huidige valuta)</option> }
+          @for (item of currencies; track item.code) { <option [value]="item.code">{{ item.name }}</option> }</select></label>
         <button
           class="secondary"
           [disabled]="busy() || parsedAmount() === null || !validCurrency() || !taxPreview()"
@@ -184,6 +179,8 @@ import { errorMessage } from '../error-message';
   `,
 })
 export class VariantEdit {
+  readonly currencies = currencies;
+  readonly knownCurrency = knownCurrency;
   readonly productId = input.required<string>();
   readonly variant = input.required<Variant>();
   readonly simpleSale = input(false);
