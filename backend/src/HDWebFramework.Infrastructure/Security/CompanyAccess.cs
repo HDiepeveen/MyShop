@@ -7,6 +7,9 @@ namespace HDWebFramework.Infrastructure.Security;
 
 public sealed class CompanyAccess(HDWebFrameworkDbContext db, UserManager<IdentityUser> users, RoleManager<IdentityRole> roles) : ICompanyAccess
 {
+    // Existing role assignments retain their original claim type after the framework rename.
+    private const string LegacyPermissionClaim = "MyShop.ManagementPermission";
+
     public async Task<IReadOnlyList<string>> PermissionsAsync(string userId, CancellationToken token)
     {
         var member = await db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == userId, token);
@@ -18,7 +21,7 @@ public sealed class CompanyAccess(HDWebFrameworkDbContext db, UserManager<Identi
                       join role in db.Roles on membership.RoleId equals role.Id
                       join claim in db.RoleClaims on role.Id equals claim.RoleId
                       where membership.UserId == userId && role.Name!.StartsWith(CompanyPermissions.RolePrefix)
-                        && claim.ClaimType == CompanyPermissions.Claim
+                        && (claim.ClaimType == CompanyPermissions.Claim || claim.ClaimType == LegacyPermissionClaim)
                       select claim.ClaimValue!).Distinct().ToArrayAsync(token);
     }
 
@@ -53,7 +56,7 @@ public sealed class CompanyAccess(HDWebFrameworkDbContext db, UserManager<Identi
             role.Name = CompanyPermissions.RolePrefix + name;
             Check(await roles.UpdateAsync(role));
         }
-        await db.RoleClaims.Where(claim => claim.RoleId == role.Id && claim.ClaimType == CompanyPermissions.Claim).ExecuteDeleteAsync(token);
+        await db.RoleClaims.Where(claim => claim.RoleId == role.Id && (claim.ClaimType == CompanyPermissions.Claim || claim.ClaimType == LegacyPermissionClaim)).ExecuteDeleteAsync(token);
         db.RoleClaims.AddRange(value.Permissions.Select(permission => new IdentityRoleClaim<string>
         { RoleId = role.Id, ClaimType = CompanyPermissions.Claim, ClaimValue = permission }));
         await db.SaveChangesAsync(token);
@@ -117,7 +120,7 @@ public sealed class CompanyAccess(HDWebFrameworkDbContext db, UserManager<Identi
     }
     private async Task<CompanyRole> RoleAsync(IdentityRole role, CancellationToken token) => new(role.Id,
         role.Name![CompanyPermissions.RolePrefix.Length..], role.ConcurrencyStamp!,
-        await db.RoleClaims.AsNoTracking().Where(claim => claim.RoleId == role.Id && claim.ClaimType == CompanyPermissions.Claim).Select(claim => claim.ClaimValue!).ToArrayAsync(token));
+        await db.RoleClaims.AsNoTracking().Where(claim => claim.RoleId == role.Id && (claim.ClaimType == CompanyPermissions.Claim || claim.ClaimType == LegacyPermissionClaim)).Select(claim => claim.ClaimValue!).Distinct().ToArrayAsync(token));
     private async Task<CompanyAccount> AccountAsync(IdentityUser member, CancellationToken token) => new(member.Id,
         member.UserName!, member.Email ?? "", member.ConcurrencyStamp!, !(member.LockoutEnd > DateTimeOffset.UtcNow),
         await (from membership in db.UserRoles join role in db.Roles on membership.RoleId equals role.Id

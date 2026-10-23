@@ -10,6 +10,39 @@ namespace HDWebFramework.Api.Tests.Security;
 public sealed class CompanyAccessHttpTests
 {
     [SecuritySqlFact]
+    public async Task LegacyRolePermissionsRemainUsableAndAreRemovedWhenRoleIsSaved()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var role = await CreateRole(host.Client, "Existing role", ["products"]);
+        var employee = await CreateAccount(host.Client, "legacy-user", [role.Id]);
+        using (var scope = host.App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<HDWebFramework.Infrastructure.Persistence.HDWebFrameworkDbContext>();
+            var claim = Assert.Single(db.RoleClaims.Where(item => item.RoleId == role.Id));
+            claim.ClaimType = "MyShop.ManagementPermission";
+            await db.SaveChangesAsync();
+        }
+        var page = await host.Client.GetFromJsonAsync<JsonElement>("/api/company-access");
+        Assert.Equal("products", Assert.Single(Assert.Single(page.GetProperty("roles").EnumerateArray()).GetProperty("permissions").EnumerateArray()).GetString());
+        var cookies = new CookieContainer();
+        using var client = new HttpClient(new HttpClientHandler { CookieContainer = cookies, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
+        await Csrf(client, cookies);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/login", new { userName = employee.UserName, password = SecurityHost.Password })).StatusCode);
+        var session = await client.GetFromJsonAsync<JsonElement>("/api/auth/session");
+        Assert.Equal("products", Assert.Single(session.GetProperty("permissions").EnumerateArray()).GetString());
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/products")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/orders")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync("/api/company-access/roles/" + role.Id, new SaveCompanyRole("Existing role", ["orders"], role.Revision))).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/products")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/orders")).StatusCode);
+        using var finalScope = host.App.Services.CreateScope();
+        var finalDb = finalScope.ServiceProvider.GetRequiredService<HDWebFramework.Infrastructure.Persistence.HDWebFrameworkDbContext>();
+        var remaining = Assert.Single(finalDb.RoleClaims.Where(item => item.RoleId == role.Id));
+        Assert.Equal(CompanyPermissions.Claim, remaining.ClaimType);
+        Assert.Equal("orders", remaining.ClaimValue);
+    }
+    [SecuritySqlFact]
     public async Task ProviderAndCheckoutPermissionsCanBeDelegatedSeparately()
     {
         await using var host = await SecurityHost.Create();
