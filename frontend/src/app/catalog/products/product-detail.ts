@@ -76,7 +76,6 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           </p>
         </div>
       </div>
-      <app-product-seo [productId]="detail.product.id" />
       <app-product-edit section="rename" [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-images [product]="detail.product" (saved)="onSaved($event)" />
       <app-product-presentation [product]="detail.product" (saved)="onSaved($event)" />
@@ -267,6 +266,7 @@ import { readProductListQuery, ProductStockFilter } from './product-list-query';
           </section>
         }
       </div>
+      <app-product-seo [productId]="detail.product.id" />
       <app-product-delete
         [productId]="detail.product.id"
         [productName]="detail.product.name"
