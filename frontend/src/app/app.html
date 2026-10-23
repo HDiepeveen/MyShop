@@ -11,7 +11,7 @@
         [routerLink]="auth.isManagement() ? auth.landingPage() : '/beheer'"
         class="brand"
         [attr.aria-label]="branding.name() + ' startpagina'"
-        ><span class="brand-icon">HD</span> {{ branding.name() }}</a
+        ><span class="brand-icon">HD</span><span>{{ branding.name() }}</span></a
       >
       <p class="nav-label">WERKRUIMTE</p>
       <nav aria-label="Hoofdnavigatie">
