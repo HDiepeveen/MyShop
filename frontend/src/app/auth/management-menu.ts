@@ -10,9 +10,9 @@ export const managementMenu = [
   { code: 'payments', name: 'Betaalopties', path: '/instellingen/betalen' },
   { code: 'delivery', name: 'Bezorgopties', path: '/instellingen/bezorgen' },
   { code: 'billing', name: 'Facturatie en btw', path: '/instellingen/facturatie' },
-  { code: 'companyAccess', name: 'Bedrijfsbeheerders en rollen', path: '/instellingen/bedrijfsbeheerders' },
   { code: 'paymentSettings', name: 'Betaalinstellingen', path: '/instellingen/betaalinstellingen' },
   { code: 'email', name: 'E-mailinstellingen', path: '/instellingen/email' },
+  { code: 'companyAccess', name: 'Bedrijfsbeheerders en rollen', path: '/instellingen/bedrijfsbeheerders' },
 ] as const;
 export function managementPermission(url: string): string | null {
   const path = url.split(/[?#]/)[0];
@@ -22,5 +22,5 @@ export function managementPermission(url: string): string | null {
 
 export const managementMenuGroups = [
   managementMenu.slice(0, 3), managementMenu.slice(3, 6), managementMenu.slice(6, 8),
-  managementMenu.slice(8, 11), managementMenu.slice(11, 12), managementMenu.slice(12),
+  managementMenu.slice(8, 11), managementMenu.slice(11, 13), managementMenu.slice(13),
 ];

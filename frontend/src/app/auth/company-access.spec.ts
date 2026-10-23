@@ -28,7 +28,7 @@ describe('Company account and role configuration', () => {
     ] });
     fixture.detectChanges();
     expect(page.permissionGroups().map(group => group.map(item => item.name))).toEqual([
-      ['Producten'], ['Bestellingen'], ['Website en SEO'], ['Bedrijfsbeheerders en rollen'], ['Betaalinstellingen', 'E-mailinstellingen'],
+      ['Producten'], ['Bestellingen'], ['Website en SEO'], ['Betaalinstellingen', 'E-mailinstellingen'], ['Bedrijfsbeheerders en rollen'],
     ]);
     expect(fixture.nativeElement.querySelectorAll('.permission-group').length).toBe(5);
     expect(fixture.nativeElement.textContent).toContain('alleen de volledige beheerder');
