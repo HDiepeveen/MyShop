@@ -26,6 +26,14 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
       :host.assortment-photo .product { background: var(--shop-panel); color: var(--shop-text); border-radius: 12px; padding: 20px; }
       @media (max-width:760px) { :host.assortment-photo {width:calc(100% + 40px);margin:-24px -20px;padding:36px 20px 24px;} }
       .assortment-content {max-width:1316px;margin-inline:auto;}
+      .panel {
+        --shop-text: var(--shop-readable-panel-text, #223c33);
+        color: var(--shop-text);
+      }
+      .toolbar input, .toolbar select {
+        color: var(--shop-readable-panel-text, #223c33);
+      }
+      .toolbar input::placeholder { color: var(--shop-readable-panel-text, #223c33); }
       .products {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
@@ -33,7 +41,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
       }
       .product {
         text-decoration: none;
-        color: inherit;
+        color: var(--shop-text);
         display: block;
       }
       .product h2 {
