@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace HDWebFramework.Application.Catalog.Seo;
 
-public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string? SeoDescription { get; init; } public string? HomeImageUrl { get; init; } public string? AssortmentImageUrl { get; init; } public string? AssortmentImageMode { get; init; } public bool ShowHeaderPhone { get; init; } = true; public bool ShowHeaderWhatsapp { get; init; } = true; public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
+public sealed record ShopSeoSettings(string Heading, string SeoTitle, Guid Revision, string ShopName, string WelcomeText, string Introduction, string FooterText, CompanyPage Company) { public string Currency { get; init; } = "EUR"; public string? SeoDescription { get; init; } public string? HomeImageUrl { get; init; } public string? AssortmentImageUrl { get; init; } public string? AssortmentImageMode { get; init; } public bool ShowHeaderPhone { get; init; } = true; public bool ShowHeaderWhatsapp { get; init; } = true; public string? HeaderText { get; init; } public HomePageSettings Home { get; init; } = HomePageSettings.Default; public ShopAppearance Appearance { get; init; } = ShopAppearance.Default; public string? IconUrl { get; init; } public bool ShowManagementMenuWithoutLogin { get; init; } }
 public sealed record HomePageItem(string? Title, string Description)
 {
     public Guid PageId { get; init; }
@@ -230,6 +230,7 @@ public sealed class ManageSeo(ICatalogSeoStore store)
             ShopName = SeoText.Optional(value.ShopName, 100) ?? throw new ArgumentException("Vul een webshopnaam in."),
             WelcomeText = SeoText.Optional(value.WelcomeText, 200) ?? throw new ArgumentException("Vul een welkomsttekst in."),
             Introduction = SeoText.Optional(value.Introduction, 1000) ?? throw new ArgumentException("Vul een introductietekst in."),
+            Currency = HDWebFramework.Domain.Catalog.Money.Create(0, value.Currency).Currency,
             FooterText = SeoText.Optional(value.FooterText, 200) ?? "",
             HeaderText = SeoText.Optional(value.HeaderText, 200),
             AssortmentImageMode = PageBackground.Mode(value.AssortmentImageMode),

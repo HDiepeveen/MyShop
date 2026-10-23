@@ -13,6 +13,7 @@ internal sealed class CatalogSeoSettingsPersistenceConfiguration : IEntityTypeCo
         builder.Property(x => x.BackgroundColor).HasMaxLength(7).IsRequired();
         builder.Property(x => x.PanelColor).HasMaxLength(7).IsRequired();
         builder.Property(x => x.TextColor).HasMaxLength(7).IsRequired();
+        builder.Property(x => x.Currency).HasMaxLength(3).HasDefaultValue("EUR").IsRequired();
         builder.Property(x => x.ShopName).HasMaxLength(100).IsRequired();
         builder.Property(x => x.HomeImageContentType).HasMaxLength(20);
         builder.Property(x => x.IconContentType).HasMaxLength(20);

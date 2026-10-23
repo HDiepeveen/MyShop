@@ -19,7 +19,7 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
     public async Task<ShopSeoSettings> GetSettingsAsync(CancellationToken ct)
     {
         var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
-            .Select(x => new { x.HomePageJson, x.Heading, x.SeoTitle, x.SeoDescription, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
+            .Select(x => new { x.HomePageJson, x.Currency, x.Heading, x.SeoTitle, x.SeoDescription, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
                 x.AssortmentImageMode, x.CompanyImageMode, x.CompanySeoTitle, x.CompanySeoDescription, x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours, x.HeaderText, x.ShowHeaderPhone, x.ShowHeaderWhatsapp,
                 x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasHomeImage = x.HomeImageBytes != null, HasIcon = x.IconBytes != null }).SingleAsync(ct);
         var home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!;
@@ -32,7 +32,7 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
         string? ImageUrl(Guid id) => images.Contains(id) ? $"/api/shop/page-images/{id:D}?v={row.Version:D}" : null;
         home = home with { Items = home.Items.Select(item => item with { ImageUrl = ImageUrl(item.PageId) }).ToArray() };
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { ImageMode = row.CompanyImageMode, ImageUrl = ImageUrl(PageBackground.ContactId), SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, AssortmentImageUrl = ImageUrl(PageBackground.AssortmentId), AssortmentImageMode = row.AssortmentImageMode, HeaderText = row.HeaderText, ShowHeaderPhone = row.ShowHeaderPhone, ShowHeaderWhatsapp = row.ShowHeaderWhatsapp, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { ImageMode = row.CompanyImageMode, ImageUrl = ImageUrl(PageBackground.ContactId), SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { Currency = row.Currency, SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, AssortmentImageUrl = ImageUrl(PageBackground.AssortmentId), AssortmentImageMode = row.AssortmentImageMode, HeaderText = row.HeaderText, ShowHeaderPhone = row.ShowHeaderPhone, ShowHeaderWhatsapp = row.ShowHeaderWhatsapp, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
     }
     public async Task<HDWebFramework.Application.Catalog.Abstractions.ProductImageContent?> GetPageImageAsync(Guid id, CancellationToken ct)
     {
@@ -93,7 +93,7 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
         var homeJson = JsonSerializer.Serialize(value.Home with { Items = value.Home.Items.Select(x => x with { ImageUrl = null }).ToArray() });
         var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
             .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.SeoDescription, value.SeoDescription).SetProperty(x => x.HomePageJson, homeJson).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
-                .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.FooterText, value.FooterText)
+                .SetProperty(x => x.Introduction, value.Introduction).SetProperty(x => x.FooterText, value.FooterText).SetProperty(x => x.Currency, value.Currency)
                 .SetProperty(x => x.AssortmentImageMode, value.AssortmentImageMode).SetProperty(x => x.CompanyImageMode, value.Company.ImageMode).SetProperty(x => x.CompanySeoTitle, value.Company.SeoTitle).SetProperty(x => x.CompanySeoDescription, value.Company.SeoDescription)
                 .SetProperty(x => x.CompanyHeading, value.Company.Heading).SetProperty(x => x.CompanyName, value.Company.Name)
                 .SetProperty(x => x.CompanyDescription, value.Company.Description).SetProperty(x => x.CompanyAddress, value.Company.Address)

@@ -1,3 +1,4 @@
+import { ShopBranding } from '../../shop/shop-branding';
 import { ProductEditState } from './product-edit-state';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -27,6 +28,22 @@ describe('VariantEdit', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it('uses the website default for a new price and preserves a manually entered currency', () => {
+    const fixture = setup();
+    const branding = TestBed.inject(ShopBranding);
+    branding.currency.set('SRD'); fixture.detectChanges();
+    expect(fixture.componentInstance.currency).toBe('SRD');
+    fixture.componentInstance.currency = 'USD';
+    branding.currency.set('GBP'); fixture.detectChanges();
+    expect(fixture.componentInstance.currency).toBe('USD');
+  });
+  it('preserves the saved product price currency when the website default changes', () => {
+    const fixture = setup();
+    fixture.componentRef.setInput('variant', { id: 'v', name: 'Original', sku: null, price: { amount: 42, currency: 'USD' }, attributeValues: [] });
+    fixture.detectChanges();
+    TestBed.inject(ShopBranding).currency.set('SRD'); fixture.detectChanges();
+    expect(fixture.componentInstance.currency).toBe('USD');
+  });
   it('rejects the Unicode next-line whitespace inside an article number', () => {
     const editor = setup().componentInstance;
     editor.sku = 'SHIRT' + String.fromCharCode(0x85) + '1';

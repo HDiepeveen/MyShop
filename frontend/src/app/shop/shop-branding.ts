@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 @Injectable({ providedIn: 'root' })
 export class ShopBranding {
   private readonly http = inject(HttpClient);
+  readonly currency = signal('EUR');
   readonly colors = signal<ShopColors>({ ...defaultColors });
   readonly showManagementMenuWithoutLogin = signal(false);
   readonly iconUrl = signal<string | null>(null);
@@ -28,7 +29,7 @@ export class ShopBranding {
       .get<{
         showAssortmentInMenu?: boolean;
         categoryLinks?: { id: string; name: string; webAddress?: string }[];
-        shopName: string;
+        shopName: string; currency?: string;
         assortmentImageUrl?: string | null; assortmentImageMode?: string | null;
         contactPhone?: string | null; showHeaderPhone?: boolean; showHeaderWhatsapp?: boolean;
         headerText?: string | null;
@@ -65,6 +66,7 @@ export class ShopBranding {
             this.colors.set(
               validColors(settings.appearance) ? { ...settings.appearance } : { ...defaultColors },
             );
+            this.currency.set(settings.currency || 'EUR');
             this.name.set(settings.shopName || 'HD Web Framework');
             this.footerText.set(settings.footerText ?? 'Ontdek wat bij je past.');
           }

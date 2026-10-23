@@ -25,6 +25,8 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label><input type="checkbox" name="showHeaderPhone" [(ngModel)]="showHeaderPhone" />Telefoon</label>
       <label><input type="checkbox" name="showHeaderWhatsapp" [(ngModel)]="showHeaderWhatsapp" />WhatsApp</label></fieldset>
       <label>Tekst onderaan de winkel<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
+      <label>Valuta<input name="currency" [(ngModel)]="currency" required pattern="[A-Za-z]{3}" maxlength="3" [disabled]="busy()" [class.invalid-required]="submitted() && !validCurrency()" placeholder="EUR" /></label>
+      <p>Standaard voor nieuwe productprijzen, bijvoorbeeld EUR, SRD of USD. Je kunt de valuta bij de productprijs overschrijven. Bestaande prijzen worden niet omgerekend of gewijzigd.</p>
       <h2>Assortiment</h2>
       <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" [class.invalid-required]="submitted() && !heading.trim()" [attr.aria-invalid]="submitted() && !heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" [class.invalid-required]="submitted() && !introduction.trim()" [attr.aria-invalid]="submitted() && !introduction.trim() ? 'true' : null" maxlength="1000" required [disabled]="busy()"></textarea></label>
@@ -95,6 +97,8 @@ export class SeoSettings {
   readonly settings = signal<ShopSeoSettings | null>(null);
   readonly busy = signal(false); readonly loading = signal(false); readonly error = signal(''); readonly notice = signal('');
   heading = ''; seoTitle = ''; shopName = 'HD Web Framework'; welcomeText = 'Welkom bij HD Web Framework'; introduction = 'Bekijk onze producten en kies de variant die bij je past.';
+  currency = 'EUR';
+  validCurrency() { return /^[A-Za-z]{3}$/.test(this.currency.trim()); }
   seoDescription = '';
   showHeaderPhone = true; showHeaderWhatsapp = true;
   assortmentImageMode: string | null | undefined;
@@ -108,7 +112,7 @@ export class SeoSettings {
     if (this.loading() || this.busy()) return;
     this.loading.set(true); this.error.set('');
     this.api.seoSettings().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: settings => { this.submitted.set(false); this.settings.set(settings); this.assortmentImageMode = settings.assortmentImageMode; this.headerText = settings.headerText ?? ''; this.showHeaderPhone = settings.showHeaderPhone !== false; this.showHeaderWhatsapp = settings.showHeaderWhatsapp !== false; this.seoDescription = settings.seoDescription ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'HD Web Framework'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij HD Web Framework'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
+      next: settings => { this.submitted.set(false); this.settings.set(settings); this.currency = settings.currency ?? 'EUR'; this.assortmentImageMode = settings.assortmentImageMode; this.headerText = settings.headerText ?? ''; this.showHeaderPhone = settings.showHeaderPhone !== false; this.showHeaderWhatsapp = settings.showHeaderWhatsapp !== false; this.seoDescription = settings.seoDescription ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'HD Web Framework'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij HD Web Framework'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
       error: error => { this.loading.set(false); this.error.set(errorMessage(error)); },
     });
   }
@@ -143,10 +147,10 @@ export class SeoSettings {
     const settings = this.settings();
     if (!settings || this.busy() || this.loading()) return;
     this.submitted.set(true); form?.form.markAllAsTouched();
-    if (form?.invalid || !this.heading.trim() || !this.seoTitle.trim() || !this.shopName.trim() || !this.introduction.trim() || !this.company.heading.trim()) { this.error.set('Controleer de rood gemarkeerde velden. Vul alle verplichte velden in, waaronder de titel van elke pagina.'); return; }
+    if (!this.validCurrency() || form?.invalid || !this.heading.trim() || !this.seoTitle.trim() || !this.shopName.trim() || !this.introduction.trim() || !this.company.heading.trim()) { this.error.set('Controleer de rood gemarkeerde velden. Vul alle verplichte velden in, waaronder de titel van elke pagina.'); return; }
     if (!this.home.heading.trim() || this.invalidPageTitles() || this.home.items.some(item => !item.description.trim())) { this.error.set('Controleer de rood gemarkeerde velden. Vul de koptekst en voor elke pagina een titel en omschrijving in.'); return; }
     this.busy.set(true); this.error.set(''); this.notice.set('');
-    this.api.updateSeoSettings({ heading: this.heading, seoTitle: this.seoTitle, seoDescription: this.seoDescription, revision: settings.revision, shopName: this.shopName, welcomeText: this.welcomeText, introduction: this.introduction, footerText: this.footerText, headerText: this.headerText, assortmentImageMode: this.assortmentImageMode, showHeaderPhone: this.showHeaderPhone, showHeaderWhatsapp: this.showHeaderWhatsapp, company: this.company, home: this.home }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.updateSeoSettings({ currency: this.currency.trim().toUpperCase(), heading: this.heading, seoTitle: this.seoTitle, seoDescription: this.seoDescription, revision: settings.revision, shopName: this.shopName, welcomeText: this.welcomeText, introduction: this.introduction, footerText: this.footerText, headerText: this.headerText, assortmentImageMode: this.assortmentImageMode, showHeaderPhone: this.showHeaderPhone, showHeaderWhatsapp: this.showHeaderWhatsapp, company: this.company, home: this.home }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => { this.busy.set(false); this.notice.set('Webshopinstellingen opgeslagen.'); this.load(); },
       error: error => { this.busy.set(false); this.error.set(errorMessage(error)); },
     });

@@ -9,6 +9,19 @@ namespace HDWebFramework.Application.Tests.Catalog;
 public sealed class GenerateProductVariantsTests
 {
     [Fact]
+    public async Task GeneratedPricesUseSelectedCurrencyWithoutChangingExistingPrices()
+    {
+        var s = new Scenario();
+        var existing = s.Product.Variants.Single();
+        s.Product.SetVariantPrice(existing.Id, Money.Create(42, "EUR"), 21);
+        var command = s.Command(s.Combination("L")) with { NetAmount = 10, VatRate = 21, Currency = "srd" };
+        await s.Handler.ExecuteAsync(command, CancellationToken.None);
+        Assert.Equal("EUR", existing.Price!.Value.Currency);
+        Assert.Equal("SRD", s.Product.Variants.Last().Price!.Value.Currency);
+        Assert.Equal(12.10m, s.Product.Variants.Last().Price!.Value.Amount);
+    }
+
+    [Fact]
     public async Task Adds_new_combinations_once_and_preserves_existing_price_stock_and_sku()
     {
         var s = new Scenario();

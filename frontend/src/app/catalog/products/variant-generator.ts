@@ -1,3 +1,4 @@
+import { ShopBranding } from '../../shop/shop-branding';
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -69,6 +70,7 @@ import {
                 [disabled]="busy()"
               />
             </label>
+            <label>Valuta<input name="currency" [(ngModel)]="currency" maxlength="3" [disabled]="busy()" /></label>
             @if (netAmount.trim()) {
               <label class="field"
                 >Btw
@@ -93,7 +95,7 @@ import {
               @if (pricePreview(); as price) {
                 <p>
                   Prijs: {{ price.net }} · Btw: {{ price.vat }} · Totaal voor de klant:
-                  {{ price.gross }} EUR
+                  {{ price.gross }} {{ currency.toUpperCase() }}
                 </p>
               }
             }
@@ -103,7 +105,7 @@ import {
               <small>Leeg laten betekent dat de voorraad nog niet wordt gevolgd.</small>
             </label>
             <p>
-              De beginprijs is in EUR. Artikelnummer en eventuele afwijkende prijzen stel je daarna
+              De beginprijs is in {{ currency.toUpperCase() }}. Artikelnummer en eventuele afwijkende prijzen stel je daarna
               per variant in.
             </p>
             <button [disabled]="busy() || selectedCount() === 0">
@@ -129,6 +131,9 @@ export class VariantGenerator {
   readonly vatLoading = signal(false);
   readonly vatError = signal('');
   lists: Record<string, string> = {};
+  private readonly branding = inject(ShopBranding);
+  private previousDefaultCurrency = 'EUR';
+  currency = 'EUR';
   netAmount = '';
   stock = '';
   vatChoice = '';
@@ -136,6 +141,11 @@ export class VariantGenerator {
   private readonly destroyRef = inject(DestroyRef);
   private writing = false;
   constructor() {
+    effect(() => {
+      const currency = this.branding.currency();
+      if (this.currency === this.previousDefaultCurrency) this.currency = currency;
+      this.previousDefaultCurrency = currency;
+    });
     this.destroyRef.onDestroy(() => {
       if (this.writing) this.busy.set(false);
     });
@@ -267,7 +277,11 @@ export class VariantGenerator {
       return;
     }
     const product = this.product();
+    if (net !== null && !/^[A-Za-z]{3}$/.test(this.currency.trim())) {
+      this.error.set('Gebruik een valutacode van drie letters, bijvoorbeeld EUR.'); return;
+    }
     const body = combinationRequest(product.revision, this.combinations(), {
+      currency: this.currency.trim().toUpperCase(),
       netAmount: net,
       vatRate: net === null ? null : this.vatChoice === 'exempt' ? 0 : Number(this.vatChoice),
       vatExempt: net !== null && this.vatChoice === 'exempt',

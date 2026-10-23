@@ -7,7 +7,7 @@ public sealed record VariantCombinationValue(AttributeDefinitionId AttributeDefi
 public sealed record VariantCombination(string Name, IReadOnlyList<VariantCombinationValue> Values);
 public sealed record GenerateProductVariantsCommand(
     ProductId ProductId, Guid Revision, IReadOnlyList<VariantCombination> Combinations,
-    decimal? NetAmount = null, decimal? VatRate = null, bool VatExempt = false, int? StockQuantity = null);
+    decimal? NetAmount = null, decimal? VatRate = null, bool VatExempt = false, int? StockQuantity = null, string Currency = "EUR");
 public enum GenerateProductVariantsFailure { ProductNotFound, ProductTypeNotFound }
 public sealed record GenerateProductVariantsResult(GenerateProductVariantsFailure? Failure, int Added = 0, int Skipped = 0);
 
@@ -44,7 +44,7 @@ public sealed class GenerateProductVariants
                 throw new ArgumentException("Gebruik een beginprijs met maximaal twee decimalen.");
             if (command.VatRate is not { } rate)
                 throw new ArgumentException("Kies btw bij de beginprijs.");
-            price = VatPrice.FromNet(Money.Create(net, "EUR"), rate, command.VatExempt).Gross;
+            price = VatPrice.FromNet(Money.Create(net, command.Currency), rate, command.VatExempt).Gross;
             if (!await _rates.IsAvailableAsync(rate, command.VatExempt, cancellationToken))
                 throw new ArgumentException("Dit btw-percentage is niet beschikbaar. Stel het eerst in bij facturatie.");
         }

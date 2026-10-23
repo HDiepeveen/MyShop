@@ -32,7 +32,7 @@ public static class GenerateProductVariantsEndpoint
                 c.Values.Select(v => new VariantCombinationValue(AttributeDefinitionId.From(v.AttributeDefinitionId),
                     AttributeValueRequestMapper.Map(v.Value))).ToArray())).ToArray();
             var result = await useCase.ExecuteAsync(new(ProductId.From(productId), request.Revision, combinations,
-                request.NetAmount, request.VatRate, request.VatExempt, request.StockQuantity), cancellationToken);
+                request.NetAmount, request.VatRate, request.VatExempt, request.StockQuantity, request.Currency), cancellationToken);
             if (result.Failure is not null)
                 return TypedResults.NotFound(new ProblemDetails { Title = "Product not found", Detail = "Het product of producttype bestaat niet meer." });
             return TypedResults.Ok(result);
@@ -49,6 +49,6 @@ public static class GenerateProductVariantsEndpoint
 }
 
 public sealed record GenerateProductVariantsRequest(Guid Revision, IReadOnlyList<VariantCombinationRequest> Combinations,
-    decimal? NetAmount = null, decimal? VatRate = null, bool VatExempt = false, int? StockQuantity = null);
+    decimal? NetAmount = null, decimal? VatRate = null, bool VatExempt = false, int? StockQuantity = null, string Currency = "EUR");
 public sealed record VariantCombinationRequest(string Name, IReadOnlyList<VariantCombinationValueRequest> Values);
 public sealed record VariantCombinationValueRequest(Guid AttributeDefinitionId, AttributeValueRequest Value);

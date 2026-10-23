@@ -14,6 +14,7 @@ internal sealed class CatalogSeoSettingsPersistence
     public string BackgroundColor { get; set; } = "#f6f7f1";
     public string PanelColor { get; set; } = "#fffefa";
     public string TextColor { get; set; } = "#223c33";
+    public string Currency { get; set; } = "EUR";
     public string ShopName { get; set; } = "HDWebFramework";
     public string WelcomeText { get; set; } = "Welkom bij HDWebFramework";
     public string Introduction { get; set; } = "Bekijk onze producten en kies de variant die bij je past.";

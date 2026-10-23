@@ -46,6 +46,7 @@ describe('VariantGenerator', () => {
     const request = http.expectOne('/api/products/product/variant-combinations');
     expect(JSON.parse(request.request.body)).toMatchObject({
       revision: 'revision',
+      currency: 'EUR',
       netAmount: 10,
       vatRate: 21,
       stockQuantity: 3,

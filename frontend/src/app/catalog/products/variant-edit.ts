@@ -1,5 +1,6 @@
+import { ShopBranding } from '../../shop/shop-branding';
 import { ProductEditState } from './product-edit-state';
-import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -198,8 +199,15 @@ export class VariantEdit {
   sku = '';
   amount = '';
   currency = 'EUR';
+  private readonly branding = inject(ShopBranding);
+  private previousDefaultCurrency = 'EUR';
   stock = '';
   constructor() {
+    effect(() => {
+      const currency = this.branding.currency();
+      if (!this.variant().price && this.currency === this.previousDefaultCurrency) this.currency = currency;
+      this.previousDefaultCurrency = currency;
+    });
     this.destroyRef.onDestroy(() => {
       if (this.writing) this.busy.set(false);
     });
@@ -217,7 +225,7 @@ export class VariantEdit {
             ? 'exempt'
             : String(this.variant().price?.vatRate)
         : '21';
-      this.currency = this.variant().price?.currency ?? 'EUR';
+      this.currency = this.variant().price?.currency ?? untracked(() => this.branding.currency());
       this.stock = this.variant().stockQuantity?.toString() ?? '';
     });
   }

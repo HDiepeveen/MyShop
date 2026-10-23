@@ -18,7 +18,7 @@ public static class StorefrontEndpoints
         {
             var settings = await useCase.GetSettingsAsync(ct);
             var homePages = settings.Home.Enabled ? settings.Home.Normalize().Items.Select((item, index) => new { name = item.Title ?? $"Pagina {index + 1}", webAddress = item.WebAddress }).ToArray() : [];
-            return Results.Ok(new { showAssortmentInMenu = (await navigation.GetShopAsync(ct)).ShowAssortmentInMenu, categoryLinks = await navigation.ListVisibleAsync(ct), headerText = settings.HeaderText, contactPhone = settings.Company.Phone, settings.AssortmentImageUrl, settings.AssortmentImageMode, settings.ShowHeaderPhone, settings.ShowHeaderWhatsapp, homePages, settings.ShopName, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
+            return Results.Ok(new { showAssortmentInMenu = (await navigation.GetShopAsync(ct)).ShowAssortmentInMenu, categoryLinks = await navigation.ListVisibleAsync(ct), headerText = settings.HeaderText, contactPhone = settings.Company.Phone, settings.AssortmentImageUrl, settings.AssortmentImageMode, settings.ShowHeaderPhone, settings.ShowHeaderWhatsapp, homePages, settings.ShopName, settings.Currency, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/category-pages/{address}", async (string address, HDWebFramework.Application.Catalog.CategoryNavigation.ICategoryNavigationStore navigation, CancellationToken ct) =>
         {
