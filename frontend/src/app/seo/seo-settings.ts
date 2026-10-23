@@ -18,8 +18,9 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
   @if (loading()) { <p role="status">Instellingen ophalen…</p> }
   @if (error()) { <p role="alert">{{ error() }}</p><button type="button" [disabled]="busy() || loading()" (click)="load()">Opnieuw ophalen</button> }
   @if (settings()) {
-    <form class="panel" #settingsForm="ngForm" (ngSubmit)="save(settingsForm)">
-      <h2>Website</h2>
+    <form #settingsForm="ngForm" (ngSubmit)="save(settingsForm)">
+      <section class="panel" aria-labelledby="website-heading">
+      <h2 id="website-heading">Website</h2>
       <label>Plaats website (optioneel)<input name="sitePlace" [(ngModel)]="home.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" [disabled]="busy()" /></label>
       <label>Naam<input name="shopName" [(ngModel)]="shopName" [class.invalid-required]="submitted() && !shopName.trim()" [attr.aria-invalid]="submitted() && !shopName.trim() ? 'true' : null" maxlength="100" required [disabled]="busy()" /></label>
       <fieldset [disabled]="busy()"><legend>Icoontjes in menubalk</legend>
@@ -30,13 +31,18 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label>Valuta<select name="currency" [(ngModel)]="currency" required [disabled]="busy()" [class.invalid-required]="submitted() && !validCurrency()">@if (currency && !knownCurrency(currency)) { <option [value]="currency">{{ currency }} (huidige valuta)</option> }
           @for (item of currencies; track item.code) { <option [value]="item.code">{{ item.name }}</option> }</select></label>
       <p>Bij wijziging krijgen alle bestaande productprijzen deze valuta; de prijsbedragen blijven exact gelijk en worden niet omgerekend. Daarna kun je de valuta per productprijs weer aanpassen.</p>
-      <h2>Assortiment</h2>
+      </section>
+      <section class="panel" aria-labelledby="assortment-heading">
+      <h2 id="assortment-heading">Assortiment</h2>
       <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" [class.invalid-required]="submitted() && !heading.trim()" [attr.aria-invalid]="submitted() && !heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" [class.invalid-required]="submitted() && !introduction.trim()" [attr.aria-invalid]="submitted() && !introduction.trim() ? 'true' : null" maxlength="1000" required [disabled]="busy()"></textarea></label>
       <app-page-background-editor pageId="d2f06ded-68a2-4936-9880-327d616d1a42" [revision]="settings()!.revision" [imageUrl]="settings()?.assortmentImageUrl" [(mode)]="assortmentImageMode" [disabled]="busy()" (working)="busy.set($event)" (stored)="backgroundStored($event)" />
       <label>SEO-titel assortiment<input name="seoTitle" [(ngModel)]="seoTitle" [class.invalid-required]="submitted() && !seoTitle.trim()" [attr.aria-invalid]="submitted() && !seoTitle.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>SEO-omschrijving assortiment<textarea name="seoDescription" [(ngModel)]="seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
-      <h2>Home pagina</h2>
+      </section>
+      <section class="panel" aria-labelledby="pages-heading">
+      <h2 id="pages-heading">Pagina’s</h2>
+      <h3>Home pagina</h3>
       <p>SEO-velden zijn optioneel. Leeg gebruikt de automatische titel of omschrijving. Een ingevulde SEO-titel wordt exact gebruikt, zonder automatische toevoegingen.</p>
       <p>De verplichte titel van een extra pagina bepaalt het webadres, zonder plaatsnaam. Na opslaan verandert het webadres mee als je de titel wijzigt.</p>
       <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Home pagina inschakelen</label>
@@ -53,7 +59,7 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       </fieldset>
       <label>SEO-titel homepagina<input name="homeSeoTitle" [(ngModel)]="home.seoTitle" maxlength="200" [disabled]="busy()" /></label>
       <label>SEO-omschrijving homepagina<textarea name="homeSeoDescription" [(ngModel)]="home.seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
-      <h2>Extra pagina’s</h2>
+      <h3>Extra pagina’s</h3>
       @for (item of home.items; track item; let i = $index) {
         <fieldset [disabled]="busy()">
           <legend>Pagina {{ i + 1 }}</legend>
@@ -69,7 +75,7 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
         </fieldset>
       }
       <button type="button" class="secondary" [disabled]="busy() || home.items.length >= 20" (click)="addPage()">Pagina toevoegen</button>
-      <h2>Contact pagina</h2>
+      <h3>Contact pagina</h3>
       <label><input type="checkbox" name="contactEnabled" [(ngModel)]="home.contactEnabled" [disabled]="busy()" />Contact pagina inschakelen</label>
       <p>Deze informatie is openbaar op de bedrijfspagina. De bedrijfsgegevens voor facturen stel je apart in bij Facturatie en btw.</p>
       <label>Titel<input name="companyHeading" [(ngModel)]="company.heading" [class.invalid-required]="submitted() && !company.heading.trim()" [attr.aria-invalid]="submitted() && !company.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
@@ -81,7 +87,9 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <app-page-background-editor pageId="ac8107f2-a136-4b4f-9e85-b70f14860701" [revision]="settings()!.revision" [imageUrl]="company.imageUrl" [(mode)]="company.imageMode" [disabled]="busy()" (working)="busy.set($event)" (stored)="backgroundStored($event)" />
       <label>SEO-titel contactpagina<input name="companySeoTitle" [(ngModel)]="company.seoTitle" maxlength="200" [disabled]="busy()" /></label>
       <label>SEO-omschrijving contactpagina<textarea name="companySeoDescription" [(ngModel)]="company.seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
-      <h2>Volgorde in menubalk</h2>
+      </section>
+      <section class="panel" aria-labelledby="menu-order-heading">
+      <h2 id="menu-order-heading">Volgorde in menubalk</h2>
       <p>Verplaats de paginalinks met Omhoog en Omlaag. Alleen ingeschakelde pagina’s en zichtbare categorieën worden getoond.</p>
       <ol class="menu-order">
         @for (link of menuLinks(); track link.key; let i = $index) {
@@ -89,6 +97,7 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
           <button type="button" class="secondary" [disabled]="busy() || i === menuLinks().length - 1" (click)="moveMenuLink(i, 1)">Omlaag</button></span></li>
         }
       </ol>
+      </section>
       @if (submitted() && invalidPageTitles()) { <p class="validation-error">Vul voor elke extra pagina een titel in. Controleer de rood gemarkeerde velden.</p> }
       <button type="submit" [disabled]="busy() || loading()">{{ busy() ? 'Opslaan…' : 'Instellingen opslaan' }}</button>
     </form>
