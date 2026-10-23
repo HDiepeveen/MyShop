@@ -31,6 +31,19 @@ import { ProductEditState } from './product-edit-state';
   template: `
     <section class="panel">
       <h2>Productomschrijving</h2>
+        <label class="field"
+          >Omschrijving<textarea
+            name="description"
+            [(ngModel)]="description"
+            maxlength="10000"
+            [disabled]="busy()"
+          ></textarea>
+        </label>
+        <p class="muted">Gewone tekst, maximaal 10.000 tekens. HTML wordt niet opgemaakt.</p>
+    </section>
+    <ng-content />
+    <section class="panel">
+      <h2>Publiceren</h2>
       <p>
         Status:
         <span class="badge">{{
@@ -42,19 +55,9 @@ import { ProductEditState } from './product-edit-state';
         bepaalt de selectie voor de toekomstige klantwinkel; het is geen controle van prijs of
         voorraad.
       </p>
-      <form (ngSubmit)="save(false)">
-        <label class="field"
-          >Omschrijving<textarea
-            name="description"
-            [(ngModel)]="description"
-            maxlength="10000"
-            [disabled]="busy()"
-          ></textarea>
-        </label>
-        <p class="muted">Gewone tekst, maximaal 10.000 tekens. HTML wordt niet opgemaakt.</p>
         <p class="muted">Kies je hoofdafbeelding bij Productafbeeldingen. De productnaam wordt automatisch als alternatieve tekst gebruikt.</p>
         <div class="actions">
-          <button type="submit" class="secondary" [disabled]="busy()">Opslaan als concept</button>
+          <button type="button" class="secondary" [disabled]="busy()" (click)="save(false)">Opslaan als concept</button>
           <button
             type="button"
             [disabled]="busy() || !description.trim() || !imageUrl.trim()"
@@ -63,12 +66,10 @@ import { ProductEditState } from './product-edit-state';
             Opslaan en publiceren
           </button>
         </div>
-      </form>
       @if (error()) {
         <p class="error" role="alert">{{ error() }}</p>
       }
     </section>
-    <ng-content />
     <section class="panel">
       <h2>Voorbeeld opgeslagen presentatie</h2>
       @if (product().presentation; as presentation) {
