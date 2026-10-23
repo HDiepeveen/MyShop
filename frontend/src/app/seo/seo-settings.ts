@@ -83,10 +83,10 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label>SEO-omschrijving contactpagina<textarea name="companySeoDescription" [(ngModel)]="company.seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
       <h2>Volgorde in menubalk</h2>
       <p>Verplaats de paginalinks met Omhoog en Omlaag. Alleen ingeschakelde pagina’s en zichtbare categorieën worden getoond.</p>
-      <ol>
+      <ol class="menu-order">
         @for (link of menuLinks(); track link.key; let i = $index) {
-          <li>{{ link.name }} <button type="button" class="secondary" [disabled]="busy() || i === 0" (click)="moveMenuLink(i, -1)">Omhoog</button>
-          <button type="button" class="secondary" [disabled]="busy() || i === menuLinks().length - 1" (click)="moveMenuLink(i, 1)">Omlaag</button></li>
+          <li><span class="menu-order-name">{{ link.name }}</span><span class="menu-order-actions"><button type="button" class="secondary" [disabled]="busy() || i === 0" (click)="moveMenuLink(i, -1)">Omhoog</button>
+          <button type="button" class="secondary" [disabled]="busy() || i === menuLinks().length - 1" (click)="moveMenuLink(i, 1)">Omlaag</button></span></li>
         }
       </ol>
       @if (submitted() && invalidPageTitles()) { <p class="validation-error">Vul voor elke extra pagina een titel in. Controleer de rood gemarkeerde velden.</p> }
@@ -95,6 +95,11 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
   }
   @if (notice()) { <p role="status">{{ notice() }}</p> }
 `, styles: [`input.invalid-required, textarea.invalid-required, select.invalid-required, input.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border: 2px solid #b42318; outline-color: #b42318; }
+  .menu-order { padding-left: 0; list-style: none; }
+  .menu-order li { display: flex; align-items: center; gap: 16px; padding-block: 8px; }
+  .menu-order-name { min-width: 0; overflow-wrap: anywhere; }
+  .menu-order-actions { display: flex; flex: 0 0 auto; gap: 8px; margin-left: auto; }
+  .menu-order-actions button { margin: 0; }
   .validation-error { color: #b42318; }
   .home-image-preview { display: block; max-width: 300px; max-height: 180px; object-fit: contain; border-radius: 12px; }`] })
 export class SeoSettings {
