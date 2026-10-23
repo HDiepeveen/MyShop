@@ -195,7 +195,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
               [routerLink]="['/winkel', product.webAddress || product.id]"
               [queryParams]="contextQuery()"
             >
-              <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" [padded]="true" />
+              <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" [padded]="true" [paddingPixels]="8" />
               <h2>{{ product.name }}</h2>
               @if (product.isAvailable === false) {
                 <p><strong>Uitverkocht</strong></p>

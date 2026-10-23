@@ -1,7 +1,7 @@
 import { Component, effect, input, signal } from '@angular/core';
 @Component({
   selector: 'app-shop-image',
-  host: { '[class.large]': 'large()', '[class.padded]': 'padded()' },
+  host: { '[class.large]': 'large()', '[class.padded]': 'padded()', '[style.--photo-padding]': 'paddingPixels() + "px"' },
   styles: [
     `
       :host {
@@ -18,7 +18,7 @@ import { Component, effect, input, signal } from '@angular/core';
       :host(.padded) img {
         display: block;
         box-sizing: border-box;
-        padding: 24px;
+        padding: var(--photo-padding, 24px);
       }
       .placeholder {
         display: grid;
@@ -49,6 +49,7 @@ export class ShopImage {
   readonly alt = input('');
   readonly large = input(false);
   readonly padded = input(false);
+  readonly paddingPixels = input(24);
   readonly failed = signal(false);
   constructor() {
     effect(() => {
