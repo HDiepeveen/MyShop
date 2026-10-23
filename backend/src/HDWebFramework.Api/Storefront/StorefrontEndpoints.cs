@@ -17,8 +17,8 @@ public static class StorefrontEndpoints
         endpoints.MapGet("/api/shop/settings", async ([FromServices] HDWebFramework.Application.Catalog.Seo.ManageSeo useCase, HDWebFramework.Application.Catalog.CategoryNavigation.ICategoryNavigationStore navigation, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
-            var homePages = settings.Home.Enabled ? settings.Home.Normalize().Items.Select((item, index) => new { name = item.Title ?? $"Pagina {index + 1}", webAddress = item.WebAddress }).ToArray() : [];
-            return Results.Ok(new { showAssortmentInMenu = (await navigation.GetShopAsync(ct)).ShowAssortmentInMenu, categoryLinks = await navigation.ListVisibleAsync(ct), headerText = settings.HeaderText, contactPhone = settings.Company.Phone, settings.AssortmentImageUrl, settings.AssortmentImageMode, settings.ShowHeaderPhone, settings.ShowHeaderWhatsapp, homePages, settings.ShopName, settings.Currency, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
+            var homePages = settings.Home.Enabled ? settings.Home.Normalize().Items.Select((item, index) => new { name = item.Title ?? $"Pagina {index + 1}", webAddress = item.WebAddress, pageId = item.PageId }).ToArray() : [];
+            return Results.Ok(new { contactEnabled = settings.Home.ContactEnabled, menuOrder = settings.Home.MenuOrder, showAssortmentInMenu = (await navigation.GetShopAsync(ct)).ShowAssortmentInMenu, categoryLinks = await navigation.ListVisibleAsync(ct), headerText = settings.HeaderText, contactPhone = settings.Company.Phone, settings.AssortmentImageUrl, settings.AssortmentImageMode, settings.ShowHeaderPhone, settings.ShowHeaderWhatsapp, homePages, settings.ShopName, settings.Currency, settings.WelcomeText, settings.Introduction, settings.FooterText, settings.Appearance, settings.IconUrl, settings.ShowManagementMenuWithoutLogin, homeEnabled = settings.Home.Enabled });
         }).AllowAnonymous();
         endpoints.MapGet("/api/shop/category-pages/{address}", async (string address, HDWebFramework.Application.Catalog.CategoryNavigation.ICategoryNavigationStore navigation, CancellationToken ct) =>
         {
@@ -39,6 +39,7 @@ public static class StorefrontEndpoints
         endpoints.MapGet("/api/shop/company", async ([FromServices] HDWebFramework.Application.Catalog.Seo.ManageSeo useCase, CancellationToken ct) =>
         {
             var settings = await useCase.GetSettingsAsync(ct);
+            if (!settings.Home.ContactEnabled) return (IResult)Results.NotFound();
             var company = settings.Company;
             return Results.Ok(new { company.Heading, Name = company.Name ?? settings.ShopName, company.Description, company.Address, company.Email, company.Phone, company.OpeningHours, company.SeoTitle, company.SeoDescription, company.ImageUrl, company.ImageMode });
         }).AllowAnonymous();

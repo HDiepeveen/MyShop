@@ -18,6 +18,8 @@ public sealed record HomePageItem(string? Title, string Description)
 }
 public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyList<HomePageItem> Items)
 {
+    public bool ContactEnabled { get; init; } = true;
+    public IReadOnlyList<string> MenuOrder { get; init; } = Array.Empty<string>();
     public string? SeoTitle { get; init; }
     public string? SeoDescription { get; init; }
 
@@ -29,6 +31,7 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
     public static HomePageSettings Default => new(false, "Welkom", Array.Empty<HomePageItem>());
     public HomePageSettings Normalize(bool forSaving = false)
     {
+        if (MenuOrder is null || MenuOrder.Count > 100 || MenuOrder.Any(key => string.IsNullOrWhiteSpace(key) || key.Length > 200) || MenuOrder.Distinct(StringComparer.Ordinal).Count() != MenuOrder.Count) throw new ArgumentException("Gebruik een geldige volgorde voor de menubalk.");
         if (Items is null || Items.Count > 20) throw new ArgumentException("Gebruik maximaal 20 pagina’s.");
         return this with {
             SeoTitle = SeoText.Optional(SeoTitle, 200),

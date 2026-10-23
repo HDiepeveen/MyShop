@@ -1,3 +1,4 @@
+import { orderedWebsiteLinks, WebsiteLink } from './website-navigation';
 import { ShopColors, defaultColors, validColors } from '../settings/shop-theme';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -10,10 +11,25 @@ export class ShopBranding {
   readonly iconUrl = signal<string | null>(null);
   readonly iconFailed = signal(false);
   readonly icon = computed(() => (this.iconFailed() ? null : this.iconUrl()));
+  readonly contactEnabled = signal(true);
+  readonly menuOrder = signal<readonly string[]>([]);
+  readonly navigationLinks = computed(() => {
+    const links: WebsiteLink[] = [];
+    if (this.homeEnabled()) {
+      links.push({key: 'home', name: 'Home', path: '/'});
+      links.push(...this.homePages().map(page => ({key: 'page:' + (page.pageId || page.webAddress), name: page.name, path: '/' + page.webAddress})));
+    }
+    if (this.showAssortmentInMenu()) links.push({key: 'assortment', name: 'Assortiment', path: '/assortiment'});
+    links.push(...this.categoryLinks().map(category => ({key: 'category:' + category.id, name: category.name,
+      path: category.webAddress ? '/assortiment/' + category.webAddress : '/assortiment',
+      queryParams: category.webAddress ? undefined : {categoryId: category.id}})));
+    if (this.contactEnabled()) links.push({key: 'contact', name: 'Contact', path: '/contact'});
+    return orderedWebsiteLinks(links, this.menuOrder());
+  });
   readonly homeEnabled = signal(false);
   readonly showAssortmentInMenu = signal(true);
   readonly categoryLinks = signal<readonly { id: string; name: string; webAddress?: string }[]>([]);
-  readonly homePages = signal<readonly { name: string; webAddress: string }[]>([]);
+  readonly homePages = signal<readonly { name: string; webAddress: string; pageId?: string }[]>([]);
   readonly assortmentImageUrl = signal<string | null>(null);
   readonly assortmentImageMode = signal<string | null>(null);
   readonly contactPhone = signal<string | null>(null);
@@ -33,8 +49,9 @@ export class ShopBranding {
         assortmentImageUrl?: string | null; assortmentImageMode?: string | null;
         contactPhone?: string | null; showHeaderPhone?: boolean; showHeaderWhatsapp?: boolean;
         headerText?: string | null;
+        contactEnabled?: boolean; menuOrder?: string[];
         homeEnabled?: boolean;
-        homePages?: { name: string; webAddress: string }[];
+        homePages?: { name: string; webAddress: string; pageId?: string }[];
         footerText?: string;
         appearance?: ShopColors;
         iconUrl?: string | null;
@@ -51,6 +68,8 @@ export class ShopBranding {
             this.contactPhone.set(settings.contactPhone?.trim() || null);
             this.showHeaderPhone.set(settings.showHeaderPhone !== false);
             this.showHeaderWhatsapp.set(settings.showHeaderWhatsapp !== false);
+            this.contactEnabled.set(settings.contactEnabled !== false);
+            this.menuOrder.set(settings.menuOrder ?? []);
             this.homeEnabled.set(settings.homeEnabled === true);
             this.homePages.set(settings.homeEnabled === true ? (settings.homePages ?? []) : []);
             this.showManagementMenuWithoutLogin.set(

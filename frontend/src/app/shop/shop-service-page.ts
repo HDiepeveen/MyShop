@@ -22,12 +22,14 @@ import { StorefrontSeo } from './storefront-seo';
         <h1>{{ page.title || 'Meer informatie' }}</h1>
         <div class="information-layout">
           <div class="page-content"><p>{{ page.description }}</p></div>
+          @if (branding.contactEnabled()) {
           <aside class="contact-card">
             <span class="eyebrow">Persoonlijk contact</span>
             <h2>Hoe kunnen we u helpen?</h2>
             <p>Heeft u een vraag of wilt u een afspraak bespreken? Neem gerust contact met ons op.</p>
             <a class="button" routerLink="/contact">Neem contact op <span aria-hidden="true">↗</span></a>
           </aside>
+          }
         </div>
       </div>
     @if (page.imageUrl && !imageFailed()) { <img class="page-background" [src]="page.imageUrl" [style.object-fit]="page.imageMode === 'stretch' ? 'fill' : 'cover'" alt="" aria-hidden="true" (error)="imageFailed.set(true)" /> }

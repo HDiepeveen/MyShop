@@ -27,7 +27,7 @@ import { ShopBranding } from './shop-branding';
         <p class="eyebrow">{{ branding.name() }}</p>
         <h1>{{ home.heading }}</h1>
         <div class="hero-actions"><a class="button" routerLink="/assortiment">Bekijk het assortiment <span aria-hidden="true">↗</span></a>
-        <a class="home-contact" routerLink="/contact">Neem contact op →</a></div>
+        @if (branding.contactEnabled()) { <a class="home-contact" routerLink="/contact">Neem contact op →</a> }</div>
         </div>
       </section>
       @if (branding.homePages().length) {

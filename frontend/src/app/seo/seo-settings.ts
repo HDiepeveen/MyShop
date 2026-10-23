@@ -1,3 +1,4 @@
+import { orderedWebsiteLinks, WebsiteLink } from '../shop/website-navigation';
 import { currencies, knownCurrency } from '../catalog/currencies';
 import { PageBackgroundEditor } from './page-background-editor';
 import { HttpClient } from '@angular/common/http';
@@ -35,11 +36,10 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <app-page-background-editor pageId="d2f06ded-68a2-4936-9880-327d616d1a42" [revision]="settings()!.revision" [imageUrl]="settings()?.assortmentImageUrl" [(mode)]="assortmentImageMode" [disabled]="busy()" (working)="busy.set($event)" (stored)="backgroundStored($event)" />
       <label>SEO-titel assortiment<input name="seoTitle" [(ngModel)]="seoTitle" [class.invalid-required]="submitted() && !seoTitle.trim()" [attr.aria-invalid]="submitted() && !seoTitle.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>SEO-omschrijving assortiment<textarea name="seoDescription" [(ngModel)]="seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
-      <h2>Home</h2>
+      <h2>Home pagina</h2>
       <p>SEO-velden zijn optioneel. Leeg gebruikt de automatische titel of omschrijving. Een ingevulde SEO-titel wordt exact gebruikt, zonder automatische toevoegingen.</p>
-      @if (settings()?.home?.enabled) { <p><a routerLink="/">Opgeslagen homepagina bekijken</a></p> }
-      <p>Home toont de eigen tekst hieronder. Extra pagina’s staan in de menubalk. Hun verplichte titel bepaalt het webadres, zonder plaatsnaam. Na opslaan verandert het webadres mee als je de titel wijzigt. De websiteplaats blijft beschikbaar voor de automatische SEO-titel.</p>
-      <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Homepagina inschakelen</label>
+      <p>De verplichte titel van een extra pagina bepaalt het webadres, zonder plaatsnaam. Na opslaan verandert het webadres mee als je de titel wijzigt.</p>
+      <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Home pagina inschakelen</label>
       <label>Titel<input name="homeHeading" [(ngModel)]="home.heading" [class.invalid-required]="submitted() && !home.heading.trim()" [attr.aria-invalid]="submitted() && !home.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Omschrijving<textarea name="homeDescription" [(ngModel)]="home.description" maxlength="4000" rows="7" [disabled]="busy()"></textarea></label>
       <fieldset [disabled]="busy() || loading()">
@@ -68,8 +68,9 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
           <button type="button" class="secondary" (click)="home.items.splice(i, 1)">Pagina verwijderen</button>
         </fieldset>
       }
-      <button type="button" class="secondary" [disabled]="busy() || home.items.length >= 20" (click)="home.items.push({title: '', description: ''})">Pagina toevoegen</button>
-      <h2>Contact</h2>
+      <button type="button" class="secondary" [disabled]="busy() || home.items.length >= 20" (click)="addPage()">Pagina toevoegen</button>
+      <h2>Contact pagina</h2>
+      <label><input type="checkbox" name="contactEnabled" [(ngModel)]="home.contactEnabled" [disabled]="busy()" />Contact pagina inschakelen</label>
       <p>Deze informatie is openbaar op de bedrijfspagina. De bedrijfsgegevens voor facturen stel je apart in bij Facturatie en btw.</p>
       <label>Titel<input name="companyHeading" [(ngModel)]="company.heading" [class.invalid-required]="submitted() && !company.heading.trim()" [attr.aria-invalid]="submitted() && !company.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Omschrijving<textarea name="companyDescription" [(ngModel)]="company.description" maxlength="4000" rows="6" [disabled]="busy()"></textarea></label>
@@ -80,6 +81,14 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <app-page-background-editor pageId="ac8107f2-a136-4b4f-9e85-b70f14860701" [revision]="settings()!.revision" [imageUrl]="company.imageUrl" [(mode)]="company.imageMode" [disabled]="busy()" (working)="busy.set($event)" (stored)="backgroundStored($event)" />
       <label>SEO-titel contactpagina<input name="companySeoTitle" [(ngModel)]="company.seoTitle" maxlength="200" [disabled]="busy()" /></label>
       <label>SEO-omschrijving contactpagina<textarea name="companySeoDescription" [(ngModel)]="company.seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
+      <h2>Volgorde in menubalk</h2>
+      <p>Verplaats de paginalinks met Omhoog en Omlaag. Alleen ingeschakelde pagina’s en zichtbare categorieën worden getoond.</p>
+      <ol>
+        @for (link of menuLinks(); track link.key; let i = $index) {
+          <li>{{ link.name }} <button type="button" class="secondary" [disabled]="busy() || i === 0" (click)="moveMenuLink(i, -1)">Omhoog</button>
+          <button type="button" class="secondary" [disabled]="busy() || i === menuLinks().length - 1" (click)="moveMenuLink(i, 1)">Omlaag</button></li>
+        }
+      </ol>
       @if (submitted() && invalidPageTitles()) { <p class="validation-error">Vul voor elke extra pagina een titel in. Controleer de rood gemarkeerde velden.</p> }
       <button type="submit" [disabled]="busy() || loading()">{{ busy() ? 'Opslaan…' : 'Instellingen opslaan' }}</button>
     </form>
@@ -109,6 +118,25 @@ export class SeoSettings {
   headerText = '';
   footerText = 'Ontdek wat bij je past.';
   home: HomePageSettings = { enabled: false, heading: 'Welkom', items: [] };
+  addPage() { this.home.items.push({ pageId: crypto.randomUUID(), title: '', description: '' }); }
+  menuLinks() {
+    const links: WebsiteLink[] = [];
+    if (this.home.enabled) {
+      links.push({key: 'home', name: 'Home', path: '/'});
+      links.push(...this.home.items.map((page, i) => ({key: 'page:' + (page.pageId || page.webAddress || i), name: page.title?.trim() || 'Pagina ' + (i + 1), path: ''})));
+    }
+    if (this.branding.showAssortmentInMenu()) links.push({key: 'assortment', name: 'Assortiment', path: '/assortiment'});
+    links.push(...this.branding.categoryLinks().map(category => ({key: 'category:' + category.id, name: category.name, path: ''})));
+    if (this.home.contactEnabled !== false) links.push({key: 'contact', name: 'Contact', path: '/contact'});
+    return orderedWebsiteLinks(links, this.home.menuOrder);
+  }
+  moveMenuLink(index: number, direction: number) {
+    const links = this.menuLinks(); const target = index + direction;
+    if (this.busy() || target < 0 || target >= links.length) return;
+    [links[index], links[target]] = [links[target], links[index]];
+    const visible = new Set(links.map(link => link.key));
+    this.home.menuOrder = [...links.map(link => link.key), ...(this.home.menuOrder ?? []).filter(key => !visible.has(key))];
+  }
   moveHomeItem(index: number, direction: number) { const target = index + direction; if (this.busy() || target < 0 || target >= this.home.items.length) return; [this.home.items[index], this.home.items[target]] = [this.home.items[target], this.home.items[index]]; }
   company: CompanyPage = { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null };
   constructor() { this.load(); }
@@ -116,7 +144,7 @@ export class SeoSettings {
     if (this.loading() || this.busy()) return;
     this.loading.set(true); this.error.set('');
     this.api.seoSettings().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: settings => { this.submitted.set(false); this.settings.set(settings); this.currency = settings.currency ?? 'EUR'; this.assortmentImageMode = settings.assortmentImageMode; this.headerText = settings.headerText ?? ''; this.showHeaderPhone = settings.showHeaderPhone !== false; this.showHeaderWhatsapp = settings.showHeaderWhatsapp !== false; this.seoDescription = settings.seoDescription ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.branding.homeEnabled.set(this.home.enabled); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'HD Web Framework'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij HD Web Framework'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
+      next: settings => { this.submitted.set(false); this.settings.set(settings); this.currency = settings.currency ?? 'EUR'; this.assortmentImageMode = settings.assortmentImageMode; this.headerText = settings.headerText ?? ''; this.showHeaderPhone = settings.showHeaderPhone !== false; this.showHeaderWhatsapp = settings.showHeaderWhatsapp !== false; this.seoDescription = settings.seoDescription ?? ''; this.home = structuredClone(settings.home ?? { enabled: false, heading: 'Welkom', items: [] }); this.home.contactEnabled ??= true; this.branding.homeEnabled.set(this.home.enabled); this.branding.contactEnabled.set(this.home.contactEnabled !== false); this.branding.menuOrder.set(this.home.menuOrder ?? []); this.branding.homePages.set(this.home.enabled ? this.home.items.map(page => ({name: page.title || 'Pagina', webAddress: page.webAddress || '', pageId: page.pageId})) : []); this.heading = settings.heading; this.seoTitle = settings.seoTitle; this.shopName = settings.shopName ?? 'HD Web Framework'; this.branding.name.set(this.shopName); this.welcomeText = settings.welcomeText ?? 'Welkom bij HD Web Framework'; this.introduction = settings.introduction ?? 'Bekijk onze producten en kies de variant die bij je past.'; this.footerText = settings.footerText ?? 'Ontdek wat bij je past.'; this.branding.footerText.set(this.footerText); this.company = { ...(settings.company ?? { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null }) }; this.loading.set(false); },
       error: error => { this.loading.set(false); this.error.set(errorMessage(error)); },
     });
   }

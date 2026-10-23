@@ -78,6 +78,11 @@ internal static class SeoHtml
                     "<a href=\"/assortiment\">Bekijk het assortiment</a></main>";
             }
         }
+        else if (path.TrimEnd('/') == "/contact" && !branding.Home.ContactEnabled)
+        {
+            context.Response.StatusCode = 404;
+            preview = "<main><h1>Contactpagina niet beschikbaar</h1></main>";
+        }
         else if (path.TrimEnd('/') == "/contact")
         {
             var company = branding.Company;
@@ -123,13 +128,22 @@ internal static class SeoHtml
         }
         if (index)
         {
-            var links = (branding.Home.Enabled ? branding.Home.Normalize().Items : []).Select((item, position) =>
-                "<a href=\"/" + E(item.WebAddress!) + "\">" + E(item.Title ?? $"Pagina {position + 1}") + "</a>");
+            var links = new List<(string Key, string Html)>();
+            if (branding.Home.Enabled)
+            {
+                links.Add(("home", "<a href=\"/\">Home</a>"));
+                links.AddRange(branding.Home.Normalize().Items.Select((item, position) =>
+                    ("page:" + item.PageId.ToString("D"), "<a href=\"/" + E(item.WebAddress!) + "\">" + E(item.Title ?? $"Pagina {position + 1}") + "</a>")));
+            }
             var navigation = context.RequestServices.GetRequiredService<HDWebFramework.Application.Catalog.CategoryNavigation.ICategoryNavigationStore>();
-            var showAssortment = (await navigation.GetShopAsync(context.RequestAborted)).ShowAssortmentInMenu;
+            if ((await navigation.GetShopAsync(context.RequestAborted)).ShowAssortmentInMenu)
+                links.Add(("assortment", "<a href=\"/assortiment\">Assortiment</a>"));
             var categories = await navigation.ListVisibleAsync(context.RequestAborted);
-            var categoryLinks = categories.Select(category => "<a href=\"/assortiment/" + E(category.WebAddress ?? category.Id.ToString("D")) + "\">" + E(category.Name) + "</a>");
-            preview = "<nav aria-label=\"Winkelnavigatie\">" + (branding.Home.Enabled ? "<a href=\"/\">Home</a> " : "") + string.Join(" ", links) + (showAssortment ? " <a href=\"/assortiment\">Assortiment</a> " : " ") + string.Join(" ", categoryLinks) + "</nav>" + preview;
+            links.AddRange(categories.Select(category => ("category:" + category.Id.ToString("D"), "<a href=\"/assortiment/" + E(category.WebAddress ?? category.Id.ToString("D")) + "\">" + E(category.Name) + "</a>")));
+            if (branding.Home.ContactEnabled) links.Add(("contact", "<a href=\"/contact\">Contact</a>"));
+            var order = branding.Home.MenuOrder;
+            int Position(string key) { for (var i = 0; i < order.Count; i++) if (order[i] == key) return i; return order.Count; }
+            preview = "<nav aria-label=\"Winkelnavigatie\">" + string.Join(" ", links.OrderBy(link => Position(link.Key)).Select(link => link.Html)) + "</nav>" + preview;
         }
         template = Regex.Replace(template, "<title>.*?</title>", _ => "<title>" + E(title) + "</title>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
         template = Regex.Replace(template, "<meta\\s+[^>]*name=[\"'](?:description|robots)[\"'][^>]*>", "", RegexOptions.IgnoreCase);

@@ -27,7 +27,7 @@ const titles: Record<string, string> = {
         }
       } @else { <p role="status">Document laden…</p> }
       <p><a [href]="download" download>Document downloaden (tekstbestand)</a></p>
-      <a routerLink="/contact">Contact</a>
+      @if (branding.contactEnabled()) { <a routerLink="/contact">Contact</a> }
     </article>
   `,
   styleUrl: './shop-legal.css',

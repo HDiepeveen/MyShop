@@ -11,6 +11,27 @@ namespace HDWebFramework.Api.Tests.Catalog.Seo;
 public sealed class HomePageHttpTests
 {
     [SecuritySqlFact]
+    public async Task Contact_can_be_disabled_and_navigation_order_is_persisted()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var settings = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
+        Assert.True(settings["home"]!["contactEnabled"]!.GetValue<bool>());
+        settings["home"]!["contactEnabled"] = false;
+        settings["home"]!["menuOrder"] = new JsonArray("contact", "home", "assortment");
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
+        var stored = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
+        Assert.False(stored["home"]!["contactEnabled"]!.GetValue<bool>());
+        var navigation = (await host.Client.GetFromJsonAsync<JsonObject>("/api/shop/settings"))!;
+        Assert.False(navigation["contactEnabled"]!.GetValue<bool>());
+        Assert.Equal("contact", navigation["menuOrder"]![0]!.GetValue<string>());
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/api/shop/company")).StatusCode);
+        stored["home"]!["contactEnabled"] = true;
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", stored)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/api/shop/company")).StatusCode);
+    }
+
+    [SecuritySqlFact]
     public async Task Common_legacy_place_is_adopted_and_global_changes_update_addresses()
     {
         await using var host = await SecurityHost.Create();

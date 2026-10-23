@@ -49,25 +49,9 @@
           {{ branding.name() }}
         </a>
         <nav aria-label="Winkelnavigatie" class="actions">
-          @if (branding.homeEnabled()) {
-            <a routerLink="/">Home</a>
-            @for (page of branding.homePages(); track page.webAddress) {
-              <a [routerLink]="'/' + page.webAddress">{{ page.name }}</a>
-            }
+          @for (link of branding.navigationLinks(); track link.key) {
+            <a [routerLink]="link.path" [queryParams]="link.queryParams || {}">{{ link.name }}</a>
           }
-          @if (branding.showAssortmentInMenu()) {
-            <a routerLink="/assortiment">Assortiment</a>
-          }
-          @for (category of branding.categoryLinks(); track category.id) {
-            <a
-              [routerLink]="
-                category.webAddress ? ['/assortiment', category.webAddress] : ['/assortiment']
-              "
-              [queryParams]="category.webAddress ? {} : { categoryId: category.id }"
-              >{{ category.name }}</a
-            >
-          }
-          <a routerLink="/contact">Contact</a>
           @if (shopSettings.checkoutEnabled()) {
             <a routerLink="/winkel/winkelmand">Winkelmand ({{ cart.count() }})</a>
           }

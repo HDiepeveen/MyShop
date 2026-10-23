@@ -17,7 +17,7 @@ describe('SEO editors', () => {
     page.heading = 'Auto’s te koop'; page.seoTitle = 'Auto kopen | HD Web Framework';
     page.shopName = 'Autohuis Hans'; page.welcomeText = 'Welkom bij Hans'; page.introduction = 'Onze occasions.'; page.save(); page.save();
     const request = http.expectOne('/api/seo-settings');
-    expect(request.request.body).toEqual({ currency: 'EUR', assortmentImageMode: undefined, heading: 'Auto’s te koop', seoTitle: 'Auto kopen | HD Web Framework', seoDescription: '', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', showHeaderPhone: true, showHeaderWhatsapp: true, home: { enabled: false, heading: 'Welkom', items: [] }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
+    expect(request.request.body).toEqual({ currency: 'EUR', assortmentImageMode: undefined, heading: 'Auto’s te koop', seoTitle: 'Auto kopen | HD Web Framework', seoDescription: '', revision, shopName: 'Autohuis Hans', welcomeText: 'Welkom bij Hans', introduction: 'Onze occasions.', footerText: 'Ontdek wat bij je past.', headerText: '', showHeaderPhone: true, showHeaderWhatsapp: true, home: { enabled: false, heading: 'Welkom', items: [], contactEnabled: true }, company: { heading: 'Over ons en contact', name: null, description: null, address: null, email: null, phone: null, openingHours: null } });
     request.flush(null);
     http.expectOne('/api/seo-settings').flush({ heading: page.heading, seoTitle: page.seoTitle, revision: 'new' });
     expect(page.settings()?.revision).toBe('new');
@@ -30,6 +30,23 @@ describe('SEO editors', () => {
     page.backgroundStored({...page.settings()!,revision:'next',company:{...page.company,imageUrl:'/contact.png'},home:{...page.home,items:[{...page.home.items[0],description:'Saved',imageUrl:'/photo.png'}]}});
     expect(page.home.items[0].description).toBe('Unsaved text');expect(page.home.items[0].imageMode).toBe('cover');
     expect(page.home.items[0].imageUrl).toBe('/photo.png');expect(page.settings()?.revision).toBe('next');
+  });
+  it('edits contact visibility and menu order without losing page identity', () => {
+    const fixture = TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({ heading: 'Assortiment', seoTitle: 'Shop', revision,
+      home: { enabled: true, heading: 'Home', items: [{pageId:'p',title:'APK',description:'Keuring',webAddress:'apk'}] } });
+    const page=fixture.componentInstance;
+    expect(page.home.contactEnabled).toBe(true);
+    page.moveMenuLink(3,-1);
+    expect(page.menuLinks().map(x=>x.name)).toEqual(['Home','APK','Contact','Assortiment']);
+    page.home.items[0].title='APK keuring';
+    expect(page.menuLinks().map(x=>x.name)).toEqual(['Home','APK keuring','Contact','Assortiment']);
+    page.home.contactEnabled=false;
+    page.save();
+    const request=http.expectOne('/api/seo-settings');
+    expect(request.request.body.home.contactEnabled).toBe(false);
+    expect(request.request.body.home.menuOrder).toEqual(['home','page:p','contact','assortment']);
+    request.flush({}, {status:409,statusText:'Conflict'});
   });
   it('keeps an edited heading when saving fails', () => {
     const fixture = TestBed.createComponent(SeoSettings);

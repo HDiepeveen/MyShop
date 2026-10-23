@@ -13,4 +13,4 @@ export interface ProductTypeHeadings {
   revision: string;
 }
 
-export interface HomePageSettings { imageMode?: string | null; seoTitle?: string | null; seoDescription?: string | null; welcomeText?: string | null; imageUrl?: string | null; place?: string | null; description?: string | null; enabled: boolean; heading: string; items: { pageId?: string; imageUrl?: string | null; imageMode?: string | null; seoTitle?: string | null; seoDescription?: string | null; title: string | null; place?: string | null; webAddress?: string | null; description: string }[]; }
+export interface HomePageSettings { contactEnabled?: boolean; menuOrder?: string[]; imageMode?: string | null; seoTitle?: string | null; seoDescription?: string | null; welcomeText?: string | null; imageUrl?: string | null; place?: string | null; description?: string | null; enabled: boolean; heading: string; items: { pageId?: string; imageUrl?: string | null; imageMode?: string | null; seoTitle?: string | null; seoDescription?: string | null; title: string | null; place?: string | null; webAddress?: string | null; description: string }[]; }

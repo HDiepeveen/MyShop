@@ -13,7 +13,7 @@ describe('Legal documents', () => {
       imports: [ShopLegal],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: { snapshot: { data: { legalPage: slug } } } },
-        { provide: ShopBranding, useValue: { name: signal('Autoservice Ganpat') } }],
+        { provide: ShopBranding, useValue: { name: signal('Autoservice Ganpat'), contactEnabled: signal(true) } }],
     });
     return TestBed.createComponent(ShopLegal);
   }
