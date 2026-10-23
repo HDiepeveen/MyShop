@@ -21,7 +21,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
     @if (failure()) { <p class="error" role="alert">{{ failure() }}</p> }
     @if (notice()) { <p role="status">{{ notice() }}</p> }
     @if (loading()) { <p role="status">Gegevens ophalen…</p> }
-    <button type="button" class="secondary" [disabled]="busy() || loading()" (click)="load()">Gegevens vernieuwen</button>
+    <button type="button" class="secondary refresh-overview" [disabled]="busy() || loading()" (click)="load()">Gegevens vernieuwen</button>
     @if (data(); as items) {
       <section class="panel">
         <h2>Bedrijfsrollen</h2>
