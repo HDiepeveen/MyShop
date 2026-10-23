@@ -80,7 +80,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
               <label><input type="checkbox" [checked]="accountRoles.includes(role.id)" (change)="toggleRole(role.id, $event)" />{{ role.name }}</label>
             } @empty { <p>Maak eerst een bedrijfsrol aan.</p> }
           </fieldset>
-          <button type="submit" [disabled]="busy() || !accountRoles.length || (!editingAccount && (!userName.trim() || !email.trim() || password.length < 12))">Account opslaan</button>
+          <button type="submit" [disabled]="busy() || !accountRoles.length || (!editingAccount && (!userName.trim() || !email.trim() || !validAccountPassword()))">Account opslaan</button>
           @if (editingAccount) { <button type="button" class="secondary" [disabled]="busy()" (click)="resetAccount()">Nieuw account</button> }
         </form>
       </section>
@@ -147,10 +147,15 @@ export class CompanyAccessPage {
       ? this.http.put('/api/company-access/roles/' + encodeURIComponent(this.editingRole.id), body)
       : this.http.post('/api/company-access/roles', body));
   }
+  validAccountPassword() {
+    return this.password.length >= 12 && this.password.length <= 128 &&
+      /[A-Z]/.test(this.password) && /[a-z]/.test(this.password) &&
+      /[0-9]/.test(this.password) && /[^A-Za-z0-9]/.test(this.password);
+  }
   saveAccount() {
     if (this.busy() || this.loading() || !this.data() || !this.accountRoles.length) return;
     const account = this.editingAccount;
-    if (!account && (!this.userName.trim() || !this.email.trim() || this.password.length < 12 || this.password.length > 128)) return;
+    if (!account && (!this.userName.trim() || !this.email.trim() || !this.validAccountPassword())) return;
     const body = account
       ? { revision: account.revision, enabled: this.enabled, roles: [...this.accountRoles] }
       : { userName: this.userName.trim(), email: this.email.trim(), password: this.password, roles: [...this.accountRoles] };
