@@ -17,7 +17,7 @@ Onze huidige website gebruikt deze technieken voor inloggen, beveiliging en — 
 
 | Naam | Techniek en doel | Bewaring |
 |---|---|---|
-| `HDWebFramework.Admin` | Functionele inlogcookie voor klant- én beheeraccounts. Ondanks de technische naam wordt deze ook voor klanten gebruikt. | Sessiecookie; het inlogbewijs is maximaal dertig minuten geldig. De website verlengt die termijn niet automatisch bij ieder bezoek. |
+| `HDWebFramework.Admin` | Functionele inlogcookie voor klant- én beheeraccounts. Ondanks de technische naam wordt deze ook voor klanten gebruikt. | Sessiecookie; het inlogbewijs is maximaal twee uur geldig. De website verlengt die termijn niet automatisch bij ieder bezoek. |
 | `HDWebFramework.Antiforgery` | Beveiligingscookie die samen met een controletoken helpt voorkomen dat een andere website ongewenst handelingen namens u uitvoert. | Sessiecookie, zonder ingestelde vaste vervaldatum. |
 | `XSRF-TOKEN` | Bijbehorend beveiligingstoken dat de website kan meesturen bij wijzigingen en formulierverzoeken. | Sessiecookie, zonder ingestelde vaste vervaldatum. |
 | `HDWebFramework.cart.v1` | localStorage met product- en variantidentificaties en aantallen van de winkelmand. | Geen automatische tijdslimiet ingesteld. Wordt bijgewerkt door winkelmandhandelingen; kan blijven staan tot overschrijven of verwijderen van browsergegevens. |

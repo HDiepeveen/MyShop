@@ -30,7 +30,7 @@ public static class AdminSecurity
             options.Cookie.HttpOnly = true;
             options.Cookie.SameSite = SameSiteMode.Strict;
             options.Cookie.SecurePolicy = development ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
-            options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+            options.ExpireTimeSpan = TimeSpan.FromHours(2);
             options.SlidingExpiration = false;
             options.Events.OnValidatePrincipal = async context =>
             {

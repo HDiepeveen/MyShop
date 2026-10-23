@@ -17,7 +17,7 @@ Voor de huidige website-inrichting gebruiken wij functionele cookies voor inlogg
 
 | Naam | Techniek en doel | Bewaring |
 |---|---|---|
-| `HDWebFramework.Admin` | Functionele inlogcookie voor beveiligde account- en beheertoegang. | Sessiecookie; het inlogbewijs is maximaal dertig minuten geldig. De website verlengt die termijn niet automatisch bij ieder bezoek. |
+| `HDWebFramework.Admin` | Functionele inlogcookie voor beveiligde account- en beheertoegang. | Sessiecookie; het inlogbewijs is maximaal twee uur geldig. De website verlengt die termijn niet automatisch bij ieder bezoek. |
 | `HDWebFramework.Antiforgery` | Beveiligingscookie die samen met een controletoken helpt voorkomen dat een andere website ongewenst handelingen namens u uitvoert. | Sessiecookie, zonder ingestelde vaste vervaldatum. |
 | `XSRF-TOKEN` | Bijbehorend beveiligingstoken dat de website kan meesturen bij wijzigingen en formulierverzoeken. | Sessiecookie, zonder ingestelde vaste vervaldatum. |
 

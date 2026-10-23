@@ -21,7 +21,7 @@ Start daarna API en frontend volgens de frontendhandleiding en log in op `/inlog
 
 ## Gebruik en herstel
 
-- De sessie vervalt na 30 minuten, ook bij actief gebruik. De sessiecookie is HttpOnly en SameSite=Strict; er staan geen toegangstokens in browseropslag.
+- De sessie vervalt na 2 uur, ook bij actief gebruik. De sessiecookie is HttpOnly en SameSite=Strict; er staan geen toegangstokens in browseropslag.
 - Wachtwoord wijzigen vereist het huidige wachtwoord. Daarna moet je opnieuw inloggen; eerdere sessies vervallen.
 - Uitloggen trekt alle sessies van dit account in. Een netwerkfout wordt niet als succesvol uitloggen getoond.
 - Vijf onjuiste wachtwoorden blokkeren een account vijftien minuten. Maximaal tien loginverzoeken per bron-IP per minuut, per serverproces. De foutmelding onderscheidt geen onbekende naam, onjuist wachtwoord, ontbrekende rol of blokkade.

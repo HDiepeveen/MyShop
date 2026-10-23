@@ -23,7 +23,7 @@ public sealed class AdminSecurityOptionsTests
         Assert.True(cookie.Cookie.HttpOnly);
         Assert.Equal(SameSiteMode.Strict, cookie.Cookie.SameSite);
         Assert.False(cookie.SlidingExpiration);
-        Assert.Equal(TimeSpan.FromMinutes(30), cookie.ExpireTimeSpan);
+        Assert.Equal(TimeSpan.FromHours(2), cookie.ExpireTimeSpan);
         var csrf = provider.GetRequiredService<IOptions<AntiforgeryOptions>>().Value;
         Assert.Equal(CookieSecurePolicy.Always, csrf.Cookie.SecurePolicy);
         Assert.Equal("X-XSRF-TOKEN", csrf.HeaderName);
