@@ -16,7 +16,7 @@ it.each([false, true])('shows optional management navigation without granting ac
   expect(fixture.nativeElement.querySelector('aside')).toBeNull();
   branding.showManagementMenuWithoutLogin.set(true);
   await fixture.whenStable();
-  expect(fixture.nativeElement.querySelectorAll('aside nav a').length).toBe(13);
+  expect(fixture.nativeElement.querySelectorAll('aside nav a').length).toBe(14);
   expect(auth.canOpen('/bestellingen')).toBe(false);
   auth.session.set({ authenticated: true, administrator: false, businessAdministrator: true, customer: false, name: 'Staff', permissions: ['orders'] });
   await fixture.whenStable();
@@ -47,7 +47,7 @@ it('offers accessible navigation and a skip link', async () => {
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   expect(element.querySelector('nav')?.getAttribute('aria-label')).toBe('Hoofdnavigatie');
-  expect(element.querySelectorAll('.sidebar nav a').length).toBe(13);
+  expect(element.querySelectorAll('.sidebar nav a').length).toBe(14);
   const websiteLinks = element.querySelectorAll('nav[aria-label="Website bekijken"] a');
   expect(Array.from(websiteLinks, link => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([['Home', '/'], ['Assortiment', '/assortiment']]);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');

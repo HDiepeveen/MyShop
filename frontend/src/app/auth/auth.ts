@@ -28,6 +28,7 @@ export class Auth {
     return !!this.session()?.administrator || !!permission && this.canUse(permission);
   }
   landingPage() {
+    if (this.session()?.administrator) return '/beheer';
     return managementMenu.find(item => this.canUse(item.code))?.path ?? '/account';
   }
   load() {
