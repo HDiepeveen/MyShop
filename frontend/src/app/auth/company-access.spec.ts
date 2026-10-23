@@ -52,16 +52,19 @@ describe('Company account and role configuration', () => {
   });
   it.each([
     'Short1!', 'lowercase123!', 'UPPERCASE123!', 'WithoutDigits!!', 'WithoutSymbol123', 'A'.repeat(129) + 'a1!',
-  ])('disables saving and blocks submission for invalid password %s', password => {
+  ])('disables saving and blocks submission for invalid password %s', async password => {
     const {fixture,page}=setup();
+    await fixture.whenStable();
     page.userName='staff'; page.email='staff@example.test'; page.accountRoles=['r1']; page.password=password;
-    fixture.detectChanges();
+    fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
     const button=Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(b=>b.textContent?.trim()==='Account opslaan')!;
     expect(button.disabled).toBe(true);
     page.saveAccount();
     http.expectNone('/api/auth/csrf');
-    page.password='ValidPassword123!';
-    fixture.detectChanges();
+    const passwordInput=fixture.nativeElement.querySelector('input[name=password]') as HTMLInputElement;
+    passwordInput.value='ValidPassword123!'; passwordInput.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
     expect(button.disabled).toBe(false);
   });
   it('creates an account with selected roles and clears the password after saving', () => {
