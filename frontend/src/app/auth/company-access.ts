@@ -32,7 +32,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
           <button type="button" class="secondary" [disabled]="busy()" (click)="editRole(role)">Rol aanpassen</button>
           </div>
         } @empty { <p>Er zijn nog geen bedrijfsrollen.</p> }
-        <h3 class="access-form-heading">{{ editingRole ? 'Rol aanpassen' : 'Nieuwe rol' }}</h3>
+        <h3 class="access-form-heading account-form-divider">{{ editingRole ? 'Rol aanpassen' : 'Nieuwe rol' }}</h3>
         <form (ngSubmit)="saveRole()">
           <label>Rolnaam <input name="roleName" [(ngModel)]="roleName" required maxlength="80" [disabled]="busy()" /></label>
           <fieldset [disabled]="busy()">
