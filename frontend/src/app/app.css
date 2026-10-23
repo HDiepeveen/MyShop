@@ -155,6 +155,8 @@ footer {
     padding: 18px;
   }
   .brand {
+    flex-direction: row;
+    align-items: center;
     font-size: 22px;
   }
   .nav-label,
