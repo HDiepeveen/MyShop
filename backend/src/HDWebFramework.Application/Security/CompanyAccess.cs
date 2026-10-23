@@ -9,8 +9,8 @@ public static class CompanyPermissions
     {
         ["overview"] = "Overzicht", ["categories"] = "Categorieën", ["productTypes"] = "Producttypen",
         ["products"] = "Producten", ["orders"] = "Bestellingen", ["customers"] = "Klanten",
-        ["payments"] = "Betaalopties", ["delivery"] = "Bezorgopties", ["email"] = "E-mailinstellingen",
-        ["billing"] = "Facturatie en btw", ["appearance"] = "Vormgeving", ["seo"] = "Webshop en SEO",
+        ["paymentSettings"] = "Betaalinstellingen", ["payments"] = "Betaalopties", ["delivery"] = "Bezorgopties", ["email"] = "E-mailinstellingen",
+        ["billing"] = "Facturatie en btw", ["appearance"] = "Vormgeving", ["seo"] = "Website en SEO",
     };
 }
 public sealed record CompanyRole(string Id, string Name, string Revision, IReadOnlyList<string> Permissions);

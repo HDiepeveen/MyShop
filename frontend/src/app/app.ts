@@ -9,7 +9,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Cart } from './shop/cart';
 import { Component, inject, signal } from '@angular/core';
 import { Auth } from './auth/auth';
-import { managementMenu } from './auth/management-menu';
+import { managementMenu, managementMenuGroups } from './auth/management-menu';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -23,8 +23,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 export class App {
   readonly managementMenu = managementMenu;
   managementGroups() {
-    return [managementMenu.slice(0, 3), managementMenu.slice(3, 6), managementMenu.slice(6, 8),
-      managementMenu.slice(8, 11), managementMenu.slice(11, 12), managementMenu.slice(12)]
+    return managementMenuGroups
       .map(items => items.filter(item => this.auth.canUse(item.code) || !this.auth.isManagement()))
       .filter(items => items.length > 0);
   }

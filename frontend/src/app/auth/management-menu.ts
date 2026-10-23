@@ -19,3 +19,8 @@ export function managementPermission(url: string): string | null {
   if (path === '/') return 'overview';
   return managementMenu.find(item => path === item.path || path.startsWith(item.path + '/'))?.code ?? null;
 }
+
+export const managementMenuGroups = [
+  managementMenu.slice(0, 3), managementMenu.slice(3, 6), managementMenu.slice(6, 8),
+  managementMenu.slice(8, 11), managementMenu.slice(11, 12), managementMenu.slice(12),
+];

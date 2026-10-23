@@ -19,6 +19,21 @@ describe('Company account and role configuration', () => {
     return { fixture, page: fixture.componentInstance };
   }
   afterEach(() => http.verify());
+  it('uses menu labels and groups rather than backend ordering or outdated labels', () => {
+    const { page, fixture } = setup();
+    page.data.set({ ...data, permissions: [
+      { code: 'email', name: 'Email' }, { code: 'paymentSettings', name: 'Mollie' },
+      { code: 'seo', name: 'Webshop en SEO' }, { code: 'products', name: 'Products' },
+      { code: 'orders', name: 'Orders' },
+    ] });
+    fixture.detectChanges();
+    expect(page.permissionGroups().map(group => group.map(item => item.name))).toEqual([
+      ['Producten'], ['Bestellingen'], ['Website en SEO'], ['Bedrijfsbeheerders en rollen'], ['Betaalinstellingen', 'E-mailinstellingen'],
+    ]);
+    expect(fixture.nativeElement.querySelectorAll('.permission-group').length).toBe(5);
+    expect(fixture.nativeElement.textContent).toContain('alleen de volledige beheerder');
+    expect(page.permissionNames({ ...data.roles[0], permissions: ['email', 'products', 'seo'] })).toBe('Producten, Website en SEO, E-mailinstellingen');
+  });
   it('edits only checked permissions with the current revision and CSRF protection', async () => {
     const { fixture, page } = setup();
     (fixture.nativeElement.querySelector('section button') as HTMLButtonElement).click();

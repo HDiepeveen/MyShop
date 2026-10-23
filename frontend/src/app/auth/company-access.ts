@@ -1,3 +1,4 @@
+import { managementMenu, managementMenuGroups } from './management-menu';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -33,9 +34,17 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
           <label>Rolnaam <input name="roleName" [(ngModel)]="roleName" required maxlength="80" [disabled]="busy()" /></label>
           <fieldset [disabled]="busy()">
             <legend>Toegang tot beheeronderdelen</legend>
-            @for (permission of items.permissions; track permission.code) {
-              <label><input type="checkbox" [checked]="rolePermissions.includes(permission.code)"
-                (change)="togglePermission(permission.code, $event)" />{{ permission.name }}</label>
+            @for (group of permissionGroups(); track $index) {
+              <div class="permission-group">
+                @for (permission of group; track permission.code) {
+                  @if (permission.code === 'companyAccess') {
+                    <p class="admin-only">{{ permission.name }} — alleen de volledige beheerder</p>
+                  } @else {
+                    <label><input type="checkbox" [checked]="rolePermissions.includes(permission.code)"
+                      (change)="togglePermission(permission.code, $event)" />{{ permission.name }}</label>
+                  }
+                }
+              </div>
             }
           </fieldset>
           <button type="submit" [disabled]="busy() || !roleName.trim()">Rol opslaan</button>
@@ -71,8 +80,14 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
       </section>
     }
   `,
+  styles: [`.permission-group + .permission-group { border-top: 1px solid #9eb7af; margin-top: 16px; padding-top: 16px; } .admin-only { margin: 0; }`],
 })
 export class CompanyAccessPage {
+  permissionGroups() {
+    const available = new Set(this.data()?.permissions.map(item => item.code) ?? []);
+    return managementMenuGroups.map(group => group.filter(item => item.code === 'companyAccess' || available.has(item.code)))
+      .filter(group => group.length > 0);
+  }
   private readonly http = inject(HttpClient);
   private readonly auth = inject(Auth);
   private readonly destroyRef = inject(DestroyRef);
@@ -117,7 +132,7 @@ export class CompanyAccessPage {
   private toggle(items: string[], item: string, event: Event) {
     return (event.target as HTMLInputElement).checked ? [...new Set([...items, item])] : items.filter(value => value !== item);
   }
-  permissionNames(role: CompanyRole) { return this.data()?.permissions.filter(item => role.permissions.includes(item.code)).map(item => item.name).join(', '); }
+  permissionNames(role: CompanyRole) { return managementMenu.filter(item => role.permissions.includes(item.code)).map(item => item.name).join(', '); }
   roleNames(account: CompanyAccount) { return this.data()?.roles.filter(role => account.roles.includes(role.id)).map(role => role.name).join(', '); }
   saveRole() {
     if (this.busy() || this.loading() || !this.data() || !this.roleName.trim() || this.roleName.trim().length > 80) return;

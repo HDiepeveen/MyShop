@@ -33,6 +33,7 @@ public sealed class ManagementAuthorization(ICompanyAccess access) : Authorizati
         _ when Segment(route, "/api/product-types") => "productTypes",
         _ when Segment(route, "/api/orders") => "orders",
         _ when Segment(route, "/api/customers") => "customers",
+        _ when Segment(route, "/api/payment-options/mollie") => "paymentSettings",
         _ when Segment(route, "/api/payment-options") => "payments",
         _ when Segment(route, "/api/delivery-methods") => "delivery",
         _ when Segment(route, "/api/email-settings") => "email",

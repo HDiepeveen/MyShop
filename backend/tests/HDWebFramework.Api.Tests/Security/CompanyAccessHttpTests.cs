@@ -10,6 +10,26 @@ namespace HDWebFramework.Api.Tests.Security;
 public sealed class CompanyAccessHttpTests
 {
     [SecuritySqlFact]
+    public async Task ProviderAndCheckoutPermissionsCanBeDelegatedSeparately()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var role = await CreateRole(host.Client, "Checkout only", ["payments"]);
+        var employee = await CreateAccount(host.Client, "payment-user", [role.Id]);
+        var cookies = new CookieContainer();
+        using var client = new HttpClient(new HttpClientHandler { CookieContainer = cookies, AllowAutoRedirect = false }) { BaseAddress = host.Client.BaseAddress };
+        await Csrf(client, cookies);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/login", new { userName = employee.UserName, password = SecurityHost.Password })).StatusCode);
+        await Csrf(client, cookies);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/payment-options")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/payment-options/mollie")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.PostAsJsonAsync("/api/payment-options/mollie/check", new { revision = Guid.NewGuid() })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync("/api/company-access/roles/" + role.Id, new SaveCompanyRole("Provider only", ["paymentSettings"], role.Revision))).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/payment-options/mollie")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/payment-options")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/company-access")).StatusCode);
+    }
+    [SecuritySqlFact]
     public async Task AllAssignableSectionsWorkAndRevokedWritePermissionsStopImmediately()
     {
         await using var host = await SecurityHost.Create();
