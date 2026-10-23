@@ -1,4 +1,3 @@
-import { MollieSettingsEditor } from './mollie-settings';
 import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -8,11 +7,10 @@ import { loadState } from '../catalog/load-state';
 import { errorMessage } from '../catalog/error-message';
 
 @Component({
-  imports: [FormsModule, MollieSettingsEditor],
+  imports: [FormsModule],
   template: `
     <div class="eyebrow">Checkout</div>
     <h1>Betaalopties</h1>
-    <app-mollie-settings (saved)="reload()" />
     <p class="muted">Bepaal uit welke opties klanten bij het afrekenen kunnen kiezen.</p>
     @if (state()?.loading) {
       <p role="status">Betaalopties ophalen…</p>

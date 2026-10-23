@@ -19,6 +19,7 @@ export class Auth {
     return !!this.session()?.authenticated && !!(this.session()?.administrator || this.session()?.businessAdministrator);
   }
   canUse(permission: string) {
+    if (permission === 'paymentSettings') permission = 'payments';
     return this.isManagement() && (!!this.session()?.administrator || (permission !== 'companyAccess' && !!this.session()?.permissions?.includes(permission)));
   }
   canOpen(url: string) {

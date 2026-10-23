@@ -10,8 +10,9 @@ export const managementMenu = [
   { code: 'payments', name: 'Betaalopties', path: '/instellingen/betalen' },
   { code: 'delivery', name: 'Bezorgopties', path: '/instellingen/bezorgen' },
   { code: 'billing', name: 'Facturatie en btw', path: '/instellingen/facturatie' },
-  { code: 'email', name: 'E-mailinstellingen', path: '/instellingen/email' },
   { code: 'companyAccess', name: 'Bedrijfsbeheerders en rollen', path: '/instellingen/bedrijfsbeheerders' },
+  { code: 'paymentSettings', name: 'Betaalinstellingen', path: '/instellingen/betaalinstellingen' },
+  { code: 'email', name: 'E-mailinstellingen', path: '/instellingen/email' },
 ] as const;
 export function managementPermission(url: string): string | null {
   const path = url.split(/[?#]/)[0];

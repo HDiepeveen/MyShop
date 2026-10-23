@@ -6,6 +6,11 @@ import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
+    path: 'instellingen/betaalinstellingen',
+    loadComponent: () => import('./checkout/payment-provider-settings').then(m => m.PaymentProviderSettings),
+    title: 'Betaalinstellingen · HD Web Framework',
+  },
+  {
     path: 'instellingen/bedrijfsbeheerders',
     loadComponent: () => import('./auth/company-access').then(m => m.CompanyAccessPage),
     title: 'Bedrijfsbeheerders en rollen · HD Web Framework',
