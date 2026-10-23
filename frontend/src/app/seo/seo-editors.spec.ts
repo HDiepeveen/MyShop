@@ -58,7 +58,7 @@ describe('SEO editors', () => {
     input.value='';input.dispatchEvent(new Event('input'));await fixture.whenStable();
     const page=fixture.componentInstance; page.home.menuOrder=['contact','home'];page.notice.set('Vorige bevestiging');
     const form=fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
-    page.save(form); await fixture.whenStable(); fixture.detectChanges();
+    page.save(form, 'website'); await fixture.whenStable(); fixture.detectChanges();
     expect(page.error()).toContain('Naam');
     expect(page.notice()).toBe('');
     expect(fixture.nativeElement.querySelector('.save-feedback[role=alert]')?.textContent).toContain('Niet opgeslagen');
@@ -68,7 +68,7 @@ describe('SEO editors', () => {
   it('shows the precise SEO error at the save controls instead of a generic message', async () => {
     const fixture=TestBed.createComponent(SeoSettings);
     http.expectOne('/api/seo-settings').flush({heading:'Assortiment',seoTitle:'Shop',revision});
-    fixture.componentInstance.save();
+    fixture.componentInstance.save(undefined, 'menu');
     http.expectOne('/api/seo-settings').flush({code:'invalidSeo',message:'Gebruik een geldige volgorde voor de menubalk.'},{status:400,statusText:'Bad Request'});
     await fixture.whenStable(); fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.save-feedback[role=alert]')?.textContent).toContain('geldige volgorde');
@@ -125,7 +125,7 @@ describe('SEO editors', () => {
     if (field === 'title') page.home.items[0].title = '   ';
     if (field === 'description') page.home.items[0].description = '';
     fixture.detectChanges(); await fixture.whenStable();
-    const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+    const form = fixture.nativeElement.querySelector(field === 'shopName' ? 'form[aria-labelledby=website-heading]' : 'form[aria-labelledby=pages-heading]') as HTMLFormElement;
     expect(form.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
     form.dispatchEvent(new Event('submit', {bubbles:true,cancelable:true})); fixture.detectChanges();
     http.expectNone(request => request.method === 'PUT');
@@ -140,6 +140,52 @@ describe('SEO editors', () => {
     const request = http.expectOne('/api/seo-settings');
     expect(request.request.method).toBe('PUT');
     request.flush({}, {status:409,statusText:'Conflict'});
+  });
+  it.each(['website','assortment','pages','menu'] as const)('saves only the %s tile and keeps other drafts and the new revision', section => {
+    const fixture=TestBed.createComponent(SeoSettings);
+    const baseline={heading:'Saved assortment',seoTitle:'Saved SEO',revision,shopName:'Saved shop',welcomeText:'Welcome',introduction:'Saved intro',footerText:'Saved footer',currency:'EUR',
+      company:{heading:'Saved contact',name:null,description:'Saved company',address:null,email:null,phone:null,openingHours:null},
+      home:{enabled:true,heading:'Saved home',place:'Zwolle',menuOrder:['home','contact'],items:[]}};
+    http.expectOne('/api/seo-settings').flush(baseline);
+    const page=fixture.componentInstance;
+    page.shopName='Draft shop';page.currency='USD';page.home.place='Amsterdam';
+    page.heading='Draft assortment';page.seoTitle='Draft SEO';page.introduction='Draft intro';
+    page.home.heading='Draft home';page.company.heading='Draft contact';page.home.menuOrder=['contact','home'];
+    page.save(undefined,section);
+    const request=http.expectOne('/api/seo-settings');const body=request.request.body;
+    expect(body.shopName).toBe(section==='website'?'Draft shop':'Saved shop');
+    expect(body.currency).toBe(section==='website'?'USD':'EUR');
+    expect(body.heading).toBe(section==='assortment'?'Draft assortment':'Saved assortment');
+    expect(body.home.place).toBe(section==='website'?'Amsterdam':'Zwolle');
+    expect(body.home.heading).toBe(section==='pages'?'Draft home':'Saved home');
+    expect(body.company.heading).toBe(section==='pages'?'Draft contact':'Saved contact');
+    expect(body.home.menuOrder).toEqual(section==='menu'?['contact','home']:['home','contact']);
+    request.flush(null);
+    http.expectOne('/api/seo-settings').flush({...body,revision:'next'});
+    expect(page.settings()?.revision).toBe('next');
+    expect(page.shopName).toBe('Draft shop');expect(page.heading).toBe('Draft assortment');
+    expect(page.home.heading).toBe('Draft home');expect(page.company.heading).toBe('Draft contact');
+    expect(page.home.place).toBe('Amsterdam');expect(page.home.menuOrder).toEqual(['contact','home']);
+    expect(page.notice()).toContain('opgeslagen');
+    page.save(undefined,'menu');
+    const next=http.expectOne('/api/seo-settings');
+    expect(next.request.body.revision).toBe('next');
+    next.flush({}, {status:409,statusText:'Conflict'});
+  });
+  it('can save menu order while a new page and website name are unfinished', async () => {
+    const fixture=TestBed.createComponent(SeoSettings);
+    http.expectOne('/api/seo-settings').flush({heading:'Assortiment',seoTitle:'Shop',revision,shopName:'Saved shop',introduction:'Intro',company:{heading:'Contact'},home:{enabled:true,heading:'Home',items:[]}});
+    await fixture.whenStable();
+    const page=fixture.componentInstance;page.shopName='';page.home.items.push({title:'',description:''});page.home.menuOrder=['contact','home'];
+    fixture.changeDetectorRef.markForCheck();fixture.detectChanges();await fixture.whenStable();
+    const form=fixture.nativeElement.querySelector('form[aria-labelledby=menu-order-heading]') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+    const request=http.expectOne('/api/seo-settings');
+    expect(request.request.body.shopName).toBe('Saved shop');expect(request.request.body.home.items).toEqual([]);
+    request.flush(null);http.expectOne('/api/seo-settings').flush({...request.request.body,revision:'next'});
+    await fixture.whenStable();fixture.detectChanges();
+    expect(form.querySelector('[role=status]')?.textContent).toContain('Menubalkvolgorde opgeslagen');
+    expect(page.shopName).toBe('');expect(page.home.items[0].title).toBe('');
   });
   it('saves one website place and an independent home text without requiring extra pages', () => {
     const fixture = TestBed.createComponent(SeoSettings);

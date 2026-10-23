@@ -12,41 +12,48 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CatalogApi } from '../catalog/catalog.api';
 import { errorMessage } from '../catalog/error-message';
 import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
+type SettingsSection = 'website' | 'assortment' | 'pages' | 'menu';
 @Component({ imports: [FormsModule, RouterLink, PageBackgroundEditor], template: `
   <h1>Website en SEO</h1>
   <p>De koptekst staat boven je producten. De SEO-titel wordt gebruikt voor het browsertabblad en als aanwijzing voor zoekmachines.</p>
   @if (loading()) { <p role="status">Instellingen ophalen…</p> }
   @if (error()) { <p role="alert">{{ error() }}</p><button type="button" [disabled]="busy() || loading()" (click)="load()">Opnieuw ophalen</button> }
   @if (settings()) {
-    <form #settingsForm="ngForm" (ngSubmit)="save(settingsForm)">
-      <section class="panel" aria-labelledby="website-heading">
+    <div class="settings-sections">
+      <form class="panel" #websiteForm="ngForm" (ngSubmit)="save(websiteForm, 'website')" aria-labelledby="website-heading">
       <h2 id="website-heading">Website</h2>
       <label>Plaats website (optioneel)<input name="sitePlace" [(ngModel)]="home.place" maxlength="100" placeholder="Bijvoorbeeld Zwolle" [disabled]="busy()" /></label>
-      <label>Naam<input name="shopName" [(ngModel)]="shopName" [class.invalid-required]="submitted() && !shopName.trim()" [attr.aria-invalid]="submitted() && !shopName.trim() ? 'true' : null" maxlength="100" required [disabled]="busy()" /></label>
+      <label>Naam<input name="shopName" [(ngModel)]="shopName" [class.invalid-required]="submittedFor('website') && !shopName.trim()" [attr.aria-invalid]="submittedFor('website') && !shopName.trim() ? 'true' : null" maxlength="100" required [disabled]="busy()" /></label>
       <fieldset [disabled]="busy()"><legend>Icoontjes in menubalk</legend>
       <p>Gebruikt het telefoonnummer uit Contact. Zonder telefoonnummer wordt dit onderdeel niet getoond.</p>
       <label><input type="checkbox" name="showHeaderPhone" [(ngModel)]="showHeaderPhone" />Telefoon</label>
       <label><input type="checkbox" name="showHeaderWhatsapp" [(ngModel)]="showHeaderWhatsapp" />WhatsApp</label></fieldset>
       <label>Tekst onderaan de winkel<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
-      <label>Valuta<select name="currency" [(ngModel)]="currency" required [disabled]="busy()" [class.invalid-required]="submitted() && !validCurrency()">@if (currency && !knownCurrency(currency)) { <option [value]="currency">{{ currency }} (huidige valuta)</option> }
+      <label>Valuta<select name="currency" [(ngModel)]="currency" required [disabled]="busy()" [class.invalid-required]="submittedFor('website') && !validCurrency()">@if (currency && !knownCurrency(currency)) { <option [value]="currency">{{ currency }} (huidige valuta)</option> }
           @for (item of currencies; track item.code) { <option [value]="item.code">{{ item.name }}</option> }</select></label>
       <p>Bij wijziging krijgen alle bestaande productprijzen deze valuta; de prijsbedragen blijven exact gelijk en worden niet omgerekend. Daarna kun je de valuta per productprijs weer aanpassen.</p>
-      </section>
-      <section class="panel" aria-labelledby="assortment-heading">
+      @if (activeSection() === 'website' && error()) { <p class="validation-error save-feedback" role="alert">{{ error() }}</p> }
+      @if (activeSection() === 'website' && notice()) { <p class="success save-feedback" role="status">{{ notice() }}</p> }
+      <button type="submit" [disabled]="busy() || loading()">{{ busy() && activeSection() === 'website' ? 'Opslaan…' : 'Website opslaan' }}</button>
+      </form>
+      <form class="panel" #assortmentForm="ngForm" (ngSubmit)="save(assortmentForm, 'assortment')" aria-labelledby="assortment-heading">
       <h2 id="assortment-heading">Assortiment</h2>
-      <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" [class.invalid-required]="submitted() && !heading.trim()" [attr.aria-invalid]="submitted() && !heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
-      <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" [class.invalid-required]="submitted() && !introduction.trim()" [attr.aria-invalid]="submitted() && !introduction.trim() ? 'true' : null" maxlength="1000" required [disabled]="busy()"></textarea></label>
+      <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" [class.invalid-required]="submittedFor('assortment') && !heading.trim()" [attr.aria-invalid]="submittedFor('assortment') && !heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
+      <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" [class.invalid-required]="submittedFor('assortment') && !introduction.trim()" [attr.aria-invalid]="submittedFor('assortment') && !introduction.trim() ? 'true' : null" maxlength="1000" required [disabled]="busy()"></textarea></label>
       <app-page-background-editor pageId="d2f06ded-68a2-4936-9880-327d616d1a42" [revision]="settings()!.revision" [imageUrl]="settings()?.assortmentImageUrl" [(mode)]="assortmentImageMode" [disabled]="busy()" (working)="busy.set($event)" (stored)="backgroundStored($event)" />
-      <label>SEO-titel assortiment<input name="seoTitle" [(ngModel)]="seoTitle" [class.invalid-required]="submitted() && !seoTitle.trim()" [attr.aria-invalid]="submitted() && !seoTitle.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
+      <label>SEO-titel assortiment<input name="seoTitle" [(ngModel)]="seoTitle" [class.invalid-required]="submittedFor('assortment') && !seoTitle.trim()" [attr.aria-invalid]="submittedFor('assortment') && !seoTitle.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>SEO-omschrijving assortiment<textarea name="seoDescription" [(ngModel)]="seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
-      </section>
-      <section class="panel" aria-labelledby="pages-heading">
+      @if (activeSection() === 'assortment' && error()) { <p class="validation-error save-feedback" role="alert">{{ error() }}</p> }
+      @if (activeSection() === 'assortment' && notice()) { <p class="success save-feedback" role="status">{{ notice() }}</p> }
+      <button type="submit" [disabled]="busy() || loading()">{{ busy() && activeSection() === 'assortment' ? 'Opslaan…' : 'Assortiment opslaan' }}</button>
+      </form>
+      <form class="panel" #pagesForm="ngForm" (ngSubmit)="save(pagesForm, 'pages')" aria-labelledby="pages-heading">
       <h2 id="pages-heading">Pagina’s</h2>
       <h3>Home pagina</h3>
       <p>SEO-velden zijn optioneel. Leeg gebruikt de automatische titel of omschrijving. Een ingevulde SEO-titel wordt exact gebruikt, zonder automatische toevoegingen.</p>
       <p>De verplichte titel van een extra pagina bepaalt het webadres, zonder plaatsnaam. Na opslaan verandert het webadres mee als je de titel wijzigt.</p>
       <label><input type="checkbox" name="homeEnabled" [(ngModel)]="home.enabled" [disabled]="busy()" />Home pagina inschakelen</label>
-      <label>Titel<input name="homeHeading" [(ngModel)]="home.heading" [class.invalid-required]="submitted() && !home.heading.trim()" [attr.aria-invalid]="submitted() && !home.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
+      <label>Titel<input name="homeHeading" [(ngModel)]="home.heading" [class.invalid-required]="submittedFor('pages') && !home.heading.trim()" [attr.aria-invalid]="submittedFor('pages') && !home.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Omschrijving<textarea name="homeDescription" [(ngModel)]="home.description" maxlength="4000" rows="7" [disabled]="busy()"></textarea></label>
       <fieldset [disabled]="busy() || loading()">
         <legend>Achtergrondfoto</legend>
@@ -63,9 +70,9 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       @for (item of home.items; track item; let i = $index) {
         <fieldset [disabled]="busy()">
           <legend>Pagina {{ i + 1 }}</legend>
-          <label>Titel<input [name]="'homeTitle' + i" [(ngModel)]="item.title" [class.invalid-required]="submitted() && !item.title?.trim()" [attr.aria-invalid]="submitted() && !item.title?.trim() ? 'true' : null" maxlength="200" required /></label>
+          <label>Titel<input [name]="'homeTitle' + i" [(ngModel)]="item.title" [class.invalid-required]="submittedFor('pages') && !item.title?.trim()" [attr.aria-invalid]="submittedFor('pages') && !item.title?.trim() ? 'true' : null" maxlength="200" required /></label>
           @if (item.webAddress) { <p>Huidig webadres (wordt bijgewerkt na opslaan): <a [routerLink]="'/' + item.webAddress">/{{ item.webAddress }}</a></p> }
-          <label>Omschrijving<textarea [name]="'homeDescription' + i" [(ngModel)]="item.description" [class.invalid-required]="submitted() && !item.description.trim()" [attr.aria-invalid]="submitted() && !item.description.trim() ? 'true' : null" maxlength="4000" rows="5" required></textarea></label>
+          <label>Omschrijving<textarea [name]="'homeDescription' + i" [(ngModel)]="item.description" [class.invalid-required]="submittedFor('pages') && !item.description.trim()" [attr.aria-invalid]="submittedFor('pages') && !item.description.trim() ? 'true' : null" maxlength="4000" rows="5" required></textarea></label>
           <app-page-background-editor [pageId]="item.pageId" [revision]="settings()!.revision" [imageUrl]="item.imageUrl" [(mode)]="item.imageMode" [disabled]="busy()" (working)="busy.set($event)" (stored)="backgroundStored($event)" />
           <label>SEO-titel (optioneel)<input [name]="'pageSeoTitle' + i" [(ngModel)]="item.seoTitle" maxlength="200" /></label>
           <label>SEO-omschrijving (optioneel)<textarea [name]="'pageSeoDescription' + i" [(ngModel)]="item.seoDescription" maxlength="500"></textarea></label>
@@ -78,7 +85,7 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <h3>Contact pagina</h3>
       <label><input type="checkbox" name="contactEnabled" [(ngModel)]="home.contactEnabled" [disabled]="busy()" />Contact pagina inschakelen</label>
       <p>Deze informatie is openbaar op de bedrijfspagina. De bedrijfsgegevens voor facturen stel je apart in bij Facturatie en btw.</p>
-      <label>Titel<input name="companyHeading" [(ngModel)]="company.heading" [class.invalid-required]="submitted() && !company.heading.trim()" [attr.aria-invalid]="submitted() && !company.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
+      <label>Titel<input name="companyHeading" [(ngModel)]="company.heading" [class.invalid-required]="submittedFor('pages') && !company.heading.trim()" [attr.aria-invalid]="submittedFor('pages') && !company.heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Omschrijving<textarea name="companyDescription" [(ngModel)]="company.description" maxlength="4000" rows="6" [disabled]="busy()"></textarea></label>
       <label>Adres<textarea name="companyAddress" [(ngModel)]="company.address" maxlength="500" rows="3" [disabled]="busy()"></textarea></label>
       <label>E-mailadres<input name="companyEmail" type="email" [(ngModel)]="company.email" maxlength="254" [disabled]="busy()" /></label>
@@ -87,23 +94,24 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <app-page-background-editor pageId="ac8107f2-a136-4b4f-9e85-b70f14860701" [revision]="settings()!.revision" [imageUrl]="company.imageUrl" [(mode)]="company.imageMode" [disabled]="busy()" (working)="busy.set($event)" (stored)="backgroundStored($event)" />
       <label>SEO-titel contactpagina<input name="companySeoTitle" [(ngModel)]="company.seoTitle" maxlength="200" [disabled]="busy()" /></label>
       <label>SEO-omschrijving contactpagina<textarea name="companySeoDescription" [(ngModel)]="company.seoDescription" maxlength="500" [disabled]="busy()"></textarea></label>
-      </section>
-      <section class="panel" aria-labelledby="menu-order-heading">
+      @if (activeSection() === 'pages' && error()) { <p class="validation-error save-feedback" role="alert">{{ error() }}</p> }
+      @if (activeSection() === 'pages' && notice()) { <p class="success save-feedback" role="status">{{ notice() }}</p> }
+      <button type="submit" [disabled]="busy() || loading()">{{ busy() && activeSection() === 'pages' ? 'Opslaan…' : 'Pagina’s opslaan' }}</button>
+      </form>
+      <form class="panel" #menuForm="ngForm" (ngSubmit)="save(menuForm, 'menu')" aria-labelledby="menu-order-heading">
       <h2 id="menu-order-heading">Volgorde in menubalk</h2>
-      <p>Verplaats de paginalinks met Omhoog en Omlaag. Alleen ingeschakelde pagina’s en zichtbare categorieën worden getoond.</p>
+      <p>Verplaats de paginalinks met Omhoog en Omlaag. Alleen ingeschakelde pagina’s en zichtbare categorieën worden getoond. Nieuwe pagina’s worden zichtbaar op de website nadat je Pagina’s opslaan gebruikt.</p>
       <ol class="menu-order">
         @for (link of menuLinks(); track link.key; let i = $index) {
           <li><span class="menu-order-name">{{ link.name }}</span><span class="menu-order-actions"><button type="button" class="secondary" [disabled]="busy() || i === 0" (click)="moveMenuLink(i, -1)">Omhoog</button>
           <button type="button" class="secondary" [disabled]="busy() || i === menuLinks().length - 1" (click)="moveMenuLink(i, 1)">Omlaag</button></span></li>
         }
       </ol>
-      </section>
-      @if (submitted() && invalidPageTitles()) { <p class="validation-error">Vul voor elke extra pagina een titel in. Controleer de rood gemarkeerde velden.</p> }
-      <p class="muted">Wijzigingen aan de menuvolgorde worden pas toegepast na Instellingen opslaan.</p>
-      @if (error()) { <p class="validation-error save-feedback" role="alert">{{ error() }}</p> }
-      @if (notice()) { <p class="success save-feedback" role="status">{{ notice() }}</p> }
-      <button type="submit" [disabled]="busy() || loading()">{{ busy() ? 'Opslaan…' : 'Instellingen opslaan' }}</button>
-    </form>
+      @if (activeSection() === 'menu' && error()) { <p class="validation-error save-feedback" role="alert">{{ error() }}</p> }
+      @if (activeSection() === 'menu' && notice()) { <p class="success save-feedback" role="status">{{ notice() }}</p> }
+      <button type="submit" [disabled]="busy() || loading()">{{ busy() && activeSection() === 'menu' ? 'Opslaan…' : 'Menubalkvolgorde opslaan' }}</button>
+      </form>
+    </div>
   }
 
 `, styles: [`input.invalid-required, textarea.invalid-required, select.invalid-required, input.ng-invalid.ng-touched, textarea.ng-invalid.ng-touched { border: 2px solid #b42318; outline-color: #b42318; }
@@ -124,6 +132,8 @@ export class SeoSettings {
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly submitted = signal(false);
+  readonly activeSection = signal<SettingsSection | 'all'>('all');
+  submittedFor(section: SettingsSection) { return this.submitted() && (this.activeSection() === 'all' || this.activeSection() === section); }
   readonly settings = signal<ShopSeoSettings | null>(null);
   readonly busy = signal(false); readonly loading = signal(false); readonly error = signal(''); readonly notice = signal('');
   heading = ''; seoTitle = ''; shopName = 'HD Web Framework'; welcomeText = 'Welkom bij HD Web Framework'; introduction = 'Bekijk onze producten en kies de variant die bij je past.';
@@ -202,7 +212,70 @@ export class SeoSettings {
     return fields.length ? 'Niet opgeslagen. Controleer: ' + [...new Set(fields)].join(', ') + '. Controleer de rood gemarkeerde velden.'
       : 'Niet opgeslagen. Controleer de rood gemarkeerde velden en vul alle verplichte velden in.';
   }
-  save(form?: NgForm) {
+  private currentDraft(): ShopSeoSettings {
+    return { ...this.settings()!, currency: this.currency.trim().toUpperCase(), heading: this.heading, seoTitle: this.seoTitle,
+      seoDescription: this.seoDescription, shopName: this.shopName, welcomeText: this.welcomeText, introduction: this.introduction,
+      footerText: this.footerText, headerText: this.headerText, assortmentImageMode: this.assortmentImageMode,
+      showHeaderPhone: this.showHeaderPhone, showHeaderWhatsapp: this.showHeaderWhatsapp,
+      company: structuredClone(this.company), home: structuredClone(this.home) };
+  }
+  private saveSection(section: SettingsSection, form?: NgForm) {
+    const stored = this.settings();
+    if (!stored || this.busy() || this.loading()) return;
+    this.activeSection.set(section); this.submitted.set(true); this.error.set(''); this.notice.set('');
+    form?.form.markAllAsTouched();
+    const invalid = section === 'website' ? !this.shopName.trim() || !this.validCurrency()
+      : section === 'assortment' ? !this.heading.trim() || !this.introduction.trim() || !this.seoTitle.trim()
+      : section === 'pages' ? !this.home.heading.trim() || !this.company.heading.trim() || this.invalidPageTitles() || this.home.items.some(item => !item.description.trim()) : false;
+    if (form?.invalid || invalid) { this.error.set(this.validationMessage(form)); return; }
+    // Merge only this tile into the last saved snapshot. Other tiles can keep unfinished drafts.
+    const draft = this.currentDraft();
+    const body: ShopSeoSettings = structuredClone(stored);
+    const savedHome = structuredClone(stored.home ?? {enabled:false, heading:'Welkom', items:[]});
+    if (section === 'website') {
+      Object.assign(body, {shopName:draft.shopName, currency:draft.currency, footerText:draft.footerText,
+        showHeaderPhone:draft.showHeaderPhone, showHeaderWhatsapp:draft.showHeaderWhatsapp});
+      body.home = {...savedHome, place:draft.home?.place};
+    } else if (section === 'assortment') {
+      Object.assign(body, {heading:draft.heading, introduction:draft.introduction, seoTitle:draft.seoTitle,
+        seoDescription:draft.seoDescription, assortmentImageMode:draft.assortmentImageMode});
+    } else if (section === 'pages') {
+      body.company = draft.company;
+      body.home = {...draft.home!, place:savedHome.place, menuOrder:savedHome.menuOrder};
+    } else {
+      body.home = {...savedHome, menuOrder:[...(this.home.menuOrder ?? [])]};
+    }
+    this.busy.set(true);
+    this.api.updateSeoSettings(body).pipe(switchMap(() => this.api.seoSettings()), takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: saved => {
+        this.settings.set(saved);
+        // Apply server normalization only to the saved tile; keep drafts in the other three tiles.
+        if (section === 'website') {
+          this.shopName=saved.shopName; this.currency=saved.currency ?? 'EUR'; this.footerText=saved.footerText;
+          this.showHeaderPhone=saved.showHeaderPhone !== false; this.showHeaderWhatsapp=saved.showHeaderWhatsapp !== false;
+          this.home.place=saved.home?.place;
+        } else if (section === 'assortment') {
+          this.heading=saved.heading; this.introduction=saved.introduction; this.seoTitle=saved.seoTitle;
+          this.seoDescription=saved.seoDescription ?? ''; this.assortmentImageMode=saved.assortmentImageMode;
+        } else if (section === 'pages') {
+          const place=this.home.place, order=this.home.menuOrder;
+          this.home={...structuredClone(saved.home!), place, menuOrder:order}; this.company=structuredClone(saved.company);
+        } else { this.home.menuOrder=[...(saved.home?.menuOrder ?? [])]; }
+        this.branding.name.set(saved.shopName); this.branding.currency.set(saved.currency ?? 'EUR');
+        this.branding.footerText.set(saved.footerText); this.branding.homeEnabled.set(saved.home?.enabled === true);
+        this.branding.contactEnabled.set(saved.home?.contactEnabled !== false); this.branding.menuOrder.set(saved.home?.menuOrder ?? []);
+        this.branding.homePages.set(saved.home?.enabled ? saved.home.items.map(page => ({name:page.title || 'Pagina',webAddress:page.webAddress || '',pageId:page.pageId})) : []);
+        this.branding.contactPhone.set(saved.company.phone?.trim() || null); this.branding.showHeaderPhone.set(saved.showHeaderPhone !== false); this.branding.showHeaderWhatsapp.set(saved.showHeaderWhatsapp !== false);
+        this.busy.set(false); this.submitted.set(false);
+        const names={website:'Website',assortment:'Assortiment',pages:'Pagina’s',menu:'Menubalkvolgorde'};
+        this.notice.set(names[section] + ' opgeslagen.');
+      },
+      error: error => {this.busy.set(false);this.error.set(errorMessage(error));},
+    });
+  }
+  save(form?: NgForm, section: SettingsSection | 'all' = 'all') {
+    if (section !== 'all') { this.saveSection(section, form); return; }
+    this.activeSection.set('all');
     const settings = this.settings();
     if (!settings || this.busy() || this.loading()) return;
     this.submitted.set(true); this.notice.set(''); form?.form.markAllAsTouched();

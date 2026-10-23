@@ -17,7 +17,7 @@ import { errorMessage } from '../catalog/error-message';
     @if (!pageId() || pageId() === emptyId) { <p>Sla de nieuwe pagina eerst op om een foto te uploaden.</p> }
     @else {
       <label>Afbeelding kiezen<input #fileInput type="file" accept="image/jpeg,image/png" (change)="choose(fileInput)" /></label>
-      <p>JPEG of PNG, maximaal 5 MB en 20 miljoen pixels. Uploaden bewaart alleen de foto; sla de overige velden op met Instellingen opslaan.</p>
+      <p>JPEG of PNG, maximaal 5 MB en 20 miljoen pixels. Uploaden bewaart alleen de foto; sla de overige velden op met de opslagknop van de betreffende tegel.</p>
       <button type="button" [disabled]="!file" (click)="change(fileInput)">Afbeelding uploaden</button>
       @if (imageUrl()) { <button type="button" class="secondary" (click)="change(fileInput,true)">Afbeelding verwijderen</button> }
     }
