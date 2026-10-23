@@ -30,7 +30,7 @@ import { ProductEditState } from './product-edit-state';
   ],
   template: `
     <section class="panel">
-      <h2>Productpresentatie</h2>
+      <h2>Productomschrijving</h2>
       <p>
         Status:
         <span class="badge">{{
@@ -44,7 +44,7 @@ import { ProductEditState } from './product-edit-state';
       </p>
       <form (ngSubmit)="save(false)">
         <label class="field"
-          >Beschrijving<textarea
+          >Omschrijving<textarea
             name="description"
             [(ngModel)]="description"
             maxlength="10000"
