@@ -175,7 +175,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               <p role="alert">Prijs niet beschikbaar. Probeer het later opnieuw.</p>
             } @else if (selectedPrice(); as price) {
               @if (price.amount !== null && price.currency) {
-                <p class="price">{{ price.currency | currencySymbol }} {{ amount(price.amount) }}</p>
+                <h3>{{ price.currency | currencySymbol }} {{ amount(price.amount) }}</h3>
               } @else {
                 <p>Voor deze variant is nog geen prijs beschikbaar.</p>
               }
