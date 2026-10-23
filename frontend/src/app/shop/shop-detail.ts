@@ -29,6 +29,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
       :host.assortment-photo .panel {background:rgba(0,0,0,.68);border-color:#ffffff40;color:#fff;}
       :host.assortment-photo .panel .muted, :host.assortment-photo .panel a:not(.button) {color:inherit;}
       @media(max-width:760px){:host.assortment-photo{width:calc(100% + 40px);margin:-24px -20px;padding:36px 20px 24px;}}
+      .product-attributes, .product-price { margin-top: 32px; }
       .description {
         white-space: pre-wrap;
         overflow-wrap: anywhere;
@@ -79,7 +80,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
             </nav>
           }
           @if (product.attributes?.length) {
-            <section [attr.aria-label]="product.attributesHeading || 'Productkenmerken'">
+            <section class="product-attributes" [attr.aria-label]="product.attributesHeading || 'Productkenmerken'">
               <h3>{{ product.attributesHeading || 'Productkenmerken' }}</h3>
               <dl class="detail-list">
                 @for (attribute of product.attributes; track attribute.attributeDefinitionId) {
@@ -167,7 +168,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
           } @else {
             <p>Er zijn geen varianten beschikbaar.</p>
           }
-          <section aria-label="Actuele prijs" aria-live="polite">
+          <section class="product-price" aria-label="Actuele prijs" aria-live="polite">
             @if (prices()?.loading) {
               <p>Prijs ophalen…</p>
             } @else if (prices()?.error) {
