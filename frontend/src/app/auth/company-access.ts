@@ -86,7 +86,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
       </section>
     }
   `,
-  styles: [`.account-form-divider { border-top: 1px solid #9eb7af; padding-top: 16px; } .access-form-heading { margin-top: 32px; } .access-row { display: flex; align-items: center; gap: 16px; padding-block: 8px; } .access-row p { margin: 0; min-width: 0; overflow-wrap: anywhere; } .access-row button { margin: 0 0 0 auto; flex-shrink: 0; } @media (max-width: 600px) { .access-row { flex-wrap: wrap; } } .permission-group + .permission-group { border-top: 1px solid #9eb7af; margin-top: 16px; padding-top: 16px; } .admin-only { margin: 0; }`],
+  styles: [`.account-form-divider { border-top: 1px solid #9eb7af; padding-top: 16px; } .access-form-heading { margin-top: 20px; } .access-row { display: flex; align-items: center; gap: 16px; padding-block: 8px; } .access-row p { margin: 0; min-width: 0; overflow-wrap: anywhere; } .access-row button { margin: 0 0 0 auto; flex-shrink: 0; } @media (max-width: 600px) { .access-row { flex-wrap: wrap; } } .permission-group + .permission-group { border-top: 1px solid #9eb7af; margin-top: 16px; padding-top: 16px; } .admin-only { margin: 0; }`],
 })
 export class CompanyAccessPage {
   permissionGroups() {
