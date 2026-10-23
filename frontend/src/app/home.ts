@@ -1,3 +1,4 @@
+import { Auth } from './auth/auth';
 import { CurrencySymbolPipe } from './shared/money';
 import { ShopBranding } from './shop/shop-branding';
 import { DatePipe } from '@angular/common';
@@ -25,6 +26,7 @@ import { loadState } from './catalog/load-state';
           <span class="card-number">ASSORTIMENT</span><h2>{{ data.productCount }} producten</h2>
           <p>{{ data.publishedProductCount }} gepubliceerd · {{ data.draftProductCount }} concept</p><span class="arrow">↗</span>
         </a>
+        @if (auth.canUse('payments')) {
         <a class="panel card-link" routerLink="/bestellingen">
           <span class="card-number">ACTIE NODIG</span><h2>{{ count(data.orders, 'awaitingPayment') }} wacht op betaling</h2>
           <p>{{ count(data.orders, 'paid') }} betaald · {{ count(data.orders, 'shipped') }} verzonden</p><span class="arrow">↗</span>
@@ -33,11 +35,13 @@ import { loadState } from './catalog/load-state';
           <span class="card-number">KLANTEN</span><h2>{{ data.customerCount }} accounts</h2>
           <p>Bekijk klantgegevens en toegang.</p><span class="arrow">↗</span>
         </a>
+        }
       </div>
       <div class="actions">
         <a class="button secondary" routerLink="/producten" [queryParams]="{ published: true }">Gepubliceerde producten bekijken</a>
         <a class="button secondary" routerLink="/producten" [queryParams]="{ published: false }">Conceptproducten bekijken</a>
       </div>
+      @if (auth.canUse('payments')) {
       <div class="grid">
         <section class="panel"><h2>Actieve omzet</h2>
           <p class="muted">Betaalde en verzonden bestellingen, exclusief terugbetalingen.</p>
@@ -63,10 +67,12 @@ import { loadState } from './catalog/load-state';
           </tr> }</tbody></table></div>
         } @else { <p>Nog geen bestellingen.</p> }
       </section>
+      }
     }
   `,
 })
 export class Home {
+  readonly auth = inject(Auth);
   readonly branding = inject(ShopBranding);
   private readonly api = inject(DashboardApi);
   private readonly reload = new BehaviorSubject(0);

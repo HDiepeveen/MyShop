@@ -1,3 +1,4 @@
+import { Auth } from './auth/auth';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -17,6 +18,8 @@ describe('Home', () => {
   afterEach(() => http.verify());
 
   it('shows the administrator dashboard and refreshes it', () => {
+    const auth = TestBed.inject(Auth);
+    auth.session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
 
@@ -79,6 +82,25 @@ describe('Home', () => {
     expect(text).toContain('MS-ORDER');
     expect(text).toContain('Ada Lovelace');
     expect(text).toContain('Betaald');
+
+    // A company role without payment options sees only the assortment overview.
+    auth.session.set({ authenticated: true, administrator: false, businessAdministrator: true,
+      permissions: ['overview', 'products', 'orders', 'customers', 'paymentSettings'], customer: false, name: 'Medewerker' });
+    fixture.detectChanges();
+    const restrictedText = fixture.nativeElement.textContent as string;
+    expect(restrictedText).toContain('8 producten');
+    for (const label of ['ACTIE NODIG', 'KLANTEN', 'Actieve omzet', 'Lage voorraad', 'Recente bestellingen']) {
+      expect(restrictedText).not.toContain(label);
+    }
+    expect(restrictedText).not.toContain('Ada Lovelace');
+    expect(restrictedText).not.toContain('42,50');
+
+    auth.session.update(session => ({ ...session!, permissions: ['overview', 'payments'] }));
+    fixture.detectChanges();
+    const paymentText = fixture.nativeElement.textContent as string;
+    for (const label of ['ACTIE NODIG', 'KLANTEN', 'Actieve omzet', 'Lage voorraad', 'Recente bestellingen']) {
+      expect(paymentText).toContain(label);
+    }
 
     fixture.componentInstance.refresh();
     http.expectOne('/api/dashboard').flush({
