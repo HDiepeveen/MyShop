@@ -12,6 +12,7 @@ import { loadState } from '../load-state';
 import { readProductListQuery } from './product-list-query';
 
 @Component({
+  styles: [`.product-type-filter { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; } .product-type-filter button { margin-left: auto; }`],
   providers: [ProductEditState],
   imports: [FormsModule, RouterLink, ProductDelete],
   template: ` <div class="eyebrow">Assortiment</div>
@@ -38,8 +39,8 @@ import { readProductListQuery } from './product-list-query';
         </p>
       }
       @if (filters().productTypeId; as typeId) {
-        <p>
-          Filter: <a [routerLink]="['/producttypen', typeId]">Geselecteerd producttype</a>
+        <p class="product-type-filter">
+          <span>Filter: <a [routerLink]="['/producttypen', typeId]">Geselecteerd producttype</a></span>
           <button type="button" class="secondary" (click)="clearFilter('productTypeId')">
             Producttypefilter verwijderen
           </button>
