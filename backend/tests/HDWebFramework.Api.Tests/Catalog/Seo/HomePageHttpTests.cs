@@ -11,6 +11,35 @@ namespace HDWebFramework.Api.Tests.Catalog.Seo;
 public sealed class HomePageHttpTests
 {
     [SecuritySqlFact]
+    public async Task Legacy_pages_receive_stable_distinct_ids_so_menu_order_can_be_saved()
+    {
+        await using var host = await SecurityHost.Create();
+        var legacy = """{"Enabled":true,"Heading":"Home","Items":[{"Title":"APK","Description":"Keuring.","WebAddress":"apk"},{"Title":"Reparatie","Description":"Reparaties.","WebAddress":"reparatie"}]}""";
+        await using (var scope = host.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<HDWebFrameworkDbContext>();
+            await db.Database.ExecuteSqlInterpolatedAsync($"UPDATE CatalogSeoSettings SET HomePageJson={legacy}");
+        }
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var settings = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
+        var pages = settings["home"]!["items"]!;
+        var first = pages[0]!["pageId"]!.GetValue<Guid>();
+        var second = pages[1]!["pageId"]!.GetValue<Guid>();
+        Assert.NotEqual(Guid.Empty, first); Assert.NotEqual(Guid.Empty, second); Assert.NotEqual(first, second);
+        var again = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
+        Assert.Equal(first, again["home"]!["items"]![0]!["pageId"]!.GetValue<Guid>());
+        var navigation = (await host.Client.GetFromJsonAsync<JsonObject>("/api/shop/settings"))!;
+        Assert.Equal(second, navigation["homePages"]![1]!["pageId"]!.GetValue<Guid>());
+        settings["home"]!["menuOrder"] = new JsonArray("page:" + second, "home", "page:" + first, "contact");
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/seo-settings", settings)).StatusCode);
+        var stored = (await host.Client.GetFromJsonAsync<JsonObject>("/api/seo-settings"))!;
+        Assert.Equal("page:" + second, stored["home"]!["menuOrder"]![0]!.GetValue<string>());
+        Assert.Equal(first, stored["home"]!["items"]![0]!["pageId"]!.GetValue<Guid>());
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/api/shop/pages/apk")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/api/shop/pages/reparatie")).StatusCode);
+    }
+
+    [SecuritySqlFact]
     public async Task Contact_can_be_disabled_and_navigation_order_is_persisted()
     {
         await using var host = await SecurityHost.Create();

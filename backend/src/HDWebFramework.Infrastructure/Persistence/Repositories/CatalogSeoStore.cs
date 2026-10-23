@@ -28,6 +28,7 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
             var legacyPlaces = home.Items.Select(item => SeoText.Optional(item.Place, 100)).Where(place => place is not null).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             if (legacyPlaces.Length == 1) home = home with { Place = legacyPlaces[0] };
         }
+        home = home.Normalize();
         var images = await context.PageBackgrounds.AsNoTracking().Select(x => x.PageId).ToListAsync(ct);
         string? ImageUrl(Guid id) => images.Contains(id) ? $"/api/shop/page-images/{id:D}?v={row.Version:D}" : null;
         home = home with { Items = home.Items.Select(item => item with { ImageUrl = ImageUrl(item.PageId) }).ToArray() };

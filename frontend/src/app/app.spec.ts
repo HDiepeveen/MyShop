@@ -52,7 +52,7 @@ it('offers accessible navigation and a skip link', async () => {
   expect(Array.from(websiteLinks, link => [link.textContent?.trim(), link.getAttribute('href')])).toEqual([['Home', '/'], ['Assortiment', '/assortiment']]);
   expect(element.querySelector('.skip')?.getAttribute('href')).toBe('#content');
   expect(element.querySelector('.sidebar-footer .webshop-version')?.textContent).toContain(webshopVersion.version);
-  expect(element.querySelector('.sidebar-footer')?.textContent?.trim()).toBe('Catalogusbeheer ' + webshopVersion.version);
+  expect(element.querySelector('.sidebar-footer')?.textContent?.trim()).toBe('HD Web Framework ' + webshopVersion.version);
   expect(element.querySelector('footer .webshop-version')).toBeNull();
 });
 

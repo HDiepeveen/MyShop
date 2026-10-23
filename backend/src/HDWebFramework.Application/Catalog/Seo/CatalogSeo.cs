@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -51,7 +52,10 @@ public sealed record HomePageSettings(bool Enabled, string Heading, IReadOnlyLis
         foreach (var item in items)
         {
             if (item is null) throw new ArgumentException("Vul de pagina in.");
-            var id = item.PageId == Guid.Empty && forSaving ? Guid.NewGuid() : item.PageId;
+            // Older website pages have no ID. Resolve a stable, distinct ID on reads as well as saves.
+            var id = item.PageId == Guid.Empty
+                ? new Guid(SHA256.HashData(Encoding.UTF8.GetBytes($"HDWebFramework.HomePage:{result.Count}:{item.WebAddress ?? item.Title ?? string.Empty}"))[..16])
+                : item.PageId;
             if (id == PageBackground.ContactId || id == PageBackground.AssortmentId || (id != Guid.Empty && !ids.Add(id))) throw new ArgumentException("Elke pagina moet een eigen identiteit hebben.");
             var title = SeoText.Optional(item.Title, 200);
             if (forSaving && title is null) throw new ArgumentException("Vul voor elke extra pagina een titel in.");
