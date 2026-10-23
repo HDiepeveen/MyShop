@@ -73,8 +73,6 @@ import { ProductEditState } from './product-edit-state';
     <section class="panel">
       <h2>Voorbeeld opgeslagen presentatie</h2>
       @if (product().presentation; as presentation) {
-        <p class="description">{{ presentation.description || 'Nog geen beschrijving.' }}</p>
-      <ng-content select="[presentation-details]" />
         @if (presentation.imageUrl) {
           @if (!imageFailed()) {
             <img
@@ -90,6 +88,8 @@ import { ProductEditState } from './product-edit-state';
         } @else {
           <p class="muted">Nog geen hoofdafbeelding.</p>
         }
+        <p class="description">{{ presentation.description || 'Nog geen beschrijving.' }}</p>
+      <ng-content select="[presentation-details]" />
       } @else {
         <p class="muted">Nog geen presentatie ingevuld.</p>
       }
