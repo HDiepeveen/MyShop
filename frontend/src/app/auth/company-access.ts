@@ -55,7 +55,7 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
         </form>
       </section>
       <section class="panel">
-        <h2>Bedrijfsbeheerders</h2>
+        <h2>Bedrijfsaccounts</h2>
         <h3>Bestaande accounts</h3>
         @for (account of items.accounts; track account.id) {
           <div class="access-row">
@@ -63,8 +63,8 @@ export interface CompanyAccessData { permissions: { code: string; name: string }
             Rollen: {{ roleNames(account) || 'Geen rollen' }}</p>
           <button type="button" class="secondary" [disabled]="busy()" (click)="editAccount(account)">Account en rollen aanpassen</button>
           </div>
-        } @empty { <p>Er zijn nog geen bedrijfsbeheerders.</p> }
-        <h3 class="access-form-heading">{{ editingAccount ? 'Account aanpassen: ' + editingAccount.userName : 'Nieuwe bedrijfsbeheerder' }}</h3>
+        } @empty { <p>Er zijn nog geen bedrijfsaccounts.</p> }
+        <h3 class="access-form-heading">{{ editingAccount ? 'Account aanpassen: ' + editingAccount.userName : 'Nieuwe Account' }}</h3>
         <form (ngSubmit)="saveAccount()">
           @if (!editingAccount) {
             <label>Gebruikersnaam <input name="userName" [(ngModel)]="userName" required maxlength="100" autocomplete="off" [disabled]="busy()" /></label>
