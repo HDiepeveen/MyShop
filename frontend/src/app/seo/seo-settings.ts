@@ -26,7 +26,7 @@ import { CompanyPage, HomePageSettings, ShopSeoSettings } from './seo.models';
       <label><input type="checkbox" name="showHeaderWhatsapp" [(ngModel)]="showHeaderWhatsapp" />WhatsApp</label></fieldset>
       <label>Tekst onderaan de winkel<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
       <label>Valuta<input name="currency" [(ngModel)]="currency" required pattern="[A-Za-z]{3}" maxlength="3" [disabled]="busy()" [class.invalid-required]="submitted() && !validCurrency()" placeholder="EUR" /></label>
-      <p>Standaard voor nieuwe productprijzen, bijvoorbeeld EUR, SRD of USD. Je kunt de valuta bij de productprijs overschrijven. Bestaande prijzen worden niet omgerekend of gewijzigd.</p>
+      <p>Bijvoorbeeld EUR, SRD of USD. Bij wijziging krijgen alle bestaande productprijzen deze valuta; de prijsbedragen blijven exact gelijk en worden niet omgerekend. Daarna kun je de valuta per productprijs weer aanpassen.</p>
       <h2>Assortiment</h2>
       <label>Koptekst assortiment<input name="heading" [(ngModel)]="heading" [class.invalid-required]="submitted() && !heading.trim()" [attr.aria-invalid]="submitted() && !heading.trim() ? 'true' : null" maxlength="200" required [disabled]="busy()" /></label>
       <label>Introductietekst<textarea name="introduction" [(ngModel)]="introduction" [class.invalid-required]="submitted() && !introduction.trim()" [attr.aria-invalid]="submitted() && !introduction.trim() ? 'true' : null" maxlength="1000" required [disabled]="busy()"></textarea></label>

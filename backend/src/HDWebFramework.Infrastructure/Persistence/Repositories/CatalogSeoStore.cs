@@ -90,6 +90,8 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
     public async Task<SeoResult> SaveSettingsAsync(ShopSeoSettings value, CancellationToken ct)
     {
         await using var tx = await context.Database.BeginTransactionAsync(ct);
+        var previousCurrency = await context.CatalogSeoSettings.AsNoTracking()
+            .Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id).Select(x => x.Currency).SingleAsync(ct);
         var homeJson = JsonSerializer.Serialize(value.Home with { Items = value.Home.Items.Select(x => x with { ImageUrl = null }).ToArray() });
         var changed = await context.CatalogSeoSettings.Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id && x.Version == value.Revision)
             .ExecuteUpdateAsync(set => set.SetProperty(x => x.Heading, value.Heading).SetProperty(x => x.SeoTitle, value.SeoTitle).SetProperty(x => x.SeoDescription, value.SeoDescription).SetProperty(x => x.HomePageJson, homeJson).SetProperty(x => x.ShopName, value.ShopName).SetProperty(x => x.WelcomeText, value.WelcomeText)
@@ -101,6 +103,13 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
                 .SetProperty(x => x.CompanyEmail, value.Company.Email).SetProperty(x => x.CompanyPhone, value.Company.Phone).SetProperty(x => x.HeaderText, value.HeaderText)
                 .SetProperty(x => x.CompanyOpeningHours, value.Company.OpeningHours).SetProperty(x => x.Version, Guid.NewGuid()), ct);
         if (changed != 1) return new(SeoFailure.Conflict);
+        if (previousCurrency != value.Currency)
+        {
+            // Invalidate open product drafts before changing currencies. Amounts, VAT and price rules stay intact.
+            await context.Products.ExecuteUpdateAsync(set => set.SetProperty(x => x.Version, _ => Guid.NewGuid()), ct);
+            await context.ProductVariants.Where(x => x.PriceAmount != null)
+                .ExecuteUpdateAsync(set => set.SetProperty(x => x.PriceCurrency, value.Currency), ct);
+        }
         var ids = value.Home.Items.Select(x => x.PageId).Append(PageBackground.ContactId).Append(PageBackground.AssortmentId).ToArray();
         await context.PageBackgrounds.Where(x => !ids.Contains(x.PageId)).ExecuteDeleteAsync(ct);
         await tx.CommitAsync(ct);

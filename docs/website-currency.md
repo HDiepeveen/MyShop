@@ -1,9 +1,11 @@
-# Standaardvaluta website
+# Websitevaluta
 
 Bij Website en SEO, onder Website, staat Valuta als laatste veld. Verplicht: drie letters, bijvoorbeeld EUR, SRD of USD; opslag normaliseert naar hoofdletters. Bestaande installaties krijgen EUR via migratie WebsiteDefaultCurrency.
 
-De instelling vult de valuta in bij nieuwe product-/variantprijzen en het genereren van varianten. De productprijs kan een afwijkende valuta bevatten. Al opgeslagen prijzen behouden hun eigen valuta; aanpassen van de standaard wijzigt geen prijzen en rekent geen bedragen om. Handmatig ingevoerde valutakeuzen worden niet overschreven door een achtergrondverversing van website-instellingen.
+Een wijziging van de websitevaluta vervangt de valuta van alle bestaande product-/variantprijzen, ook van eerder afwijkend ingestelde valuta. Alleen de valutacode verandert: brutoprijs, nettoprijs, btw-percentage, voorraad en prijsregels blijven intact. Bijvoorbeeld EUR 10 wordt SRD 10; er is geen wisselkoersomrekening. Het ongewijzigd opslaan van de websitevaluta laat afwijkende productvaluta’s staan. Daarna kan elke productprijs weer een afwijkende valuta krijgen.
 
-Dit is geen uitbreiding van ondersteunde betaalvaluta’s bij Mollie of andere betaalproviders en verandert geen bezorgtarieven of bestaande bestellingen. Daar blijven hun eigen valuta en validaties gelden.
+De wijziging van instellingen en productvaluta’s gebeurt in één transactie. Productrevisies worden vernieuwd zodat oude geopende bewerkschermen de wijziging niet stilzwijgend terugdraaien.
 
-De waarde wordt met de bestaande SEO-revisie opgeslagen en openbaar teruggegeven in /api/shop/settings. Productbeheerders hoeven daardoor geen toegang tot Website en SEO te hebben om de standaard te gebruiken.
+Nieuwe prijzen en gegenereerde varianten gebruiken de websitevaluta als standaard. Handmatig ingevoerde valutakeuzen in een open formulier worden niet overschreven door een achtergrondverversing van website-instellingen.
+
+Bestaande bestellingen en betalingen behouden hun historische bedragen en valuta. Dit breidt de ondersteunde betaalvaluta’s bij betaalproviders niet uit en wijzigt geen bezorgtarieven; daarvoor blijven de eigen valuta en validaties gelden.
