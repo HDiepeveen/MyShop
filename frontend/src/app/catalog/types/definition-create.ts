@@ -20,13 +20,15 @@ import { errorMessage } from '../error-message';
         <label class="field"
           >Naam<input name="displayName" [ngModel]="displayName" (ngModelChange)="changeName($event)" required [disabled]="busy()"
         /></label>
+        @if (canEditCode()) {
         <label class="field"
-          >Code<input name="code" [(ngModel)]="code" [readOnly]="!canEditCode()" required maxlength="64" [disabled]="busy()" />
+          >Code<input name="code" [(ngModel)]="code" required maxlength="64" [disabled]="busy()" />
           <small
             >Begin met een kleine letter. Gebruik alleen a–z, 0–9 en underscores, maximaal 64
             tekens.</small
           ></label
         >
+        }
         <label class="field"
           >Soort<select name="dataType" [(ngModel)]="dataType" [disabled]="busy()">
             @for (type of types; track type.code) {

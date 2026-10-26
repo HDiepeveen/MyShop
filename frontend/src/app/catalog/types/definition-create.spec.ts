@@ -37,14 +37,13 @@ describe('DefinitionCreate', () => {
     input.value='Brandstof';input.dispatchEvent(new Event('input'));await fixture.whenStable();
     expect((fixture.nativeElement.querySelector('input[name=code]') as HTMLInputElement).value).toBe('brandstof');
   });
-  it('keeps the generated code visible and read-only for a business administrator', async () => {
+  it('hides the code field for a business administrator while generating it automatically', async () => {
     TestBed.inject(Auth).session.set({authenticated:true,administrator:false,businessAdministrator:true,customer:false,name:'Staff',permissions:['productTypes']});
     const fixture=TestBed.createComponent(DefinitionCreate);fixture.componentRef.setInput('typeId','t');await fixture.whenStable();
     const name=fixture.nativeElement.querySelector('input[name=displayName]') as HTMLInputElement;
-    const code=fixture.nativeElement.querySelector('input[name=code]') as HTMLInputElement;
-    expect(code.readOnly).toBe(true);expect(code.disabled).toBe(false);
+    expect(fixture.nativeElement.querySelector('input[name=code]')).toBeNull();
     name.value='Motorinhoud';name.dispatchEvent(new Event('input'));await fixture.whenStable();
-    expect(code.value).toBe('motorinhoud');
+    expect(fixture.componentInstance.code).toBe('motorinhoud');
     fixture.componentInstance.code='tampered';fixture.componentInstance.create();
     const request=http.expectOne('/api/product-types/t/attributes');expect(request.request.body.code).toBe('motorinhoud');request.flush({id:'a'});
   });
