@@ -1,3 +1,4 @@
+import { Auth } from '../../auth/auth';
 import { TypeHeadingsEdit } from '../../seo/type-headings-edit';
 import { DefinitionEdit } from './definition-edit';
 import { TypeEditState } from './type-edit-state';
@@ -59,7 +60,9 @@ import { attributeTypeLabel } from '../attribute-types';
                 {{ definition.isRequired ? 'Verplicht' : 'Optioneel' }} ·
                 {{ definition.isFilterable ? 'Filterbaar' : 'Niet filterbaar' }}
               </p>
-              <small>Code: {{ definition.code }}</small>
+              @if (auth.session()?.administrator) {
+                <small>Code: {{ definition.code }}</small>
+              }
               <app-definition-edit
                 [typeId]="type.id"
                 [definition]="definition"
@@ -78,6 +81,7 @@ import { attributeTypeLabel } from '../attribute-types';
   `,
 })
 export class TypeDetail {
+  readonly auth = inject(Auth);
   readonly editState = inject(TypeEditState);
   constructor() {
     effect(() => {

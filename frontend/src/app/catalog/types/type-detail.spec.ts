@@ -1,3 +1,4 @@
+import { Auth } from '../../auth/auth';
 import { By } from '@angular/platform-browser';
 import { TypeEdit } from './type-edit';
 import { DefinitionCreate } from './definition-create';
@@ -88,6 +89,12 @@ describe('TypeDetail', () => {
       .flush({ productTypeId: 't', productCount: 2, isInUse: true });
     expect(fixture.nativeElement.textContent).toContain('Materiaal');
     expect(fixture.nativeElement.textContent).toContain('Tekst · Verplicht · Niet filterbaar');
+    TestBed.inject(Auth).session.set({ authenticated: true, administrator: false, businessAdministrator: true, customer: false, name: 'Staff', permissions: ['productTypes'] });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Code: material');
+    TestBed.inject(Auth).session.set({ authenticated: true, administrator: true, customer: false, name: 'Admin' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Code: material');
   });
 
   it('shares the write lock across type and definition editors and reloads persisted state', () => {

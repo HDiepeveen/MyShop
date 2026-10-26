@@ -131,6 +131,8 @@ import { readProductListQuery } from './product-list-query';
       @if (skuError()) {
         <p class="error" role="alert">{{ skuError() }}</p>
       }
+    </section>
+    <section class="panel">
       <button type="button" class="secondary refresh-overview" [disabled]="state()?.loading" (click)="retry()">
         Overzicht verversen
       </button>
