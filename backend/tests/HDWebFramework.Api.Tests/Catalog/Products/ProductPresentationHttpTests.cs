@@ -25,7 +25,10 @@ public sealed class ProductPresentationHttpTests
         var path = $"/api/products/{id}";
         var detail = await host.Client.GetFromJsonAsync<JsonElement>(path);
         Assert.False(detail.GetProperty("presentation").GetProperty("isPublished").GetBoolean());
-        Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync(path + "/presentation", new { description = "", imageUrl = (string?)null, imageAlt = "", isPublished = true, revision })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync(path + "/presentation", new { description = "", imageUrl = (string?)null, imageAlt = "", isPublished = true, revision })).StatusCode);
+        detail = await host.Client.GetFromJsonAsync<JsonElement>(path);
+        Assert.True(detail.GetProperty("presentation").GetProperty("isPublished").GetBoolean());
+        revision = detail.GetProperty("revision").GetGuid();
         Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync(path + "/presentation", new { description = "Linen shirt\nComfortable.", imageUrl = "https://example.com/shirt.jpg", imageAlt = "A linen shirt", isPublished = true, revision })).StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, (await host.Client.PutAsJsonAsync(path + "/presentation", new { description = "stale", imageUrl = (string?)null, imageAlt = "", isPublished = false, revision })).StatusCode);
         await host.Client.PatchAsJsonAsync(path + "/name", new { name = "Renamed shirt" });

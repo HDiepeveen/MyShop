@@ -26,7 +26,7 @@ public static class UpdateProductPresentationEndpoint
             return found ? Results.NoContent() : Results.NotFound();
         }
         catch (ProductConcurrencyException) { return Results.Conflict(new { message = "Het product is gewijzigd. Vernieuw de gegevens en probeer opnieuw." }); }
-        catch (ArgumentException) { return Results.BadRequest(new { message = "Controleer de beschrijving, HTTPS-afbeeldingslink en alternatieve tekst. Publiceren vereist een hoofdafbeelding." }); }
+        catch (ArgumentException) { return Results.BadRequest(new { message = "Controleer de beschrijving, HTTPS-afbeeldingslink en alternatieve tekst." }); }
     }
 }
 public sealed record ProductPresentationRequest(string Description, string? ImageUrl, string ImageAlt, bool IsPublished, Guid Revision);

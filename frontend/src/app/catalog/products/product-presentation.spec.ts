@@ -90,11 +90,13 @@ describe('Product presentation editor', () => {
     expect(request.request.body.description).toBe('');
     request.flush(null);
   });
-  it('requires a main image to publish, while allowing an empty draft', async () => {
+  it('publishes without an image or description and also allows an empty draft', async () => {
     const editor = (await setup()).componentInstance;
     editor.save(true);
-    http.expectNone('/api/products/p/presentation');
-    expect(editor.error()).toContain('Publiceren vereist');
+    const published = http.expectOne('/api/products/p/presentation');
+    expect(published.request.body.isPublished).toBe(true);
+    expect(published.request.body.imageUrl).toBeNull();
+    published.flush(null);
     editor.save(false);
     const request = http.expectOne('/api/products/p/presentation');
     expect(request.request.body.isPublished).toBe(false);
