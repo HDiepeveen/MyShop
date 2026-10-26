@@ -123,6 +123,18 @@ describe('Product presentation editor', () => {
     fixture.detectChanges();
     expect(element.textContent).toContain('De afbeelding kon niet worden geladen');
   });
+  it('unpublishes a published product through the visible button while preserving its presentation', async () => {
+    const fixture = await setup({ ...product, presentation: { description: 'Shirt details', imageUrl: null, imageAlt: '', isPublished: true } });
+    const saved = vi.fn();
+    fixture.componentInstance.saved.subscribe(saved);
+    const button = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('button')).find(button => button.textContent?.trim() === 'Niet meer publiceren')!;
+    expect(button).toBeTruthy();
+    button.click();
+    const request = http.expectOne('/api/products/p/presentation');
+    expect(request.request.body).toEqual({ description: 'Shirt details', imageUrl: null, imageAlt: '', isPublished: false, revision: 'revision' });
+    request.flush(null);
+    expect(saved).toHaveBeenCalledWith('Het product is niet meer gepubliceerd en is als concept opgeslagen.');
+  });
   it('respects the shared product write lock', async () => {
     const editor = (await setup()).componentInstance;
     TestBed.inject(ProductEditState).busy.set(true);

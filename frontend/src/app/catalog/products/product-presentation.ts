@@ -57,7 +57,7 @@ import { ProductEditState } from './product-edit-state';
       </p>
         <p class="muted">Kies je hoofdafbeelding bij Productafbeeldingen. De productnaam wordt automatisch als alternatieve tekst gebruikt.</p>
         <div class="actions">
-          <button type="button" class="secondary" [disabled]="busy()" (click)="save(false)">Opslaan als concept</button>
+          <button type="button" class="secondary" [disabled]="busy()" (click)="save(false)">{{ product().presentation?.isPublished ? 'Niet meer publiceren' : 'Opslaan als concept' }}</button>
           <button
             type="button"
             [disabled]="busy()"
@@ -174,7 +174,9 @@ export class ProductPresentationEdit {
           this.saved.emit(
             isPublished
               ? 'De productpresentatie is gepubliceerd.'
-              : 'De productpresentatie is als concept opgeslagen.',
+              : product.presentation?.isPublished
+                ? 'Het product is niet meer gepubliceerd en is als concept opgeslagen.'
+                : 'De productpresentatie is als concept opgeslagen.',
           );
         },
         error: (error) => {
