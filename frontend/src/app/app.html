@@ -90,7 +90,7 @@
           <a routerLink="/">Home</a>
           <a routerLink="/assortiment">Assortiment</a>
         </nav>
-        <span>Mijn winkel <span class="divider">/</span> Beheer</span>
+        <span>Beheer</span>
         @if (auth.session()?.authenticated) {
           <span>{{ auth.session()?.name }}</span>
           @if (auth.isManagement()) {

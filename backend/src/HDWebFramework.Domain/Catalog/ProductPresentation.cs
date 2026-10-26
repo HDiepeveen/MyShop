@@ -36,8 +36,8 @@ public sealed record ProductPresentation
         }
         else if (imageAlt.Length != 0)
             throw new ArgumentException("Alternative text requires an image.", nameof(imageAlt));
-        if (isPublished && (description.Length == 0 || imageUrl is null))
-            throw new ArgumentException("Publishing requires a description and image.", nameof(isPublished));
+        if (isPublished && imageUrl is null)
+            throw new ArgumentException("Publishing requires an image.", nameof(isPublished));
         return new(description, imageUrl, imageAlt, isPublished);
     }
 }

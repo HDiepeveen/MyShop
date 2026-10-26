@@ -53,7 +53,7 @@ import { ProductEditState } from './product-edit-state';
         }}</span>
       </p>
       <p class="muted">
-        Publiceren vereist een beschrijving en een hoofdafbeelding. Dit
+        Publiceren vereist een hoofdafbeelding. Een omschrijving is optioneel. Dit
         bepaalt de selectie voor de toekomstige klantwinkel; het is geen controle van prijs of
         voorraad.
       </p>
@@ -62,7 +62,7 @@ import { ProductEditState } from './product-edit-state';
           <button type="button" class="secondary" [disabled]="busy()" (click)="save(false)">Opslaan als concept</button>
           <button
             type="button"
-            [disabled]="busy() || !description.trim() || !imageUrl.trim()"
+            [disabled]="busy() || !imageUrl.trim()"
             (click)="save(true)"
           >
             Opslaan en publiceren
@@ -132,10 +132,10 @@ export class ProductPresentationEdit {
       imageAlt.length > 250 ||
       imageUrl.length > 2048 ||
       !!imageUrl !== !!imageAlt ||
-      (isPublished && (!description || !imageUrl))
+      (isPublished && !imageUrl)
     ) {
       this.error.set(
-        'Controleer de lengte van de beschrijving en de afbeelding. Publiceren vereist een beschrijving en afbeelding.',
+        'Controleer de lengte van de beschrijving en de afbeelding. Publiceren vereist een hoofdafbeelding.',
       );
       return;
     }

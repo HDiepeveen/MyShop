@@ -82,14 +82,15 @@ describe('Product presentation editor', () => {
   });
   it('publishes a product with its uploaded main image', async () => {
     const editor = (await setup()).componentInstance;
-    editor.description = 'Blue shirt';
+    editor.description = '   ';
     editor.imageUrl = '/api/shop/product-images/00e3952b-9eac-4f72-b27f-bf895c06af36';
     editor.save(true);
     const request = http.expectOne('/api/products/p/presentation');
     expect(request.request.body.imageUrl).toBe(editor.imageUrl);
+    expect(request.request.body.description).toBe('');
     request.flush(null);
   });
-  it('requires complete details to publish, while allowing an empty draft', async () => {
+  it('requires a main image to publish, while allowing an empty draft', async () => {
     const editor = (await setup()).componentInstance;
     editor.save(true);
     http.expectNone('/api/products/p/presentation');

@@ -28,7 +28,7 @@ type SettingsSection = 'website' | 'assortment' | 'pages' | 'menu';
       <p>Gebruikt het telefoonnummer uit Contact. Zonder telefoonnummer wordt dit onderdeel niet getoond.</p>
       <label><input type="checkbox" name="showHeaderPhone" [(ngModel)]="showHeaderPhone" />Telefoon</label>
       <label><input type="checkbox" name="showHeaderWhatsapp" [(ngModel)]="showHeaderWhatsapp" />WhatsApp</label></fieldset>
-      <label>Tekst onderaan de winkel<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
+      <label>Tekst onderaan de website<input name="footerText" [(ngModel)]="footerText" maxlength="200" [disabled]="busy()" placeholder="Ontdek wat bij je past." /></label>
       <label>Valuta<select name="currency" [(ngModel)]="currency" required [disabled]="busy()" [class.invalid-required]="submittedFor('website') && !validCurrency()">@if (currency && !knownCurrency(currency)) { <option [value]="currency">{{ currency }} (huidige valuta)</option> }
           @for (item of currencies; track item.code) { <option [value]="item.code">{{ item.name }}</option> }</select></label>
       <p>Bij wijziging krijgen alle bestaande productprijzen deze valuta; de prijsbedragen blijven exact gelijk en worden niet omgerekend. Daarna kun je de valuta per productprijs weer aanpassen.</p>

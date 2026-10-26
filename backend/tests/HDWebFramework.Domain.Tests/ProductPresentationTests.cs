@@ -19,6 +19,13 @@ public sealed class ProductPresentationTests
         Assert.Equal("Linen shirt", presentation.ImageAlt);
         Assert.True(presentation.IsPublished);
     }
+    [Fact]
+    public void PublishesWithoutDescription()
+    {
+        var presentation = ProductPresentation.Create("   ", "https://example.com/a.jpg", "Image", true);
+        Assert.Equal("", presentation.Description);
+        Assert.True(presentation.IsPublished);
+    }
     [Theory]
     [InlineData("http://example.com/a.jpg")]
     [InlineData("/api/shop/product-images/00000000-0000-0000-0000-000000000000")]
@@ -41,7 +48,6 @@ public sealed class ProductPresentationTests
     [Theory]
     [InlineData("", null, "", true)]
     [InlineData("Description", null, "", true)]
-    [InlineData("", "https://example.com/a.jpg", "Image", true)]
     [InlineData("Description", "https://example.com/a.jpg", "", false)]
     [InlineData("Description", null, "Image", false)]
     public void RejectsIncompletePublicationOrImage(string description, string? url, string alt, bool published) =>
