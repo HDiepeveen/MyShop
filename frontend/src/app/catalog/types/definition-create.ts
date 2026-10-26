@@ -80,14 +80,15 @@ export class DefinitionCreate {
   dataType = 0;
   scope = 0;
   required = false;
-  filterable = false;
+  filterable = true;
   constructor() {
     this.destroyRef.onDestroy(() => { if (this.writing) this.busy.set(false); });
     effect(() => {
       this.typeId();
       this.displayName = this.code = '';
       this.dataType = this.scope = 0;
-      this.required = this.filterable = false;
+      this.required = false;
+      this.filterable = true;
       this.error.set('');
     });
   }

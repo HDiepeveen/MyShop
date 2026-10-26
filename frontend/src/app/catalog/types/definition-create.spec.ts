@@ -58,7 +58,7 @@ describe('DefinitionCreate', () => {
       scope: 1,
       dataType: 5,
       isRequired: true,
-      isFilterable: false,
+      isFilterable: true,
     });
     expect(saved).not.toHaveBeenCalled();
     request.flush({ id: 'a' });
