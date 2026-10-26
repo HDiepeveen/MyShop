@@ -19,6 +19,22 @@ describe('DefinitionCreate', () => {
     fixture.detectChanges();
     return fixture.componentInstance;
   }
+  it('suggests lowercase valid codes and follows name edits until the code is customized', () => {
+    const editor=setup();
+    editor.changeName('Kenteken');expect(editor.code).toBe('kenteken');
+    editor.changeName('Transmissie type');expect(editor.code).toBe('transmissie_type');
+    editor.changeName('Café');expect(editor.code).toBe('cafe');
+    editor.code='custom_code';editor.changeName('Model');expect(editor.code).toBe('custom_code');
+    editor.code='';editor.changeName('Kleur');expect(editor.code).toBe('kleur');
+    editor.changeName('123 nummer');expect(editor.code).toBe('kenmerk_123_nummer');expect(editor.valid()).toBe(true);
+  });
+  it('fills the code when typing a name in the form', async () => {
+    const fixture=TestBed.createComponent(DefinitionCreate);fixture.componentRef.setInput('typeId','t');
+    await fixture.whenStable();
+    const input=fixture.nativeElement.querySelector('input[name=displayName]') as HTMLInputElement;
+    input.value='Brandstof';input.dispatchEvent(new Event('input'));await fixture.whenStable();
+    expect((fixture.nativeElement.querySelector('input[name=code]') as HTMLInputElement).value).toBe('brandstof');
+  });
   it('validates codes and sends numeric enum values, without duplicate submissions', () => {
     const editor = setup();
     editor.displayName = ' Materiaal ';

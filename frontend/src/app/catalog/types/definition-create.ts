@@ -17,7 +17,7 @@ import { errorMessage } from '../error-message';
       </p>
       <form (ngSubmit)="create()">
         <label class="field"
-          >Naam<input name="displayName" [(ngModel)]="displayName" required [disabled]="busy()"
+          >Naam<input name="displayName" [ngModel]="displayName" (ngModelChange)="changeName($event)" required [disabled]="busy()"
         /></label>
         <label class="field"
           >Code<input name="code" [(ngModel)]="code" required maxlength="64" [disabled]="busy()" />
@@ -90,6 +90,17 @@ export class DefinitionCreate {
       this.required = this.filterable = false;
       this.error.set('');
     });
+  }
+  changeName(name: string) {
+    const previous = this.suggestCode(this.displayName);
+    if (!this.code.trim() || this.code === previous) this.code = this.suggestCode(name);
+    this.displayName = name;
+  }
+  private suggestCode(name: string) {
+    let code = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+      .replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+    if (code && !/^[a-z]/.test(code)) code = 'kenmerk_' + code;
+    return code.slice(0, 64);
   }
   valid() {
     return (
