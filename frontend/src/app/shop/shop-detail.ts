@@ -166,8 +166,6 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
                 <p role="status">Deze variant is uitverkocht.</p>
               }
             }
-          } @else {
-            <p>Er zijn geen varianten beschikbaar.</p>
           }
           <section class="product-price" aria-label="Actuele prijs" aria-live="polite">
             @if (prices()?.loading) {
