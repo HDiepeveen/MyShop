@@ -78,7 +78,7 @@ public static class StorefrontEndpoints
                         item.ImageUrl, item.ImageAlt, item.IsAvailable, item.Prices.Select(price =>
                             new StorefrontPriceRangeResponse(price.Currency,
                                 price.MinimumAmount.ToString("F2", CultureInfo.InvariantCulture),
-                                price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()) { WebAddress = item.WebAddress })
+                                price.MaximumAmount.ToString("F2", CultureInfo.InvariantCulture))).ToList()) { WebAddress = item.WebAddress, HasVariants = item.HasVariants })
                         .ToList(), page.TotalCount, page.Offset, page.Limit) { WelcomeText = page.WelcomeText, Introduction = page.Introduction, Heading = page.Heading, SeoTitle = page.SeoTitle, SeoDescription = page.SeoDescription });
             }
             catch (ArgumentException) { return (IResult)Results.BadRequest(); }
@@ -109,6 +109,7 @@ public sealed record StorefrontPageResponse(DateTimeOffset At, IReadOnlyList<Sto
 public sealed record StorefrontItemResponse(Guid Id, string Name, string? ImageUrl, string ImageAlt,
     bool IsAvailable, IReadOnlyList<StorefrontPriceRangeResponse> Prices)
 {
+    public bool HasVariants { get; init; } = true;
     public string? WebAddress { get; init; }
 }
 public sealed record StorefrontPriceRangeResponse(string Currency, string MinimumAmount, string MaximumAmount);

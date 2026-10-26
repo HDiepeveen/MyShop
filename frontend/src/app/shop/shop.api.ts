@@ -24,6 +24,7 @@ export interface ShopPage {
 }
 export interface ShopListItem extends ShopItem {
   prices: { currency: string; minimumAmount: string; maximumAmount: string }[];
+  hasVariants?: boolean;
   isAvailable?: boolean;
 }
 export interface ShopCategory {

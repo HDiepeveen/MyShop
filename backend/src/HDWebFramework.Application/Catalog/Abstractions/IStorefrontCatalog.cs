@@ -17,6 +17,7 @@ public sealed record StorefrontPriceRange(string Currency, decimal MinimumAmount
 public sealed record StorefrontItem(Guid Id, string Name, string? ImageUrl, string ImageAlt,
     bool IsAvailable, IReadOnlyList<StorefrontPriceRange> Prices)
 {
+    public bool HasVariants { get; init; } = true;
     public string? WebAddress { get; init; }
 }
 public sealed record StorefrontPage(DateTimeOffset At, IReadOnlyList<StorefrontItem> Items,

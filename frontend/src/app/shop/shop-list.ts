@@ -197,7 +197,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
             >
               <app-shop-image [url]="product.imageUrl" [alt]="product.imageAlt" [padded]="true" [paddingPixels]="8" />
               <h2>{{ product.name }}</h2>
-              @if (product.isAvailable === false) {
+              @if (product.hasVariants !== false && product.isAvailable === false) {
                 <p><strong>Uitverkocht</strong></p>
               }
               @if (product.prices.length) {

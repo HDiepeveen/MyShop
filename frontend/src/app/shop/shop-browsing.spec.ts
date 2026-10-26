@@ -36,6 +36,14 @@ describe('Storefront browsing options', () => {
     harness.detectChanges();
     return { harness, list: harness.routeDebugElement!.componentInstance as ShopList };
   }
+  it.each([{ hasVariants: false, soldOut: false }, { hasVariants: true, soldOut: true }])('distinguishes missing variants from depleted stock: %j', async ({ hasVariants, soldOut }) => {
+    const harness = await RouterTestingHarness.create('/assortiment');
+    http.expectOne('/api/shop/categories').flush([]);
+    http.expectOne(r => r.url === '/api/shop/products').flush({ ...page, items: [{ ...page.items[0], hasVariants, isAvailable: false }] });
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.textContent?.includes('Uitverkocht')).toBe(soldOut);
+    expect(harness.routeNativeElement!.textContent).toContain('Prijs niet beschikbaar');
+  });
   it('renders sorting and stock controls and preserves them in product links', async () => {
     const { harness } = await setup();
     const root = harness.routeNativeElement!;

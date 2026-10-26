@@ -40,7 +40,7 @@ internal sealed class StorefrontCatalog(HDWebFrameworkDbContext context) : IStor
             var variants = variantsByProduct.GetValueOrDefault(row.Id, []);
             return new StorefrontItem(row.Id, row.Name, row.ImageUrl, row.ImageAlt,
                 variants.Any(variant => variant.CanFulfill(1)), PriceRanges(variants, at))
-            { WebAddress = row.Slug ?? HDWebFramework.Application.Catalog.Seo.SeoText.AutomaticAddress(row.Name, row.Id) };
+            { HasVariants = variants.Count > 0, WebAddress = row.Slug ?? HDWebFramework.Application.Catalog.Seo.SeoText.AutomaticAddress(row.Name, row.Id) };
         }).ToList();
         var seo = await context.CatalogSeoSettings.AsNoTracking().SingleAsync(cancellationToken);
         return new(at, items, count, offset, limit) { WelcomeText = seo.WelcomeText, Introduction = seo.Introduction, Heading = seo.Heading, SeoTitle = seo.SeoTitle, SeoDescription = seo.SeoDescription ?? HDWebFramework.Application.Catalog.Seo.SeoText.Summary(seo.Introduction) };
