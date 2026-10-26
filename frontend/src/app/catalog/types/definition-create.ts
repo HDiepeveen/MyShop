@@ -1,3 +1,4 @@
+import { Auth } from '../../auth/auth';
 import { TypeEditState } from './type-edit-state';
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -20,7 +21,7 @@ import { errorMessage } from '../error-message';
           >Naam<input name="displayName" [ngModel]="displayName" (ngModelChange)="changeName($event)" required [disabled]="busy()"
         /></label>
         <label class="field"
-          >Code<input name="code" [(ngModel)]="code" required maxlength="64" [disabled]="busy()" />
+          >Code<input name="code" [(ngModel)]="code" [readOnly]="!canEditCode()" required maxlength="64" [disabled]="busy()" />
           <small
             >Begin met een kleine letter. Gebruik alleen a–z, 0–9 en underscores, maximaal 64
             tekens.</small
@@ -72,6 +73,8 @@ export class DefinitionCreate {
   readonly busy = inject(TypeEditState).busy;
   readonly error = signal('');
   readonly types = attributeTypes;
+  private readonly auth = inject(Auth);
+  canEditCode() { return this.auth.session()?.administrator === true; }
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
   private writing = false;
@@ -94,7 +97,7 @@ export class DefinitionCreate {
   }
   changeName(name: string) {
     const previous = this.suggestCode(this.displayName);
-    if (!this.code.trim() || this.code === previous) this.code = this.suggestCode(name);
+    if (!this.canEditCode() || !this.code.trim() || this.code === previous) this.code = this.suggestCode(name);
     this.displayName = name;
   }
   private suggestCode(name: string) {
@@ -112,6 +115,7 @@ export class DefinitionCreate {
     );
   }
   create() {
+    if (!this.canEditCode()) this.code = this.suggestCode(this.displayName);
     if (this.busy() || !this.valid()) return;
     this.started.emit();
     this.busy.set(true);

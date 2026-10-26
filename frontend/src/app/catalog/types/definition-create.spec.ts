@@ -1,3 +1,4 @@
+import { Auth } from '../../auth/auth';
 import { TypeEditState } from './type-edit-state';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -11,6 +12,7 @@ describe('DefinitionCreate', () => {
       providers: [TypeEditState, provideHttpClient(), provideHttpClientTesting()],
     });
     http = TestBed.inject(HttpTestingController);
+    TestBed.inject(Auth).session.set({authenticated:true,administrator:true,customer:false,name:'Admin'});
   });
   afterEach(() => http.verify());
   function setup() {
@@ -34,6 +36,17 @@ describe('DefinitionCreate', () => {
     const input=fixture.nativeElement.querySelector('input[name=displayName]') as HTMLInputElement;
     input.value='Brandstof';input.dispatchEvent(new Event('input'));await fixture.whenStable();
     expect((fixture.nativeElement.querySelector('input[name=code]') as HTMLInputElement).value).toBe('brandstof');
+  });
+  it('keeps the generated code visible and read-only for a business administrator', async () => {
+    TestBed.inject(Auth).session.set({authenticated:true,administrator:false,businessAdministrator:true,customer:false,name:'Staff',permissions:['productTypes']});
+    const fixture=TestBed.createComponent(DefinitionCreate);fixture.componentRef.setInput('typeId','t');await fixture.whenStable();
+    const name=fixture.nativeElement.querySelector('input[name=displayName]') as HTMLInputElement;
+    const code=fixture.nativeElement.querySelector('input[name=code]') as HTMLInputElement;
+    expect(code.readOnly).toBe(true);expect(code.disabled).toBe(false);
+    name.value='Motorinhoud';name.dispatchEvent(new Event('input'));await fixture.whenStable();
+    expect(code.value).toBe('motorinhoud');
+    fixture.componentInstance.code='tampered';fixture.componentInstance.create();
+    const request=http.expectOne('/api/product-types/t/attributes');expect(request.request.body.code).toBe('motorinhoud');request.flush({id:'a'});
   });
   it('validates codes and sends numeric enum values, without duplicate submissions', () => {
     const editor = setup();

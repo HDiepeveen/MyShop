@@ -1,3 +1,6 @@
+using System.Text;
+using System.Text.RegularExpressions;
+
 namespace HDWebFramework.Domain.Catalog;
 
 public sealed record AttributeCode
@@ -6,6 +9,13 @@ public sealed record AttributeCode
     private AttributeCode(string value) => Value = value;
     public string Value { get; }
 
+    public static string Suggest(string? name)
+    {
+        var plain = Regex.Replace((name ?? string.Empty).Normalize(NormalizationForm.FormD), "[\\u0300-\\u036f]", string.Empty);
+        var code = Regex.Replace(plain.Trim().ToLowerInvariant(), "[^a-z0-9_]+", "_").Trim('_');
+        if (code.Length > 0 && !IsLowercaseAsciiLetter(code[0])) code = "kenmerk_" + code;
+        return code.Length > MaximumLength ? code[..MaximumLength] : code;
+    }
     public static AttributeCode Create(string value)
     {
         ArgumentNullException.ThrowIfNull(value);

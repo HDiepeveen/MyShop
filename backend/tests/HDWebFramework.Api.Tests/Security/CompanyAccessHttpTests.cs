@@ -174,6 +174,31 @@ public sealed class CompanyAccessHttpTests
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/company-access")).StatusCode);
     }
 
+    [SecuritySqlFact]
+    public async Task BusinessAdministratorUsesGeneratedAttributeCodeWhileOwnerCanChooseCode()
+    {
+        await using var host = await SecurityHost.Create();
+        await host.Csrf(); await host.Login(); await host.Csrf();
+        var typeResponse = await host.Client.PostAsJsonAsync("/api/product-types", new {name="Vehicles"});
+        Assert.Equal(HttpStatusCode.Created, typeResponse.StatusCode);
+        var type = await typeResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var path = "/api/product-types/" + type.GetProperty("id").GetGuid() + "/attributes";
+        var ownerResponse = await host.Client.PostAsJsonAsync(path, new {code="owner_code",displayName="Kleur",dataType=0,scope=0});
+        Assert.Equal(HttpStatusCode.Created, ownerResponse.StatusCode);
+        Assert.Equal("owner_code", (await ownerResponse.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        var role = await CreateRole(host.Client,"Product types",["productTypes"]);
+        var employee = await CreateAccount(host.Client,"type-editor",[role.Id]);
+        var cookies = new CookieContainer();
+        using var client = new HttpClient(new HttpClientHandler {CookieContainer=cookies,AllowAutoRedirect=false}) {BaseAddress=host.Client.BaseAddress};
+        await Csrf(client,cookies);
+        Assert.Equal(HttpStatusCode.NoContent,(await client.PostAsJsonAsync("/api/auth/login",new {userName=employee.UserName,password=SecurityHost.Password})).StatusCode);
+        await Csrf(client,cookies);
+        var response=await client.PostAsJsonAsync(path,new {code="Tampered Code",displayName="Motorinhoud",dataType=0,scope=0});
+        Assert.Equal(HttpStatusCode.Created,response.StatusCode);
+        Assert.Equal("motorinhoud",(await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.Conflict,(await client.PostAsJsonAsync(path,new {code="different",displayName="Motorinhoud",dataType=0,scope=0})).StatusCode);
+    }
+
     private static async Task<CompanyRole> CreateRole(HttpClient client, string name, string[] permissions)
     {
         var response = await client.PostAsJsonAsync("/api/company-access/roles", new SaveCompanyRole(name, permissions));

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using HDWebFramework.Api.Security;
+using HDWebFramework.Application.Security;
 using HDWebFramework.Application.Catalog.AddProductTypeAttribute;
 using HDWebFramework.Domain.Catalog;
 using UseCase = HDWebFramework.Application.Catalog.AddProductTypeAttribute.AddProductTypeAttribute;
@@ -11,9 +13,16 @@ public static class AddProductTypeAttributeEndpoint
     public static IEndpointRouteBuilder MapAddProductTypeAttribute(this IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
-        endpoints.MapPost("/api/product-types/{productTypeId:guid}/attributes", ExecuteAsync)
+        endpoints.MapPost("/api/product-types/{productTypeId:guid}/attributes", ExecuteAuthorizedAsync)
             .WithName("AddProductTypeAttribute");
         return endpoints;
+    }
+
+    private static Task<Results<Created<AddProductTypeAttributeResponse>, NotFound<ProblemDetails>, BadRequest<ProblemDetails>, Conflict<ProblemDetails>>> ExecuteAuthorizedAsync(
+        Guid productTypeId, AddProductTypeAttributeRequest request, HttpContext context, [FromServices] UseCase useCase, CancellationToken cancellationToken)
+    {
+        if (context.User.IsInRole(CompanyPermissions.EmployeeRole) && !context.User.IsInRole(AdminSecurity.Role)) request = request with { Code = AttributeCode.Suggest(request.DisplayName) };
+        return ExecuteAsync(productTypeId, request, useCase, cancellationToken);
     }
 
     public static async Task<Results<
