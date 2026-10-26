@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using HDWebFramework.Application.Security;
 using HDWebFramework.Application.Catalog.ManageProductImages;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
@@ -20,10 +22,14 @@ public static class ProductImagesEndpoints
         app.MapDelete("/api/products/{productId:guid}/images/{imageId:guid}", async (Guid productId, Guid imageId,
             [FromBody] ImageRevision request, ManageProductImages images, CancellationToken ct) =>
             await Change(() => images.DeleteAsync(productId, imageId, request.Revision, ct)));
-        app.MapGet("/api/shop/product-images/{imageId:guid}", async (Guid imageId, HttpContext context, ManageProductImages images, CancellationToken ct) =>
+        app.MapGet("/api/shop/product-images/{imageId:guid}", async (Guid imageId, HttpContext context, ManageProductImages images, ICompanyAccess access, CancellationToken ct) =>
         {
-            var image = await images.ContentAsync(imageId, context.User.IsInRole(AdminSecurity.Role), ct);
+            var canPreview = context.User.IsInRole(AdminSecurity.Role);
+            if (!canPreview && context.User.Identity?.IsAuthenticated == true && context.User.FindFirstValue(ClaimTypes.NameIdentifier) is string userId)
+                canPreview = (await access.PermissionsAsync(userId, ct)).Contains("products");
+            var image = await images.ContentAsync(imageId, canPreview, ct);
             if (image is null) return Results.NotFound();
+            if (canPreview) context.Response.Headers.CacheControl = "private, no-store";
             context.Response.Headers.XContentTypeOptions = "nosniff";
             context.Response.Headers.ContentSecurityPolicy = "default-src 'none'; sandbox";
             return Results.File(image.Bytes, image.ContentType);

@@ -1,3 +1,4 @@
+using HDWebFramework.Application.Security;
 using System.Net;
 using System.Buffers.Binary;
 using System.Net.Http.Json;
@@ -26,6 +27,43 @@ public sealed class ProductImagesHttpTests
         Assert.Equal(HttpStatusCode.Created, product.StatusCode);
         var data = await product.Content.ReadFromJsonAsync<JsonElement>();
         return (data.GetProperty("id").GetGuid(), data.GetProperty("revision").GetGuid());
+    }
+
+    [SecuritySqlFact]
+    public async Task Product_editor_can_preview_draft_images_but_visitors_and_other_roles_cannot()
+    {
+        await using var host = await SecurityHost.Create(); await host.Csrf(); await host.Login(); await host.Csrf();
+        var product = await Product(host);
+        var roleResponse = await host.Client.PostAsJsonAsync("/api/company-access/roles", new SaveCompanyRole("Product editor", ["products"]));
+        var role = (await roleResponse.Content.ReadFromJsonAsync<CompanyRole>())!;
+        var accountResponse = await host.Client.PostAsJsonAsync("/api/company-access/accounts", new CreateCompanyAccount("photo-editor", "photo@example.test", SecurityHost.Password, [role.Id]));
+        var account = (await accountResponse.Content.ReadFromJsonAsync<CompanyAccount>())!;
+        var cookies = new CookieContainer();
+        using var editor = new HttpClient(new HttpClientHandler { CookieContainer = cookies }) { BaseAddress = host.Client.BaseAddress };
+        async Task Csrf()
+        {
+            Assert.Equal(HttpStatusCode.NoContent, (await editor.GetAsync("/api/auth/csrf")).StatusCode);
+            editor.DefaultRequestHeaders.Remove("X-XSRF-TOKEN");
+            editor.DefaultRequestHeaders.Add("X-XSRF-TOKEN", cookies.GetCookies(editor.BaseAddress!)["XSRF-TOKEN"]!.Value);
+        }
+        await Csrf();
+        Assert.Equal(HttpStatusCode.NoContent, (await editor.PostAsJsonAsync("/api/auth/login", new { userName = account.UserName, password = SecurityHost.Password })).StatusCode);
+        await Csrf();
+        using var upload = Upload(product.Revision);
+        Assert.Equal(HttpStatusCode.NoContent, (await editor.PostAsync($"/api/products/{product.Id}/images", upload)).StatusCode);
+        var gallery = await editor.GetFromJsonAsync<JsonElement>($"/api/products/{product.Id}/images");
+        var url = gallery.GetProperty("images")[0].GetProperty("url").GetString()!;
+        using var visitor = new HttpClient { BaseAddress = host.Client.BaseAddress };
+        Assert.Equal(HttpStatusCode.NotFound, (await visitor.GetAsync(url)).StatusCode);
+        var preview = await editor.GetAsync(url);
+        Assert.Equal(HttpStatusCode.OK, preview.StatusCode);
+        Assert.Equal(Png, await preview.Content.ReadAsByteArrayAsync());
+        Assert.True(preview.Headers.CacheControl!.Private); Assert.True(preview.Headers.CacheControl.NoStore);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync(url)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.PutAsJsonAsync("/api/company-access/roles/" + role.Id, new SaveCompanyRole("Website only", ["seo"], role.Revision))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await editor.GetAsync(url)).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync($"/api/products/{product.Id}/presentation", new {description="Product",imageUrl=url,imageAlt="Product",isPublished=true,revision=gallery.GetProperty("revision").GetGuid()})).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await visitor.GetAsync(url)).StatusCode);
     }
 
     [SecuritySqlFact]
