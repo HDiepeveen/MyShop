@@ -1,5 +1,6 @@
 param(
-    [Parameter(Mandatory=$true)][string]$OutputDirectory
+    [Parameter(Mandatory=$true)][string]$OutputDirectory,
+    [string]$RewriteRulesFile = (Join-Path $PSScriptRoot 'hosting/production-rewrite.xml')
 )
 $ErrorActionPreference = 'Stop'
 $taskRepo = Split-Path $PSScriptRoot -Parent
@@ -17,6 +18,19 @@ try {
 $taskPublish = Join-Path $taskOutput 'website'
 dotnet publish (Join-Path $taskRepo 'backend/src/HDWebFramework.Api') -c Release --no-restore -p:UseAppHost=false -o $taskPublish
 if ($LASTEXITCODE -ne 0) { throw 'Publiceren mislukt.' }
+# Deployment-specific IIS rules stay outside the reusable application source.
+# Pass -RewriteRulesFile '' to publish without production redirects (e.g. a separate test site).
+if ($RewriteRulesFile) {
+    [xml]$taskRules = Get-Content -LiteralPath $RewriteRulesFile -Raw
+    if ($taskRules.DocumentElement.Name -ne 'rewrite') { throw 'Verwacht een rewrite-element in het regelbestand.' }
+    $taskWebConfigPath = Join-Path $taskPublish 'web.config'
+    [xml]$taskWebConfig = Get-Content -LiteralPath $taskWebConfigPath -Raw
+    $taskServer = $taskWebConfig.SelectSingleNode('/configuration/location/system.webServer')
+    if ($null -eq $taskServer) { throw 'system.webServer ontbreekt in de gepubliceerde web.config.' }
+    if ($null -ne $taskServer.SelectSingleNode('rewrite')) { throw 'Bestaande rewrite-regels worden niet overschreven.' }
+    [void]$taskServer.PrependChild($taskWebConfig.ImportNode($taskRules.DocumentElement, $true))
+    $taskWebConfig.Save($taskWebConfigPath)
+}
 $taskWebRoot = Join-Path $taskPublish 'wwwroot'
 New-Item -ItemType Directory -Force -Path $taskWebRoot | Out-Null
 Copy-Item -Path (Join-Path $taskRepo 'frontend/dist/hdwebframework/browser/*') -Destination $taskWebRoot -Recurse

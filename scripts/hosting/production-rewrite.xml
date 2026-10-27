@@ -1,0 +1,11 @@
+<rewrite>
+  <rules>
+    <rule name="Hostingadres naar hoofddomein" stopProcessing="true">
+      <match url="(.*)" />
+      <conditions>
+        <add input="{HTTP_HOST}" pattern="^hansdiepeveen-001-site1\.ktempurl\.com$" ignoreCase="true" />
+      </conditions>
+      <action type="Redirect" url="https://autoservice-ganpat.nl/{R:1}" appendQueryString="true" redirectType="Permanent" />
+    </rule>
+  </rules>
+</rewrite>
