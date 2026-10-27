@@ -47,5 +47,6 @@ app.MapDeliveryMethods();
 app.MapOrderManagement();
 app.MapDashboard();
 
+app.MapSearchDiscovery();
 app.MapFrontend();
 app.Run();
