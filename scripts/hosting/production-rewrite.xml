@@ -7,5 +7,12 @@
       </conditions>
       <action type="Redirect" url="https://autoservice-ganpat.nl/{R:1}" appendQueryString="true" redirectType="Permanent" />
     </rule>
+    <rule name="WWW naar hoofddomein" stopProcessing="true">
+      <match url="(.*)" />
+      <conditions>
+        <add input="{HTTP_HOST}" pattern="^www\.autoservice-ganpat\.nl$" ignoreCase="true" />
+      </conditions>
+      <action type="Redirect" url="https://autoservice-ganpat.nl/{R:1}" appendQueryString="true" redirectType="Permanent" />
+    </rule>
   </rules>
 </rewrite>
