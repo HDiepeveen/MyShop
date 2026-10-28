@@ -27,7 +27,7 @@ import { readProductListQuery } from './product-list-query';
     </div>
     @if (notice()) { <p class="success" role="status">{{ notice() }}</p> }
     <section class="panel">
-      <details class="product-filters" open>
+      <details class="product-filters">
         <summary>Zoeken, filteren en exporteren</summary>
       @if (filters().categoryId; as categoryId) {
         <p>
