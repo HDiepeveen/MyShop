@@ -12,7 +12,7 @@ import { loadState } from '../load-state';
 import { readProductListQuery } from './product-list-query';
 
 @Component({
-  styles: [`.product-type-filter { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; } .product-type-filter button { margin-left: auto; }`],
+  styles: [`.product-filters { margin: 0; } .product-type-filter { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; } .product-type-filter button { margin-left: auto; }`],
   providers: [ProductEditState],
   imports: [FormsModule, RouterLink, ProductDelete],
   template: ` <div class="eyebrow">Assortiment</div>
@@ -27,6 +27,8 @@ import { readProductListQuery } from './product-list-query';
     </div>
     @if (notice()) { <p class="success" role="status">{{ notice() }}</p> }
     <section class="panel">
+      <details class="product-filters" open>
+        <summary>Zoeken, filteren en exporteren</summary>
       @if (filters().categoryId; as categoryId) {
         <p>
           Filter: <a [routerLink]="['/categorieen', categoryId]">Geselecteerde categorie</a>
@@ -131,6 +133,7 @@ import { readProductListQuery } from './product-list-query';
       @if (skuError()) {
         <p class="error" role="alert">{{ skuError() }}</p>
       }
+      </details>
     </section>
     <section class="panel">
       <button type="button" class="secondary refresh-overview" [disabled]="state()?.loading" (click)="retry()">
