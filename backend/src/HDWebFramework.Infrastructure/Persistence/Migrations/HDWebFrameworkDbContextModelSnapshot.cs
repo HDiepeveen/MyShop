@@ -64,6 +64,9 @@ namespace HDWebFramework.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("AssortmentButtonOpacity")
+                        .HasColumnType("int");
+
                     b.Property<string>("AssortmentImageMode")
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
@@ -165,6 +168,11 @@ namespace HDWebFramework.Infrastructure.Persistence.Migrations
                         .HasMaxLength(7)
                         .HasColumnType("nvarchar(7)");
 
+                    b.Property<string>("PhotoTextColor")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
                     b.Property<string>("PrimaryColor")
                         .IsRequired()
                         .HasMaxLength(7)
@@ -218,6 +226,7 @@ namespace HDWebFramework.Infrastructure.Persistence.Migrations
                         new
                         {
                             Id = new Guid("a178498a-a53f-48fb-9650-d0f3d3108322"),
+                            AssortmentButtonOpacity = 10,
                             BackgroundColor = "#f6f7f1",
                             CompanyHeading = "Over ons en contact",
                             Currency = "EUR",
@@ -226,6 +235,7 @@ namespace HDWebFramework.Infrastructure.Persistence.Migrations
                             Introduction = "Bekijk onze producten en kies de variant die bij je past.",
                             NavigationRevision = new Guid("00000000-0000-0000-0000-000000000000"),
                             PanelColor = "#fffefa",
+                            PhotoTextColor = "#dbeafe",
                             PrimaryColor = "#1d5543",
                             SeoTitle = "Assortiment · HDWebFramework",
                             ShopName = "HDWebFramework",

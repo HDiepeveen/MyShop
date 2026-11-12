@@ -10,6 +10,8 @@ import { errorMessage } from '../catalog/error-message';
 import {
   ShopColors,
   defaultColors,
+  defaultAssortmentButtonOpacity,
+  defaultPhotoTextColor,
   shopThemes,
   themeStyles,
   validColors,
@@ -17,7 +19,7 @@ import {
 } from './shop-theme';
 
 interface AppearanceSettings {
-  colors: ShopColors;
+  colors: ShopColors & { assortmentButtonOpacity?: number; photoTextColor?: string };
   revision: string;
   iconUrl?: string | null;
   showManagementMenuWithoutLogin?: boolean;
@@ -117,6 +119,20 @@ interface AppearanceSettings {
                 }}<input type="color" [name]="field.key" [(ngModel)]="colors[field.key]"
               /></label>
             }
+            <label>Tekst en koppen op achtergrondfoto
+              <input type="color" name="photoTextColor" [(ngModel)]="photoTextColor" />
+            </label>
+          </div>
+          <label>
+            Achtergronddekking knoppen bij Assortiment: {{ assortmentButtonOpacity }}%
+            <input type="range" name="assortmentButtonOpacity" min="0" max="100" step="1"
+              [(ngModel)]="assortmentButtonOpacity" />
+          </label>
+          <p>Geldt bij een achtergrondfoto voor de actieve filters en paginaknoppen. 0% is doorzichtig, 100% is volledig dekkend.</p>
+          <div class="assortment-button-preview"
+            [style.--assortment-photo-text]="photoTextColor"
+            [style.--assortment-button-opacity]="assortmentButtonOpacity + '%'">
+            <button type="button" class="secondary assortment-photo-button">Volgende</button>
           </div>
           @for (warning of warnings(); track warning) {
             <p role="status">
@@ -164,6 +180,11 @@ interface AppearanceSettings {
       min-height: 48px;
       cursor: pointer;
     }
+    .assortment-button-preview {
+      background: #50534e;
+      padding: 0 12px;
+      border-radius: 7px;
+    }
     .theme-preview {
       padding: 24px;
       border-radius: 12px;
@@ -196,6 +217,8 @@ export class AppearanceSettingsPage {
     { key: 'textColor', label: 'Tekst en koppen' },
   ];
   colors = { ...defaultColors };
+  photoTextColor = defaultPhotoTextColor;
+  assortmentButtonOpacity = defaultAssortmentButtonOpacity;
   showManagementMenuWithoutLogin = false;
   revision = '';
   iconUrl: string | null = null;
@@ -209,7 +232,7 @@ export class AppearanceSettingsPage {
     this.load();
   }
   valid() {
-    return validColors(this.colors);
+    return validColors(this.colors) && /^#[0-9a-f]{6}$/i.test(this.photoTextColor);
   }
   styles() {
     return themeStyles(this.colors);
@@ -231,6 +254,8 @@ export class AppearanceSettingsPage {
   resetColors() {
     if (this.busy() || this.loading() || !this.revision) return;
     this.colors = { ...defaultColors };
+    this.photoTextColor = defaultPhotoTextColor;
+    this.assortmentButtonOpacity = defaultAssortmentButtonOpacity;
     this.error.set('');
     this.notice.set(
       'Originele kleuren hersteld in het voorbeeld. Klik op Kleuren opslaan om ze toe te passen.',
@@ -302,7 +327,10 @@ export class AppearanceSettingsPage {
       .subscribe({
         next: (settings) => {
           if (!keepColors) {
-            this.colors = { ...settings.colors };
+            const { assortmentButtonOpacity = defaultAssortmentButtonOpacity, photoTextColor = defaultPhotoTextColor, ...colors } = settings.colors;
+            this.colors = colors;
+            this.photoTextColor = photoTextColor;
+            this.assortmentButtonOpacity = assortmentButtonOpacity;
             this.showManagementMenuWithoutLogin = settings.showManagementMenuWithoutLogin === true;
           }
           this.iconUrl = settings.iconUrl ?? null;
@@ -318,10 +346,10 @@ export class AppearanceSettingsPage {
   save() {
     if (this.busy() || this.loading() || !this.revision) return;
     if (!this.valid()) {
-      this.error.set('Kies vier geldige kleuren.');
+      this.error.set('Kies geldige kleuren.');
       return;
     }
-    const colors = { ...this.colors };
+    const colors = { ...this.colors, photoTextColor: this.photoTextColor, assortmentButtonOpacity: this.assortmentButtonOpacity };
     this.busy.set(true);
     this.error.set('');
     this.notice.set('');

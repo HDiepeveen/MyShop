@@ -119,7 +119,7 @@ describe('Appearance settings', () => {
     expect(page.busy()).toBe(true);
     http.expectOne('/api/auth/csrf').flush(null);
     const save = http.expectOne('/api/shop-appearance');
-    expect(save.request.body).toEqual({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
+    expect(save.request.body).toEqual({ colors: { ...defaultColors, assortmentButtonOpacity: 10, photoTextColor: '#dbeafe' }, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     save.flush(null);
     http.expectOne('/api/shop/settings').flush({ shopName: 'HD Web Framework', appearance: defaultColors });
     http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-2' });
@@ -130,6 +130,7 @@ describe('Appearance settings', () => {
     const page = fixture.componentInstance;
     http.expectOne('/api/shop-appearance').flush({ colors: defaultColors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     page.choose('Donker');
+    page.assortmentButtonOpacity = 65;
     fixture.detectChanges();
     expect(
       fixture.nativeElement
@@ -142,15 +143,16 @@ describe('Appearance settings', () => {
     http.expectOne('/api/auth/csrf').flush(null);
     const save = http.expectOne('/api/shop-appearance');
     expect(save.request.method).toBe('PUT');
-    expect(save.request.body).toEqual({ colors: shopThemes[2].colors, revision: 'revision-1', showManagementMenuWithoutLogin: false });
+    expect(save.request.body).toEqual({ colors: { ...shopThemes[2].colors, assortmentButtonOpacity: 65, photoTextColor: '#dbeafe' }, revision: 'revision-1', showManagementMenuWithoutLogin: false });
     save.flush(null);
     http
       .expectOne('/api/shop/settings')
-      .flush({ shopName: 'HD Web Framework', appearance: shopThemes[2].colors });
+      .flush({ shopName: 'HD Web Framework', appearance: { ...shopThemes[2].colors, assortmentButtonOpacity: 65 } });
     http
       .expectOne('/api/shop-appearance')
       .flush({ colors: shopThemes[2].colors, revision: 'revision-2' });
     expect(page.revision).toBe('revision-2');
+    expect(TestBed.inject(ShopBranding).assortmentButtonOpacity()).toBe(65);
     expect(TestBed.inject(ShopBranding).colors()).toEqual(shopThemes[2].colors);
   });
   it('retains custom colors after a save conflict', () => {

@@ -10,6 +10,8 @@ internal sealed class CatalogSeoSettingsPersistence
     public string? HomeImageContentType { get; set; }
     public byte[]? IconBytes { get; set; }
     public string? IconContentType { get; set; }
+    public string PhotoTextColor { get; set; } = "#dbeafe";
+    public int AssortmentButtonOpacity { get; set; } = 10;
     public string PrimaryColor { get; set; } = "#1d5543";
     public string BackgroundColor { get; set; } = "#f6f7f1";
     public string PanelColor { get; set; } = "#fffefa";

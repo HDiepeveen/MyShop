@@ -21,7 +21,7 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
         var row = await context.CatalogSeoSettings.AsNoTracking().Where(x => x.Id == CatalogSeoSettingsPersistenceConfiguration.Id)
             .Select(x => new { x.HomePageJson, x.Currency, x.Heading, x.SeoTitle, x.SeoDescription, x.Version, x.ShopName, x.WelcomeText, x.Introduction, x.FooterText,
                 x.AssortmentImageMode, x.CompanyImageMode, x.CompanySeoTitle, x.CompanySeoDescription, x.CompanyHeading, x.CompanyName, x.CompanyDescription, x.CompanyAddress, x.CompanyEmail, x.CompanyPhone, x.CompanyOpeningHours, x.HeaderText, x.ShowHeaderPhone, x.ShowHeaderWhatsapp,
-                x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.ShowManagementMenuWithoutLogin, HasHomeImage = x.HomeImageBytes != null, HasIcon = x.IconBytes != null }).SingleAsync(ct);
+                x.PrimaryColor, x.BackgroundColor, x.PanelColor, x.TextColor, x.PhotoTextColor, x.AssortmentButtonOpacity, x.ShowManagementMenuWithoutLogin, HasHomeImage = x.HomeImageBytes != null, HasIcon = x.IconBytes != null }).SingleAsync(ct);
         var home = row.HomePageJson is null ? HomePageSettings.Default : JsonSerializer.Deserialize<HomePageSettings>(row.HomePageJson)!;
         if (home.Place is null)
         {
@@ -33,7 +33,7 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
         string? ImageUrl(Guid id) => images.Contains(id) ? $"/api/shop/page-images/{id:D}?v={row.Version:D}" : null;
         home = home with { Items = home.Items.Select(item => item with { ImageUrl = ImageUrl(item.PageId) }).ToArray() };
         return new(row.Heading, row.SeoTitle, row.Version, row.ShopName, row.WelcomeText, row.Introduction, row.FooterText,
-            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { ImageMode = row.CompanyImageMode, ImageUrl = ImageUrl(PageBackground.ContactId), SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { Currency = row.Currency, SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, AssortmentImageUrl = ImageUrl(PageBackground.AssortmentId), AssortmentImageMode = row.AssortmentImageMode, HeaderText = row.HeaderText, ShowHeaderPhone = row.ShowHeaderPhone, ShowHeaderWhatsapp = row.ShowHeaderWhatsapp, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor), IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
+            new(row.CompanyHeading, row.CompanyName, row.CompanyDescription, row.CompanyAddress, row.CompanyEmail, row.CompanyPhone, row.CompanyOpeningHours) { ImageMode = row.CompanyImageMode, ImageUrl = ImageUrl(PageBackground.ContactId), SeoTitle = row.CompanySeoTitle, SeoDescription = row.CompanySeoDescription }) { Currency = row.Currency, SeoDescription = row.SeoDescription, HomeImageUrl = row.HasHomeImage ? $"/api/shop/home-image?v={row.Version:D}" : null, AssortmentImageUrl = ImageUrl(PageBackground.AssortmentId), AssortmentImageMode = row.AssortmentImageMode, HeaderText = row.HeaderText, ShowHeaderPhone = row.ShowHeaderPhone, ShowHeaderWhatsapp = row.ShowHeaderWhatsapp, Home = home, ShowManagementMenuWithoutLogin = row.ShowManagementMenuWithoutLogin, Appearance = new(row.PrimaryColor, row.BackgroundColor, row.PanelColor, row.TextColor) { PhotoTextColor = row.PhotoTextColor, AssortmentButtonOpacity = row.AssortmentButtonOpacity }, IconUrl = row.HasIcon ? $"/api/shop/icon?v={row.Version:D}" : null };
     }
     public async Task<HDWebFramework.Application.Catalog.Abstractions.ProductImageContent?> GetPageImageAsync(Guid id, CancellationToken ct)
     {
@@ -84,6 +84,8 @@ internal sealed class CatalogSeoStore(HDWebFrameworkDbContext context) : ICatalo
                 .SetProperty(x => x.BackgroundColor, value.Colors.BackgroundColor)
                 .SetProperty(x => x.PanelColor, value.Colors.PanelColor)
                 .SetProperty(x => x.TextColor, value.Colors.TextColor)
+                .SetProperty(x => x.PhotoTextColor, value.Colors.PhotoTextColor)
+                .SetProperty(x => x.AssortmentButtonOpacity, value.Colors.AssortmentButtonOpacity)
                 .SetProperty(x => x.ShowManagementMenuWithoutLogin, value.ShowManagementMenuWithoutLogin)
                 .SetProperty(x => x.Version, Guid.NewGuid()), ct);
         return new(changed == 1 ? null : SeoFailure.Conflict);

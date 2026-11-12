@@ -16,13 +16,17 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
 
 @Component({
   selector: 'app-shop-list',
-  host: {'[class.assortment-photo]': '!!branding.assortmentImageUrl()'},
+  host: {
+    '[class.assortment-photo]': '!!branding.assortmentImageUrl()',
+    '[style.--assortment-photo-text]': 'branding.photoTextColor()',
+    '[style.--assortment-button-opacity]': 'branding.assortmentButtonOpacity() + "%"',
+  },
   imports: [CurrencySymbolPipe, FormsModule, RouterLink, ShopImage],
   styles: [
     `
       :host { display: block; padding-top: 16px; }
       @media (max-width: 760px) { :host { padding-top: 12px; } }
-      :host.assortment-photo { width: calc(100% + 84px); margin: -38px -42px; padding: 54px 42px 38px; box-sizing: border-box; background: #0009; color: #fff; min-height: calc(100vh - 140px); }
+      :host.assortment-photo { width: calc(100% + 84px); margin: -38px -42px; padding: 54px 42px 38px; box-sizing: border-box; background: #0009; color: var(--assortment-photo-text, white); min-height: calc(100vh - 140px); }
       :host.assortment-photo .eyebrow, :host.assortment-photo .muted { color: inherit; }
       :host.assortment-photo .product { background: var(--shop-panel); color: var(--shop-text); border-radius: 12px; padding: 20px; }
       @media (max-width:760px) { :host.assortment-photo {width:calc(100% + 40px);margin:-24px -20px;padding:36px 20px 24px;} }
@@ -126,7 +130,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
         </select></label
       >
       @if (hasFilters()) {
-        <button type="button" class="secondary" (click)="resetFilters()">
+        <button type="button" class="secondary assortment-reset" (click)="resetFilters()">
           Alle filters herstellen
         </button>
       }
@@ -135,7 +139,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
       <p role="alert">{{ searchError() }}</p>
     }
     @if (hasFilters()) {
-      <nav class="toolbar" aria-label="Actieve filters">
+      <nav class="toolbar assortment-filters" aria-label="Actieve filters">
         @if (query().search) {
           <button
             type="button"
@@ -236,7 +240,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
             <button type="button" (click)="goToPage(0)">Terug naar de eerste pagina</button>
           }
           @if (hasFilters()) {
-            <button type="button" class="secondary" (click)="resetFilters()">
+            <button type="button" class="secondary assortment-reset" (click)="resetFilters()">
               Alle filters herstellen
             </button>
           }
@@ -253,7 +257,7 @@ import { readShopQuery, shopContextQuery, ShopSort } from './shop-query';
             · {{ query().offset + 1 }}–{{ query().offset + page.items.length }}
           }
         </span>
-        <div class="actions">
+        <div class="actions assortment-pagination">
           @if (query().offset) {
             <button class="secondary" (click)="goToPage(0)">Eerste pagina</button>
           }

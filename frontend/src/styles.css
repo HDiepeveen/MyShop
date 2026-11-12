@@ -103,6 +103,24 @@ button:hover {
 .secondary:hover {
   background: var(--shop-background, #eef2e7);
 }
+.assortment-photo :is(.assortment-filters .secondary, .assortment-pagination .secondary, .secondary.assortment-reset),
+.assortment-button-preview .assortment-photo-button {
+  background: rgb(0 0 0 / var(--assortment-button-opacity, 10%));
+  color: white;
+  border-color: #fffc;
+}
+.assortment-photo :is(.assortment-filters .secondary, .assortment-pagination .secondary, .secondary.assortment-reset):hover:not(:disabled),
+.assortment-button-preview .assortment-photo-button:hover {
+  background: rgb(0 0 0 / max(var(--assortment-button-opacity, 10%), 40%));
+}
+.assortment-photo :is(.assortment-filters .secondary, .assortment-pagination .secondary, .secondary.assortment-reset):focus-visible {
+  outline-color: var(--assortment-photo-text, white);
+}
+.assortment-photo .assortment-pagination .secondary:disabled {
+  color: #ddd;
+  border-style: dashed;
+  opacity: 1;
+}
 .button:focus-visible,
 button:focus-visible,
 a:focus-visible,

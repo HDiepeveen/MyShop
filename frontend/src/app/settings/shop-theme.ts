@@ -4,6 +4,8 @@ export interface ShopColors {
   panelColor: string;
   textColor: string;
 }
+export const defaultPhotoTextColor = "#dbeafe";
+export const defaultAssortmentButtonOpacity = 10;
 export const defaultColors: ShopColors = {
   primaryColor: '#1d5543',
   backgroundColor: '#f6f7f1',

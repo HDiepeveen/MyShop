@@ -6,7 +6,20 @@ public sealed record ShopAppearance(string PrimaryColor, string BackgroundColor,
 {
     public static ShopAppearance Default { get; } = new("#1d5543", "#f6f7f1", "#fffefa", "#223c33");
 
-    public ShopAppearance Normalize() => new(Color(PrimaryColor), Color(BackgroundColor), Color(PanelColor), Color(TextColor));
+    public string PhotoTextColor { get; init; } = "#dbeafe";
+    public int AssortmentButtonOpacity { get; init; } = 10;
+
+    public ShopAppearance Normalize()
+    {
+        if (AssortmentButtonOpacity is < 0 or > 100)
+            throw new ArgumentException("Kies een knopdekking van 0 tot 100 procent.");
+
+        return new(Color(PrimaryColor), Color(BackgroundColor), Color(PanelColor), Color(TextColor))
+        {
+            PhotoTextColor = Color(PhotoTextColor),
+            AssortmentButtonOpacity = AssortmentButtonOpacity
+        };
+    }
 
     private static string Color(string value)
     {

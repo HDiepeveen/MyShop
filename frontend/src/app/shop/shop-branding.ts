@@ -1,10 +1,12 @@
 import { orderedWebsiteLinks, WebsiteLink } from './website-navigation';
-import { ShopColors, defaultColors, validColors } from '../settings/shop-theme';
+import { ShopColors, defaultColors, defaultAssortmentButtonOpacity, defaultPhotoTextColor, validColors } from '../settings/shop-theme';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 @Injectable({ providedIn: 'root' })
 export class ShopBranding {
   private readonly http = inject(HttpClient);
+  readonly photoTextColor = signal(defaultPhotoTextColor);
+  readonly assortmentButtonOpacity = signal(defaultAssortmentButtonOpacity);
   readonly currency = signal('EUR');
   readonly colors = signal<ShopColors>({ ...defaultColors });
   readonly showManagementMenuWithoutLogin = signal(false);
@@ -53,7 +55,7 @@ export class ShopBranding {
         homeEnabled?: boolean;
         homePages?: { name: string; webAddress: string; pageId?: string }[];
         footerText?: string;
-        appearance?: ShopColors;
+        appearance?: ShopColors & { assortmentButtonOpacity?: number; photoTextColor?: string };
         iconUrl?: string | null;
         showManagementMenuWithoutLogin?: boolean;
       }>('/api/shop/settings')
@@ -82,9 +84,11 @@ export class ShopBranding {
                 : null;
             if (icon !== this.iconUrl()) this.iconFailed.set(false);
             this.iconUrl.set(icon);
-            this.colors.set(
-              validColors(settings.appearance) ? { ...settings.appearance } : { ...defaultColors },
-            );
+            const { assortmentButtonOpacity = defaultAssortmentButtonOpacity, photoTextColor = defaultPhotoTextColor, ...colors } =
+              { ...defaultColors, ...settings.appearance };
+            this.colors.set(validColors(colors) ? colors : { ...defaultColors });
+            this.photoTextColor.set(photoTextColor);
+            this.assortmentButtonOpacity.set(assortmentButtonOpacity);
             this.currency.set(settings.currency || 'EUR');
             this.name.set(settings.shopName || 'HD Web Framework');
             this.footerText.set(settings.footerText ?? 'Ontdek wat bij je past.');
