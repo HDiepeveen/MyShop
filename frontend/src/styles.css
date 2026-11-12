@@ -106,8 +106,8 @@ button:hover {
 .assortment-photo :is(.assortment-filters .secondary, .assortment-pagination .secondary, .secondary.assortment-reset),
 .assortment-button-preview .assortment-photo-button {
   background: rgb(0 0 0 / var(--assortment-button-opacity, 10%));
-  color: white;
-  border-color: #fffc;
+  color: var(--assortment-photo-text, white);
+  border-color: var(--assortment-photo-text, #fffc);
 }
 .assortment-photo :is(.assortment-filters .secondary, .assortment-pagination .secondary, .secondary.assortment-reset):hover:not(:disabled),
 .assortment-button-preview .assortment-photo-button:hover {
@@ -117,7 +117,7 @@ button:hover {
   outline-color: var(--assortment-photo-text, white);
 }
 .assortment-photo .assortment-pagination .secondary:disabled {
-  color: #ddd;
+  color: var(--assortment-photo-text, #ddd);
   border-style: dashed;
   opacity: 1;
 }
