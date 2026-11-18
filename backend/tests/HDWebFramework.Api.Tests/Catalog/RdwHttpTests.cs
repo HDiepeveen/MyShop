@@ -19,7 +19,7 @@ public sealed class RdwHttpTests
         await host.Csrf(); await host.Login(); await host.Csrf();
 
         var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/rdw-settings");
-        Assert.Equal(98, settings.GetProperty("columns").GetArrayLength());
+        Assert.Equal(99, settings.GetProperty("columns").GetArrayLength());
         var revision = settings.GetProperty("settings").GetProperty("revision").GetGuid();
         Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/rdw-settings",
             new { revision, columns = new[] { "unknown" } })).StatusCode);

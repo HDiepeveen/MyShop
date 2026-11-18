@@ -5,6 +5,7 @@ public static class RdwColumns
 {
     public static readonly IReadOnlyList<RdwColumn> All = [
         new("kenteken", "Kenteken", "text"),
+        new("brandstof_omschrijving", "Brandstof", "text"),
         new("voertuigsoort", "Voertuigsoort", "text"),
         new("merk", "Merk", "text"),
         new("handelsbenaming", "Handelsbenaming", "text"),
