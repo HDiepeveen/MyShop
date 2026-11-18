@@ -30,7 +30,7 @@ public sealed record StorefrontPage(DateTimeOffset At, IReadOnlyList<StorefrontI
     public string SeoTitle { get; init; } = "Assortiment · HD Web Framework";
 }
 public sealed record StorefrontCategory(Guid Id, string Name);
-public sealed record StorefrontProductAttribute(Guid AttributeDefinitionId, string Name, string Value);
+public sealed record StorefrontProductAttribute(Guid AttributeDefinitionId, string Name, string Value, string DataType = "Text");
 public sealed record StorefrontVariantAttribute(Guid AttributeDefinitionId, string Value);
 public sealed record StorefrontVariantDefinition(Guid Id, string Name);
 public sealed record StorefrontVariant(Guid Id, string Name, bool IsAvailable)

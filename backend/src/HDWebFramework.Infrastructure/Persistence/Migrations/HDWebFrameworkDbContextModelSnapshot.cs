@@ -1465,6 +1465,31 @@ namespace HDWebFramework.Infrastructure.Persistence.Migrations
                     b.ToTable("ProductWebAddresses", (string)null);
                 });
 
+            modelBuilder.Entity("HDWebFramework.Infrastructure.Persistence.Models.RdwSettingsPersistence", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ColumnsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("Revision")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RdwSettings", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ColumnsJson = "[\"kenteken\",\"merk\",\"handelsbenaming\",\"voertuigsoort\",\"eerste_kleur\",\"datum_eerste_toelating\",\"vervaldatum_apk\",\"aantal_zitplaatsen\",\"aantal_deuren\",\"massa_ledig_voertuig\",\"cilinderinhoud\",\"aantal_cilinders\",\"tellerstandoordeel\"]",
+                            Revision = new Guid("790213d2-9aa5-4f0b-8de7-906eb8eb95b2")
+                        });
+                });
+
             modelBuilder.Entity("HDWebFramework.Infrastructure.Persistence.Models.VatRatePersistence", b =>
                 {
                     b.Property<Guid>("Id")

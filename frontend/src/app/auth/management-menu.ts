@@ -12,6 +12,7 @@ export const managementMenu = [
   { code: 'billing', name: 'Facturatie en btw', path: '/instellingen/facturatie' },
   { code: 'paymentSettings', name: 'Betaalinstellingen', path: '/instellingen/betaalinstellingen' },
   { code: 'email', name: 'E-mailinstellingen', path: '/instellingen/email' },
+  { code: 'rdw', name: 'RDW-instellingen', path: '/instellingen/rdw' },
   { code: 'companyAccess', name: 'Bedrijfsbeheerders en rollen', path: '/instellingen/bedrijfsbeheerders' },
 ] as const;
 export function managementPermission(url: string): string | null {
@@ -22,5 +23,5 @@ export function managementPermission(url: string): string | null {
 
 export const managementMenuGroups = [
   managementMenu.slice(0, 3), managementMenu.slice(3, 6), managementMenu.slice(6, 8),
-  managementMenu.slice(8, 11), managementMenu.slice(11, 13), managementMenu.slice(13),
+  managementMenu.slice(8, 11), managementMenu.slice(11, 14), managementMenu.slice(14),
 ];

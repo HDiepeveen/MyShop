@@ -1,3 +1,4 @@
+import { RdwVehicle } from './rdw-vehicle';
 import { CurrencySymbolPipe } from '../shared/money';
 import { PageBackdrop } from './page-backdrop';
 import { ShopBranding } from './shop-branding';
@@ -19,7 +20,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
 @Component({
   selector: 'app-shop-detail',
   host: {'[class.assortment-photo]': '!!branding.assortmentImageUrl()'},
-  imports: [CurrencySymbolPipe, FormsModule, RouterLink, ShopImage],
+  imports: [CurrencySymbolPipe, FormsModule, RouterLink, ShopImage, RdwVehicle],
   styles: [
     `
       :host {display:block;}
@@ -91,6 +92,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               </dl>
             </section>
           }
+          @if (hasRdw(product.attributes)) { <app-rdw-vehicle [productId]="product.id" /> }
           @if (product.variants.length) {
             @if (options(); as choices) {
               @for (dimension of choices.dimensions; track dimension.id) {
@@ -267,6 +269,9 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
   `,
 })
 export class ShopDetail {
+  hasRdw(attributes: { dataType?: string }[] | undefined) {
+    return attributes?.some(attribute => attribute.dataType === 'Rdw') === true;
+  }
   readonly branding = inject(ShopBranding);
   private readonly seo = inject(StorefrontSeo);
   readonly auth = inject(Auth);

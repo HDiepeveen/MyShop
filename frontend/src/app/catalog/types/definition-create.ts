@@ -30,7 +30,7 @@ import { errorMessage } from '../error-message';
         >
         }
         <label class="field"
-          >Soort<select name="dataType" [(ngModel)]="dataType" [disabled]="busy()">
+          >Soort<select name="dataType" [ngModel]="dataType" (ngModelChange)="changeDataType($event)" [disabled]="busy()">
             @for (type of types; track type.code) {
               <option [ngValue]="type.code">{{ type.label }}</option>
             }
@@ -39,7 +39,7 @@ import { errorMessage } from '../error-message';
         <label class="field"
           >Niveau<select name="scope" [(ngModel)]="scope" [disabled]="busy()">
             <option [ngValue]="0">Product</option>
-            <option [ngValue]="1">Variant</option>
+            <option [ngValue]="1" [disabled]="dataType === 7">Variant</option>
           </select></label
         >
         <label class="check-field"
@@ -96,6 +96,13 @@ export class DefinitionCreate {
       this.filterable = true;
       this.error.set('');
     });
+  }
+  changeDataType(value: number) {
+    this.dataType = value;
+    if (value === 7) {
+      this.scope = 0;
+      this.filterable = false;
+    }
   }
   changeName(name: string) {
     const previous = this.suggestCode(this.displayName);

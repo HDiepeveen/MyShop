@@ -41,7 +41,7 @@ export interface ShopProduct extends ShopItem {
   images?: { id: string; url: string; alternativeText: string }[];
   description: string;
   categories: ShopCategory[];
-  attributes?: { attributeDefinitionId: string; name: string; value: string }[];
+  attributes?: { attributeDefinitionId: string; name: string; value: string; dataType?: string }[];
   variantDefinitions?: { id: string; name: string }[];
   variants: ShopVariant[];
 }

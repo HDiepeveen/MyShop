@@ -32,6 +32,9 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddScoped<HDWebFramework.Application.Security.ICompanyAccess, HDWebFramework.Infrastructure.Security.CompanyAccess>();
         services.AddDbContext<HDWebFrameworkDbContext>(options =>
             options.UseSqlServer(connectionString));
+        services.AddHttpClient<HDWebFramework.Application.Catalog.Rdw.IRdwClient, HDWebFramework.Infrastructure.Rdw.RdwClient>(
+            client => client.Timeout = TimeSpan.FromSeconds(15));
+        services.AddScoped<HDWebFramework.Application.Catalog.Rdw.IRdwStore, RdwStore>();
         services.AddScoped<IProductImages>(provider => new ProductImagesRepository(provider.GetRequiredService<HDWebFrameworkDbContext>()));
         services.AddScoped<HDWebFramework.Application.Notifications.IEmailQueue, HDWebFramework.Infrastructure.Notifications.EmailQueue>();
         services.AddScoped<HDWebFramework.Infrastructure.Notifications.EmailSettingsRepository>();

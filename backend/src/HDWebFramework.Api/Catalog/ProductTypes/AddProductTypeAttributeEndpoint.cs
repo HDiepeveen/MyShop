@@ -70,6 +70,7 @@ public static class AddProductTypeAttributeEndpoint
 
     private static ApiAttributeDataType MapDataType(AttributeDataType dataType) => dataType switch
     {
+        AttributeDataType.Rdw => ApiAttributeDataType.Rdw,
         AttributeDataType.Text => ApiAttributeDataType.Text,
         AttributeDataType.Integer => ApiAttributeDataType.Integer,
         AttributeDataType.Decimal => ApiAttributeDataType.Decimal,
@@ -82,6 +83,7 @@ public static class AddProductTypeAttributeEndpoint
 
     private static AttributeDataType MapRequestDataType(ApiAttributeDataType dataType) => dataType switch
     {
+        ApiAttributeDataType.Rdw => AttributeDataType.Rdw,
         ApiAttributeDataType.Text => AttributeDataType.Text,
         ApiAttributeDataType.Integer => AttributeDataType.Integer,
         ApiAttributeDataType.Decimal => AttributeDataType.Decimal,

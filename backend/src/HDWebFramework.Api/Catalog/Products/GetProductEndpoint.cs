@@ -115,6 +115,7 @@ public sealed record AttributeValueResponse(
             value.DataType.ToString(),
             value switch
             {
+                RdwAttributeValue vehicle => vehicle.LicensePlate,
                 TextAttributeValue text => text.Value,
                 IntegerAttributeValue integer => integer.Value,
                 DecimalAttributeValue decimalValue => decimalValue.Value,

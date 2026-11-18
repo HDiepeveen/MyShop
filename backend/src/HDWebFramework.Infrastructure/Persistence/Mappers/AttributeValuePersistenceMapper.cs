@@ -101,6 +101,8 @@ internal static class AttributeValuePersistenceMapper
 
         return dataType switch
         {
+            AttributeDataType.Rdw when textValue is not null && scalarCount == 1 =>
+                RdwAttributeValue.Create(id, textValue),
             AttributeDataType.Text when textValue is not null && scalarCount == 1 =>
                 TextAttributeValue.Create(id, textValue),
             AttributeDataType.Integer when integerValue is not null && scalarCount == 1 =>

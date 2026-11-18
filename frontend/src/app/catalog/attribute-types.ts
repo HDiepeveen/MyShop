@@ -6,6 +6,7 @@ export const attributeTypes = [
   { code: 4, name: 'Date', label: 'Datum' },
   { code: 5, name: 'Choice', label: 'Enkele keuze' },
   { code: 6, name: 'MultiChoice', label: 'Meerdere keuzes' },
+  { code: 7, name: 'Rdw', label: 'RDW' },
 ] as const;
 export function attributeTypeLabel(name: string) {
   return attributeTypes.find((type) => type.name === name)?.label ?? 'Onbekend type';

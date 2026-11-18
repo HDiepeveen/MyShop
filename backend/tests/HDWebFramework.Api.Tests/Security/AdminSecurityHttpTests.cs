@@ -331,6 +331,7 @@ internal sealed class SecurityHost : IAsyncDisposable
         App.MapCustomerManagementEndpoints();
         App.MapCatalog();
         App.MapSeo();
+        App.MapRdw();
         if (configuration?.GetValueOrDefault("Hosting:FrontendRoot") is not null) App.MapFrontend();
         App.MapStorefront();
         App.MapPaymentOptions();

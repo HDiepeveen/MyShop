@@ -1,3 +1,6 @@
+import { HttpClient } from '@angular/common/http';
+import { switchMap } from 'rxjs';
+import { Auth } from '../../auth/auth';
 import { Component, DestroyRef, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,6 +23,11 @@ import { ProductEditState } from './product-edit-state';
       <p class="muted">{{ typeLabel(definition().dataType) }}</p>
       <form (ngSubmit)="save()">
         @switch (definition().dataType) {
+          @case ('Rdw') {
+            <label>Kenteken<input name="licensePlate" [(ngModel)]="text" maxlength="12"
+              placeholder="Bijvoorbeeld AB-12-CD" [disabled]="busy()" /></label>
+            <p>Haal voertuiggegevens op bij RDW. Opnieuw ophalen vernieuwt de opgeslagen gegevens.</p>
+          }
           @case ('MultiChoice') {
             <p class="muted">Voeg één waarde per keuze toe. De volgorde blijft behouden.</p>
             @for (choice of choices; track $index) {
@@ -89,7 +97,7 @@ import { ProductEditState } from './product-edit-state';
         @if (validationError()) {
           <p class="form-errors" role="alert">{{ validationError() }}</p>
         }
-        <button class="secondary" [disabled]="busy()">Kenmerk opslaan</button>
+        <button class="secondary" [disabled]="busy()">{{ definition().dataType === 'Rdw' ? 'Voertuiggegevens ophalen' : 'Kenmerk opslaan' }}</button>
       </form>
       @if (current()) {
         @if (definition().isRequired) {
@@ -117,6 +125,8 @@ export class AttributeEdit {
   readonly error = signal('');
   readonly validationError = signal('');
   readonly typeLabel = attributeTypeLabel;
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(Auth);
   private readonly api = inject(CatalogApi);
   private readonly destroyRef = inject(DestroyRef);
   text = '';
@@ -184,10 +194,43 @@ export class AttributeEdit {
         },
       });
   }
+  private importVehicle() {
+    const licensePlate = this.text.trim().replace(/[- ]/g, '').toUpperCase();
+    if (!/^[A-Z0-9]{6}$/.test(licensePlate) || !/[A-Z]/.test(licensePlate) || !/[0-9]/.test(licensePlate)) {
+      this.validationError.set('Vul een geldig Nederlands kenteken in.');
+      return;
+    }
+    const productId = this.productId(), attributeId = this.definition().id;
+    this.writing = true;
+    this.busy.set(true);
+    this.error.set('');
+    this.validationError.set('');
+    this.auth.prepare().pipe(
+      switchMap(() => this.http.post('/api/products/' + productId + '/rdw/' + attributeId, { licensePlate })),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: () => {
+        this.writing = false;
+        this.busy.set(false);
+        if (this.productId() === productId && this.definition().id === attributeId)
+          this.saved.emit('Voertuiggegevens van RDW opgeslagen.');
+      },
+      error: error => {
+        this.writing = false;
+        this.busy.set(false);
+        if (this.productId() === productId && this.definition().id === attributeId)
+          this.error.set(errorMessage(error));
+      },
+    });
+  }
   save() {
     if (this.busy()) return;
     if (this.definition().scope !== (this.variantId() === null ? 'Product' : 'Variant')) {
       this.validationError.set('Dit kenmerk hoort bij een ander niveau. Vernieuw de gegevens.');
+      return;
+    }
+    if (this.definition().dataType === 'Rdw') {
+      this.importVehicle();
       return;
     }
     const parsed = attributeInput(

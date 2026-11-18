@@ -39,6 +39,7 @@ app.MapCustomerManagementEndpoints();
 
 app.MapCatalog();
 app.MapSeo();
+app.MapRdw();
 app.MapStorefront();
 app.MapPaymentOptions();
 app.MapEmailSettings();

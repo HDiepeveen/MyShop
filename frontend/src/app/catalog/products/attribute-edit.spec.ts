@@ -26,6 +26,19 @@ describe('AttributeEdit', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it('normalizes and imports an RDW plate with CSRF and reloads after success', () => {
+    const editor = setup('Rdw').componentInstance;
+    editor.text = ' ab-12-cd ';
+    const saved = vi.fn();
+    editor.saved.subscribe(saved);
+    editor.save();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const request = http.expectOne('/api/products/p/rdw/a');
+    expect(request.request.body).toEqual({ licensePlate: 'AB12CD' });
+    request.flush(null);
+    expect(saved).toHaveBeenCalledWith('Voertuiggegevens van RDW opgeslagen.');
+    expect(editor.busy()).toBe(false);
+  });
   it('validates empty text and persists a value only once with the proper type', () => {
     const editor = setup().componentInstance;
     editor.save();

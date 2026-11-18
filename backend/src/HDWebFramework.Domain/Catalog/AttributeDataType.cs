@@ -8,5 +8,6 @@ public enum AttributeDataType
     Boolean = 3,
     Date = 4,
     Choice = 5,
-    MultiChoice = 6
+    MultiChoice = 6,
+    Rdw = 7
 }

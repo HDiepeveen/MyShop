@@ -18,7 +18,7 @@ describe('Separate payment provider access', () => {
   it('keeps the agreed groups in one shared definition', () => {
     expect(managementMenuGroups.map(group => group.map(item => item.code))).toEqual([
       ['categories', 'productTypes', 'products'], ['overview', 'orders', 'customers'],
-      ['seo', 'appearance'], ['payments', 'delivery', 'billing'], ['paymentSettings', 'email'], ['companyAccess'],
+      ['seo', 'appearance'], ['payments', 'delivery', 'billing'], ['paymentSettings', 'email', 'rdw'], ['companyAccess'],
     ]);
   });
 });

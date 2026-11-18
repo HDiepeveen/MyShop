@@ -6,6 +6,11 @@ import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
+    path: 'instellingen/rdw',
+    loadComponent: () => import('./settings/rdw-settings').then(m => m.RdwSettingsPage),
+    title: 'RDW-instellingen · HD Web Framework',
+  },
+  {
     path: 'instellingen/betaalinstellingen',
     loadComponent: () => import('./checkout/payment-provider-settings').then(m => m.PaymentProviderSettings),
     title: 'Betaalinstellingen · HD Web Framework',

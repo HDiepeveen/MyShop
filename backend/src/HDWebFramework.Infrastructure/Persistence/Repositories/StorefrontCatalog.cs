@@ -116,7 +116,7 @@ internal sealed class StorefrontCatalog(HDWebFrameworkDbContext context) : IStor
                 (d, v) => new { Definition = d, Value = v })
                 .Where(item => item.Definition.DataType == item.Value.DataType)
                 .Select(item => new StorefrontProductAttribute(item.Definition.Id, item.Definition.DisplayName,
-                    OptionValue(AttributeValuePersistenceMapper.ToDomain(item.Value)))).ToArray(),
+                    OptionValue(AttributeValuePersistenceMapper.ToDomain(item.Value)), item.Definition.DataType.ToString())).ToArray(),
             VariantDefinitions = definitions.Select(d => new StorefrontVariantDefinition(d.Id, d.DisplayName)).ToArray(),
             Variants = detail.Variants.Select(v => v with
             {
@@ -128,6 +128,7 @@ internal sealed class StorefrontCatalog(HDWebFrameworkDbContext context) : IStor
     private static string OptionValue(AttributeValue value) => value switch
     {
         MultiChoiceAttributeValue choices => string.Join(", ", choices.Values.Select(choice => choice.Value)),
+        RdwAttributeValue vehicle => vehicle.LicensePlate,
         TextAttributeValue text => text.Value,
         ChoiceAttributeValue choice => choice.Value.Value,
         IntegerAttributeValue integer => integer.Value.ToString(CultureInfo.InvariantCulture),
