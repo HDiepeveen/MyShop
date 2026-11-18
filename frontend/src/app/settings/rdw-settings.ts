@@ -12,7 +12,8 @@ interface Settings { revision: string; columns: string[]; }
   imports: [FormsModule],
   template: `
     <h1>RDW-instellingen</h1>
-    <p>Kies welke gegevens uit RDW Open Data ‘Gekentekende voertuigen’ bij producten worden getoond.</p>
+    <p>Kies welke voertuig-, brandstof-, verbruiks- en emissiegegevens uit RDW Open Data bij producten worden getoond.</p>
+    <p>Nieuwe gegevens worden toegevoegd wanneer je bij het product opnieuw op "Voertuiggegevens ophalen" klikt. Alleen beschikbare, geselecteerde velden worden getoond.</p>
     @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
     @if (loading()) { <p role="status">RDW-instellingen ophalen…</p> }
     @if (!loading() && !revision) {

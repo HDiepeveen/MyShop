@@ -16,13 +16,24 @@ internal sealed class RdwClient(HttpClient http) : IRdwClient
 
         var fuels = await http.GetFromJsonAsync<JsonElement[]>(
             "https://opendata.rdw.nl/resource/8ys7-d773.json" + query + "&$limit=100", ct);
-        var descriptions = (fuels ?? []).Select(f => f.TryGetProperty("brandstof_omschrijving", out var value)
-                ? value.GetString() : null)
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         var vehicle = JsonNode.Parse(records[0].GetRawText())!.AsObject();
-        if (descriptions.Length > 0)
-            vehicle["brandstof_omschrijving"] = string.Join(" / ", descriptions);
+        var fuelRecords = fuels ?? [];
+        var fuelColumns = fuelRecords.SelectMany(f => f.EnumerateObject().Select(p => p.Name))
+            .Where(key => key != "kenteken").Distinct();
+        foreach (var key in fuelColumns)
+        {
+            var values = fuelRecords.Select(f =>
+            {
+                if (!f.TryGetProperty(key, out var raw) || raw.ValueKind == JsonValueKind.Null) return null;
+                var value = raw.ValueKind == JsonValueKind.String ? raw.GetString() : raw.ToString();
+                if (string.IsNullOrWhiteSpace(value)) return null;
+                if (fuelRecords.Length > 1 && key != "brandstof_omschrijving" &&
+                    f.TryGetProperty("brandstof_omschrijving", out var fuel) && !string.IsNullOrWhiteSpace(fuel.GetString()))
+                    return fuel.GetString() + ": " + value;
+                return value;
+            }).Where(value => value is not null).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            if (values.Length > 0) vehicle[key] = string.Join(" / ", values);
+        }
         return vehicle.ToJsonString();
     }
 }

@@ -28,6 +28,25 @@ public sealed class RdwClientTests
         Assert.Single(handler.Requests);
     }
 
+    [Fact]
+    public async Task PreservesConsumptionPerFuelAndElectricFieldsWithoutEmptyValues()
+    {
+        var fuels = """[{"brandstof_omschrijving":"Benzine","brandstofverbruik_gecombineerd":"6.2","co2_uitstoot_gecombineerd":"140","geluidsniveau_stationair":""},{"brandstof_omschrijving":"LPG","brandstofverbruik_gecombineerd":"8.1","co2_uitstoot_gecombineerd":"130","geluidsniveau_stationair":null}]""";
+        var result = await new RdwClient(new HttpClient(new Handler("""[{"kenteken":"AB12CD"}]""", fuels)))
+            .FindAsync("AB12CD", default);
+        using var json = JsonDocument.Parse(result!);
+        Assert.Equal("Benzine: 6.2 / LPG: 8.1", json.RootElement.GetProperty("brandstofverbruik_gecombineerd").GetString());
+        Assert.Equal("Benzine: 140 / LPG: 130", json.RootElement.GetProperty("co2_uitstoot_gecombineerd").GetString());
+        Assert.False(json.RootElement.TryGetProperty("geluidsniveau_stationair", out _));
+
+        var electric = """[{"brandstof_omschrijving":"Elektriciteit","elektrisch_verbruik_enkel_elektrisch_wltp":"135.00","actie_radius_enkel_elektrisch_wltp":"450"}]""";
+        result = await new RdwClient(new HttpClient(new Handler("""[{"kenteken":"AB12CD"}]""", electric)))
+            .FindAsync("AB12CD", default);
+        using var ev = JsonDocument.Parse(result!);
+        Assert.Equal("135.00", ev.RootElement.GetProperty("elektrisch_verbruik_enkel_elektrisch_wltp").GetString());
+        Assert.Equal("450", ev.RootElement.GetProperty("actie_radius_enkel_elektrisch_wltp").GetString());
+    }
+
     private sealed class Handler(string vehicle, string fuel) : HttpMessageHandler
     {
         public List<string> Requests { get; } = [];

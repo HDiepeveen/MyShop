@@ -19,7 +19,7 @@ public sealed class RdwHttpTests
         await host.Csrf(); await host.Login(); await host.Csrf();
 
         var settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/rdw-settings");
-        Assert.Equal(99, settings.GetProperty("columns").GetArrayLength());
+        Assert.Equal(133, settings.GetProperty("columns").GetArrayLength());
         var revision = settings.GetProperty("settings").GetProperty("revision").GetGuid();
         Assert.Equal(HttpStatusCode.BadRequest, (await host.Client.PutAsJsonAsync("/api/rdw-settings",
             new { revision, columns = new[] { "unknown" } })).StatusCode);
@@ -53,11 +53,23 @@ public sealed class RdwHttpTests
             $"/api/products/{productId}/rdw/{attributeId}", new { licensePlate = "ZZ99ZZ" })).StatusCode);
         var unchanged = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{productId}/rdw");
         Assert.Equal("AB12CD", unchanged[0].GetProperty("licensePlate").GetString());
+        settings = await host.Client.GetFromJsonAsync<JsonElement>("/api/rdw-settings");
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.PutAsJsonAsync("/api/rdw-settings",
+            new { revision = settings.GetProperty("settings").GetProperty("revision").GetGuid(),
+                columns = new[] { "brandstof_omschrijving", "brandstofverbruik_gecombineerd", "co2_uitstoot_gecombineerd" } })).StatusCode);
+        vehicles = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{productId}/rdw");
+        var fuelFields = vehicles[0].GetProperty("fields").EnumerateArray()
+            .ToDictionary(f => f.GetProperty("key").GetString()!, f => f.GetProperty("value").GetString());
+        Assert.Equal(3, fuelFields.Count);
+        Assert.Equal("Benzine", fuelFields["brandstof_omschrijving"]);
+        Assert.Equal("6.2", fuelFields["brandstofverbruik_gecombineerd"]);
+        Assert.Equal("140", fuelFields["co2_uitstoot_gecombineerd"]);
+
     }
 
     private sealed class Client : IRdwClient
     {
         public Task<string?> FindAsync(string plate, CancellationToken ct) =>
-            Task.FromResult(plate == "AB12CD" ? """{"kenteken":"AB12CD","merk":"OPEL","vervaldatum_apk":"20271118","eerste_kleur":"GRIJS"}""" : null);
+            Task.FromResult(plate == "AB12CD" ? """{"kenteken":"AB12CD","merk":"OPEL","vervaldatum_apk":"20271118","eerste_kleur":"GRIJS","brandstof_omschrijving":"Benzine","brandstofverbruik_gecombineerd":"6.2","co2_uitstoot_gecombineerd":"140"}""" : null);
     }
 }
