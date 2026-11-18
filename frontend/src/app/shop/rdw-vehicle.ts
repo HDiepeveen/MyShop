@@ -21,7 +21,6 @@ interface Vehicle {
               <dd>{{ field.value }}</dd>
             }
           </dl>
-          <p class="muted">Bron RDW Open Data</p>
         </details>
       }
     }
