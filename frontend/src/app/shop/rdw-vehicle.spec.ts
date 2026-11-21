@@ -9,6 +9,10 @@ describe('Vehicle details', () => {
     const http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(RdwVehicle);
     fixture.componentRef.setInput('productId', 'car');
+    fixture.componentRef.setInput('attributes', [
+      {attributeDefinitionId: 'rdw', name: 'Voertuiggegevens', value: 'AB12CD', dataType: 'Rdw'},
+      {attributeDefinitionId: 'transmission', name: 'Transmissietype', value: 'Schakel', dataType: 'Text'},
+    ]);
     fixture.detectChanges();
     http.expectOne('/api/shop/products/car/rdw').flush([{name: 'RDW', licensePlate: 'AB12CD',
       fields: [{key: 'merk', name: 'Merk', value: 'OPEL'}]}]);
@@ -16,7 +20,9 @@ describe('Vehicle details', () => {
     const details = fixture.nativeElement.querySelector('.vehicle-details') as HTMLElement;
     expect(fixture.nativeElement.querySelector('details, summary')).toBeNull();
     expect(details.querySelector('h3')).toBeNull();
-    expect(details.querySelector('dd')!.textContent).toBe('OPEL');
+    expect(Array.from(details.querySelectorAll('dt')).map(node => node.textContent)).toEqual(['Merk', 'Transmissietype']);
+    expect(Array.from(details.querySelectorAll('dd')).map(node => node.textContent)).toEqual(['OPEL', 'Schakel']);
+    expect(fixture.nativeElement.querySelectorAll('dl').length).toBe(1);
     http.verify();
   });
 });
