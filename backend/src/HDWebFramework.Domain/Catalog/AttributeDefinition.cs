@@ -17,8 +17,8 @@ public sealed class AttributeDefinition
         if (!Enum.IsDefined(scope))
             throw new ArgumentOutOfRangeException(nameof(scope), scope, "Attribute scope is not supported.");
 
-        if (dataType == AttributeDataType.Rdw && scope != AttributeScope.Product)
-            throw new ArgumentException("Een RDW-kenmerk hoort op productniveau.");
+        if (dataType is AttributeDataType.Rdw or AttributeDataType.OverheidIo && scope != AttributeScope.Product)
+            throw new ArgumentException("Een voertuigkenmerk hoort op productniveau.");
 
         DataType = dataType;
         IsRequired = isRequired;

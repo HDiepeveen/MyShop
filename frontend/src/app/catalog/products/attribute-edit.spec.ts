@@ -26,6 +26,15 @@ describe('AttributeEdit', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it('imports an Overheid.io vehicle using the dedicated server endpoint', () => {
+    const editor = setup('OverheidIo').componentInstance;
+    editor.text = 'ab-12-cd';
+    editor.save();
+    http.expectOne('/api/auth/csrf').flush(null);
+    const request = http.expectOne('/api/products/p/overheid-io/a');
+    expect(request.request.body).toEqual({licensePlate: 'AB12CD'});
+    request.flush(null);
+  });
   it('normalizes and imports an RDW plate with CSRF and reloads after success', () => {
     const editor = setup('Rdw').componentInstance;
     editor.text = ' ab-12-cd ';
@@ -36,7 +45,7 @@ describe('AttributeEdit', () => {
     const request = http.expectOne('/api/products/p/rdw/a');
     expect(request.request.body).toEqual({ licensePlate: 'AB12CD' });
     request.flush(null);
-    expect(saved).toHaveBeenCalledWith('Voertuiggegevens van RDW opgeslagen.');
+    expect(saved).toHaveBeenCalledWith('Voertuiggegevens opgeslagen.');
     expect(editor.busy()).toBe(false);
   });
   it('validates empty text and persists a value only once with the proper type', () => {

@@ -48,6 +48,12 @@ public static class RdwEndpoints
             var vehicles = await store.PublicVehiclesAsync(productId, ct);
             return vehicles is null ? Results.NotFound() : (IResult)Results.Ok(vehicles);
         }).AllowAnonymous();
+        endpoints.MapGet("/api/shop/products/{productId:guid}/vehicle-data",
+            async (Guid productId, [FromServices] IRdwStore store, CancellationToken ct) =>
+        {
+            var vehicles = await store.PublicVehiclesAsync(productId, ct);
+            return vehicles is null ? Results.NotFound() : (IResult)Results.Ok(vehicles);
+        }).AllowAnonymous();
     }
 }
 public sealed record RdwImportRequest(string? LicensePlate);

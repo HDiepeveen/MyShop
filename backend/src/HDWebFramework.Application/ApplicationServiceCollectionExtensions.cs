@@ -58,6 +58,7 @@ public static class ApplicationServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddScoped<Catalog.ImportRdw.ImportRdw>();
+        services.AddScoped<Catalog.ImportOverheidIo.ImportOverheidIo>();
         services.AddScoped<AddProductVariant>();
         services.AddScoped<HDWebFramework.Application.Catalog.GenerateProductVariants.GenerateProductVariants>();
         services.AddScoped<AddProductVariantPriceRule>();

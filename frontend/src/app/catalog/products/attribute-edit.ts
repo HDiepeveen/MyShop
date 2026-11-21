@@ -28,6 +28,11 @@ import { ProductEditState } from './product-edit-state';
               placeholder="Bijvoorbeeld AB-12-CD" [disabled]="busy()" /></label>
             <p>Haal voertuiggegevens op bij RDW. Opnieuw ophalen vernieuwt de opgeslagen gegevens.</p>
           }
+          @case ('OverheidIo') {
+            <label>Kenteken<input name="licensePlate" [(ngModel)]="text" maxlength="12"
+              placeholder="Bijvoorbeeld AB-12-CD" [disabled]="busy()" /></label>
+            <p>Haal voertuiggegevens op bij Overheid.io. Opnieuw ophalen vernieuwt de opgeslagen gegevens.</p>
+          }
           @case ('MultiChoice') {
             <p class="muted">Voeg één waarde per keuze toe. De volgorde blijft behouden.</p>
             @for (choice of choices; track $index) {
@@ -97,7 +102,7 @@ import { ProductEditState } from './product-edit-state';
         @if (validationError()) {
           <p class="form-errors" role="alert">{{ validationError() }}</p>
         }
-        <button class="secondary" [disabled]="busy()">{{ definition().dataType === 'Rdw' ? 'Voertuiggegevens ophalen' : 'Kenmerk opslaan' }}</button>
+        <button class="secondary" [disabled]="busy()">{{ isVehicle() ? 'Voertuiggegevens ophalen' : 'Kenmerk opslaan' }}</button>
       </form>
       @if (current()) {
         @if (definition().isRequired) {
@@ -194,6 +199,7 @@ export class AttributeEdit {
         },
       });
   }
+  isVehicle() { return this.definition().dataType === 'Rdw' || this.definition().dataType === 'OverheidIo'; }
   private importVehicle() {
     const licensePlate = this.text.trim().replace(/[- ]/g, '').toUpperCase();
     if (!/^[A-Z0-9]{6}$/.test(licensePlate) || !/[A-Z]/.test(licensePlate) || !/[0-9]/.test(licensePlate)) {
@@ -206,14 +212,14 @@ export class AttributeEdit {
     this.error.set('');
     this.validationError.set('');
     this.auth.prepare().pipe(
-      switchMap(() => this.http.post('/api/products/' + productId + '/rdw/' + attributeId, { licensePlate })),
+      switchMap(() => this.http.post('/api/products/' + productId + (this.definition().dataType === 'OverheidIo' ? '/overheid-io/' : '/rdw/') + attributeId, { licensePlate })),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
       next: () => {
         this.writing = false;
         this.busy.set(false);
         if (this.productId() === productId && this.definition().id === attributeId)
-          this.saved.emit('Voertuiggegevens van RDW opgeslagen.');
+          this.saved.emit('Voertuiggegevens opgeslagen.');
       },
       error: error => {
         this.writing = false;
@@ -229,7 +235,7 @@ export class AttributeEdit {
       this.validationError.set('Dit kenmerk hoort bij een ander niveau. Vernieuw de gegevens.');
       return;
     }
-    if (this.definition().dataType === 'Rdw') {
+    if (this.isVehicle()) {
       this.importVehicle();
       return;
     }

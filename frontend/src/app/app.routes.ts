@@ -6,9 +6,9 @@ import { adminGuard, customerGuard } from './auth/auth-routing';
 import { Home } from './home';
 const protectedRoutes: Routes = [
   {
-    path: 'instellingen/rdw',
-    loadComponent: () => import('./settings/rdw-settings').then(m => m.RdwSettingsPage),
-    title: 'RDW-instellingen · HD Web Framework',
+    path: 'instellingen/voertuigen',
+    loadComponent: () => import('./settings/vehicle-settings').then(m => m.VehicleSettingsPage),
+    title: 'Voertuiginstellingen · HD Web Framework',
   },
   {
     path: 'instellingen/betaalinstellingen',
@@ -124,6 +124,8 @@ const protectedRoutes: Routes = [
  ];
 
 export const routes: Routes = [
+  { path: 'instellingen/rdw', redirectTo: 'instellingen/voertuigen', pathMatch: 'full' },
+
   { path: '', pathMatch: 'full', data: { storefront: true }, canMatch: [() => inject(HttpClient).get<{homeEnabled: boolean}>('/api/shop/settings').pipe(map(s => s.homeEnabled === true), catchError(() => of(false)))], loadComponent: () => import('./shop/shop-home').then(m => m.ShopHome), title: 'Home · HD Web Framework' },
   { path: 'assortiment/:category', data: { storefront: true }, loadComponent: () => import('./shop/shop-category').then(m => m.ShopCategory), title: 'Categorie · HD Web Framework' },
   { path: 'assortiment', data: { storefront: true }, loadComponent: () => import('./shop/shop-list').then(m => m.ShopList), title: 'Assortiment · HD Web Framework' },

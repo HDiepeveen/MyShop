@@ -12,11 +12,12 @@ export const managementMenu = [
   { code: 'billing', name: 'Facturatie en btw', path: '/instellingen/facturatie' },
   { code: 'paymentSettings', name: 'Betaalinstellingen', path: '/instellingen/betaalinstellingen' },
   { code: 'email', name: 'E-mailinstellingen', path: '/instellingen/email' },
-  { code: 'rdw', name: 'RDW-instellingen', path: '/instellingen/rdw' },
+  { code: 'rdw', name: 'Voertuiginstellingen', path: '/instellingen/voertuigen' },
   { code: 'companyAccess', name: 'Bedrijfsbeheerders en rollen', path: '/instellingen/bedrijfsbeheerders' },
 ] as const;
 export function managementPermission(url: string): string | null {
   const path = url.split(/[?#]/)[0];
+  if (path === '/instellingen/rdw') return 'rdw';
   if (path === '/') return 'overview';
   return managementMenu.find(item => path === item.path || path.startsWith(item.path + '/'))?.code ?? null;
 }

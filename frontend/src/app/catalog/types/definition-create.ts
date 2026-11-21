@@ -39,7 +39,7 @@ import { errorMessage } from '../error-message';
         <label class="field"
           >Niveau<select name="scope" [(ngModel)]="scope" [disabled]="busy()">
             <option [ngValue]="0">Product</option>
-            <option [ngValue]="1" [disabled]="dataType === 7">Variant</option>
+            <option [ngValue]="1" [disabled]="(dataType === 7 || dataType === 8)">Variant</option>
           </select></label
         >
         <label class="check-field"
@@ -99,7 +99,7 @@ export class DefinitionCreate {
   }
   changeDataType(value: number) {
     this.dataType = value;
-    if (value === 7) {
+    if ((value === 7 || value === 8)) {
       this.scope = 0;
       this.filterable = false;
     }

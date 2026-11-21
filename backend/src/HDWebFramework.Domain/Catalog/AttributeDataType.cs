@@ -9,5 +9,6 @@ public enum AttributeDataType
     Date = 4,
     Choice = 5,
     MultiChoice = 6,
-    Rdw = 7
+    Rdw = 7,
+    OverheidIo = 8
 }

@@ -116,6 +116,7 @@ public sealed record AttributeValueResponse(
             value switch
             {
                 RdwAttributeValue vehicle => vehicle.LicensePlate,
+                OverheidIoAttributeValue vehicle => vehicle.LicensePlate,
                 TextAttributeValue text => text.Value,
                 IntegerAttributeValue integer => integer.Value,
                 DecimalAttributeValue decimalValue => decimalValue.Value,

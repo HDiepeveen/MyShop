@@ -9,9 +9,10 @@ import { errorMessage } from '../catalog/error-message';
 interface Column { key: string; name: string; type: string; }
 interface Settings { revision: string; columns: string[]; }
 @Component({
+  selector: 'app-rdw-settings',
   imports: [FormsModule],
   template: `
-    <h1>RDW-instellingen</h1>
+    <h2>RDW-instellingen</h2>
     <p>Kies welke voertuig-, brandstof-, verbruiks- en emissiegegevens uit RDW Open Data bij producten worden getoond.</p>
     <p>Nieuwe gegevens worden toegevoegd wanneer je bij het product opnieuw op "Voertuiggegevens ophalen" klikt. Alleen beschikbare, geselecteerde velden worden getoond.</p>
     @if (error()) { <p class="error" role="alert">{{ error() }}</p> }

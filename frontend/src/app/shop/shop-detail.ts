@@ -81,7 +81,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               }
             </nav>
           }
-          @if (product.attributes?.length && !hasRdw(product.attributes)) {
+          @if (product.attributes?.length && !hasVehicleData(product.attributes)) {
             <section class="product-attributes" [attr.aria-label]="product.attributesHeading || 'Productkenmerken'">
               <h3>{{ product.attributesHeading || 'Productkenmerken' }}</h3>
               <dl class="detail-list">
@@ -92,7 +92,7 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
               </dl>
             </section>
           }
-          @if (hasRdw(product.attributes)) { <app-rdw-vehicle [productId]="product.id" [attributes]="product.attributes || []" /> }
+          @if (hasVehicleData(product.attributes)) { <app-rdw-vehicle [productId]="product.id" [attributes]="product.attributes || []" /> }
           @if (product.variants.length) {
             @if (options(); as choices) {
               @for (dimension of choices.dimensions; track dimension.id) {
@@ -269,8 +269,8 @@ import { chooseOption, optionAvailable, optionValue, variantOptions } from './va
   `,
 })
 export class ShopDetail {
-  hasRdw(attributes: { dataType?: string }[] | undefined) {
-    return attributes?.some(attribute => attribute.dataType === 'Rdw') === true;
+  hasVehicleData(attributes: { dataType?: string }[] | undefined) {
+    return attributes?.some(attribute => (attribute.dataType === 'Rdw' || attribute.dataType === 'OverheidIo')) === true;
   }
   readonly branding = inject(ShopBranding);
   private readonly seo = inject(StorefrontSeo);

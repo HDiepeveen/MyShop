@@ -1011,6 +1011,34 @@ namespace HDWebFramework.Infrastructure.Persistence.Migrations
                     b.ToTable("OrderTotals", (string)null);
                 });
 
+            modelBuilder.Entity("HDWebFramework.Infrastructure.Persistence.Models.OverheidIoSettingsPersistence", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ColumnsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProtectedApiKey")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("Revision")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OverheidIoSettings", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ColumnsJson = "[\"kenteken\",\"merk\",\"handelsbenaming\",\"voertuigsoort\",\"eerste_kleur\",\"datum_eerste_toelating\",\"vervaldatum_apk\",\"aantal_zitplaatsen\",\"aantal_deuren\",\"massa_ledig_voertuig\",\"cilinderinhoud\",\"aantal_cilinders\",\"tellerstandoordeel\",\"brandstof.brandstof_omschrijving\"]",
+                            Revision = new Guid("e74b8e60-9f7e-4e08-9a88-70b6777ac215")
+                        });
+                });
+
             modelBuilder.Entity("HDWebFramework.Infrastructure.Persistence.Models.PageBackgroundPersistence", b =>
                 {
                     b.Property<Guid>("PageId")

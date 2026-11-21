@@ -35,6 +35,10 @@ public static class InfrastructureServiceCollectionExtensions
         services.AddHttpClient<HDWebFramework.Application.Catalog.Rdw.IRdwClient, HDWebFramework.Infrastructure.Rdw.RdwClient>(
             client => client.Timeout = TimeSpan.FromSeconds(15));
         services.AddScoped<HDWebFramework.Application.Catalog.Rdw.IRdwStore, RdwStore>();
+        services.AddScoped<HDWebFramework.Application.Catalog.OverheidIo.IOverheidIoSettingsStore, OverheidIoSettingsStore>();
+        services.AddHttpClient<HDWebFramework.Application.Catalog.OverheidIo.IOverheidIoClient, HDWebFramework.Infrastructure.Rdw.OverheidIoClient>(
+            client => client.Timeout = TimeSpan.FromSeconds(15))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         services.AddScoped<IProductImages>(provider => new ProductImagesRepository(provider.GetRequiredService<HDWebFrameworkDbContext>()));
         services.AddScoped<HDWebFramework.Application.Notifications.IEmailQueue, HDWebFramework.Infrastructure.Notifications.EmailQueue>();
         services.AddScoped<HDWebFramework.Infrastructure.Notifications.EmailSettingsRepository>();

@@ -15,6 +15,13 @@ describe('Separate payment provider access', () => {
     expect(auth.canOpen('/instellingen/betalen')).toBe(false);
     expect(auth.canOpen('/instellingen/bedrijfsbeheerders')).toBe(false);
   });
+  it('keeps existing RDW permissions valid for vehicle settings and its old address', () => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient()] });
+    const auth = TestBed.inject(Auth);
+    auth.session.set({ authenticated: true, administrator: false, businessAdministrator: true, customer: false, name: 'Staff', permissions: ['rdw'] });
+    expect(auth.canOpen('/instellingen/voertuigen')).toBe(true);
+    expect(auth.canOpen('/instellingen/rdw')).toBe(true);
+  });
   it('keeps the agreed groups in one shared definition', () => {
     expect(managementMenuGroups.map(group => group.map(item => item.code))).toEqual([
       ['categories', 'productTypes', 'products'], ['overview', 'orders', 'customers'],

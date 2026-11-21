@@ -101,6 +101,8 @@ internal static class AttributeValuePersistenceMapper
 
         return dataType switch
         {
+            AttributeDataType.OverheidIo when textValue is not null && scalarCount == 1 =>
+                OverheidIoAttributeValue.Create(id, textValue),
             AttributeDataType.Rdw when textValue is not null && scalarCount == 1 =>
                 RdwAttributeValue.Create(id, textValue),
             AttributeDataType.Text when textValue is not null && scalarCount == 1 =>

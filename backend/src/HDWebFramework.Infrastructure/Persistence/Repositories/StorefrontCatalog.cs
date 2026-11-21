@@ -129,6 +129,7 @@ internal sealed class StorefrontCatalog(HDWebFrameworkDbContext context) : IStor
     {
         MultiChoiceAttributeValue choices => string.Join(", ", choices.Values.Select(choice => choice.Value)),
         RdwAttributeValue vehicle => vehicle.LicensePlate,
+        OverheidIoAttributeValue vehicle => vehicle.LicensePlate,
         TextAttributeValue text => text.Value,
         ChoiceAttributeValue choice => choice.Value.Value,
         IntegerAttributeValue integer => integer.Value.ToString(CultureInfo.InvariantCulture),

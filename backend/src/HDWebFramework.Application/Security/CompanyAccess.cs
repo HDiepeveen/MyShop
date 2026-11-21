@@ -7,7 +7,7 @@ public static class CompanyPermissions
     public const string Claim = "HDWebFramework.ManagementPermission";
     public static readonly IReadOnlyDictionary<string, string> Items = new Dictionary<string, string>
     {
-        ["rdw"] = "RDW-instellingen",
+        ["rdw"] = "Voertuiginstellingen",
         ["overview"] = "Overzicht", ["categories"] = "Categorieën", ["productTypes"] = "Producttypen",
         ["products"] = "Producten", ["orders"] = "Bestellingen", ["customers"] = "Klanten",
         ["paymentSettings"] = "Betaalinstellingen", ["payments"] = "Betaalopties", ["delivery"] = "Bezorgopties", ["email"] = "E-mailinstellingen",

@@ -25,6 +25,7 @@ public sealed class ManagementAuthorization(ICompanyAccess access) : Authorizati
     public static string? Permission(string route) => route switch
     {
         "/api/rdw-settings" => "rdw",
+        "/api/overheid-io-settings" => "rdw",
         "/api/dashboard" => "overview",
         "/api/page-images/{pageId:guid}" => "seo",
         "/api/seo-settings" or "/api/home-image" => "seo",

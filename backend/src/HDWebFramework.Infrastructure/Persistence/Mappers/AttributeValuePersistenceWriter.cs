@@ -50,6 +50,7 @@ internal static class AttributeValuePersistenceWriter
     private static Payload CreatePayload(AttributeValue source) => source switch
     {
         RdwAttributeValue value => new(AttributeDataType.Rdw, TextValue: value.Value),
+        OverheidIoAttributeValue value => new(AttributeDataType.OverheidIo, TextValue: value.Value),
         TextAttributeValue value => new(AttributeDataType.Text, TextValue: value.Value),
         IntegerAttributeValue value => new(AttributeDataType.Integer, IntegerValue: value.Value),
         DecimalAttributeValue value => CreateDecimalPayload(value),

@@ -31,10 +31,10 @@ interface Vehicle {
 export class RdwVehicle {
   readonly productId = input.required<string>();
   readonly attributes = input<{ attributeDefinitionId: string; name: string; value: string; dataType?: string }[]>([]);
-  readonly manualAttributes = computed(() => this.attributes().filter(attribute => attribute.dataType !== 'Rdw'));
+  readonly manualAttributes = computed(() => this.attributes().filter(attribute => attribute.dataType !== 'Rdw' && attribute.dataType !== 'OverheidIo'));
   private readonly http = inject(HttpClient);
   readonly vehicles = toSignal(toObservable(this.productId).pipe(
-    switchMap(id => this.http.get<Vehicle[]>('/api/shop/products/' + id + '/rdw')
+    switchMap(id => this.http.get<Vehicle[]>('/api/shop/products/' + id + '/vehicle-data')
       .pipe(catchError(() => of([] as Vehicle[])))),
   ), { initialValue: [] });
   readonly fields = computed(() => this.vehicles().flatMap(vehicle => vehicle.fields));

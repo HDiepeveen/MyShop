@@ -9,6 +9,7 @@ public sealed class AttributeValueDiscriminatorContractTests
     private static readonly (Type Type, AttributeDataType DataType)[] Contracts =
     [
         (typeof(RdwAttributeValue), AttributeDataType.Rdw),
+        (typeof(OverheidIoAttributeValue), AttributeDataType.OverheidIo),
         (typeof(TextAttributeValue), AttributeDataType.Text),
         (typeof(IntegerAttributeValue), AttributeDataType.Integer),
         (typeof(DecimalAttributeValue), AttributeDataType.Decimal),
@@ -117,7 +118,7 @@ public sealed class AttributeValueDiscriminatorContractTests
 
     [Fact]
     public void AttributeValueInventory_ContainsExpectedNumberOfTypes() =>
-        Assert.Equal(8, Contracts.Length);
+        Assert.Equal(9, Contracts.Length);
 
     [Fact]
     public void AttributeValueInventory_HasUniqueTypeNames() =>

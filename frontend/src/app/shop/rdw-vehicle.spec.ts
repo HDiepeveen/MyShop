@@ -11,10 +11,11 @@ describe('Vehicle details', () => {
     fixture.componentRef.setInput('productId', 'car');
     fixture.componentRef.setInput('attributes', [
       {attributeDefinitionId: 'rdw', name: 'Voertuiggegevens', value: 'AB12CD', dataType: 'Rdw'},
+      {attributeDefinitionId: 'ovio', name: 'Overheid.io', value: 'AB12CD', dataType: 'OverheidIo'},
       {attributeDefinitionId: 'transmission', name: 'Transmissietype', value: 'Schakel', dataType: 'Text'},
     ]);
     fixture.detectChanges();
-    http.expectOne('/api/shop/products/car/rdw').flush([{name: 'RDW', licensePlate: 'AB12CD',
+    http.expectOne('/api/shop/products/car/vehicle-data').flush([{name: 'RDW', licensePlate: 'AB12CD',
       fields: [{key: 'merk', name: 'Merk', value: 'OPEL'}]}]);
     fixture.detectChanges();
     const details = fixture.nativeElement.querySelector('.vehicle-details') as HTMLElement;

@@ -19,11 +19,11 @@ public interface IRdwStore
 }
 public static class RdwDisplay
 {
-    public static IReadOnlyList<RdwField> Fields(string json, IReadOnlyCollection<string> selected)
+    public static IReadOnlyList<RdwField> Fields(string json, IReadOnlyCollection<string> selected, IReadOnlyList<RdwColumn>? columns = null)
     {
         using var doc = JsonDocument.Parse(json);
         var fields = new List<RdwField>();
-        foreach (var column in RdwColumns.All.Where(c => selected.Contains(c.Key)))
+        foreach (var column in (columns ?? RdwColumns.All).Where(c => selected.Contains(c.Key)))
         {
             if (!doc.RootElement.TryGetProperty(column.Key, out var raw) || raw.ValueKind == JsonValueKind.Null)
                 continue;

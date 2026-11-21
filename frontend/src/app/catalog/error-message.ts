@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 export function errorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
-    if (error.error?.code === 'rdw' && typeof error.error.message === 'string')
+    if ((error.error?.code === 'rdw' || error.error?.code === 'overheidIo') && typeof error.error.message === 'string')
       return error.error.message;
     if (error.status === 0 || error.status === 502 || error.status === 504)
       return 'Het assortiment is niet bereikbaar. Probeer het over een moment opnieuw.';

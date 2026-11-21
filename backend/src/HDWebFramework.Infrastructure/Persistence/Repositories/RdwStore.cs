@@ -1,3 +1,4 @@
+using HDWebFramework.Application.Catalog.OverheidIo;
 using System.Text.Json;
 using HDWebFramework.Application.Catalog.Rdw;
 using HDWebFramework.Domain.Catalog;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HDWebFramework.Infrastructure.Persistence.Repositories;
 
-internal sealed class RdwStore(HDWebFrameworkDbContext db) : IRdwStore
+internal sealed class RdwStore(HDWebFrameworkDbContext db, IOverheidIoSettingsStore overheidIo) : IRdwStore
 {
     public async Task<RdwSettings> SettingsAsync(CancellationToken ct)
     {
@@ -28,13 +29,17 @@ internal sealed class RdwStore(HDWebFrameworkDbContext db) : IRdwStore
         var values = await (from value in db.ProductAttributeValues.AsNoTracking()
             join definition in db.AttributeDefinitions on value.AttributeDefinitionId equals definition.Id
             join product in db.Products on value.ProductId equals product.Id
-            where product.IsPublished && value.ProductId == productId && value.DataType == AttributeDataType.Rdw &&
-                definition.DataType == AttributeDataType.Rdw && definition.ProductTypeId == product.ProductTypeId
-            select new { definition.Id, definition.DisplayName, value.TextValue }).ToListAsync(ct);
+            where product.IsPublished && value.ProductId == productId && (value.DataType == AttributeDataType.Rdw || value.DataType == AttributeDataType.OverheidIo) &&
+                definition.DataType == value.DataType && definition.ProductTypeId == product.ProductTypeId
+            select new { definition.Id, definition.DisplayName, value.TextValue, value.DataType }).ToListAsync(ct);
         var settings = await SettingsAsync(ct);
+        var overheidSettings = values.Any(v => v.DataType == AttributeDataType.OverheidIo) ? await overheidIo.GetAsync(ct) : null;
         return values.Select(v => {
-            var vehicle = RdwAttributeValue.Create(AttributeDefinitionId.From(v.Id), v.TextValue!);
-            return new RdwVehicle(v.DisplayName, vehicle.LicensePlate, RdwDisplay.Fields(vehicle.Value, settings.Columns));
+            var plate = v.DataType == AttributeDataType.OverheidIo
+                ? OverheidIoAttributeValue.Create(AttributeDefinitionId.From(v.Id), v.TextValue!).LicensePlate
+                : RdwAttributeValue.Create(AttributeDefinitionId.From(v.Id), v.TextValue!).LicensePlate;
+            return new RdwVehicle(v.DisplayName, plate, RdwDisplay.Fields(v.TextValue!, v.DataType == AttributeDataType.OverheidIo ? overheidSettings!.Columns : settings.Columns,
+                v.DataType == AttributeDataType.OverheidIo ? OverheidIoColumns.All : RdwColumns.All));
         }).ToList();
     }
 }
