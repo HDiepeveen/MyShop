@@ -33,11 +33,14 @@ public static class RdwEndpoints
             catch (ProductConcurrencyException)
             { return Results.Conflict(new { message = "Het product is gewijzigd. Vernieuw de gegevens en probeer opnieuw." }); }
             catch (System.Text.Json.JsonException)
-            { return Results.Problem("RDW geeft een ongeldig antwoord. Probeer later opnieuw.", statusCode: 502); }
-            catch (HttpRequestException)
-            { return Results.Problem("RDW is tijdelijk niet bereikbaar. Probeer later opnieuw.", statusCode: 502); }
+            { return Results.Json(new { code = "rdw", message = "RDW geeft een ongeldig antwoord. Probeer later opnieuw." }, statusCode: 502); }
+            catch (HttpRequestException ex)
+            {
+                var reason = ex.StatusCode is { } status ? "HTTP " + (int)status : ex.HttpRequestError.ToString();
+                return Results.Json(new { code = "rdw", message = "De verbinding met RDW is mislukt (" + reason + "). De bestaande voertuiggegevens zijn behouden." }, statusCode: 502);
+            }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-            { return Results.Problem("RDW reageert te langzaam. Probeer later opnieuw.", statusCode: 504); }
+            { return Results.Json(new { code = "rdw", message = "RDW reageert te langzaam. Probeer later opnieuw. De bestaande voertuiggegevens zijn behouden." }, statusCode: 504); }
         });
         endpoints.MapGet("/api/shop/products/{productId:guid}/rdw",
             async (Guid productId, [FromServices] IRdwStore store, CancellationToken ct) =>

@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 export function errorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
+    if (error.error?.code === 'rdw' && typeof error.error.message === 'string')
+      return error.error.message;
     if (error.status === 0 || error.status === 502 || error.status === 504)
-      return 'De winkel is niet bereikbaar. Probeer het over een moment opnieuw.';
+      return 'Het assortiment is niet bereikbaar. Probeer het over een moment opnieuw.';
     if (error.status === 401) return 'Je sessie is verlopen. Log opnieuw in.';
     if (error.status === 403) return 'Je hebt geen toestemming voor deze handeling.';
     if (error.status === 404)
