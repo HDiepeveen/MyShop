@@ -47,6 +47,39 @@ public sealed class RdwClientTests
         Assert.Equal("450", ev.RootElement.GetProperty("actie_radius_enkel_elektrisch_wltp").GetString());
     }
 
+    [Theory]
+    [InlineData(HttpRequestError.NameResolutionError)]
+    [InlineData(HttpRequestError.ConnectionError)]
+    public async Task UsesRdwSocrataTenantWhenPublicDomainCannotConnect(HttpRequestError failure)
+    {
+        var handler = new FallbackHandler(failure);
+        var result = await new RdwClient(new HttpClient(handler)).FindAsync("AB12CD", default);
+        Assert.Contains("Benzine", result);
+        Assert.Equal(new[] { "opendata.rdw.nl", "rdw.azure-westeurope-prod.socrata.com", "rdw.azure-westeurope-prod.socrata.com" }, handler.Hosts);
+    }
+
+    [Fact]
+    public async Task DoesNotRetryAnHttpRejectionOnAnotherHost()
+    {
+        var handler = new FallbackHandler(HttpRequestError.HttpProtocolError);
+        await Assert.ThrowsAsync<HttpRequestException>(() => new RdwClient(new HttpClient(handler)).FindAsync("AB12CD", default));
+        Assert.Single(handler.Hosts);
+    }
+
+    private sealed class FallbackHandler(HttpRequestError failure) : HttpMessageHandler
+    {
+        public List<string> Hosts { get; } = [];
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            Hosts.Add(request.RequestUri!.Host);
+            if (request.RequestUri.Host == "opendata.rdw.nl")
+                throw new HttpRequestException(failure, "Unavailable");
+            var json = request.RequestUri.AbsolutePath.Contains("m9d7-ebf2")
+                ? """[{"kenteken":"AB12CD"}]""" : """[{"brandstof_omschrijving":"Benzine"}]""";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) });
+        }
+    }
+
     private sealed class Handler(string vehicle, string fuel) : HttpMessageHandler
     {
         public List<string> Requests { get; } = [];
