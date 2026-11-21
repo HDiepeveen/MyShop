@@ -26,6 +26,24 @@ describe('AttributeEdit', () => {
     fixture.detectChanges();
     return fixture;
   }
+  it.each(['Rdw', 'OverheidIo'])('offers draft clearing before importing a %s vehicle', (dataType) => {
+    const fixture = setup();
+    fixture.componentRef.setInput('definition', {id: 'a', displayName: 'Voertuig', dataType, scope: 'Product', isRequired: false});
+    fixture.detectChanges();
+    const editor = fixture.componentInstance;
+    const clear = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>('button'))
+      .find(button => button.textContent?.trim() === 'Waarde wissen')!;
+    expect(clear).toBeTruthy();
+    expect(clear.disabled).toBe(true);
+    editor.text = 'AB12CD'; editor.error.set('Opvragen mislukt');
+    fixture.detectChanges();
+    expect(clear.disabled).toBe(false);
+    clear.click(); fixture.detectChanges();
+    expect(editor.text).toBe('');
+    expect(editor.error()).toBe('');
+    expect(clear.disabled).toBe(true);
+    http.expectNone('/api/products/p/attributes/a');
+  });
   it('imports an Overheid.io vehicle using the dedicated server endpoint', () => {
     const editor = setup('OverheidIo').componentInstance;
     editor.text = 'ab-12-cd';

@@ -89,6 +89,12 @@ public sealed class OverheidIoHttpTests
         })).StatusCode);
         using (var scope = host.App.Services.CreateScope())
             Assert.Null(await scope.ServiceProvider.GetRequiredService<IOverheidIoSettingsStore>().GetApiKeyAsync(default));
+        Assert.Equal(HttpStatusCode.NoContent, (await host.Client.DeleteAsync($"/api/products/{productId}/attributes/{attributeId}")).StatusCode);
+        product = await host.Client.GetFromJsonAsync<JsonElement>($"/api/products/{productId}");
+        Assert.Empty(product.GetProperty("attributeValues").EnumerateArray());
+        vehicles = await visitor.GetFromJsonAsync<JsonElement>($"/api/shop/products/{productId}/vehicle-data");
+        Assert.Empty(vehicles.EnumerateArray());
+
 
 
     }

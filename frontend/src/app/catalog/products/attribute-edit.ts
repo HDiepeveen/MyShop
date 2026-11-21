@@ -104,13 +104,13 @@ import { ProductEditState } from './product-edit-state';
         }
         <button class="secondary" [disabled]="busy()">{{ isVehicle() ? 'Voertuiggegevens ophalen' : 'Kenmerk opslaan' }}</button>
       </form>
-      @if (current()) {
-        @if (definition().isRequired) {
+      @if (current() || isVehicle()) {
+        @if (current() && definition().isRequired) {
           <p class="muted">
             Dit kenmerk is verplicht. Na wissen meldt de controle dat de waarde ontbreekt.
           </p>
         }
-        <button type="button" class="secondary" [disabled]="busy()" (click)="clear()">
+        <button type="button" class="secondary" [disabled]="busy() || (!current() && !text.trim())" (click)="clear()">
           Waarde wissen
         </button>
       }
@@ -160,7 +160,15 @@ export class AttributeEdit {
     if (!this.busy()) this.choices.splice(index, 1);
   }
   clear() {
-    if (this.busy() || !this.current()) return;
+    if (this.busy()) return;
+    if (!this.current()) {
+      if (this.isVehicle()) {
+        this.text = '';
+        this.error.set('');
+        this.validationError.set('');
+      }
+      return;
+    }
     const productId = this.productId(),
       variantId = this.variantId(),
       definition = this.definition(),
