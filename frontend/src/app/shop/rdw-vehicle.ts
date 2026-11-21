@@ -13,19 +13,18 @@ interface Vehicle {
   template: `
     @for (vehicle of vehicles(); track vehicle.name + vehicle.licensePlate) {
       @if (vehicle.fields.length) {
-        <details>
-          <summary>Voertuiggegevens · {{ vehicle.licensePlate }}</summary>
+        <section class="vehicle-details">
           <dl class="detail-list">
             @for (field of vehicle.fields; track field.key) {
               <dt>{{ field.name }}</dt>
               <dd>{{ field.value }}</dd>
             }
           </dl>
-        </details>
+        </section>
       }
     }
   `,
-  styles: `details { margin-top: 28px; } summary { cursor: pointer; font-weight: 600; } dd { overflow-wrap: anywhere; }`,
+  styles: `section { margin-top: 28px; } dd { overflow-wrap: anywhere; }`,
 })
 export class RdwVehicle {
   readonly productId = input.required<string>();

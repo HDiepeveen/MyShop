@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { RdwVehicle } from './rdw-vehicle';
 
 describe('Vehicle details', () => {
-  it('renders RDW fields in a collapsed accessible list', () => {
+  it('renders RDW fields permanently without a disclosure control', () => {
     TestBed.configureTestingModule({ imports: [RdwVehicle], providers: [provideHttpClient(), provideHttpClientTesting()] });
     const http = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(RdwVehicle);
@@ -13,9 +13,9 @@ describe('Vehicle details', () => {
     http.expectOne('/api/shop/products/car/rdw').flush([{name: 'RDW', licensePlate: 'AB12CD',
       fields: [{key: 'merk', name: 'Merk', value: 'OPEL'}]}]);
     fixture.detectChanges();
-    const details = fixture.nativeElement.querySelector('details') as HTMLDetailsElement;
-    expect(details.open).toBe(false);
-    expect(details.querySelector('summary')!.textContent).toContain('AB12CD');
+    const details = fixture.nativeElement.querySelector('.vehicle-details') as HTMLElement;
+    expect(fixture.nativeElement.querySelector('details, summary')).toBeNull();
+    expect(details.querySelector('h3')).toBeNull();
     expect(details.querySelector('dd')!.textContent).toBe('OPEL');
     http.verify();
   });
