@@ -44,7 +44,7 @@ public sealed class OverheidIoTests
         var client = new Client(found);
         var useCase = new ImportOverheidIo(repo, new TypeStore(type), client);
         Assert.Equal(found, await useCase.ExecuteAsync(product.Id.Value, id.Value, "ab-12-cd", default));
-        Assert.Equal("AB12CD", client.Request);
+        Assert.Equal("AB-12-CD", client.Request);
         Assert.Equal(found ? 1 : 0, repo.Saves);
         if (found) Assert.Equal("AB12CD", Assert.IsType<OverheidIoAttributeValue>(Assert.Single(product.AttributeValues)).LicensePlate);
     }

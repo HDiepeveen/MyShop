@@ -102,6 +102,6 @@ public sealed class OverheidIoHttpTests
     private sealed class Client : IOverheidIoClient
     {
         public Task<string?> FindAsync(string plate, CancellationToken ct) =>
-            Task.FromResult(plate == "AB12CD" ? """{"kenteken":"AB12CD","merk":"OPEL","vervaldatum_apk":"2027-11-18","eerste_kleur":"GRIJS","brandstof.brandstof_omschrijving":"Benzine","brandstof.brandstofverbruik_gecombineerd":"6.2","brandstof.co2_uitstoot_gecombineerd":"140"}""" : null);
+            Task.FromResult(HDWebFramework.Domain.Catalog.OverheidIoAttributeValue.NormalizePlate(plate) == "AB12CD" ? """{"kenteken":"AB12CD","merk":"OPEL","vervaldatum_apk":"2027-11-18","eerste_kleur":"GRIJS","brandstof.brandstof_omschrijving":"Benzine","brandstof.brandstofverbruik_gecombineerd":"6.2","brandstof.co2_uitstoot_gecombineerd":"140"}""" : null);
     }
 }

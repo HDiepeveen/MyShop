@@ -39,6 +39,27 @@ public sealed class OverheidIoClientTests
         Assert.Null(handler.Url);
         Assert.Null(await new OverheidIoClient(new HttpClient(handler), new Settings("test-key")).FindAsync("AB12CD", default));
     }
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task TriesSuppliedPlateAndOnlyTriesWithoutDashesAfterNotFound(bool formattedExists)
+    {
+        var handler = new PlateHandler(formattedExists);
+        var result = await new OverheidIoClient(new HttpClient(handler), new Settings("test-key")).FindAsync("28-zgb-8", default);
+        Assert.NotNull(result);
+        Assert.Equal(formattedExists ? new[] { "/voertuiggegevens/28-ZGB-8" }
+            : new[] { "/voertuiggegevens/28-ZGB-8", "/voertuiggegevens/28ZGB8" }, handler.Paths);
+    }
+    private sealed class PlateHandler(bool formattedExists) : HttpMessageHandler
+    {
+        public List<string> Paths { get; } = [];
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            Paths.Add(request.RequestUri!.AbsolutePath);
+            return Task.FromResult(new HttpResponseMessage(!formattedExists && Paths.Count == 1 ? HttpStatusCode.NotFound : HttpStatusCode.OK)
+            { Content = new StringContent("""{"kenteken":"28ZGB8","merk":"OPEL"}""") });
+        }
+    }
     private sealed class Settings(string? key) : IOverheidIoSettingsStore
     {
         public Task<string?> GetApiKeyAsync(CancellationToken ct) => Task.FromResult(key);

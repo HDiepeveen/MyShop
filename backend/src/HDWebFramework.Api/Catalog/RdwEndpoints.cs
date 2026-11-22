@@ -27,7 +27,7 @@ public static class RdwEndpoints
             {
                 return await useCase.ExecuteAsync(productId, attributeId, request.LicensePlate ?? "", ct)
                     ? Results.NoContent()
-                    : (IResult)Results.NotFound(new { message = "Geen voertuig gevonden bij dit kenteken." });
+                    : (IResult)Results.NotFound(new { code = "rdw", message = "RDW heeft geen voertuiggegevens gevonden voor dit kenteken. Controleer het kenteken. Eerder opgeslagen gegevens zijn behouden." });
             }
             catch (ArgumentException ex) { return Results.BadRequest(new { message = ex.Message }); }
             catch (ProductConcurrencyException)

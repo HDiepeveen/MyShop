@@ -16,7 +16,7 @@ public sealed class ImportOverheidIo(IProductRepository products, IProductTypeRe
         var definition = type?.AttributeDefinitions.SingleOrDefault(a => a.Id.Value == attributeId);
         if (definition is null || definition.DataType != AttributeDataType.OverheidIo || definition.Scope != AttributeScope.Product)
             throw new ArgumentException("Kies een Overheid.io-kenmerk op productniveau.");
-        var json = await client.FindAsync(normalized, ct);
+        var json = await client.FindAsync(licensePlate.Trim().Replace(" ", "").ToUpperInvariant(), ct);
         if (json is null) return false;
         var value = OverheidIoAttributeValue.Create(AttributeDefinitionId.From(attributeId), json);
         if (value.LicensePlate != normalized) throw new InvalidOperationException("Overheid.io antwoordt met een ander kenteken.");

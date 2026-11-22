@@ -215,12 +215,13 @@ export class AttributeEdit {
       return;
     }
     const productId = this.productId(), attributeId = this.definition().id;
+    const lookupPlate = this.definition().dataType === 'OverheidIo' ? this.text.trim().replace(/ /g, '').toUpperCase() : licensePlate;
     this.writing = true;
     this.busy.set(true);
     this.error.set('');
     this.validationError.set('');
     this.auth.prepare().pipe(
-      switchMap(() => this.http.post('/api/products/' + productId + (this.definition().dataType === 'OverheidIo' ? '/overheid-io/' : '/rdw/') + attributeId, { licensePlate })),
+      switchMap(() => this.http.post('/api/products/' + productId + (this.definition().dataType === 'OverheidIo' ? '/overheid-io/' : '/rdw/') + attributeId, { licensePlate: lookupPlate })),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe({
       next: () => {

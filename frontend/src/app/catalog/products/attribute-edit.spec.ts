@@ -50,7 +50,7 @@ describe('AttributeEdit', () => {
     editor.save();
     http.expectOne('/api/auth/csrf').flush(null);
     const request = http.expectOne('/api/products/p/overheid-io/a');
-    expect(request.request.body).toEqual({licensePlate: 'AB12CD'});
+    expect(request.request.body).toEqual({licensePlate: 'AB-12-CD'});
     request.flush(null);
   });
   it('normalizes and imports an RDW plate with CSRF and reloads after success', () => {

@@ -1,3 +1,4 @@
+using HDWebFramework.Domain.Catalog;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -10,6 +11,14 @@ internal sealed class OverheidIoClient(HttpClient http, IOverheidIoSettingsStore
         var apiKey = await settings.GetApiKeyAsync(ct);
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new OverheidIoConfigurationException("Vul eerst de Overheid.io API-sleutel in bij Voertuiginstellingen.");
+        var normalized = OverheidIoAttributeValue.NormalizePlate(licensePlate);
+        var supplied = licensePlate.Trim().Replace(" ", "").ToUpperInvariant();
+        var result = await LookupAsync(supplied, apiKey, ct);
+        return result is null && supplied != normalized ? await LookupAsync(normalized, apiKey, ct) : result;
+    }
+
+    private async Task<string?> LookupAsync(string licensePlate, string apiKey, CancellationToken ct)
+    {
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.overheid.io/voertuiggegevens/" + Uri.EscapeDataString(licensePlate));
         request.Headers.Add("ovio-api-key", apiKey);
         request.Headers.Accept.ParseAdd("application/json");

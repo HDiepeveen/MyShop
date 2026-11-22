@@ -21,7 +21,7 @@ public static class OverheidIoEndpoints
             {
                 return await useCase.ExecuteAsync(productId, attributeId, request.LicensePlate ?? "", ct)
                     ? Results.NoContent()
-                    : (IResult)Results.NotFound(new { message = "Geen voertuig gevonden bij dit kenteken." });
+                    : (IResult)Results.NotFound(new { code = "overheidIo", message = "Overheid.io heeft geen voertuiggegevens gevonden voor dit kenteken. Controleer het kenteken. Eerder opgeslagen gegevens zijn behouden." });
             }
             catch (OverheidIoConfigurationException ex)
             { return Results.Json(new { code = "overheidIo", message = ex.Message }, statusCode: 422); }
